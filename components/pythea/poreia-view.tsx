@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { motion } from "framer-motion"
 import {
   Lock,
@@ -123,6 +123,34 @@ export function PoreiaView({
     return () => window.removeEventListener("keydown", onKey)
   }, [go, index])
 
+  // Tap to advance, swipe to flip either way (works on touch and mouse).
+  // A short, low-movement pointer gesture counts as a tap (go forward); a
+  // horizontal drag past the threshold flips in the swipe direction.
+  const pointer = useRef<{ x: number; y: number; t: number } | null>(null)
+  const onPointerDown = useCallback((e: React.PointerEvent) => {
+    pointer.current = { x: e.clientX, y: e.clientY, t: Date.now() }
+  }, [])
+  const onPointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      const start = pointer.current
+      pointer.current = null
+      if (!start) return
+      const dx = e.clientX - start.x
+      const dy = e.clientY - start.y
+      const SWIPE = 45
+      // Horizontal swipe: left goes to the next page, right to the previous.
+      if (Math.abs(dx) > SWIPE && Math.abs(dx) > Math.abs(dy)) {
+        go(dx < 0 ? index + 1 : index - 1)
+        return
+      }
+      // Otherwise treat a small, quick gesture as a tap to turn the page.
+      if (Math.abs(dx) < 10 && Math.abs(dy) < 10 && Date.now() - start.t < 500) {
+        go(index + 1)
+      }
+    },
+    [go, index],
+  )
+
   // While turning, the page revealed underneath is the destination (forward)
   // or the page we are leaving (backward).
   const baseIndex = flip ? (flip.dir === 1 ? flip.to : flip.from) : index
@@ -189,8 +217,13 @@ export function PoreiaView({
           spine so the leaf slips behind instead of floating away on the left. */}
       <div className="flex justify-center">
         <div
-          className="relative w-full max-w-2xl"
+          className="relative w-full max-w-2xl cursor-pointer select-none touch-pan-y"
           style={{ perspective: "2800px", perspectiveOrigin: "50% 40%" }}
+          onPointerDown={onPointerDown}
+          onPointerUp={onPointerUp}
+          role="button"
+          tabIndex={0}
+          aria-label="Πάτησε ή σύρε για την επόμενη σελίδα"
         >
           {/* Soft ambient shadow cast on the desk under the book */}
           <div className="pointer-events-none absolute -inset-x-6 -bottom-6 top-8 -z-30 rounded-[40%] bg-black/45 blur-2xl" />
