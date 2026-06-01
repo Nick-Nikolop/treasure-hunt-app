@@ -31,11 +31,11 @@ export function Particles({ count = 26 }: { count?: number }) {
     return Array.from({ length: count }, () => ({
       left: Math.random() * 100,
       top: Math.random() * 100,
-      size: 1.5 + Math.random() * 3.5,
+      size: 2.5 + Math.random() * 5,
       duration: 14 + Math.random() * 16,
       delay: Math.random() * -30,
       drift: (Math.random() - 0.5) * 40,
-      opacity: 0.12 + Math.random() * 0.35,
+      opacity: 0.4 + Math.random() * 0.5,
     }))
   }, [count])
 
@@ -55,7 +55,8 @@ export function Particles({ count = 26 }: { count?: number }) {
             top: `${p.top}%`,
             width: p.size,
             height: p.size,
-            filter: "blur(0.5px)",
+            boxShadow:
+              "0 0 6px color-mix(in oklch, var(--brass) 70%, transparent)",
           }}
           initial={{ opacity: 0, y: 0, x: 0 }}
           animate={{
