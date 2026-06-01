@@ -97,11 +97,16 @@ export function PoreiaView({
     setIndex((i) => Math.min(i, pages.length - 1))
   }, [pages.length])
 
+  const bookRef = useRef<HTMLDivElement>(null)
+
   const go = useCallback(
     (next: number) => {
       if (flip) return
       if (next < 0 || next > pages.length - 1 || next === index) return
       setFlip({ dir: next > index ? 1 : -1, from: index, to: next })
+      // Smoothly bring the book back into view so the reader always sees the
+      // page they just flipped to, even after scrolling down to the controls.
+      bookRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
     },
     [index, pages.length, flip],
   )
@@ -215,7 +220,7 @@ export function PoreiaView({
       {/* The book, centered. Pages are bound on the left; a turned page rotates
           around the spine and tucks behind the journal. The stage clips at the
           spine so the leaf slips behind instead of floating away on the left. */}
-      <div className="flex justify-center">
+      <div ref={bookRef} className="flex scroll-mt-20 justify-center md:scroll-mt-28">
         <div
           className="relative w-full max-w-2xl cursor-pointer select-none touch-pan-y"
           style={{ perspective: "2800px", perspectiveOrigin: "50% 40%" }}
