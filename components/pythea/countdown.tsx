@@ -67,7 +67,7 @@ export function Countdown({
 
   const box =
     size === "lg"
-      ? "min-w-16 px-3 py-2.5 text-3xl md:min-w-20 md:text-5xl"
+      ? "min-w-11 px-2 py-2 text-2xl sm:min-w-16 sm:px-3 sm:py-2.5 sm:text-3xl md:min-w-20 md:text-5xl"
       : size === "sm"
         ? "min-w-10 px-1.5 py-1 text-base"
         : "min-w-12 px-2 py-1.5 text-xl md:text-2xl"
@@ -80,9 +80,9 @@ export function Countdown({
   const colonTone = tone === "ink" ? "text-[oklch(0.5_0.1_40)]" : "text-brass/50"
 
   return (
-    <div className="flex items-stretch gap-2" role="timer" aria-label="Αντίστροφη μέτρηση">
+    <div className="flex items-stretch gap-1 sm:gap-2" role="timer" aria-label="Αντίστροφη μέτρηση">
       {cells.map((c, i) => (
-        <div key={c.label} className="flex items-center gap-2">
+        <div key={c.label} className="flex items-center gap-1 sm:gap-2">
           <div className="flex flex-col items-center">
             <span
               className={`flex items-center justify-center rounded-sm border font-serif font-black tabular-nums ${cellTone} ${box}`}

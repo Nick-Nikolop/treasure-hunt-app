@@ -164,7 +164,7 @@ export function PoreiaView({
   const endAngle = flip?.dir === 1 ? -180 : 0
 
   return (
-    <main className="relative mx-auto min-h-screen max-w-4xl px-4 pb-28 pt-24 md:pt-28">
+    <main className="relative mx-auto min-h-screen max-w-4xl px-3 pb-16 pt-20 md:px-4 md:pb-28 md:pt-28">
       {/* Preload every unlocked stamp up front so flipping pages never shows
           a late pop-in. Rendered off-screen, not announced to screen readers. */}
       <div aria-hidden className="pointer-events-none absolute size-0 overflow-hidden opacity-0">
@@ -200,14 +200,14 @@ export function PoreiaView({
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="mb-6 flex items-center gap-4"
+        className="mb-5 flex items-center gap-2.5 md:mb-6 md:gap-4"
       >
-        <Feather className="size-5 text-brass" />
-        <span className="font-sans text-xs font-bold tracking-chip text-brass">
+        <Feather className="size-4 shrink-0 text-brass md:size-5" />
+        <span className="font-sans text-[11px] font-bold tracking-chip text-brass md:text-xs">
           ΗΜΕΡΟΛΟΓΙΟ ΤΑΞΙΔΙΟΥ
         </span>
         <span className="h-px flex-1 bg-border" />
-        <span className="font-serif text-sm font-bold text-muted-foreground">
+        <span className="shrink-0 font-serif text-sm font-bold text-muted-foreground">
           {unlockedCount} / {total}
         </span>
       </motion.div>
@@ -317,19 +317,20 @@ export function PoreiaView({
       </div>
 
       {/* Controls */}
-      <div className="mt-7 flex items-center justify-between gap-4">
+      <div className="mt-6 flex items-center justify-between gap-3 md:mt-7 md:gap-4">
         <button
           type="button"
           onClick={() => go(index - 1)}
           disabled={index === 0 || flip !== null}
-          className="inline-flex items-center gap-2 rounded-sm border border-border bg-card/60 px-4 py-2.5 font-sans text-xs font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass disabled:cursor-not-allowed disabled:opacity-30"
+          aria-label="Προηγούμενη σελίδα"
+          className="inline-flex shrink-0 items-center gap-2 rounded-sm border border-border bg-card/60 px-3 py-2.5 font-sans text-[11px] font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass disabled:cursor-not-allowed disabled:opacity-30 md:px-4 md:text-xs"
         >
           <ChevronLeft className="size-4" />
-          ΠΡΟΗΓΟΥΜΕΝΗ
+          <span className="hidden sm:inline">ΠΡΟΗΓΟΥΜΕΝΗ</span>
         </button>
 
         {/* Page dots */}
-        <div className="flex flex-wrap items-center justify-center gap-1.5">
+        <div className="flex min-w-0 flex-wrap items-center justify-center gap-1.5">
           {pages.map((p, i) => (
             <button
               key={i}
@@ -351,9 +352,10 @@ export function PoreiaView({
           type="button"
           onClick={() => go(index + 1)}
           disabled={index === pages.length - 1 || flip !== null}
-          className="inline-flex items-center gap-2 rounded-sm border border-border bg-card/60 px-4 py-2.5 font-sans text-xs font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass disabled:cursor-not-allowed disabled:opacity-30"
+          aria-label="Επόμενη σελίδα"
+          className="inline-flex shrink-0 items-center gap-2 rounded-sm border border-border bg-card/60 px-3 py-2.5 font-sans text-[11px] font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass disabled:cursor-not-allowed disabled:opacity-30 md:px-4 md:text-xs"
         >
-          ΕΠΟΜΕΝΗ
+          <span className="hidden sm:inline">ΕΠΟΜΕΝΗ</span>
           <ChevronRight className="size-4" />
         </button>
       </div>
@@ -411,7 +413,7 @@ function JournalPage({
       {/* Red margin line */}
       <div className="pointer-events-none absolute inset-y-0 left-14 w-px bg-[oklch(0.55_0.17_28_/_0.45)] md:left-20" />
 
-      <div className={`relative flex flex-col ${PAGE_HEIGHT} py-10 pl-16 pr-6 md:py-12 md:pl-24 md:pr-12`}>
+      <div className={`relative flex flex-col ${PAGE_HEIGHT} py-8 pl-16 pr-5 md:py-12 md:pl-24 md:pr-12`}>
         {page.kind === "clue" && <CluePageBody clue={page.clue} />}
         {page.kind === "sealed" && (
           <SealedPageBody
@@ -505,7 +507,7 @@ function BindingRings() {
 
 function CoverPage() {
   return (
-    <article className={`relative flex ${PAGE_HEIGHT} flex-col items-center justify-center overflow-hidden rounded-r-lg rounded-l-sm border border-[oklch(0.28_0.03_60)] bg-[oklch(0.24_0.03_56)] px-8 py-14 text-center shadow-[0_30px_60px_-25px_rgba(0,0,0,0.8)]`}>
+    <article className={`relative flex ${PAGE_HEIGHT} flex-col items-center justify-center overflow-hidden rounded-r-lg rounded-l-sm border border-[oklch(0.28_0.03_60)] bg-[oklch(0.24_0.03_56)] px-6 py-12 text-center shadow-[0_30px_60px_-25px_rgba(0,0,0,0.8)] md:px-8 md:py-14`}>
       {/* leather grain */}
       <div className="grain-layer pointer-events-none absolute inset-0 opacity-[0.14] mix-blend-overlay" />
       {/* leather sheen */}
@@ -552,23 +554,23 @@ function CluePageBody({ clue }: { clue: Clue }) {
           <p className="font-sans text-[11px] font-bold tracking-chip text-ink/55">
             ΚΑΤΑΧΩΡΗΣΗ Νο. {String(clue.order).padStart(2, "0")}
           </p>
-          <h2 className="mt-1 font-serif text-4xl font-black leading-none text-ink md:text-5xl">
+          <h2 className="mt-1 text-balance font-serif text-3xl font-black leading-none text-ink md:text-5xl">
             {clue.country}
           </h2>
-          <p className="mt-2 font-serif text-lg italic text-[oklch(0.45_0.08_40)]">
+          <p className="mt-2 font-serif text-base italic text-[oklch(0.45_0.08_40)] md:text-lg">
             {clue.subtitle}
           </p>
         </div>
         <JournalStamp clue={clue} />
       </div>
 
-      <div className="mt-7 flex flex-col gap-4">
+      <div className="mt-6 flex flex-col gap-4 md:mt-7">
         {clue.body.map((p, idx) => (
           <p
             key={idx}
-            className={`text-pretty font-serif text-[1.05rem] leading-8 text-ink/85 ${
+            className={`text-pretty font-serif text-base leading-7 text-ink/85 md:text-[1.05rem] md:leading-8 ${
               idx === 0
-                ? "first-letter:float-left first-letter:mr-2 first-letter:mt-1 first-letter:font-serif first-letter:text-6xl first-letter:font-black first-letter:leading-[0.7] first-letter:text-[oklch(0.45_0.1_40)]"
+                ? "first-letter:float-left first-letter:mr-2 first-letter:mt-1 first-letter:font-serif first-letter:text-5xl first-letter:font-black first-letter:leading-[0.7] first-letter:text-[oklch(0.45_0.1_40)] md:first-letter:text-6xl"
                 : ""
             }`}
           >
@@ -627,14 +629,14 @@ function SealedPageBody({
     <div className="flex flex-1 flex-col items-center justify-center text-center">
       {/* Wax seal */}
       <div className="relative">
-        <div className="flex size-28 items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_30%,oklch(0.62_0.16_40),oklch(0.42_0.14_34))] shadow-[0_10px_24px_-8px_rgba(0,0,0,0.6)]">
-          <Lock className="size-9 text-[oklch(0.92_0.04_60)]" />
+        <div className="flex size-24 items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_30%,oklch(0.62_0.16_40),oklch(0.42_0.14_34))] shadow-[0_10px_24px_-8px_rgba(0,0,0,0.6)] md:size-28">
+          <Lock className="size-8 text-[oklch(0.92_0.04_60)] md:size-9" />
         </div>
         {/* wax drips / irregular edge */}
         <span className="pointer-events-none absolute -inset-1 rounded-full border-2 border-dashed border-[oklch(0.5_0.13_36)/0.4]" />
       </div>
 
-      <p className="mt-7 font-sans text-[11px] font-bold tracking-chip text-ink/55">
+      <p className="mt-6 text-balance font-sans text-[11px] font-bold tracking-chip text-ink/55 md:mt-7">
         {notStarted ? "ΤΟ ΗΜΕΡΟΛΟΓΙΟ ΑΝΟΙΓΕΙ ΣΕ" : `Η ΣΕΛΙΔΑ Νο. ${String(order).padStart(2, "0")} ΣΦΡΑΓΙΣΤΗΚΕ`}
       </p>
 
@@ -642,7 +644,7 @@ function SealedPageBody({
         <Countdown targetMs={unlockMs} onDone={onDone} size="lg" tone="ink" />
       </div>
 
-      <p className="mt-7 max-w-sm text-pretty font-serif text-lg italic leading-relaxed text-ink/65">
+      <p className="mt-7 max-w-sm text-pretty font-serif text-base italic leading-relaxed text-ink/65 md:text-lg">
         {notStarted
           ? "Το πρώτο σημάδι θα εμφανιστεί μόλις ο Πυθέας ανοίξει τον χάρτη του."
           : "Γύρνα ξανά όταν λήξει ο χρόνος. Η επόμενη σελίδα θα έχει χαραχτεί στο ημερολόγιο."}
@@ -658,7 +660,7 @@ function FinalPageBody() {
       <p className="mt-6 font-sans text-[11px] font-bold tracking-chip text-ink/55">
         ΤΕΛΟΣ ΤΟΥ ΗΜΕΡΟΛΟΓΙΟΥ
       </p>
-      <p className="mt-4 max-w-md text-pretty font-serif text-2xl font-bold italic leading-relaxed text-ink/85">
+      <p className="mt-4 max-w-md text-pretty font-serif text-xl font-bold italic leading-relaxed text-ink/85 md:text-2xl">
         Όλα τα σημάδια αποκαλύφθηκαν. Ο θησαυρός περιμένει εκείνους που έμαθαν να
         κοιτούν την Καλαμάτα σαν εξερευνητές.
       </p>
