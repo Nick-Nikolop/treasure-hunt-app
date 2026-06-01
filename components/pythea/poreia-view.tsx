@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { AnimatePresence, motion } from "framer-motion"
+import { motion } from "framer-motion"
 import {
   Landmark,
   Swords,
@@ -53,6 +53,8 @@ type Page =
   | { kind: "sealed"; unlockMs: number; notStarted: boolean; order: number }
   | { kind: "final" }
 
+const FLIP_DURATION = 0.9
+
 export function PoreiaView({
   unlocked,
   locked,
@@ -85,7 +87,12 @@ export function PoreiaView({
   }, [unlocked, nextUnlockMs, notStarted, allDone, unlockedCount])
 
   const [index, setIndex] = useState(0)
-  const [dir, setDir] = useState(1)
+  // The leaf currently turning. null when the book is at rest.
+  const [flip, setFlip] = useState<{
+    dir: 1 | -1
+    from: number
+    to: number
+  } | null>(null)
 
   // Keep the index valid if the page count shrinks (e.g. reset override).
   useEffect(() => {
@@ -94,12 +101,19 @@ export function PoreiaView({
 
   const go = useCallback(
     (next: number) => {
-      if (next < 0 || next > pages.length - 1) return
-      setDir(next > index ? 1 : -1)
-      setIndex(next)
+      if (flip) return
+      if (next < 0 || next > pages.length - 1 || next === index) return
+      setFlip({ dir: next > index ? 1 : -1, from: index, to: next })
     },
-    [index, pages.length],
+    [index, pages.length, flip],
   )
+
+  const endFlip = useCallback(() => {
+    setFlip((f) => {
+      if (f) setIndex(f.to)
+      return null
+    })
+  }, [])
 
   // Keyboard navigation, like flipping a real book.
   useEffect(() => {
@@ -111,21 +125,17 @@ export function PoreiaView({
     return () => window.removeEventListener("keydown", onKey)
   }, [go, index])
 
-  const page = pages[index] ?? pages[0]
+  // While turning, the page revealed underneath is the destination (forward)
+  // or the page we are leaving (backward).
+  const baseIndex = flip ? (flip.dir === 1 ? flip.to : flip.from) : index
+  const basePage = pages[baseIndex] ?? pages[0]
 
-  const variants = {
-    enter: (d: number) => ({
-      rotateY: d > 0 ? 38 : -38,
-      x: d > 0 ? 60 : -60,
-      opacity: 0,
-    }),
-    center: { rotateY: 0, x: 0, opacity: 1 },
-    exit: (d: number) => ({
-      rotateY: d > 0 ? -38 : 38,
-      x: d > 0 ? -60 : 60,
-      opacity: 0,
-    }),
-  }
+  // The turning leaf shows the page we are leaving (forward) or arriving at
+  // (backward), and rotates around the spine on the left.
+  const leafIndex = flip ? (flip.dir === 1 ? flip.from : flip.to) : 0
+  const leafPage = pages[leafIndex] ?? pages[0]
+  const startAngle = flip?.dir === 1 ? 0 : -180
+  const endAngle = flip?.dir === 1 ? -180 : 0
 
   return (
     <main className="relative mx-auto min-h-screen max-w-4xl px-4 pb-28 pt-24 md:pt-28">
@@ -159,34 +169,84 @@ export function PoreiaView({
       </motion.div>
 
       {/* The book */}
-      <div className="relative" style={{ perspective: "2200px" }}>
-        {/* Page-thickness stack behind the book */}
-        <div className="pointer-events-none absolute inset-x-3 -bottom-2 top-3 -z-10 rounded-r-lg rounded-l-sm bg-[oklch(0.86_0.04_82)] shadow-2xl" />
-        <div className="pointer-events-none absolute inset-x-2 -bottom-1 top-2 -z-10 rounded-r-lg rounded-l-sm bg-[oklch(0.9_0.04_82)]" />
+      <div
+        className="relative"
+        style={{ perspective: "2600px", perspectiveOrigin: "50% 40%" }}
+      >
+        {/* Soft ambient shadow cast on the desk under the book */}
+        <div className="pointer-events-none absolute -inset-x-6 -bottom-6 top-8 -z-20 rounded-[40%] bg-black/45 blur-2xl" />
+
+        {/* Page-thickness stack along the right edge (closed pages) */}
+        <div className="pointer-events-none absolute -right-1 bottom-1 top-2 -z-10 w-3 rounded-r-lg bg-gradient-to-r from-[oklch(0.82_0.04_82)] to-[oklch(0.7_0.04_80)] shadow-xl" />
+        <div className="pointer-events-none absolute inset-x-2 -bottom-1.5 top-2.5 -z-10 rounded-r-lg rounded-l-sm bg-[oklch(0.86_0.04_82)]" />
+        <div className="pointer-events-none absolute inset-x-1 -bottom-0.5 top-1.5 -z-10 rounded-r-lg rounded-l-sm bg-[oklch(0.9_0.04_82)]" />
+
+        {/* The spine gutter shadow that both pages meet */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-20 w-10 bg-gradient-to-r from-black/25 via-black/10 to-transparent md:w-14" />
 
         <div
-          className="relative min-h-[30rem] md:min-h-[34rem]"
+          className="relative"
           style={{ transformStyle: "preserve-3d" }}
         >
-          <AnimatePresence custom={dir} mode="wait">
+          {/* Base page (revealed beneath the turning leaf) */}
+          <JournalPage
+            page={basePage}
+            pageNumber={baseIndex}
+            totalPages={pages.length}
+            onCountdownDone={refresh}
+          />
+
+          {/* The turning leaf */}
+          {flip && (
             <motion.div
-              key={index}
-              custom={dir}
-              variants={variants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              style={{ transformOrigin: "left center" }}
+              key={`${flip.from}-${flip.to}`}
+              className="absolute inset-0 z-30"
+              style={{
+                transformStyle: "preserve-3d",
+                transformOrigin: "left center",
+                willChange: "transform",
+              }}
+              initial={{ rotateY: startAngle }}
+              animate={{ rotateY: endAngle }}
+              transition={{ duration: FLIP_DURATION, ease: [0.36, 0.1, 0.2, 1] }}
+              onAnimationComplete={endFlip}
             >
-              <JournalPage
-                page={page}
-                pageNumber={index}
-                totalPages={pages.length}
-                onCountdownDone={refresh}
-              />
+              {/* Front face: the page being turned */}
+              <div
+                className="absolute inset-0"
+                style={{ backfaceVisibility: "hidden" }}
+              >
+                <JournalPage
+                  page={leafPage}
+                  pageNumber={leafIndex}
+                  totalPages={pages.length}
+                  onCountdownDone={refresh}
+                />
+                {/* Lift shadow that deepens toward the middle of the turn */}
+                <motion.div
+                  className="pointer-events-none absolute inset-0 rounded-r-lg rounded-l-sm bg-gradient-to-l from-black/0 via-black/0 to-black/55"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: [0, 0.5, 0.15] }}
+                  transition={{
+                    duration: FLIP_DURATION,
+                    ease: "easeInOut",
+                    times: [0, 0.5, 1],
+                  }}
+                />
+              </div>
+
+              {/* Back face: the blank reverse of the paper */}
+              <div
+                className="absolute inset-0"
+                style={{
+                  backfaceVisibility: "hidden",
+                  transform: "rotateY(180deg)",
+                }}
+              >
+                <PageBack />
+              </div>
             </motion.div>
-          </AnimatePresence>
+          )}
         </div>
       </div>
 
@@ -195,7 +255,7 @@ export function PoreiaView({
         <button
           type="button"
           onClick={() => go(index - 1)}
-          disabled={index === 0}
+          disabled={index === 0 || flip !== null}
           className="inline-flex items-center gap-2 rounded-sm border border-border bg-card/60 px-4 py-2.5 font-sans text-xs font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass disabled:cursor-not-allowed disabled:opacity-30"
         >
           <ChevronLeft className="size-4" />
@@ -224,7 +284,7 @@ export function PoreiaView({
         <button
           type="button"
           onClick={() => go(index + 1)}
-          disabled={index === pages.length - 1}
+          disabled={index === pages.length - 1 || flip !== null}
           className="inline-flex items-center gap-2 rounded-sm border border-border bg-card/60 px-4 py-2.5 font-sans text-xs font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass disabled:cursor-not-allowed disabled:opacity-30"
         >
           ΕΠΟΜΕΝΗ
@@ -254,8 +314,14 @@ function JournalPage({
     <article className="relative overflow-hidden rounded-r-lg rounded-l-sm border border-[oklch(0.78_0.04_80)] bg-paper text-ink shadow-[0_30px_60px_-25px_rgba(0,0,0,0.7)]">
       {/* Spiral binding rings on the left */}
       <BindingRings />
+      {/* Paper fiber grain */}
+      <div className="grain-layer pointer-events-none absolute inset-0 opacity-[0.06] mix-blend-multiply" />
       {/* Inner page shading near the spine + outer edge curl */}
-      <div className="pointer-events-none absolute inset-0 rounded-r-lg rounded-l-sm shadow-[inset_22px_0_30px_-26px_rgba(0,0,0,0.6),inset_-14px_0_24px_-22px_rgba(0,0,0,0.35)]" />
+      <div className="pointer-events-none absolute inset-0 rounded-r-lg rounded-l-sm shadow-[inset_26px_0_34px_-26px_rgba(0,0,0,0.65),inset_-16px_0_26px_-22px_rgba(0,0,0,0.4)]" />
+      {/* Deckled / lit outer edge */}
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-1.5 bg-gradient-to-l from-white/40 to-transparent" />
+      {/* Corner aging */}
+      <div className="pointer-events-none absolute inset-0 rounded-r-lg rounded-l-sm [background:radial-gradient(120%_90%_at_100%_100%,oklch(0.6_0.06_60_/_0.18),transparent_45%),radial-gradient(120%_90%_at_100%_0%,oklch(0.6_0.06_60_/_0.14),transparent_45%)]" />
       {/* Faint ruled lines */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.5]"
@@ -291,9 +357,38 @@ function JournalPage({
   )
 }
 
+// The blank reverse side of a journal leaf, seen mid-turn.
+function PageBack() {
+  return (
+    <article className="relative h-full overflow-hidden rounded-l-lg rounded-r-sm border border-[oklch(0.78_0.04_80)] bg-paper">
+      <div className="grain-layer pointer-events-none absolute inset-0 opacity-[0.06] mix-blend-multiply" />
+      {/* Gutter shadow on the right, since this face meets the spine mirrored */}
+      <div className="pointer-events-none absolute inset-0 rounded-l-lg rounded-r-sm shadow-[inset_-26px_0_34px_-26px_rgba(0,0,0,0.6)]" />
+      {/* Faint show-through of ruled lines */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.28]"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(to bottom, transparent, transparent 31px, oklch(0.55 0.06 240 / 0.16) 31px, oklch(0.55 0.06 240 / 0.16) 32px)",
+          backgroundPosition: "0 64px",
+        }}
+      />
+      {/* Binding rings sit on the right edge on the reverse */}
+      <div className="pointer-events-none absolute inset-y-0 right-0 flex w-10 flex-col items-center justify-around py-6 opacity-80 md:w-14">
+        {Array.from({ length: 11 }).map((_, i) => (
+          <span
+            key={i}
+            className="h-2.5 w-2.5 rounded-full bg-ink/20 shadow-[inset_0_1px_2px_rgba(0,0,0,0.5)]"
+          />
+        ))}
+      </div>
+    </article>
+  )
+}
+
 function BindingRings() {
   return (
-    <div className="pointer-events-none absolute inset-y-0 left-0 flex w-10 flex-col items-center justify-around py-6 md:w-14">
+    <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-10 flex-col items-center justify-around py-6 md:w-14">
       {Array.from({ length: 11 }).map((_, i) => (
         <div key={i} className="relative h-5 w-7 md:h-6 md:w-9">
           {/* hole */}
@@ -310,7 +405,9 @@ function CoverPage() {
   return (
     <article className="relative flex min-h-[30rem] flex-col items-center justify-center overflow-hidden rounded-r-lg rounded-l-sm border border-[oklch(0.28_0.03_60)] bg-[oklch(0.24_0.03_56)] px-8 py-14 text-center shadow-[0_30px_60px_-25px_rgba(0,0,0,0.8)] md:min-h-[34rem]">
       {/* leather grain */}
-      <div className="grain-layer pointer-events-none absolute inset-0 opacity-[0.12] mix-blend-overlay" />
+      <div className="grain-layer pointer-events-none absolute inset-0 opacity-[0.14] mix-blend-overlay" />
+      {/* leather sheen */}
+      <div className="pointer-events-none absolute inset-0 [background:radial-gradient(120%_80%_at_30%_20%,oklch(0.34_0.03_58_/_0.8),transparent_60%)]" />
       {/* brass corners */}
       {[
         "left-4 top-4 border-l-2 border-t-2",
