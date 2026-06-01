@@ -155,6 +155,12 @@ const el = {
     finalLabel: "ΤΕΛΟΣ ΤΟΥ ΗΜΕΡΟΛΟΓΙΟΥ",
     finalBody:
       "Όλα τα σημάδια αποκαλύφθηκαν. Ο θησαυρός περιμένει εκείνους που έμαθαν να κοιτούν την Καλαμάτα σαν εξερευνητές.",
+    home: "ΑΡΧΙΚΗ",
+    lead: "Κάθε σελίδα κρατά ένα σημάδι από τα ταξίδια του Πυθέα. Νέες σελίδες ξεκλειδώνουν με τον καιρό.",
+    progress: "ΣΗΜΑΔΙΑ",
+    hintTap: "Πάτα ή σύρε για να γυρίσεις σελίδα",
+    hintKeys: "ή χρησιμοποίησε τα πλήκτρα ← →",
+    footerNote: "Νέες σελίδες χαράσσονται στο ημερολόγιο όσο ξεκλειδώνουν τα σημάδια.",
   },
   controls: {
     openAria: "Άνοιγμα πίνακα δοκιμών",
@@ -311,6 +317,12 @@ const en: Dictionary = {
     finalLabel: "END OF THE JOURNAL",
     finalBody:
       "Every mark has been revealed. The treasure awaits those who learned to look at Kalamata like explorers.",
+    home: "HOME",
+    lead: "Each page holds a mark from the travels of Pytheas. New pages unlock over time.",
+    progress: "MARKS",
+    hintTap: "Tap or swipe to turn the page",
+    hintKeys: "or use the ← → keys",
+    footerNote: "New pages are written into the journal as marks unlock.",
   },
   controls: {
     openAria: "Open test panel",

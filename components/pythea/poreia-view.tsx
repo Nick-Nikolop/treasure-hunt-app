@@ -6,10 +6,11 @@ import { motion } from "framer-motion"
 import {
   Lock,
   Compass,
-  ArrowLeft,
   ChevronLeft,
   ChevronRight,
   Feather,
+  Hand,
+  Keyboard,
 } from "lucide-react"
 import type { Clue, LockedClue } from "@/lib/clues"
 import { Countdown } from "@/components/pythea/countdown"
@@ -171,7 +172,7 @@ export function PoreiaView({
   const endAngle = flip?.dir === 1 ? -180 : 0
 
   return (
-    <main className="relative mx-auto min-h-screen max-w-4xl px-3 pb-16 pt-20 md:px-4 md:pb-28 md:pt-28">
+    <main className="relative mx-auto w-full max-w-4xl flex-1 px-3 pb-16 pt-24 md:px-4 md:pb-28 md:pt-32">
       {/* Preload every unlocked stamp up front so flipping pages never shows
           a late pop-in. Rendered off-screen, not announced to screen readers. */}
       <div aria-hidden className="pointer-events-none absolute size-0 overflow-hidden opacity-0">
@@ -190,24 +191,12 @@ export function PoreiaView({
         )}
       </div>
 
-      {/* Back link */}
-      <motion.a
-        href="/"
-        initial={{ opacity: 0, x: -10 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5 }}
-        className="group mb-7 inline-flex items-center gap-2 font-sans text-xs font-bold tracking-chip text-muted-foreground transition-colors hover:text-brass"
-      >
-        <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-1" />
-        {t.journal.back}
-      </motion.a>
-
       {/* Title strip */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="mb-5 flex items-center gap-2.5 md:mb-6 md:gap-4"
+        className="mb-3 flex items-center gap-2.5 md:gap-4"
       >
         <Feather className="size-4 shrink-0 text-brass md:size-5" />
         <span className="font-sans text-[11px] font-bold tracking-chip text-brass md:text-xs">
@@ -218,6 +207,16 @@ export function PoreiaView({
           {unlockedCount} / {total}
         </span>
       </motion.div>
+
+      {/* Lead: what this page is */}
+      <motion.p
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.1 }}
+        className="mb-7 max-w-xl text-pretty font-serif text-base italic leading-relaxed text-muted-foreground md:mb-9 md:text-lg"
+      >
+        {t.journal.lead}
+      </motion.p>
 
       {/* The book, centered. Pages are bound on the left; a turned page rotates
           around the spine and tucks behind the journal. The stage clips at the
@@ -365,6 +364,19 @@ export function PoreiaView({
           <span className="hidden sm:inline">{t.journal.next}</span>
           <ChevronRight className="size-4" />
         </button>
+      </div>
+
+      {/* Reading hints */}
+      <div className="mt-8 flex flex-col items-center justify-center gap-2 text-center sm:flex-row sm:gap-6">
+        <span className="inline-flex items-center gap-2 font-sans text-[11px] tracking-chip text-muted-foreground">
+          <Hand className="size-3.5 text-brass/70" />
+          {t.journal.hintTap}
+        </span>
+        <span className="hidden h-3 w-px bg-border sm:block" />
+        <span className="inline-flex items-center gap-2 font-sans text-[11px] tracking-chip text-muted-foreground">
+          <Keyboard className="size-3.5 text-brass/70" />
+          {t.journal.hintKeys}
+        </span>
       </div>
     </main>
   )

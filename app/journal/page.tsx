@@ -1,7 +1,9 @@
 import type { Metadata } from "next"
 import { cookies } from "next/headers"
 import { Atmosphere } from "@/components/pythea/atmosphere"
+import { JournalTopbar } from "@/components/pythea/journal-topbar"
 import { PoreiaView } from "@/components/pythea/poreia-view"
+import { SiteFooter } from "@/components/pythea/site-footer"
 import { ClueControls } from "@/components/pythea/clue-controls"
 import { buildClueState, isOverrideAuthorized, PREVIEW_COOKIE } from "@/lib/clues"
 
@@ -30,14 +32,21 @@ export default async function PoreiaPage() {
   return (
     <>
       <Atmosphere />
-      <PoreiaView
-        unlocked={state.unlocked}
-        locked={state.locked}
+      <JournalTopbar
         unlockedCount={state.unlockedCount}
         total={state.total}
-        startMs={state.startMs}
-        nextUnlockMs={state.nextUnlockMs}
       />
+      <div className="flex min-h-screen flex-col">
+        <PoreiaView
+          unlocked={state.unlocked}
+          locked={state.locked}
+          unlockedCount={state.unlockedCount}
+          total={state.total}
+          startMs={state.startMs}
+          nextUnlockMs={state.nextUnlockMs}
+        />
+        <SiteFooter />
+      </div>
       {showControls && (
         <ClueControls
           unlockedCount={state.unlockedCount}

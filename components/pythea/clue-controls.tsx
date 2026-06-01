@@ -32,7 +32,7 @@ export function ClueControls({ unlockedCount, total, overrideActive }: Props) {
         type="button"
         onClick={() => setOpen(true)}
         aria-label={t.controls.openAria}
-        className="fixed right-4 top-4 z-50 inline-flex items-center gap-2 rounded-sm border border-brass/50 bg-card/95 px-3 py-2 font-sans text-[11px] font-bold tracking-chip text-brass shadow-xl backdrop-blur-md transition-colors hover:border-brass hover:bg-card"
+        className="fixed bottom-4 right-4 z-50 inline-flex items-center gap-2 rounded-sm border border-brass/50 bg-card/95 px-3 py-2 font-sans text-[11px] font-bold tracking-chip text-brass shadow-xl backdrop-blur-md transition-colors hover:border-brass hover:bg-card"
       >
         <FlaskConical className="size-4" />
         <span className="hidden sm:inline">{t.controls.chip}</span>
@@ -44,7 +44,7 @@ export function ClueControls({ unlockedCount, total, overrideActive }: Props) {
   }
 
   return (
-    <div className="fixed right-4 top-4 z-50 w-[min(94vw,22rem)] rounded-sm border border-brass/50 bg-card/95 p-3 shadow-2xl backdrop-blur-md">
+    <div className="fixed bottom-4 right-4 z-50 w-[min(94vw,22rem)] rounded-sm border border-brass/50 bg-card/95 p-3 shadow-2xl backdrop-blur-md">
       <div className="mb-2.5 flex items-center gap-2">
         <FlaskConical className="size-4 text-brass" />
         <span className="font-sans text-[11px] font-bold tracking-chip text-brass">
