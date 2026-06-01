@@ -70,6 +70,12 @@ export function PoreiaView({
     setTimeout(() => router.refresh(), 1200)
   }, [router])
 
+  // On mobile we give every page a single uniform height equal to the tallest
+  // page's natural (text-driven) height, so the book never resizes as you
+  // slide between pages, the same way the fixed book size reads on desktop.
+  const [measuredH, setMeasuredH] = useState<number | null>(null)
+  const measureRef = useRef<HTMLDivElement>(null)
+
   const notStarted = unlockedCount === 0
   const allDone = unlockedCount === total
 
@@ -88,6 +94,44 @@ export function PoreiaView({
     if (allDone) list.push({ kind: "final" })
     return list
   }, [unlocked, nextUnlockMs, notStarted, allDone, unlockedCount])
+
+  // Re-measure whenever the content, language, mobile state, or viewport size
+  // changes, since any of those can change the tallest page's height.
+  useEffect(() => {
+    setMeasuredH(null)
+  }, [t, pages, isMobile])
+
+  useEffect(() => {
+    if (!isMobile) return
+    const onResize = () => setMeasuredH(null)
+    window.addEventListener("resize", onResize)
+    return () => window.removeEventListener("resize", onResize)
+  }, [isMobile])
+
+  // Fonts can finish loading after the first measurement, which would change
+  // the tallest page's height. Re-measure once they are ready.
+  useEffect(() => {
+    if (!isMobile || typeof document === "undefined" || !document.fonts) return
+    let cancelled = false
+    document.fonts.ready.then(() => {
+      if (!cancelled) setMeasuredH(null)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [isMobile])
+
+  // After the hidden measurer renders, take the tallest page height.
+  useEffect(() => {
+    if (!isMobile || measuredH !== null) return
+    const node = measureRef.current
+    if (!node) return
+    let max = 0
+    for (const child of Array.from(node.children)) {
+      max = Math.max(max, (child as HTMLElement).offsetHeight)
+    }
+    if (max > 0) setMeasuredH(max)
+  }, [isMobile, measuredH, pages, t])
 
   const [index, setIndex] = useState(0)
   // The leaf currently turning. null when the book is at rest.
@@ -182,6 +226,9 @@ export function PoreiaView({
   const targetIndex = flip ? flip.to : index
   const targetPage = pages[targetIndex] ?? pages[0]
 
+  // Uniform per-page height, applied only on mobile once measured.
+  const pageMinH = isMobile ? measuredH ?? undefined : undefined
+
   // The turning leaf shows the page we are leaving (forward) or arriving at
   // (backward), and rotates around the spine on the left.
   const leafIndex = flip ? (flip.dir === 1 ? flip.from : flip.to) : 0
@@ -271,6 +318,28 @@ export function PoreiaView({
             </>
           )}
 
+          {/* Hidden measurer: renders every page at its natural height so we
+              can find the tallest and give all pages that uniform height on
+              mobile. Removed as soon as the measurement is taken. */}
+          {isMobile && measuredH === null && (
+            <div
+              ref={measureRef}
+              aria-hidden
+              className="invisible pointer-events-none absolute inset-x-0 top-0 -z-50"
+            >
+              {pages.map((p, i) => (
+                <div key={i}>
+                  <JournalPage
+                    page={p}
+                    pageNumber={i}
+                    totalPages={pages.length}
+                    onCountdownDone={() => {}}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Clipping stage: a leaf rotating past the spine is hidden here, so
               it reads as tucking behind the journal rather than flying off. */}
           <div
@@ -304,6 +373,7 @@ export function PoreiaView({
                     pageNumber={targetIndex}
                     totalPages={pages.length}
                     onCountdownDone={refresh}
+                    minH={pageMinH}
                   />
                 </motion.div>
                 {flip && (
@@ -318,6 +388,7 @@ export function PoreiaView({
                       pageNumber={flip.from}
                       totalPages={pages.length}
                       onCountdownDone={refresh}
+                      minH={pageMinH}
                     />
                   </motion.div>
                 )}
@@ -459,13 +530,17 @@ function JournalPage({
   pageNumber,
   totalPages,
   onCountdownDone,
+  minH,
 }: {
   page: Page
   pageNumber: number
   totalPages: number
   onCountdownDone: () => void
+  /** When set, forces a uniform page height (px) instead of the responsive
+   *  min-height class. Used on mobile so the book never resizes per page. */
+  minH?: number
 }) {
-  if (page.kind === "cover") return <CoverPage />
+  if (page.kind === "cover") return <CoverPage minH={minH} />
 
   // Sealed pages are rendered as if the leaf was torn clean out of the journal:
   // a ragged front remnant sits over the recessed interior of the book, which
@@ -502,7 +577,12 @@ function JournalPage({
       {/* Red margin line */}
       <div className="pointer-events-none absolute inset-y-0 left-14 w-px bg-[oklch(0.55_0.17_28_/_0.45)] md:left-20" />
 
-      <div className={`relative flex flex-col ${PAGE_HEIGHT} py-8 pl-16 pr-5 md:py-12 md:pl-24 md:pr-12`}>
+      <div
+        className={`relative flex flex-col py-8 pl-16 pr-5 md:py-12 md:pl-24 md:pr-12 ${
+          minH ? "" : PAGE_HEIGHT
+        }`}
+        style={minH ? { minHeight: minH } : undefined}
+      >
         {page.kind === "clue" && <CluePageBody clue={page.clue} />}
         {page.kind === "sealed" && (
           <SealedPageBody
@@ -594,10 +674,15 @@ function BindingRings() {
   )
 }
 
-function CoverPage() {
+function CoverPage({ minH }: { minH?: number }) {
   const { t } = useI18n()
   return (
-    <article className={`relative flex ${PAGE_HEIGHT} flex-col items-center justify-center overflow-hidden rounded-r-lg rounded-l-sm border border-[oklch(0.28_0.03_60)] bg-[oklch(0.24_0.03_56)] px-6 py-12 text-center shadow-[0_30px_60px_-25px_rgba(0,0,0,0.8)] md:px-8 md:py-14`}>
+    <article
+      className={`relative flex flex-col items-center justify-center overflow-hidden rounded-r-lg rounded-l-sm border border-[oklch(0.28_0.03_60)] bg-[oklch(0.24_0.03_56)] px-6 py-12 text-center shadow-[0_30px_60px_-25px_rgba(0,0,0,0.8)] md:px-8 md:py-14 ${
+        minH ? "" : PAGE_HEIGHT
+      }`}
+      style={minH ? { minHeight: minH } : undefined}
+    >
       {/* leather grain */}
       <div className="grain-layer pointer-events-none absolute inset-0 opacity-[0.14] mix-blend-overlay" />
       {/* leather sheen */}
