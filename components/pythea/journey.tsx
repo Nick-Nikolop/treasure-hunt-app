@@ -120,24 +120,24 @@ export function Journey({ unlockedCount, total, nextUnlockMs }: Props) {
                 ) : (
                   <>
                     {/* Recessed journal interior revealed where the page was torn out */}
-                    <div className="absolute inset-0 rounded-sm bg-[oklch(0.24_0.025_70)] shadow-[inset_0_4px_12px_rgba(0,0,0,0.65),inset_0_-3px_8px_rgba(0,0,0,0.45)]" />
+                    <div className="absolute inset-0 rounded-sm bg-sealed shadow-[inset_0_4px_12px_rgba(0,0,0,0.4),inset_0_-3px_8px_rgba(0,0,0,0.28)]" />
                     {/* Faint ruled lines of the page beneath */}
                     <div
-                      className="absolute inset-0 rounded-sm opacity-[0.14]"
+                      className="absolute inset-0 rounded-sm opacity-[0.12]"
                       style={{
                         backgroundImage:
-                          "repeating-linear-gradient(oklch(0.7 0.04 80) 0 1px, transparent 1px 9px)",
+                          "repeating-linear-gradient(var(--sealed-foreground) 0 1px, transparent 1px 9px)",
                       }}
                     />
                     {/* Ragged torn-paper stub still clinging to the binding (top) edge */}
-                    <div className="torn-stub absolute inset-x-0 top-0 h-1/3 bg-card shadow-[0_4px_7px_rgba(0,0,0,0.55)]" />
+                    <div className="torn-stub absolute inset-x-0 top-0 h-1/3 bg-card shadow-[0_4px_7px_rgba(0,0,0,0.35)]" />
                     {/* Locked content */}
                     <div className="relative flex h-full flex-col items-center justify-center text-center">
-                      <Lock className="size-4 text-muted-foreground md:size-5" />
-                      <span className="mt-1 font-serif text-xl font-black text-border md:text-2xl">
+                      <Lock className="size-4 text-sealed-foreground/70 md:size-5" />
+                      <span className="mt-1 font-serif text-xl font-black text-sealed-foreground/40 md:text-2xl">
                         {String(i + 1).padStart(2, "0")}
                       </span>
-                      <span className="font-sans text-[8px] font-bold tracking-chip text-muted-foreground md:text-[9px]">
+                      <span className="font-sans text-[8px] font-bold tracking-chip text-sealed-foreground/65 md:text-[9px]">
                         {t.journey.locked}
                       </span>
                     </div>
@@ -165,8 +165,8 @@ export function Journey({ unlockedCount, total, nextUnlockMs }: Props) {
             </span>
           </div>
           <div className="flex items-center gap-2.5">
-            <span className="flex size-6 shrink-0 items-center justify-center rounded-sm bg-[oklch(0.24_0.025_70)] shadow-[inset_0_2px_5px_rgba(0,0,0,0.6)]">
-              <Lock className="size-3.5 text-muted-foreground" />
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-sm bg-sealed shadow-[inset_0_2px_5px_rgba(0,0,0,0.4)]">
+              <Lock className="size-3.5 text-sealed-foreground/70" />
             </span>
             <span className="font-serif text-sm italic text-muted-foreground">
               {t.journey.legendLocked}
