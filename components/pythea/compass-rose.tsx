@@ -13,7 +13,7 @@ export function CompassRose({ className = "" }: { className?: string }) {
       <motion.g
         animate={{ rotate: 360 }}
         transition={{ duration: 240, repeat: Infinity, ease: "linear" }}
-        style={{ originX: "100px", originY: "100px" }}
+        style={{ transformBox: "view-box", transformOrigin: "100px 100px" }}
       >
         <circle cx="100" cy="100" r="96" stroke="currentColor" strokeWidth="0.5" opacity="0.5" />
         <circle cx="100" cy="100" r="80" stroke="currentColor" strokeWidth="0.5" opacity="0.35" />
@@ -36,7 +36,7 @@ export function CompassRose({ className = "" }: { className?: string }) {
       <motion.g
         animate={{ rotate: -360 }}
         transition={{ duration: 180, repeat: Infinity, ease: "linear" }}
-        style={{ originX: "100px", originY: "100px" }}
+        style={{ transformBox: "view-box", transformOrigin: "100px 100px" }}
       >
         {[0, 90, 180, 270].map((deg) => (
           <polygon
