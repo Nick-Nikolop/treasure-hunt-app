@@ -137,11 +137,6 @@ export function PoreiaView({
   const startAngle = flip?.dir === 1 ? 0 : -180
   const endAngle = flip?.dir === 1 ? -180 : 0
 
-  // How many pages are already turned and resting on the left pile. The leaf
-  // that is mid-turn is NOT counted here (it animates onto the pile), so the
-  // turn lands seamlessly on top of this stack instead of vanishing.
-  const pileCount = flip ? (flip.dir === 1 ? flip.from : flip.to) : index
-
   return (
     <main className="relative mx-auto min-h-screen max-w-4xl px-4 pb-28 pt-24 md:pt-28">
       {/* Back link */}
@@ -173,10 +168,10 @@ export function PoreiaView({
         </span>
       </motion.div>
 
-      {/* The book. On desktop it sits to the right so the turned pages pile up
-          in the gap on the left (an open-book spread). On mobile the book fills
-          the width and the pile tucks behind the spine on the left. */}
-      <div className="flex justify-center md:justify-end">
+      {/* The book, centered. Pages are bound on the left; a turned page rotates
+          around the spine and tucks behind the journal. The stage clips at the
+          spine so the leaf slips behind instead of floating away on the left. */}
+      <div className="flex justify-center">
         <div
           className="relative w-full max-w-2xl"
           style={{ perspective: "2800px", perspectiveOrigin: "50% 40%" }}
@@ -184,77 +179,84 @@ export function PoreiaView({
           {/* Soft ambient shadow cast on the desk under the book */}
           <div className="pointer-events-none absolute -inset-x-6 -bottom-6 top-8 -z-30 rounded-[40%] bg-black/45 blur-2xl" />
 
+          {/* Drop shadow underlay, kept outside the clip so it is not cut off */}
+          <div className="pointer-events-none absolute inset-0 -z-10 rounded-r-lg rounded-l-sm shadow-[0_30px_60px_-25px_rgba(0,0,0,0.7)]" />
+
           {/* Page-thickness stack along the right edge (unturned pages) */}
           <div className="pointer-events-none absolute -right-1 bottom-1 top-2 -z-20 w-3 rounded-r-lg bg-gradient-to-r from-[oklch(0.82_0.04_82)] to-[oklch(0.7_0.04_80)] shadow-xl" />
           <div className="pointer-events-none absolute inset-x-2 -bottom-1.5 top-2.5 -z-20 rounded-r-lg rounded-l-sm bg-[oklch(0.86_0.04_82)]" />
           <div className="pointer-events-none absolute inset-x-1 -bottom-0.5 top-1.5 -z-20 rounded-r-lg rounded-l-sm bg-[oklch(0.9_0.04_82)]" />
 
-          {/* The growing pile of already-turned pages, resting on the left. */}
-          <TurnedPile count={pileCount} />
+          {/* Clipping stage: a leaf rotating past the spine is hidden here, so
+              it reads as tucking behind the journal rather than flying off. */}
+          <div
+            className="relative overflow-hidden rounded-r-lg rounded-l-sm"
+            style={{ perspective: "2800px", perspectiveOrigin: "50% 40%" }}
+          >
+            <div className="relative" style={{ transformStyle: "preserve-3d" }}>
+              {/* The spine gutter shadow */}
+              <div className="pointer-events-none absolute inset-y-0 left-0 z-20 w-10 bg-gradient-to-r from-black/35 via-black/10 to-transparent md:w-14" />
 
-          {/* The spine gutter shadow that both sides meet */}
-          <div className="pointer-events-none absolute inset-y-0 left-0 z-20 w-10 bg-gradient-to-r from-black/35 via-black/10 to-transparent md:w-14" />
+              {/* Base page (revealed beneath / behind the turning leaf) */}
+              <JournalPage
+                page={basePage}
+                pageNumber={baseIndex}
+                totalPages={pages.length}
+                onCountdownDone={refresh}
+              />
 
-          <div className="relative" style={{ transformStyle: "preserve-3d" }}>
-            {/* Base page (revealed beneath the turning leaf) */}
-            <JournalPage
-              page={basePage}
-              pageNumber={baseIndex}
-              totalPages={pages.length}
-              onCountdownDone={refresh}
-            />
-
-            {/* The turning leaf */}
-            {flip && (
-              <motion.div
-                key={`${flip.from}-${flip.to}`}
-                className="absolute inset-0 z-30"
-                style={{
-                  transformStyle: "preserve-3d",
-                  transformOrigin: "left center",
-                  willChange: "transform",
-                }}
-                initial={{ rotateY: startAngle }}
-                animate={{ rotateY: endAngle }}
-                transition={{ duration: FLIP_DURATION, ease: [0.36, 0.1, 0.2, 1] }}
-                onAnimationComplete={endFlip}
-              >
-                {/* Front face: the page being turned */}
-                <div
-                  className="absolute inset-0"
-                  style={{ backfaceVisibility: "hidden" }}
-                >
-                  <JournalPage
-                    page={leafPage}
-                    pageNumber={leafIndex}
-                    totalPages={pages.length}
-                    onCountdownDone={refresh}
-                  />
-                  {/* Lift shadow that deepens toward the middle of the turn */}
-                  <motion.div
-                    className="pointer-events-none absolute inset-0 rounded-r-lg rounded-l-sm bg-gradient-to-l from-black/0 via-black/0 to-black/55"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: [0, 0.5, 0.15] }}
-                    transition={{
-                      duration: FLIP_DURATION,
-                      ease: "easeInOut",
-                      times: [0, 0.5, 1],
-                    }}
-                  />
-                </div>
-
-                {/* Back face: the blank reverse of the paper */}
-                <div
-                  className="absolute inset-0"
+              {/* The turning leaf, always above the base page while it moves */}
+              {flip && (
+                <motion.div
+                  key={`${flip.from}-${flip.to}`}
+                  className="absolute inset-0 z-40"
                   style={{
-                    backfaceVisibility: "hidden",
-                    transform: "rotateY(180deg)",
+                    transformStyle: "preserve-3d",
+                    transformOrigin: "left center",
+                    willChange: "transform",
                   }}
+                  initial={{ rotateY: startAngle }}
+                  animate={{ rotateY: endAngle }}
+                  transition={{ duration: FLIP_DURATION, ease: [0.36, 0.1, 0.2, 1] }}
+                  onAnimationComplete={endFlip}
                 >
-                  <PageBack />
-                </div>
-              </motion.div>
-            )}
+                  {/* Front face: the page being turned */}
+                  <div
+                    className="absolute inset-0"
+                    style={{ backfaceVisibility: "hidden" }}
+                  >
+                    <JournalPage
+                      page={leafPage}
+                      pageNumber={leafIndex}
+                      totalPages={pages.length}
+                      onCountdownDone={refresh}
+                    />
+                    {/* Lift shadow that deepens toward the middle of the turn */}
+                    <motion.div
+                      className="pointer-events-none absolute inset-0 rounded-r-lg rounded-l-sm bg-gradient-to-l from-black/0 via-black/0 to-black/55"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: [0, 0.5, 0.15] }}
+                      transition={{
+                        duration: FLIP_DURATION,
+                        ease: "easeInOut",
+                        times: [0, 0.5, 1],
+                      }}
+                    />
+                  </div>
+
+                  {/* Back face: the blank reverse of the paper */}
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      backfaceVisibility: "hidden",
+                      transform: "rotateY(180deg)",
+                    }}
+                  >
+                    <PageBack />
+                  </div>
+                </motion.div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -363,50 +365,6 @@ function JournalPage({
         </span>
       </div>
     </article>
-  )
-}
-
-// The accumulated pile of pages already turned, resting flat on the left side
-// of the spine (rotated 180deg). Each turned page lands here, so a flipped page
-// never disappears, it joins the stack behind. We render at most a few sheets
-// for depth and let the count drive a subtle thickness on the binding edge.
-function TurnedPile({ count }: { count: number }) {
-  if (count <= 0) return null
-  // Only the top few sheets need to be visible; deeper ones are hidden anyway.
-  const sheets = Math.min(count, 4)
-  const thickness = Math.min(count, 9)
-
-  return (
-    <div
-      className="pointer-events-none absolute inset-0 z-10"
-      style={{ transformStyle: "preserve-3d" }}
-      aria-hidden
-    >
-      {/* Thickness of the resting pile along the spine */}
-      <div
-        className="absolute inset-y-1 left-0 origin-left"
-        style={{ transform: "rotateY(-180deg)" }}
-      >
-        <div
-          className="absolute bottom-1 left-0 top-1 w-2 rounded-l-lg bg-gradient-to-l from-[oklch(0.7_0.04_80)] to-[oklch(0.82_0.04_82)] shadow-lg"
-          style={{ transform: `translateX(-${thickness * 1.2}px)` }}
-        />
-      </div>
-
-      {/* A few stacked sheets, each slightly offset to fake the pile depth */}
-      {Array.from({ length: sheets }).map((_, i) => (
-        <div
-          key={i}
-          className="absolute inset-0 origin-left"
-          style={{
-            transform: `rotateY(-180deg) translateX(${i * 2}px) translateY(${i * 1.5}px) translateZ(${-i * 2}px)`,
-            opacity: 1 - i * 0.12,
-          }}
-        >
-          <PageBack />
-        </div>
-      ))}
-    </div>
   )
 }
 
