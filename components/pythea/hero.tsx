@@ -3,10 +3,7 @@
 import { useRef } from "react"
 import { motion, useScroll, useTransform } from "framer-motion"
 import { MapPin, ChevronDown } from "lucide-react"
-
-const TITLE_TOP = ["Το", "Ταξίδι", "του"]
-const TITLE_NAME = ["Πυθέα"]
-const TITLE_BOTTOM = ["του", "Μεσσήνιου"]
+import { useI18n } from "@/components/pythea/language-provider"
 
 const reveal = {
   hidden: { y: "110%", opacity: 0 },
@@ -174,7 +171,7 @@ export function Hero() {
             href="#register"
             className="group inline-flex items-center gap-2 rounded-sm bg-brass px-7 py-3.5 font-sans text-sm font-bold tracking-chip text-primary-foreground transition-transform hover:-translate-y-0.5"
           >
-            ΞΕΚΙΝΑ ΤΗΝ ΑΝΑΖΗΤΗΣΗ
+            ΞΕΚΙΝΑ ΤΗΝ Α��ΑΖΗΤΗΣΗ
           </a>
           <a
             href="#story"

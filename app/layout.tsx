@@ -1,7 +1,10 @@
 import type { Metadata } from 'next'
 import { Alegreya, Alegreya_Sans } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { cookies } from 'next/headers'
 import { ThemeProvider } from '@/components/theme-provider'
+import { LanguageProvider } from '@/components/pythea/language-provider'
+import { DEFAULT_LOCALE, isLocale, LANG_COOKIE } from '@/lib/i18n'
 import './globals.css'
 
 const alegreya = Alegreya({
@@ -42,14 +45,20 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  // Read the saved language from the cookie so the very first paint renders in
+  // the right language (no flash), defaulting to Greek.
+  const store = await cookies()
+  const cookieLang = store.get(LANG_COOKIE)?.value
+  const locale = isLocale(cookieLang) ? cookieLang : DEFAULT_LOCALE
+
   return (
     <html
-      lang="el"
+      lang={locale}
       suppressHydrationWarning
       className={`${alegreya.variable} ${alegreyaSans.variable} bg-background`}
     >
@@ -61,7 +70,7 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          {children}
+          <LanguageProvider initialLocale={locale}>{children}</LanguageProvider>
         </ThemeProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

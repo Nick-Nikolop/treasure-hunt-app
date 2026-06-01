@@ -4,13 +4,8 @@ import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Compass, Menu, X } from "lucide-react"
 import { ThemeToggle } from "@/components/pythea/theme-toggle"
-
-const NAV = [
-  { label: "Η Ιστορία", href: "/#story" },
-  { label: "Το Ημερολόγιο", href: "/journal" },
-  { label: "Ο Θησαυρός", href: "/#treasure" },
-  { label: "Πώς Παίζεται", href: "/#how" },
-]
+import { LanguageToggle } from "@/components/pythea/language-toggle"
+import { useI18n } from "@/components/pythea/language-provider"
 
 // Greek all-caps convention: drop the tonos (e.g. ΙΣΤΟΡΊΑ -> ΙΣΤΟΡΙΑ) while
 // keeping the dialytika. JS toUpperCase() keeps the accent, so strip it here.
@@ -24,8 +19,16 @@ function greekCaps(s: string) {
 }
 
 export function SiteHeader() {
+  const { t } = useI18n()
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
+
+  const nav = [
+    { label: t.nav.story, href: "/#story" },
+    { label: t.nav.journal, href: "/journal" },
+    { label: t.nav.treasure, href: "/#treasure" },
+    { label: t.nav.how, href: "/#how" },
+  ]
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40)
@@ -49,15 +52,15 @@ export function SiteHeader() {
         <a href="/" className="group flex items-center gap-3">
           <Compass className="size-6 text-brass transition-transform duration-700 group-hover:rotate-180" />
           <span className="font-serif text-base font-extrabold leading-none tracking-tight text-foreground md:text-lg">
-            ΠΥΘΕΑΣ
+            {t.nav.brand}
             <span className="block font-sans text-[10px] font-medium tracking-chip text-muted-foreground">
-              Ο ΜΕΣΣΗΝΙΟΣ
+              {t.nav.brandSub}
             </span>
           </span>
         </a>
 
         <div className="hidden items-center gap-8 md:flex">
-          {NAV.map((item) => (
+          {nav.map((item) => (
             <a
               key={item.href}
               href={item.href}
@@ -70,20 +73,22 @@ export function SiteHeader() {
         </div>
 
         <div className="hidden items-center gap-3 md:flex">
+          <LanguageToggle />
           <ThemeToggle />
           <a
             href="/#register"
             className="inline-flex items-center gap-2 rounded-sm border border-brass/60 px-4 py-2 font-sans text-xs font-bold tracking-chip text-brass transition-colors hover:bg-brass hover:text-primary-foreground"
           >
-            ΔΗΛΩΣΕ ΣΥΜΜΕΤΟΧΗ
+            {greekCaps(t.nav.register)}
           </a>
         </div>
 
         <div className="flex items-center gap-2 md:hidden">
+          <LanguageToggle />
           <ThemeToggle />
           <button
             type="button"
-            aria-label="Άνοιγμα μενού"
+            aria-label={t.nav.openMenu}
             onClick={() => setOpen((v) => !v)}
             className="inline-flex size-10 items-center justify-center rounded-sm border border-border text-foreground"
           >
@@ -102,7 +107,7 @@ export function SiteHeader() {
             className="overflow-hidden border-t border-border/60 bg-background/95 backdrop-blur-md md:hidden"
           >
             <div className="flex flex-col gap-1 px-5 py-4">
-              {NAV.map((item) => (
+              {nav.map((item) => (
                 <a
                   key={item.href}
                   href={item.href}
@@ -117,7 +122,7 @@ export function SiteHeader() {
                 onClick={() => setOpen(false)}
                 className="mt-2 rounded-sm bg-brass px-2 py-3 text-center font-sans text-sm font-bold tracking-chip text-primary-foreground"
               >
-                ΔΗΛΩΣΕ ΣΥΜΜΕΤΟΧΗ
+                {greekCaps(t.nav.register)}
               </a>
             </div>
           </motion.div>
