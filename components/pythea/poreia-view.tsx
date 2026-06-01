@@ -137,6 +137,24 @@ export function PoreiaView({
 
   return (
     <main className="relative mx-auto min-h-screen max-w-4xl px-4 pb-28 pt-24 md:pt-28">
+      {/* Preload every unlocked stamp up front so flipping pages never shows
+          a late pop-in. Rendered off-screen, not announced to screen readers. */}
+      <div aria-hidden className="pointer-events-none absolute size-0 overflow-hidden opacity-0">
+        {unlocked.map((clue) =>
+          STAMP_SRC[clue.country] ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={clue.country}
+              src={STAMP_SRC[clue.country] || "/placeholder.svg"}
+              alt=""
+              loading="eager"
+              decoding="sync"
+              fetchPriority="high"
+            />
+          ) : null,
+        )}
+      </div>
+
       {/* Back link */}
       <motion.a
         href="/"
@@ -497,23 +515,25 @@ function CluePageBody({ clue }: { clue: Clue }) {
 function JournalStamp({ clue }: { clue: Clue }) {
   const src = STAMP_SRC[clue.country]
   if (!src) return null
-  // Deterministic tilt per entry so it never jumps between renders.
+  // Deterministic tilt per entry, applied as a static transform so the stamp
+  // never spins or re-animates when flipping between pages.
   const rotate = STAMP_ROTATION[(clue.order - 1) % STAMP_ROTATION.length]
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.92, rotate: rotate - 5 }}
-      animate={{ opacity: 1, scale: 1, rotate }}
-      transition={{ duration: 0.55, delay: 0.3, ease: "easeOut" }}
+    <div
       className="relative hidden shrink-0 select-none sm:block"
+      style={{ transform: `rotate(${rotate}deg)` }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={src || "/placeholder.svg"}
         alt={`Γραμματόσημο από ${clue.country}`}
         draggable={false}
+        loading="eager"
+        decoding="sync"
+        fetchPriority="high"
         className="block h-auto w-24 drop-shadow-[0_7px_12px_rgba(40,30,15,0.32)] md:w-28"
       />
-    </motion.div>
+    </div>
   )
 }
 
