@@ -3,6 +3,7 @@
 import { useRef } from "react"
 import { motion, useScroll, useTransform } from "framer-motion"
 import { useI18n } from "@/components/pythea/language-provider"
+import { Particles } from "@/components/pythea/particles"
 
 function Paragraph({ text, index }: { text: string; index: number }) {
   const ref = useRef<HTMLParagraphElement>(null)
@@ -30,12 +31,13 @@ export function Story() {
   const { t } = useI18n()
   return (
     <section id="story" className="relative mx-auto max-w-3xl px-5 py-28 md:py-40">
+      <Particles count={28} />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-100px" }}
         transition={{ duration: 0.8 }}
-        className="mb-14 flex items-center gap-4"
+        className="relative z-10 mb-14 flex items-center gap-4"
       >
         <span className="font-sans text-xs font-bold tracking-chip text-brass">
           {t.story.section}
@@ -43,7 +45,7 @@ export function Story() {
         <span className="h-px flex-1 bg-border" />
       </motion.div>
 
-      <div className="flex flex-col gap-8">
+      <div className="relative z-10 flex flex-col gap-8">
         {t.story.paragraphs.map((p, i) => (
           <Paragraph key={i} text={p} index={i} />
         ))}
@@ -54,7 +56,7 @@ export function Story() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-80px" }}
         transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-        className="mt-20 border-l-2 border-brass pl-6 md:pl-8"
+        className="relative z-10 mt-20 border-l-2 border-brass pl-6 md:pl-8"
       >
         <p className="text-balance font-serif text-2xl italic leading-snug text-brass md:text-4xl">
           {t.story.quote}
