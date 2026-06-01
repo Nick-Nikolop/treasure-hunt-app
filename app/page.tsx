@@ -7,14 +7,23 @@ import { Treasure } from "@/components/pythea/treasure"
 import { HowItWorks } from "@/components/pythea/how-it-works"
 import { Register } from "@/components/pythea/register"
 import { SiteFooter } from "@/components/pythea/site-footer"
-import { buildClueState } from "@/lib/clues"
+import { cookies } from "next/headers"
+import { buildClueState, isOverrideAuthorized, PREVIEW_COOKIE } from "@/lib/clues"
 
 // Recompute against the live clock on each request (for the countdown state).
 export const dynamic = "force-dynamic"
 
-export default function Page() {
+export default async function Page() {
+  // Respect the per-browser testing override so the landing teaser count
+  // stays in sync with the journey page during testing. Public, time-locked
+  // behavior is unchanged for real visitors.
+  const allow = isOverrideAuthorized()
+  const store = await cookies()
+  const cookieVal = store.get(PREVIEW_COOKIE)?.value
+  const preview = allow && cookieVal !== undefined ? Number(cookieVal) : undefined
+
   // Only non-spoiler counts are passed to the landing page.
-  const state = buildClueState(Date.now())
+  const state = buildClueState(Date.now(), preview, allow)
 
   return (
     <>

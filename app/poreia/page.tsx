@@ -1,30 +1,31 @@
 import type { Metadata } from "next"
+import { cookies } from "next/headers"
 import { Atmosphere } from "@/components/pythea/atmosphere"
 import { PoreiaView } from "@/components/pythea/poreia-view"
-import { buildClueState, isOverrideAuthorized } from "@/lib/clues"
+import { ClueControls } from "@/components/pythea/clue-controls"
+import { buildClueState, isOverrideAuthorized, PREVIEW_COOKIE } from "@/lib/clues"
 
-// Always compute against the live server clock; never cache.
+// Recompute against the live server clock and the per-browser cookie.
 export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
-  title: "Η Διαδρομή — Πυθέας ο Μεσσήνιος",
+  title: "Η Διαδρομή του Πυθέα του Μεσσήνιου",
   description: "Τα στοιχεία του κυνηγιού θησαυρού, ένα κάθε φορά.",
   // Keep the clue page out of search engines.
   robots: { index: false, follow: false },
 }
 
-export default async function PoreiaPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ reveal?: string; key?: string }>
-}) {
-  const sp = await searchParams
-  // Testing override: ?reveal=N forces N clues open. In production it requires
-  // ?key=<PYTHEA_TEST_KEY>; in development it works without a key.
-  const preview = sp.reveal !== undefined ? Number(sp.reveal) : undefined
-  const allowOverride = isOverrideAuthorized(sp.key)
+export default async function PoreiaPage() {
+  // The testing control panel is available only where overrides are allowed
+  // (the v0 preview / development). On the live site it stays hidden.
+  const showControls = isOverrideAuthorized()
 
-  const state = buildClueState(Date.now(), preview, allowOverride)
+  const store = await cookies()
+  const cookieVal = store.get(PREVIEW_COOKIE)?.value
+  const overrideActive = showControls && cookieVal !== undefined
+  const preview = overrideActive ? Number(cookieVal) : undefined
+
+  const state = buildClueState(Date.now(), preview, showControls)
 
   return (
     <>
@@ -37,6 +38,13 @@ export default async function PoreiaPage({
         startMs={state.startMs}
         nextUnlockMs={state.nextUnlockMs}
       />
+      {showControls && (
+        <ClueControls
+          unlockedCount={state.unlockedCount}
+          total={state.total}
+          overrideActive={Boolean(overrideActive)}
+        />
+      )}
     </>
   )
 }
