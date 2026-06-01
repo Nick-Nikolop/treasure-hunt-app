@@ -57,8 +57,37 @@ export function Journey({ unlockedCount, total, nextUnlockMs }: Props) {
           {t.journey.intro}
         </motion.p>
 
+        {/* Editorial stat strip anchoring the "9 / 9 / 1" tagline */}
+        <motion.dl
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.7, delay: 0.25 }}
+          className="mt-12 grid grid-cols-3 overflow-hidden rounded-sm border border-border bg-card/40"
+        >
+          {[
+            { value: "9", label: t.journey.statCountries },
+            { value: "9", label: t.journey.statMarks },
+            { value: "1", label: t.journey.statCity },
+          ].map((stat, i) => (
+            <div
+              key={stat.label}
+              className={`flex flex-col items-center gap-1 px-3 py-6 text-center md:py-8 ${
+                i > 0 ? "border-l border-border" : ""
+              }`}
+            >
+              <dd className="font-serif text-4xl font-black leading-none text-brass md:text-5xl">
+                {stat.value}
+              </dd>
+              <dt className="font-sans text-[10px] font-bold tracking-chip text-muted-foreground md:text-xs">
+                {stat.label}
+              </dt>
+            </div>
+          ))}
+        </motion.dl>
+
         {/* Sealed markers, no spoilers */}
-        <div className="mt-14 grid grid-cols-3 gap-3 sm:grid-cols-3 md:grid-cols-9">
+        <div className="mt-12 grid grid-cols-3 gap-3 sm:grid-cols-3 md:grid-cols-9">
           {Array.from({ length: total }).map((_, i) => {
             const revealed = i < unlockedCount
             return (
@@ -114,6 +143,59 @@ export function Journey({ unlockedCount, total, nextUnlockMs }: Props) {
             )
           })}
         </div>
+
+        {/* Legend explaining the two page states */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.6, delay: 0.15 }}
+          className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-8"
+        >
+          <div className="flex items-center gap-2.5">
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-sm border border-brass/70 bg-brass/10">
+              <Check className="size-3.5 text-brass" />
+            </span>
+            <span className="font-serif text-sm italic text-muted-foreground">
+              {t.journey.legendOpen}
+            </span>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-sm bg-[oklch(0.24_0.025_70)] shadow-[inset_0_2px_5px_rgba(0,0,0,0.6)]">
+              <Lock className="size-3.5 text-muted-foreground" />
+            </span>
+            <span className="font-serif text-sm italic text-muted-foreground">
+              {t.journey.legendLocked}
+            </span>
+          </div>
+        </motion.div>
+
+        {/* Animated reveal progress meter */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="mt-8"
+        >
+          <div className="mb-2 flex items-center justify-between">
+            <span className="font-sans text-[10px] font-bold tracking-chip text-muted-foreground md:text-xs">
+              {t.journey.progressLabel}
+            </span>
+            <span className="font-serif text-sm font-black text-brass">
+              {unlockedCount} / {total}
+            </span>
+          </div>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-[oklch(0.24_0.025_70)] shadow-[inset_0_1px_3px_rgba(0,0,0,0.5)]">
+            <motion.div
+              initial={{ width: 0 }}
+              whileInView={{ width: `${(unlockedCount / total) * 100}%` }}
+              viewport={{ once: true }}
+              transition={{ duration: 1.1, delay: 0.3, ease: "easeOut" }}
+              className="h-full rounded-full bg-brass"
+            />
+          </div>
+        </motion.div>
 
         {/* Status + countdown + CTA */}
         <motion.div
