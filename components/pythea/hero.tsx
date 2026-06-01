@@ -15,6 +15,7 @@ const reveal = {
 }
 
 export function Hero() {
+  const { t } = useI18n()
   const ref = useRef<HTMLElement>(null)
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -91,17 +92,17 @@ export function Hero() {
         >
           <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background/60 px-3 py-1 backdrop-blur-sm">
             <MapPin className="size-3 text-brass" />
-            36°57′Β · 22°06′Α — ΚΑΛΑΜΑΤΑ
+            {t.hero.coords}
           </span>
           <span className="inline-flex items-center rounded-full border border-border/70 bg-background/60 px-3 py-1 text-brass backdrop-blur-sm">
-            ΚΑΛΟΚΑΙΡΙ 2026
+            {t.hero.season}
           </span>
         </motion.div>
 
         <h1 className="font-serif font-black leading-[0.92] text-foreground text-shadow-vintage">
-          <span className="sr-only">Το Ταξίδι του Πυθέα του Μεσσήνιου</span>
+          <span className="sr-only">{t.hero.srTitle}</span>
           <span aria-hidden className="block text-3xl sm:text-5xl md:text-6xl">
-            {TITLE_TOP.map((w, i) => (
+            {t.hero.titleTop.map((w, i) => (
               <span key={w} className="inline-block overflow-hidden align-bottom">
                 <motion.span
                   className="mr-[0.22em] inline-block"
@@ -119,22 +120,20 @@ export function Hero() {
             aria-hidden
             className="my-1 block text-[18vw] leading-[0.85] text-brass sm:text-8xl md:text-[8.5rem]"
           >
-            {TITLE_NAME.map((w) => (
-              <span key={w} className="inline-block overflow-hidden align-bottom">
-                <motion.span
-                  className="inline-block italic"
-                  variants={reveal}
-                  initial="hidden"
-                  animate="show"
-                  custom={3}
-                >
-                  {w}
-                </motion.span>
-              </span>
-            ))}
+            <span className="inline-block overflow-hidden align-bottom">
+              <motion.span
+                className="inline-block italic"
+                variants={reveal}
+                initial="hidden"
+                animate="show"
+                custom={3}
+              >
+                {t.hero.titleName}
+              </motion.span>
+            </span>
           </span>
           <span aria-hidden className="block text-3xl sm:text-5xl md:text-6xl">
-            {TITLE_BOTTOM.map((w, i) => (
+            {t.hero.titleBottom.map((w, i) => (
               <span key={w} className="inline-block overflow-hidden align-bottom">
                 <motion.span
                   className="mr-[0.22em] inline-block"
@@ -156,9 +155,7 @@ export function Hero() {
           transition={{ duration: 1, delay: 1.1 }}
           className="mt-8 max-w-xl text-pretty font-serif text-lg italic leading-relaxed text-muted-foreground md:text-xl"
         >
-          Ένα κυνήγι θησαυρού στην Καλαμάτα. Ακολούθησε τα ίχνη ενός
-          πολυταξιδεμένου εξερευνητή και μάθε να βλέπεις την πόλη σαν να την
-          ανακαλύπτεις για πρώτη φορά.
+          {t.hero.subtitle}
         </motion.p>
 
         <motion.div
@@ -171,13 +168,13 @@ export function Hero() {
             href="#register"
             className="group inline-flex items-center gap-2 rounded-sm bg-brass px-7 py-3.5 font-sans text-sm font-bold tracking-chip text-primary-foreground transition-transform hover:-translate-y-0.5"
           >
-            ΞΕΚΙΝΑ ΤΗΝ Α��ΑΖΗΤΗΣΗ
+            {t.hero.ctaStart}
           </a>
           <a
             href="#story"
             className="inline-flex items-center gap-2 rounded-sm border border-border bg-background/60 px-7 py-3.5 font-sans text-sm font-bold tracking-chip text-foreground backdrop-blur-sm transition-colors hover:border-brass hover:text-brass"
           >
-            Η ΙΣΤΟΡΙΑ ΤΟΥ ΠΥΘΕΑ
+            {t.hero.ctaStory}
           </a>
         </motion.div>
       </motion.div>
@@ -190,7 +187,7 @@ export function Hero() {
         transition={{ delay: 1.8, duration: 1 }}
         className="absolute bottom-7 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-2 font-sans text-[10px] tracking-chip text-muted-foreground"
       >
-        ΚΥΛΗΣΕ
+        {t.hero.scroll}
         <motion.span
           animate={{ y: [0, 8, 0] }}
           transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}

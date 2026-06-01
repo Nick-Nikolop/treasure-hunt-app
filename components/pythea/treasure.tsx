@@ -3,8 +3,10 @@
 import { useRef } from "react"
 import { motion, useScroll, useTransform } from "framer-motion"
 import { CompassRose } from "./compass-rose"
+import { useI18n } from "@/components/pythea/language-provider"
 
 export function Treasure() {
+  const { t } = useI18n()
   const ref = useRef<HTMLElement>(null)
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -44,7 +46,7 @@ export function Treasure() {
           transition={{ duration: 0.8 }}
           className="font-sans text-xs font-bold tracking-chip text-brass"
         >
-          ΙΙΙ. Ο ΘΗΣΑΥΡΟΣ
+          {t.treasure.section}
         </motion.span>
 
         <motion.h2
@@ -54,8 +56,8 @@ export function Treasure() {
           transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
           className="mt-6 text-balance font-serif text-3xl font-black leading-[1.05] text-foreground md:text-5xl lg:text-6xl"
         >
-          Ο Πυθέας δεν έκρυψε χρυσάφι. Έκρυψε έναν{" "}
-          <span className="italic text-brass">τρόπο να βλέπεις.</span>
+          {t.treasure.titlePre}{" "}
+          <span className="italic text-brass">{t.treasure.titleEm}</span>
         </motion.h2>
 
         <motion.p
@@ -65,9 +67,7 @@ export function Treasure() {
           transition={{ duration: 0.9, delay: 0.15 }}
           className="mx-auto mt-7 max-w-xl text-pretty font-serif text-lg leading-relaxed text-muted-foreground md:text-xl"
         >
-          Κάθε ομάδα που ακολουθεί τα ίχνη του πλησιάζει σε αυτό που ο ίδιος
-          θεωρούσε αληθινό θησαυρό: την ικανότητα να ανακαλύπτεις το άγνωστο μέσα
-          στο γνώριμο.
+          {t.treasure.body}
         </motion.p>
       </motion.div>
     </section>

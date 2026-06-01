@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { FlaskConical, Plus, Minus, RotateCcw, Unlock, X } from "lucide-react"
 import { setPreviewCount, clearPreview } from "@/app/journal/actions"
+import { useI18n } from "@/components/pythea/language-provider"
 
 type Props = {
   unlockedCount: number
@@ -12,6 +13,7 @@ type Props = {
 }
 
 export function ClueControls({ unlockedCount, total, overrideActive }: Props) {
+  const { t } = useI18n()
   const [pending, startTransition] = useTransition()
   const [open, setOpen] = useState(false)
 
@@ -29,11 +31,11 @@ export function ClueControls({ unlockedCount, total, overrideActive }: Props) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="Άνοιγμα πίνακα δοκιμών"
+        aria-label={t.controls.openAria}
         className="fixed right-4 top-4 z-50 inline-flex items-center gap-2 rounded-sm border border-brass/50 bg-card/95 px-3 py-2 font-sans text-[11px] font-bold tracking-chip text-brass shadow-xl backdrop-blur-md transition-colors hover:border-brass hover:bg-card"
       >
         <FlaskConical className="size-4" />
-        <span className="hidden sm:inline">ΔΟΚΙΜΕΣ</span>
+        <span className="hidden sm:inline">{t.controls.chip}</span>
         <span className="font-serif text-foreground">
           {unlockedCount}/{total}
         </span>
@@ -46,7 +48,7 @@ export function ClueControls({ unlockedCount, total, overrideActive }: Props) {
       <div className="mb-2.5 flex items-center gap-2">
         <FlaskConical className="size-4 text-brass" />
         <span className="font-sans text-[11px] font-bold tracking-chip text-brass">
-          ΠΙΝΑΚΑΣ ΔΟΚΙΜΩΝ
+          {t.controls.panelTitle}
         </span>
         <span className="ml-auto font-serif text-sm font-bold text-foreground">
           {unlockedCount} / {total}
@@ -54,7 +56,7 @@ export function ClueControls({ unlockedCount, total, overrideActive }: Props) {
         <button
           type="button"
           onClick={() => setOpen(false)}
-          aria-label="Κλείσιμο πίνακα δοκιμών"
+          aria-label={t.controls.closeAria}
           className="inline-flex size-6 items-center justify-center rounded-sm border border-border bg-background text-muted-foreground transition-colors hover:border-brass/60 hover:text-foreground"
         >
           <X className="size-3.5" />
@@ -69,7 +71,7 @@ export function ClueControls({ unlockedCount, total, overrideActive }: Props) {
           className="inline-flex flex-1 items-center justify-center gap-2 rounded-sm bg-brass px-3 py-2.5 font-sans text-xs font-bold tracking-chip text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Plus className="size-4" />
-          ΑΝΟΙΞΕ ΕΠΟΜΕΝΟ
+          {t.controls.openNext}
         </button>
 
         <button
@@ -79,7 +81,7 @@ export function ClueControls({ unlockedCount, total, overrideActive }: Props) {
           className="inline-flex items-center justify-center gap-2 rounded-sm border border-border bg-background px-3 py-2.5 font-sans text-xs font-bold tracking-chip text-foreground transition-colors hover:border-brass/60 disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Minus className="size-4" />
-          ΚΛΕΙΣΕ ΕΝΑ
+          {t.controls.closeOne}
         </button>
       </div>
 
@@ -91,7 +93,7 @@ export function ClueControls({ unlockedCount, total, overrideActive }: Props) {
           className="inline-flex flex-1 items-center justify-center gap-2 rounded-sm border border-border bg-background px-3 py-2 font-sans text-[11px] font-bold tracking-chip text-muted-foreground transition-colors hover:border-brass/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Unlock className="size-3.5" />
-          ΑΝΟΙΞΕ ΟΛΑ
+          {t.controls.openAll}
         </button>
         <button
           type="button"
@@ -100,13 +102,12 @@ export function ClueControls({ unlockedCount, total, overrideActive }: Props) {
           className="inline-flex flex-1 items-center justify-center gap-2 rounded-sm border border-border bg-background px-3 py-2 font-sans text-[11px] font-bold tracking-chip text-muted-foreground transition-colors hover:border-brass/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
         >
           <RotateCcw className="size-3.5" />
-          ΠΡΑΓΜΑΤΙΚΟΣ ΧΡΟΝΟΣ
+          {t.controls.realTime}
         </button>
       </div>
 
       <p className="mt-2.5 text-pretty font-sans text-[10px] leading-snug text-muted-foreground">
-        Ορατό μόνο σε εσένα, για δοκιμές. Δεν εμφανίζεται στους παίκτες στη
-        δημοσιευμένη σελίδα.
+        {t.controls.note}
       </p>
     </div>
   )

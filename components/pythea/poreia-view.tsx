@@ -13,6 +13,7 @@ import {
 } from "lucide-react"
 import type { Clue, LockedClue } from "@/lib/clues"
 import { Countdown } from "@/components/pythea/countdown"
+import { useI18n } from "@/components/pythea/language-provider"
 
 /** Maps each country to its real vintage stamp image in /public/stamps. */
 const STAMP_SRC: Record<string, string> = {
@@ -60,6 +61,7 @@ export function PoreiaView({
   total,
   nextUnlockMs,
 }: Props) {
+  const { t } = useI18n()
   const router = useRouter()
   const refresh = useCallback(() => {
     setTimeout(() => router.refresh(), 1200)
@@ -197,7 +199,7 @@ export function PoreiaView({
         className="group mb-7 inline-flex items-center gap-2 font-sans text-xs font-bold tracking-chip text-muted-foreground transition-colors hover:text-brass"
       >
         <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-1" />
-        ΠΙΣΩ ΣΤΗΝ ΑΡΧΗ
+        {t.journal.back}
       </motion.a>
 
       {/* Title strip */}
@@ -209,7 +211,7 @@ export function PoreiaView({
       >
         <Feather className="size-4 shrink-0 text-brass md:size-5" />
         <span className="font-sans text-[11px] font-bold tracking-chip text-brass md:text-xs">
-          ΗΜΕΡΟΛΟΓΙΟ ΤΑΞΙΔΙΟΥ
+          {t.journal.header}
         </span>
         <span className="h-px flex-1 bg-border" />
         <span className="shrink-0 font-serif text-sm font-bold text-muted-foreground">
@@ -228,7 +230,7 @@ export function PoreiaView({
           onPointerUp={onPointerUp}
           role="button"
           tabIndex={0}
-          aria-label="Πάτησε ή σύρε για την επόμενη σελίδα"
+          aria-label={t.journal.tapHint}
         >
           {/* Soft ambient shadow cast on the desk under the book */}
           <div className="pointer-events-none absolute -inset-x-6 -bottom-6 top-8 -z-30 rounded-[40%] bg-black/45 blur-2xl" />

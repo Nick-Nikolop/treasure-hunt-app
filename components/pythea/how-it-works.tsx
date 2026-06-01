@@ -2,31 +2,13 @@
 
 import { motion } from "framer-motion"
 import { Users, Map, KeyRound, Trophy } from "lucide-react"
+import { useI18n } from "@/components/pythea/language-provider"
 
-const STEPS = [
-  {
-    icon: Users,
-    title: "Φτιάξε την ομάδα σου",
-    text: "Μάζεψε τους συνεξερευνητές σου. Δύο έως πέντε άτομα ανά ομάδα, όσοι τολμούν να κοιτούν αλλιώς.",
-  },
-  {
-    icon: Map,
-    title: "Ακολούθησε τον χάρτη",
-    text: "Κάθε στάση σε οδηγεί σε μια γωνιά της Καλαμάτας που συνδέεται με μια χώρα του ταξιδιού του Πυθέα.",
-  },
-  {
-    icon: KeyRound,
-    title: "Λύσε τους γρίφους",
-    text: "Σύμβολα, σημάδια και μικρά μυστικά. Λύσε τον έναν για να ξεκλειδώσεις τον επόμενο.",
-  },
-  {
-    icon: Trophy,
-    title: "Βρες τον θησαυρό",
-    text: "Η τελευταία ένδειξη κλείνει τον κύκλο. Η πρώτη ομάδα που θα φτάσει, κερδίζει.",
-  },
-]
+const STEP_ICONS = [Users, Map, KeyRound, Trophy]
 
 export function HowItWorks() {
+  const { t } = useI18n()
+  const steps = t.how.steps.map((step, i) => ({ ...step, icon: STEP_ICONS[i] }))
   return (
     <section id="how" className="relative mx-auto max-w-6xl px-5 py-28 md:py-40">
       <motion.div
@@ -37,7 +19,7 @@ export function HowItWorks() {
         className="mb-4 flex items-center gap-4"
       >
         <span className="font-sans text-xs font-bold tracking-chip text-brass">
-          IV. ΠΩΣ ΠΑΙΖΕΤΑΙ
+          {t.how.section}
         </span>
         <span className="h-px flex-1 bg-border" />
       </motion.div>
@@ -48,12 +30,12 @@ export function HowItWorks() {
         transition={{ duration: 0.8, delay: 0.1 }}
         className="max-w-2xl text-balance font-serif text-4xl font-black leading-tight text-foreground md:text-5xl"
       >
-        Τέσσερα βήματα για να γίνεις{" "}
-        <span className="italic text-brass">εξερευνητής.</span>
+        {t.how.titlePre}{" "}
+        <span className="italic text-brass">{t.how.titleEm}</span>
       </motion.h2>
 
       <div className="mt-16 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {STEPS.map((step, i) => {
+        {steps.map((step, i) => {
           const Icon = step.icon
           return (
             <motion.div

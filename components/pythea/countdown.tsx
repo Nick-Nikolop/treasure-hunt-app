@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useI18n } from "@/components/pythea/language-provider"
 
 type TimeLeft = {
   days: number
@@ -25,11 +26,11 @@ function diff(targetMs: number): TimeLeft {
   }
 }
 
-const UNITS: { key: keyof Omit<TimeLeft, "done">; label: string }[] = [
-  { key: "days", label: "ΜΕΡΕΣ" },
-  { key: "hours", label: "ΩΡΕΣ" },
-  { key: "minutes", label: "ΛΕΠΤΑ" },
-  { key: "seconds", label: "ΔΕΥΤ." },
+const UNIT_KEYS: (keyof Omit<TimeLeft, "done">)[] = [
+  "days",
+  "hours",
+  "minutes",
+  "seconds",
 ]
 
 export function Countdown({
@@ -44,6 +45,7 @@ export function Countdown({
   /** "dark" for the dark site background, "ink" for light parchment pages. */
   tone?: "dark" | "ink"
 }) {
+  const { t } = useI18n()
   const [time, setTime] = useState<TimeLeft | null>(null)
 
   useEffect(() => {
@@ -60,9 +62,9 @@ export function Countdown({
   }, [targetMs, onDone])
 
   // Avoid hydration mismatch: render a stable skeleton until mounted.
-  const cells = UNITS.map((u) => ({
-    label: u.label,
-    value: time ? time[u.key] : 0,
+  const cells = UNIT_KEYS.map((key) => ({
+    label: t.countdown[key],
+    value: time ? time[key] : 0,
   }))
 
   const box =
@@ -80,7 +82,7 @@ export function Countdown({
   const colonTone = tone === "ink" ? "text-[oklch(0.5_0.1_40)]" : "text-brass/50"
 
   return (
-    <div className="flex items-stretch gap-1 sm:gap-2" role="timer" aria-label="Αντίστροφη μέτρηση">
+    <div className="flex items-stretch gap-1 sm:gap-2" role="timer" aria-label={t.countdown.aria}>
       {cells.map((c, i) => (
         <div key={c.label} className="flex items-center gap-1 sm:gap-2">
           <div className="flex flex-col items-center">
