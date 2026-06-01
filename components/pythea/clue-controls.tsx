@@ -2,7 +2,7 @@
 
 import { useTransition } from "react"
 import { FlaskConical, Plus, Minus, RotateCcw, Unlock } from "lucide-react"
-import { setPreviewCount, clearPreview } from "@/app/poreia/actions"
+import { setPreviewCount, clearPreview } from "@/app/journal/actions"
 
 type Props = {
   unlockedCount: number

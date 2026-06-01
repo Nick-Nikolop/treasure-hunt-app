@@ -52,9 +52,10 @@ export function Journey({ unlockedCount, total, nextUnlockMs }: Props) {
           transition={{ duration: 0.8, delay: 0.2 }}
           className="mt-5 max-w-xl text-pretty font-serif text-lg leading-relaxed text-muted-foreground"
         >
-          Ο Πυθέας έκρυψε τα ίχνη του σε γωνιές της Καλαμάτας, η καθεμιά
-          δεμένη με μια χώρα του ταξιδιού του. Τα σημάδια αποκαλύπτονται ένα
-          ένα. Κανείς δεν ξέρει ποια χώρα κρύβει το επόμενο.
+          Άνοιξε το ημερολόγιο του Πυθέα και διάβασε τις καταχωρήσεις του,
+          μία μία. Κάθε σελίδα κουβαλά μια χώρα του ταξιδιού του και ένα σημάδι
+          κρυμμένο σε μια γωνιά της Καλαμάτας. Οι σελίδες ξεκλειδώνουν με τον
+          καιρό. Κανείς δεν ξέρει ποια χώρα κρύβει η επόμενη.
         </motion.p>
 
         {/* Sealed markers, no spoilers */}
@@ -130,10 +131,10 @@ export function Journey({ unlockedCount, total, nextUnlockMs }: Props) {
           </div>
 
           <a
-            href="/poreia"
+            href="/journal"
             className="group inline-flex shrink-0 items-center gap-2 rounded-sm bg-brass px-6 py-3.5 font-sans text-sm font-bold tracking-chip text-primary-foreground transition-colors hover:bg-brass/90"
           >
-            ΑΝΟΙΞΕ ΤΗ ΔΙΑΔΡΟΜΗ
+            ΑΝΟΙΞΕ ΤΟ ΗΜΕΡΟΛΟΓΙΟ
             <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
           </a>
         </motion.div>

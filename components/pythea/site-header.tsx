@@ -6,7 +6,7 @@ import { Compass, Menu, X } from "lucide-react"
 
 const NAV = [
   { label: "Η Ιστορία", href: "/#story" },
-  { label: "Τα Σημάδια", href: "/poreia" },
+  { label: "Το Ημερολόγιο", href: "/journal" },
   { label: "Ο Θησαυρός", href: "/#treasure" },
   { label: "Πώς Παίζεται", href: "/#how" },
 ]

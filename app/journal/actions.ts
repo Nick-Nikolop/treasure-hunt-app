@@ -17,7 +17,7 @@ export async function setPreviewCount(count: number) {
     maxAge: 60 * 60 * 24 * 7,
     sameSite: "lax",
   })
-  revalidatePath("/poreia")
+  revalidatePath("/journal")
   revalidatePath("/")
 }
 
@@ -25,6 +25,6 @@ export async function setPreviewCount(count: number) {
 export async function clearPreview() {
   const store = await cookies()
   store.delete(PREVIEW_COOKIE)
-  revalidatePath("/poreia")
+  revalidatePath("/journal")
   revalidatePath("/")
 }
