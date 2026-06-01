@@ -58,7 +58,7 @@ export function Hero() {
       {/* Readability scrim: darken the whole map, then a focused vignette behind
           the title so the text always sits on a calm, high-contrast field. */}
       <div
-        className="pointer-events-none absolute inset-0 bg-background/45"
+        className="hero-scrim pointer-events-none absolute inset-0 bg-background/45"
         aria-hidden
       />
       <div

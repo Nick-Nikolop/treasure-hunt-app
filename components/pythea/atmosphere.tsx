@@ -18,22 +18,12 @@ export function Atmosphere() {
         style={{ scaleX: progress }}
         aria-hidden
       />
-      {/* Film grain */}
-      <div
-        className="grain-layer pointer-events-none fixed inset-0 z-40 opacity-[0.07] mix-blend-overlay"
-        aria-hidden
-      />
+      {/* Film grain (opacity + blend mode are theme-aware, set in globals) */}
+      <div className="grain-layer pointer-events-none fixed inset-0 z-40" aria-hidden />
       {/* Vignette */}
       <div className="vignette pointer-events-none fixed inset-0 z-30" aria-hidden />
-      {/* Scanline shimmer */}
-      <div
-        className="pointer-events-none fixed inset-0 z-30 opacity-[0.04]"
-        aria-hidden
-        style={{
-          backgroundImage:
-            "repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, rgba(0,0,0,0.6) 3px, transparent 4px)",
-        }}
-      />
+      {/* Scanline shimmer (theme-aware, set in globals) */}
+      <div className="scanlines pointer-events-none fixed inset-0 z-30" aria-hidden />
     </>
   )
 }
