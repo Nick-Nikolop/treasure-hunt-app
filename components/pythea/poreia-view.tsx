@@ -282,18 +282,18 @@ export function PoreiaView({
             }
           >
             {isMobile ? (
-              // Mobile: a light horizontal slide of the destination page. This
-              // avoids the heavy 3D leaf (preserve-3d + backface + animated
-              // shadow) that drops frames on phones, while still reading as a
-              // page turn.
+              // Mobile: a pure opacity crossfade of the destination page.
+              // Sliding the page dragged all of its heavy paint layers
+              // (inset shadows, radial + repeating gradients, grain) across
+              // the screen and revealed a gap. An opacity-only transition is
+              // cheap to composite, so it stays smooth on phones.
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 z-20 w-10 bg-gradient-to-r from-black/35 via-black/10 to-transparent" />
                 <motion.div
                   key={targetIndex}
-                  initial={flip ? { opacity: 0, x: flip.dir * 38 } : false}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.42, ease: [0.22, 0.61, 0.36, 1] }}
-                  style={{ willChange: "transform, opacity" }}
+                  initial={flip ? { opacity: 0 } : false}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.32, ease: "easeOut" }}
                   onAnimationComplete={() => {
                     if (flip) endFlip()
                   }}
