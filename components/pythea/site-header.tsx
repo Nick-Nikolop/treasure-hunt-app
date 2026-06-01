@@ -5,10 +5,10 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Compass, Menu, X } from "lucide-react"
 
 const NAV = [
-  { label: "Η Ιστορία", href: "#story" },
-  { label: "Η Διαδρομή", href: "#journey" },
-  { label: "Ο Θησαυρός", href: "#treasure" },
-  { label: "Πώς Παίζεται", href: "#how" },
+  { label: "Η Ιστορία", href: "/#story" },
+  { label: "Τα Σημάδια", href: "/poreia" },
+  { label: "Ο Θησαυρός", href: "/#treasure" },
+  { label: "Πώς Παίζεται", href: "/#how" },
 ]
 
 export function SiteHeader() {
@@ -34,7 +34,7 @@ export function SiteHeader() {
       }`}
     >
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 md:px-8">
-        <a href="#top" className="group flex items-center gap-3">
+        <a href="/" className="group flex items-center gap-3">
           <Compass className="size-6 text-brass transition-transform duration-700 group-hover:rotate-180" />
           <span className="font-serif text-base font-extrabold leading-none tracking-tight text-foreground md:text-lg">
             ΠΥΘΕΑΣ
@@ -58,7 +58,7 @@ export function SiteHeader() {
         </div>
 
         <a
-          href="#register"
+          href="/#register"
           className="hidden items-center gap-2 rounded-sm border border-brass/60 px-4 py-2 font-sans text-xs font-bold tracking-chip text-brass transition-colors hover:bg-brass hover:text-primary-foreground md:inline-flex"
         >
           ΔΗΛΩΣΕ ΣΥΜΜΕΤΟΧΗ
@@ -95,7 +95,7 @@ export function SiteHeader() {
                 </a>
               ))}
               <a
-                href="#register"
+                href="/#register"
                 onClick={() => setOpen(false)}
                 className="mt-2 rounded-sm bg-brass px-2 py-3 text-center font-sans text-sm font-bold tracking-chip text-primary-foreground"
               >
