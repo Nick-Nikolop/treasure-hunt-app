@@ -15,6 +15,7 @@ import {
 import type { Clue, LockedClue } from "@/lib/clues"
 import { Countdown } from "@/components/pythea/countdown"
 import { useI18n } from "@/components/pythea/language-provider"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 /** Maps each country to its real vintage stamp image in /public/stamps. */
 const STAMP_SRC: Record<string, string> = {
@@ -63,6 +64,7 @@ export function PoreiaView({
   nextUnlockMs,
 }: Props) {
   const { t } = useI18n()
+  const isMobile = useIsMobile()
   const router = useRouter()
   const refresh = useCallback(() => {
     setTimeout(() => router.refresh(), 1200)
@@ -107,11 +109,22 @@ export function PoreiaView({
       if (flip) return
       if (next < 0 || next > pages.length - 1 || next === index) return
       setFlip({ dir: next > index ? 1 : -1, from: index, to: next })
-      // Smoothly bring the book back into view so the reader always sees the
-      // page they just flipped to, even after scrolling down to the controls.
-      bookRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+      // Only nudge the book back into view when it has actually scrolled out of
+      // a comfortable reading position. Firing a smooth scroll on every flip
+      // fought the animation for the main thread and made mobile feel janky.
+      const el = bookRef.current
+      if (el) {
+        const { top } = el.getBoundingClientRect()
+        const headerOffset = 88
+        if (top < headerOffset || top > window.innerHeight * 0.55) {
+          el.scrollIntoView({
+            behavior: isMobile ? "auto" : "smooth",
+            block: "start",
+          })
+        }
+      }
     },
-    [index, pages.length, flip],
+    [index, pages.length, flip, isMobile],
   )
 
   const endFlip = useCallback(() => {
@@ -163,6 +176,11 @@ export function PoreiaView({
   // or the page we are leaving (backward).
   const baseIndex = flip ? (flip.dir === 1 ? flip.to : flip.from) : index
   const basePage = pages[baseIndex] ?? pages[0]
+
+  // For the lightweight mobile slide we always render the destination page,
+  // sliding it in from the side rather than turning a 3D leaf.
+  const targetIndex = flip ? flip.to : index
+  const targetPage = pages[targetIndex] ?? pages[0]
 
   // The turning leaf shows the page we are leaving (forward) or arriving at
   // (backward), and rotates around the spine on the left.
@@ -231,8 +249,13 @@ export function PoreiaView({
           tabIndex={0}
           aria-label={t.journal.tapHint}
         >
-          {/* Soft ambient shadow cast on the desk under the book */}
-          <div className="pointer-events-none absolute -inset-x-6 -bottom-6 top-8 -z-30 rounded-[40%] bg-black/45 blur-2xl" />
+          {/* Soft ambient shadow cast on the desk under the book. A lighter
+              blur on mobile avoids an expensive composite during the slide. */}
+          <div
+            className={`pointer-events-none absolute -inset-x-6 -bottom-6 top-8 -z-30 rounded-[40%] bg-black/45 ${
+              isMobile ? "blur-lg" : "blur-2xl"
+            }`}
+          />
 
           {/* Drop shadow underlay, kept outside the clip so it is not cut off */}
           <div className="pointer-events-none absolute inset-0 -z-10 rounded-r-lg rounded-l-sm shadow-[0_30px_60px_-25px_rgba(0,0,0,0.7)]" />
@@ -252,8 +275,38 @@ export function PoreiaView({
               it reads as tucking behind the journal rather than flying off. */}
           <div
             className="relative overflow-hidden rounded-r-lg rounded-l-sm"
-            style={{ perspective: "2800px", perspectiveOrigin: "50% 40%" }}
+            style={
+              isMobile
+                ? undefined
+                : { perspective: "2800px", perspectiveOrigin: "50% 40%" }
+            }
           >
+            {isMobile ? (
+              // Mobile: a light horizontal slide of the destination page. This
+              // avoids the heavy 3D leaf (preserve-3d + backface + animated
+              // shadow) that drops frames on phones, while still reading as a
+              // page turn.
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 z-20 w-10 bg-gradient-to-r from-black/35 via-black/10 to-transparent" />
+                <motion.div
+                  key={targetIndex}
+                  initial={flip ? { opacity: 0, x: flip.dir * 38 } : false}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.42, ease: [0.22, 0.61, 0.36, 1] }}
+                  style={{ willChange: "transform, opacity" }}
+                  onAnimationComplete={() => {
+                    if (flip) endFlip()
+                  }}
+                >
+                  <JournalPage
+                    page={targetPage}
+                    pageNumber={targetIndex}
+                    totalPages={pages.length}
+                    onCountdownDone={refresh}
+                  />
+                </motion.div>
+              </div>
+            ) : (
             <div className="relative" style={{ transformStyle: "preserve-3d" }}>
               {/* The spine gutter shadow */}
               <div className="pointer-events-none absolute inset-y-0 left-0 z-20 w-10 bg-gradient-to-r from-black/35 via-black/10 to-transparent md:w-14" />
@@ -318,6 +371,7 @@ export function PoreiaView({
                 </motion.div>
               )}
             </div>
+            )}
           </div>
         </div>
       </div>
@@ -382,7 +436,7 @@ export function PoreiaView({
   )
 }
 
-/* ────────────────────────────────────────────────────────────────────── */
+/* ───────────────────────────���────────────────────────────────────────── */
 
 function JournalPage({
   page,
