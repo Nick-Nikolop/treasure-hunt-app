@@ -351,23 +351,40 @@ export function PoreiaView({
             }
           >
             {isMobile ? (
-              // Mobile: a gap-free horizontal slide. The incoming page slides
-              // in from one edge while the outgoing page slides out the same
-              // direction, both as GPU transforms clipped by the overflow
-              // stage, so they move together with no empty gap and stay smooth
-              // on phones (no 3D, no animated shadows).
+              // Mobile: both pages live in ONE flex track that is translated as
+              // a single composited GPU layer. Animating two heavy pages
+              // independently forced the browser to raster/composite each
+              // page's grain, gradients and inset shadows every frame, which
+              // dropped frames. Moving a single track (one transform, one
+              // layer) is what keeps it smooth on phones.
               <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 z-30 w-10 bg-gradient-to-r from-black/35 via-black/10 to-transparent" />
-                <motion.div
-                  key={targetIndex}
-                  initial={flip ? { x: `${flip.dir * 100}%` } : false}
-                  animate={{ x: "0%" }}
-                  transition={{ duration: 0.4, ease: [0.33, 0, 0.2, 1] }}
-                  className="relative z-10"
-                  onAnimationComplete={() => {
-                    if (flip) endFlip()
-                  }}
-                >
+                <div className="pointer-events-none absolute inset-y-0 left-0 z-20 w-10 bg-gradient-to-r from-black/35 via-black/10 to-transparent" />
+                {flip ? (
+                  <motion.div
+                    key={`${flip.from}-${flip.to}`}
+                    className="flex w-[200%]"
+                    style={{ willChange: "transform" }}
+                    initial={{ x: flip.dir === 1 ? "0%" : "-50%" }}
+                    animate={{ x: flip.dir === 1 ? "-50%" : "0%" }}
+                    transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
+                    onAnimationComplete={endFlip}
+                  >
+                    {(flip.dir === 1
+                      ? [flip.from, flip.to]
+                      : [flip.to, flip.from]
+                    ).map((pi, slot) => (
+                      <div key={slot} className="w-1/2 shrink-0">
+                        <JournalPage
+                          page={pages[pi] ?? pages[0]}
+                          pageNumber={pi}
+                          totalPages={pages.length}
+                          onCountdownDone={refresh}
+                          minH={pageMinH}
+                        />
+                      </div>
+                    ))}
+                  </motion.div>
+                ) : (
                   <JournalPage
                     page={targetPage}
                     pageNumber={targetIndex}
@@ -375,22 +392,6 @@ export function PoreiaView({
                     onCountdownDone={refresh}
                     minH={pageMinH}
                   />
-                </motion.div>
-                {flip && (
-                  <motion.div
-                    className="absolute inset-0 z-20"
-                    initial={{ x: "0%" }}
-                    animate={{ x: `${-flip.dir * 100}%` }}
-                    transition={{ duration: 0.4, ease: [0.33, 0, 0.2, 1] }}
-                  >
-                    <JournalPage
-                      page={pages[flip.from] ?? pages[0]}
-                      pageNumber={flip.from}
-                      totalPages={pages.length}
-                      onCountdownDone={refresh}
-                      minH={pageMinH}
-                    />
-                  </motion.div>
                 )}
               </div>
             ) : (
