@@ -155,13 +155,21 @@ export function unlockTimeMs(order: number): number {
 
 /**
  * How many clues are unlocked at a given moment.
- * Optionally accepts a dev-only preview override (number of clues to force open).
- * The override is ignored unless we are running in development.
+ *
+ * `previewOverride` forces a specific number of clues open for testing.
+ * It is honored only when `allowOverride` is true. The caller decides that:
+ * it is true in development, or in production when the visitor supplied the
+ * correct secret key (see isOverrideAuthorized). This lets organizers preview
+ * clues early on the live site while the public cannot.
  */
-export function unlockedCountAt(nowMs: number, previewOverride?: number): number {
+export function unlockedCountAt(
+  nowMs: number,
+  previewOverride?: number,
+  allowOverride = false,
+): number {
   if (
+    allowOverride &&
     previewOverride !== undefined &&
-    process.env.NODE_ENV === "development" &&
     Number.isFinite(previewOverride)
   ) {
     return Math.max(0, Math.min(TOTAL_CLUES, Math.floor(previewOverride)))
@@ -169,6 +177,21 @@ export function unlockedCountAt(nowMs: number, previewOverride?: number): number
   if (nowMs < START_MS) return 0
   const elapsedHours = (nowMs - START_MS) / 3600_000
   return Math.min(TOTAL_CLUES, Math.floor(elapsedHours / INTERVAL_HOURS) + 1)
+}
+
+/**
+ * Decides whether a testing override is allowed for this request.
+ *
+ * - Always allowed in development (no key needed).
+ * - In production, allowed only when `providedKey` matches the PYTHEA_TEST_KEY
+ *   environment variable. If PYTHEA_TEST_KEY is not set, overrides are disabled
+ *   in production entirely.
+ */
+export function isOverrideAuthorized(providedKey?: string): boolean {
+  if (process.env.NODE_ENV === "development") return true
+  const secret = process.env.PYTHEA_TEST_KEY
+  if (!secret) return false
+  return providedKey === secret
 }
 
 /** Epoch ms when the next still-locked clue opens, or null if all are open. */
@@ -184,8 +207,12 @@ export type LockedClue = {
 }
 
 /** Computes the public-safe payload for the journey page. */
-export function buildClueState(nowMs: number, previewOverride?: number) {
-  const unlockedCount = unlockedCountAt(nowMs, previewOverride)
+export function buildClueState(
+  nowMs: number,
+  previewOverride?: number,
+  allowOverride = false,
+) {
+  const unlockedCount = unlockedCountAt(nowMs, previewOverride, allowOverride)
   const unlocked = CLUES.slice(0, unlockedCount)
   const locked: LockedClue[] = CLUES.slice(unlockedCount).map((c) => ({
     order: c.order,

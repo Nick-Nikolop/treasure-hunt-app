@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { Atmosphere } from "@/components/pythea/atmosphere"
 import { PoreiaView } from "@/components/pythea/poreia-view"
-import { buildClueState } from "@/lib/clues"
+import { buildClueState, isOverrideAuthorized } from "@/lib/clues"
 
 // Always compute against the live server clock; never cache.
 export const dynamic = "force-dynamic"
@@ -16,13 +16,15 @@ export const metadata: Metadata = {
 export default async function PoreiaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ reveal?: string }>
+  searchParams: Promise<{ reveal?: string; key?: string }>
 }) {
   const sp = await searchParams
-  // Dev-only preview override (ignored in production by buildClueState).
+  // Testing override: ?reveal=N forces N clues open. In production it requires
+  // ?key=<PYTHEA_TEST_KEY>; in development it works without a key.
   const preview = sp.reveal !== undefined ? Number(sp.reveal) : undefined
+  const allowOverride = isOverrideAuthorized(sp.key)
 
-  const state = buildClueState(Date.now(), preview)
+  const state = buildClueState(Date.now(), preview, allowOverride)
 
   return (
     <>
