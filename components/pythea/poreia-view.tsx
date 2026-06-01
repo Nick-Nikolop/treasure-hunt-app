@@ -343,11 +343,12 @@ function JournalPage({
 }) {
   if (page.kind === "cover") return <CoverPage />
 
-  // Sealed pages are rendered as if torn out of the journal: a ragged outer
-  // edge replaces the clean page, signalling the entry is not yet readable.
+  // Sealed pages are rendered as if the leaf was torn clean out of the journal:
+  // a ragged front remnant sits over the recessed interior of the book, which
+  // shows through the torn gap so you can see the journal behind the page.
   const torn = page.kind === "sealed"
 
-  return (
+  const article = (
     <article
       className={`relative overflow-hidden rounded-l-sm border border-[oklch(0.78_0.04_80)] bg-paper text-ink ${
         torn
@@ -397,6 +398,31 @@ function JournalPage({
         </span>
       </div>
     </article>
+  )
+
+  if (!torn) return article
+
+  return (
+    <div className="relative">
+      {/* Recessed journal interior revealed through the torn-out leaf. */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-l-sm rounded-r-lg bg-[oklch(0.2_0.022_55)] shadow-[inset_0_0_70px_rgba(0,0,0,0.8)]">
+        {/* The next page down, sitting deeper in the book */}
+        <div className="absolute inset-x-3 inset-y-3 rounded-sm bg-[oklch(0.33_0.03_62)] shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)]">
+          {/* faint ruled lines of the page beneath */}
+          <div
+            className="absolute inset-0 rounded-sm opacity-[0.16]"
+            style={{
+              backgroundImage:
+                "repeating-linear-gradient(to bottom, transparent, transparent 31px, oklch(0.8 0.04 80) 31px, oklch(0.8 0.04 80) 32px)",
+              backgroundPosition: "0 40px",
+            }}
+          />
+        </div>
+        {/* shadow cast by the torn leaf onto the interior */}
+        <div className="absolute inset-0 [background:linear-gradient(90deg,rgba(0,0,0,0.5),transparent_30%,transparent_70%,rgba(0,0,0,0.35))]" />
+      </div>
+      {article}
+    </div>
   )
 }
 
