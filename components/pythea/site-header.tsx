@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Compass, Menu, X } from "lucide-react"
+import { ThemeToggle } from "@/components/pythea/theme-toggle"
 
 const NAV = [
   { label: "Η Ιστορία", href: "/#story" },
@@ -68,21 +69,27 @@ export function SiteHeader() {
           ))}
         </div>
 
-        <a
-          href="/#register"
-          className="hidden items-center gap-2 rounded-sm border border-brass/60 px-4 py-2 font-sans text-xs font-bold tracking-chip text-brass transition-colors hover:bg-brass hover:text-primary-foreground md:inline-flex"
-        >
-          ΔΗΛΩΣΕ ΣΥΜΜΕΤΟΧΗ
-        </a>
+        <div className="hidden items-center gap-3 md:flex">
+          <ThemeToggle />
+          <a
+            href="/#register"
+            className="inline-flex items-center gap-2 rounded-sm border border-brass/60 px-4 py-2 font-sans text-xs font-bold tracking-chip text-brass transition-colors hover:bg-brass hover:text-primary-foreground"
+          >
+            ΔΗΛΩΣΕ ΣΥΜΜΕΤΟΧΗ
+          </a>
+        </div>
 
-        <button
-          type="button"
-          aria-label="Άνοιγμα μενού"
-          onClick={() => setOpen((v) => !v)}
-          className="inline-flex size-10 items-center justify-center rounded-sm border border-border text-foreground md:hidden"
-        >
-          {open ? <X className="size-5" /> : <Menu className="size-5" />}
-        </button>
+        <div className="flex items-center gap-2 md:hidden">
+          <ThemeToggle />
+          <button
+            type="button"
+            aria-label="Άνοιγμα μενού"
+            onClick={() => setOpen((v) => !v)}
+            className="inline-flex size-10 items-center justify-center rounded-sm border border-border text-foreground"
+          >
+            {open ? <X className="size-5" /> : <Menu className="size-5" />}
+          </button>
+        </div>
       </nav>
 
       <AnimatePresence>

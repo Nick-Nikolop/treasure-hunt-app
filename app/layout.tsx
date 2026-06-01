@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Alegreya, Alegreya_Sans } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { ThemeProvider } from '@/components/theme-provider'
 import './globals.css'
 
 const alegreya = Alegreya({
@@ -49,10 +50,19 @@ export default function RootLayout({
   return (
     <html
       lang="el"
+      suppressHydrationWarning
       className={`${alegreya.variable} ${alegreyaSans.variable} bg-background`}
     >
       <body className="font-serif antialiased">
-        {children}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          themes={['light', 'dark']}
+          enableSystem={false}
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
