@@ -84,7 +84,6 @@
   --font-sans: var(--font-alegreya-sans), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-alegreya), ui-serif, Georgia, serif;
   --font-mono: var(--font-alegreya-sans), ui-monospace, monospace;
-  --font-hand: var(--font-mynerve), 'Segoe Script', cursive;
   --color-parchment: var(--parchment);
   --color-ink: var(--ink);
   --color-brass: var(--brass);

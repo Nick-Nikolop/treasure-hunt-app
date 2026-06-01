@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Alegreya, Alegreya_Sans, Mynerve } from 'next/font/google'
+import { Alegreya, Alegreya_Sans } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
@@ -17,17 +17,6 @@ const alegreyaSans = Alegreya_Sans({
   variable: '--font-alegreya-sans',
   display: 'swap',
 })
-
-// Flowing handwriting style with Greek glyph coverage, used for the journal's
-// "handwritten" reading mode. (Connected cursive scripts like Dancing Script
-// have no Greek glyphs; Mynerve is the most cursive Greek-capable option.)
-const mynerve = Mynerve({
-  subsets: ['greek', 'latin'],
-  weight: ['400'],
-  variable: '--font-mynerve',
-  display: 'swap',
-})
-
 export const metadata: Metadata = {
   title: 'Το Ταξίδι του Πυθέα του Μεσσήνιου',
   description:
@@ -60,7 +49,7 @@ export default function RootLayout({
   return (
     <html
       lang="el"
-      className={`${alegreya.variable} ${alegreyaSans.variable} ${mynerve.variable} bg-background`}
+      className={`${alegreya.variable} ${alegreyaSans.variable} bg-background`}
     >
       <body className="font-serif antialiased">
         {children}
