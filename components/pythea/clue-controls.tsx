@@ -1,7 +1,7 @@
 "use client"
 
-import { useTransition } from "react"
-import { FlaskConical, Plus, Minus, RotateCcw, Unlock } from "lucide-react"
+import { useState, useTransition } from "react"
+import { FlaskConical, Plus, Minus, RotateCcw, Unlock, X } from "lucide-react"
 import { setPreviewCount, clearPreview } from "@/app/journal/actions"
 
 type Props = {
@@ -13,6 +13,7 @@ type Props = {
 
 export function ClueControls({ unlockedCount, total, overrideActive }: Props) {
   const [pending, startTransition] = useTransition()
+  const [open, setOpen] = useState(false)
 
   const set = (n: number) =>
     startTransition(() => {
@@ -23,8 +24,25 @@ export function ClueControls({ unlockedCount, total, overrideActive }: Props) {
       void clearPreview()
     })
 
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label="Άνοιγμα πίνακα δοκιμών"
+        className="fixed right-4 top-4 z-50 inline-flex items-center gap-2 rounded-sm border border-brass/50 bg-card/95 px-3 py-2 font-sans text-[11px] font-bold tracking-chip text-brass shadow-xl backdrop-blur-md transition-colors hover:border-brass hover:bg-card"
+      >
+        <FlaskConical className="size-4" />
+        <span className="hidden sm:inline">ΔΟΚΙΜΕΣ</span>
+        <span className="font-serif text-foreground">
+          {unlockedCount}/{total}
+        </span>
+      </button>
+    )
+  }
+
   return (
-    <div className="fixed bottom-4 left-1/2 z-50 w-[min(94vw,30rem)] -translate-x-1/2 rounded-sm border border-brass/50 bg-card/95 p-3 shadow-2xl backdrop-blur-md">
+    <div className="fixed right-4 top-4 z-50 w-[min(94vw,22rem)] rounded-sm border border-brass/50 bg-card/95 p-3 shadow-2xl backdrop-blur-md">
       <div className="mb-2.5 flex items-center gap-2">
         <FlaskConical className="size-4 text-brass" />
         <span className="font-sans text-[11px] font-bold tracking-chip text-brass">
@@ -33,6 +51,14 @@ export function ClueControls({ unlockedCount, total, overrideActive }: Props) {
         <span className="ml-auto font-serif text-sm font-bold text-foreground">
           {unlockedCount} / {total}
         </span>
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          aria-label="Κλείσιμο πίνακα δοκιμών"
+          className="inline-flex size-6 items-center justify-center rounded-sm border border-border bg-background text-muted-foreground transition-colors hover:border-brass/60 hover:text-foreground"
+        >
+          <X className="size-3.5" />
+        </button>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
