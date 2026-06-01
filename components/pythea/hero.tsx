@@ -118,9 +118,9 @@ export function Hero() {
           </span>
           <span
             aria-hidden
-            className="my-1 block text-[18vw] leading-[0.85] text-brass sm:text-8xl md:text-[8.5rem]"
+            className="my-1 block text-[18vw] leading-[0.95] text-brass sm:text-8xl md:text-[8.5rem]"
           >
-            <span className="inline-block overflow-hidden align-bottom">
+            <span className="inline-block overflow-hidden px-[0.08em] pb-[0.12em] align-bottom">
               <motion.span
                 className="inline-block italic"
                 variants={reveal}
