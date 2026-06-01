@@ -53,7 +53,11 @@ type Page =
   | { kind: "sealed"; unlockMs: number; notStarted: boolean; order: number }
   | { kind: "final" }
 
-const FLIP_DURATION = 0.9
+const FLIP_DURATION = 1.5
+
+// Shared page height so every page is as tall as the longest entry, keeping
+// the book a fixed size as you flip instead of resizing per page.
+const PAGE_HEIGHT = "min-h-[36rem] md:min-h-[44rem]"
 
 export function PoreiaView({
   unlocked,
@@ -345,7 +349,7 @@ function JournalPage({
       {/* Red margin line */}
       <div className="pointer-events-none absolute inset-y-0 left-14 w-px bg-[oklch(0.55_0.17_28_/_0.45)] md:left-20" />
 
-      <div className="relative min-h-[30rem] py-10 pl-16 pr-6 md:min-h-[34rem] md:py-12 md:pl-24 md:pr-12">
+      <div className={`relative flex flex-col ${PAGE_HEIGHT} py-10 pl-16 pr-6 md:py-12 md:pl-24 md:pr-12`}>
         {page.kind === "clue" && <CluePageBody clue={page.clue} />}
         {page.kind === "sealed" && (
           <SealedPageBody
@@ -414,7 +418,7 @@ function BindingRings() {
 
 function CoverPage() {
   return (
-    <article className="relative flex min-h-[30rem] flex-col items-center justify-center overflow-hidden rounded-r-lg rounded-l-sm border border-[oklch(0.28_0.03_60)] bg-[oklch(0.24_0.03_56)] px-8 py-14 text-center shadow-[0_30px_60px_-25px_rgba(0,0,0,0.8)] md:min-h-[34rem]">
+    <article className={`relative flex ${PAGE_HEIGHT} flex-col items-center justify-center overflow-hidden rounded-r-lg rounded-l-sm border border-[oklch(0.28_0.03_60)] bg-[oklch(0.24_0.03_56)] px-8 py-14 text-center shadow-[0_30px_60px_-25px_rgba(0,0,0,0.8)]`}>
       {/* leather grain */}
       <div className="grain-layer pointer-events-none absolute inset-0 opacity-[0.14] mix-blend-overlay" />
       {/* leather sheen */}
@@ -534,7 +538,7 @@ function SealedPageBody({
   onDone: () => void
 }) {
   return (
-    <div className="flex min-h-[24rem] flex-col items-center justify-center text-center md:min-h-[26rem]">
+    <div className="flex flex-1 flex-col items-center justify-center text-center">
       {/* Wax seal */}
       <div className="relative">
         <div className="flex size-28 items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_30%,oklch(0.62_0.16_40),oklch(0.42_0.14_34))] shadow-[0_10px_24px_-8px_rgba(0,0,0,0.6)]">
@@ -563,7 +567,7 @@ function SealedPageBody({
 
 function FinalPageBody() {
   return (
-    <div className="flex min-h-[24rem] flex-col items-center justify-center text-center md:min-h-[26rem]">
+    <div className="flex flex-1 flex-col items-center justify-center text-center">
       <Compass className="size-12 text-[oklch(0.5_0.12_60)]" />
       <p className="mt-6 font-sans text-[11px] font-bold tracking-chip text-ink/55">
         ΤΕΛΟΣ ΤΟΥ ΗΜΕΡΟΛΟΓΙΟΥ
