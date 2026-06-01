@@ -282,18 +282,19 @@ export function PoreiaView({
             }
           >
             {isMobile ? (
-              // Mobile: a pure opacity crossfade of the destination page.
-              // Sliding the page dragged all of its heavy paint layers
-              // (inset shadows, radial + repeating gradients, grain) across
-              // the screen and revealed a gap. An opacity-only transition is
-              // cheap to composite, so it stays smooth on phones.
+              // Mobile: a gap-free horizontal slide. The incoming page slides
+              // in from one edge while the outgoing page slides out the same
+              // direction, both as GPU transforms clipped by the overflow
+              // stage, so they move together with no empty gap and stay smooth
+              // on phones (no 3D, no animated shadows).
               <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 z-20 w-10 bg-gradient-to-r from-black/35 via-black/10 to-transparent" />
+                <div className="pointer-events-none absolute inset-y-0 left-0 z-30 w-10 bg-gradient-to-r from-black/35 via-black/10 to-transparent" />
                 <motion.div
                   key={targetIndex}
-                  initial={flip ? { opacity: 0 } : false}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.32, ease: "easeOut" }}
+                  initial={flip ? { x: `${flip.dir * 100}%` } : false}
+                  animate={{ x: "0%" }}
+                  transition={{ duration: 0.4, ease: [0.33, 0, 0.2, 1] }}
+                  className="relative z-10"
                   onAnimationComplete={() => {
                     if (flip) endFlip()
                   }}
@@ -305,6 +306,21 @@ export function PoreiaView({
                     onCountdownDone={refresh}
                   />
                 </motion.div>
+                {flip && (
+                  <motion.div
+                    className="absolute inset-0 z-20"
+                    initial={{ x: "0%" }}
+                    animate={{ x: `${-flip.dir * 100}%` }}
+                    transition={{ duration: 0.4, ease: [0.33, 0, 0.2, 1] }}
+                  >
+                    <JournalPage
+                      page={pages[flip.from] ?? pages[0]}
+                      pageNumber={flip.from}
+                      totalPages={pages.length}
+                      onCountdownDone={refresh}
+                    />
+                  </motion.div>
+                )}
               </div>
             ) : (
             <div className="relative" style={{ transformStyle: "preserve-3d" }}>
