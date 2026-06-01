@@ -60,7 +60,7 @@ export default async function RootLayout({
     <html
       lang={locale}
       suppressHydrationWarning
-      className={`${alegreya.variable} ${alegreyaSans.variable} bg-background`}
+      className={`${alegreya.variable} ${alegreyaSans.variable} scroll-smooth bg-background`}
     >
       <body className="font-serif antialiased">
         <ThemeProvider

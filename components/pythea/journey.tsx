@@ -21,7 +21,7 @@ export function Journey({ unlockedCount, total, nextUnlockMs }: Props) {
   }, [router])
 
   return (
-    <section id="journey" className="relative overflow-hidden py-28 md:py-40">
+    <section id="journey" className="relative scroll-mt-20 overflow-hidden py-28 md:scroll-mt-28 md:py-40">
       <div className="mx-auto max-w-5xl px-5">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

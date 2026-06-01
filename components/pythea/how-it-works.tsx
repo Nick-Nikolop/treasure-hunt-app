@@ -10,7 +10,7 @@ export function HowItWorks() {
   const { t } = useI18n()
   const steps = t.how.steps.map((step, i) => ({ ...step, icon: STEP_ICONS[i] }))
   return (
-    <section id="how" className="relative mx-auto max-w-6xl px-5 py-28 md:py-40">
+    <section id="how" className="relative mx-auto max-w-6xl scroll-mt-20 px-5 py-28 md:scroll-mt-28 md:py-40">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}

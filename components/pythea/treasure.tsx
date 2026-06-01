@@ -19,7 +19,7 @@ export function Treasure() {
     <section
       id="treasure"
       ref={ref}
-      className="relative overflow-hidden border-y border-border py-32 md:py-48"
+      className="relative scroll-mt-20 overflow-hidden border-y border-border py-32 md:scroll-mt-28 md:py-48"
     >
       {/* Glow + compass backdrop */}
       <motion.div

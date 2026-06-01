@@ -15,7 +15,7 @@ export function Register() {
   }
 
   return (
-    <section id="register" className="relative mx-auto max-w-5xl px-5 pb-32 pt-8 md:pb-48">
+    <section id="register" className="relative mx-auto max-w-5xl scroll-mt-20 px-5 pb-32 pt-8 md:scroll-mt-28 md:pb-48">
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
