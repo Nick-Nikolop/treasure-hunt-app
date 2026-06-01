@@ -3,7 +3,6 @@
 import { useRef } from "react"
 import { motion, useScroll, useTransform } from "framer-motion"
 import { MapPin, ChevronDown } from "lucide-react"
-import { CompassRose } from "./compass-rose"
 
 const TITLE_TOP = ["Το", "Ταξίδι", "του"]
 const TITLE_NAME = ["Πυθέα"]
@@ -25,10 +24,10 @@ export function Hero() {
     offset: ["start start", "end start"],
   })
 
-  const yCompass = useTransform(scrollYProgress, [0, 1], [0, 180])
+  const yMap = useTransform(scrollYProgress, [0, 1], [0, 140])
   const yTitle = useTransform(scrollYProgress, [0, 1], [0, 120])
   const opacity = useTransform(scrollYProgress, [0, 0.7], [1, 0])
-  const scaleBg = useTransform(scrollYProgress, [0, 1], [1, 1.15])
+  const scaleBg = useTransform(scrollYProgress, [0, 1], [1.05, 1.18])
 
   return (
     <section
@@ -36,31 +35,51 @@ export function Hero() {
       id="top"
       className="relative flex min-h-[100svh] items-center justify-center overflow-hidden px-5"
     >
-      {/* Longitude/latitude grid backdrop */}
+      {/* Antique map backdrop: widescreen on desktop, square crop on mobile */}
       <motion.div
-        style={{ scale: scaleBg }}
+        style={{ y: yMap, scale: scaleBg }}
         className="pointer-events-none absolute inset-0"
         aria-hidden
       >
-        <div
-          className="absolute inset-0 opacity-[0.12]"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right, var(--brass) 1px, transparent 1px), linear-gradient(to bottom, var(--brass) 1px, transparent 1px)",
-            backgroundSize: "64px 64px",
-            maskImage:
-              "radial-gradient(ellipse at center, black 30%, transparent 75%)",
-          }}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/map-square.jpg"
+          alt=""
+          className="size-full object-cover md:hidden"
+          fetchPriority="high"
+        />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/map-wide.png"
+          alt=""
+          className="hidden size-full object-cover md:block"
+          fetchPriority="high"
         />
       </motion.div>
 
-      {/* Rotating compass behind title */}
-      <motion.div
-        style={{ y: yCompass, opacity }}
-        className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-brass"
-      >
-        <CompassRose className="h-[min(85vw,640px)] w-[min(85vw,640px)] opacity-30" />
-      </motion.div>
+      {/* Readability scrim: darken the whole map, then a focused vignette behind
+          the title so the text always sits on a calm, high-contrast field. */}
+      <div
+        className="pointer-events-none absolute inset-0 bg-background/45"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-0"
+        aria-hidden
+        style={{
+          background:
+            "radial-gradient(ellipse 64% 52% at 50% 46%, var(--background) 0%, color-mix(in oklch, var(--background) 72%, transparent) 42%, transparent 78%)",
+        }}
+      />
+      {/* Top and bottom fades to blend into the page */}
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-background to-transparent"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-background to-transparent"
+        aria-hidden
+      />
 
       {/* Content */}
       <motion.div
@@ -73,11 +92,11 @@ export function Hero() {
           transition={{ duration: 1, delay: 0.1 }}
           className="mb-7 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 font-sans text-[11px] font-semibold tracking-chip text-muted-foreground"
         >
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 px-3 py-1">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background/60 px-3 py-1 backdrop-blur-sm">
             <MapPin className="size-3 text-brass" />
             36°57′Β · 22°06′Α — ΚΑΛΑΜΑΤΑ
           </span>
-          <span className="inline-flex items-center rounded-full border border-border/70 px-3 py-1 text-brass">
+          <span className="inline-flex items-center rounded-full border border-border/70 bg-background/60 px-3 py-1 text-brass backdrop-blur-sm">
             ΚΑΛΟΚΑΙΡΙ 2026
           </span>
         </motion.div>
@@ -159,7 +178,7 @@ export function Hero() {
           </a>
           <a
             href="#story"
-            className="inline-flex items-center gap-2 rounded-sm border border-border px-7 py-3.5 font-sans text-sm font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass"
+            className="inline-flex items-center gap-2 rounded-sm border border-border bg-background/60 px-7 py-3.5 font-sans text-sm font-bold tracking-chip text-foreground backdrop-blur-sm transition-colors hover:border-brass hover:text-brass"
           >
             Η ΙΣΤΟΡΙΑ ΤΟΥ ΠΥΘΕΑ
           </a>
