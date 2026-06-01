@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react"
 import {
@@ -45,6 +46,7 @@ export function LanguageProvider({
   children: React.ReactNode
 }) {
   const [locale, setLocaleState] = useState<Locale>(initialLocale)
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([])
 
   // Reconcile with a locale saved on a previous visit if the cookie was not
   // available at render time (e.g. first client navigation).
@@ -62,18 +64,57 @@ export function LanguageProvider({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const setLocale = useCallback((next: Locale) => {
-    setLocaleState(next)
-    persist(next)
+  useEffect(() => {
+    const pending = timers.current
+    return () => pending.forEach(clearTimeout)
   }, [])
 
-  const toggle = useCallback(() => {
-    setLocaleState((prev) => {
-      const next: Locale = prev === "el" ? "en" : "el"
+  /**
+   * Swap the active locale with a brief content crossfade: dim the page,
+   * change the text once it is faded out, then fade it back in. Honors
+   * prefers-reduced-motion by skipping the dimming entirely.
+   */
+  const transitionTo = useCallback((next: Locale) => {
+    const root = document.documentElement
+    const reduce = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches
+
+    timers.current.forEach(clearTimeout)
+    timers.current = []
+
+    if (reduce) {
+      setLocaleState(next)
       persist(next)
-      return next
-    })
+      return
+    }
+
+    root.dataset.langFade = ""
+    root.style.opacity = "0.35"
+
+    timers.current.push(
+      setTimeout(() => {
+        setLocaleState(next)
+        persist(next)
+        root.style.opacity = "1"
+      }, 230),
+      setTimeout(() => {
+        delete root.dataset.langFade
+        root.style.removeProperty("opacity")
+      }, 760),
+    )
   }, [])
+
+  const setLocale = useCallback(
+    (next: Locale) => {
+      transitionTo(next)
+    },
+    [transitionTo],
+  )
+
+  const toggle = useCallback(() => {
+    transitionTo(locale === "el" ? "en" : "el")
+  }, [locale, transitionTo])
 
   const value = useMemo<I18nValue>(
     () => ({ locale, setLocale, toggle, t: getDictionary(locale) }),
