@@ -73,27 +73,44 @@ export function Journey({ unlockedCount, total, nextUnlockMs }: Props) {
                   delay: i * 0.06,
                   ease: "backOut",
                 }}
-                className={`group relative flex aspect-square flex-col items-center justify-center text-center transition-colors ${
-                  revealed
-                    ? "rounded-sm border border-brass/70 bg-brass/10"
-                    : "torn-tile bg-card/60"
-                }`}
+                className="group relative aspect-square"
               >
                 {revealed ? (
-                  <Check className="size-4 text-brass md:size-5" />
+                  <div className="flex h-full flex-col items-center justify-center rounded-sm border border-brass/70 bg-brass/10 text-center">
+                    <Check className="size-4 text-brass md:size-5" />
+                    <span className="mt-1 font-serif text-xl font-black text-brass md:text-2xl">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <span className="font-sans text-[8px] font-bold tracking-chip text-muted-foreground md:text-[9px]">
+                      ΑΝΟΙΧΤΟ
+                    </span>
+                  </div>
                 ) : (
-                  <Lock className="size-4 text-muted-foreground md:size-5" />
+                  <>
+                    {/* Recessed journal interior revealed where the page was torn out */}
+                    <div className="absolute inset-0 rounded-sm bg-[oklch(0.24_0.025_70)] shadow-[inset_0_4px_12px_rgba(0,0,0,0.65),inset_0_-3px_8px_rgba(0,0,0,0.45)]" />
+                    {/* Faint ruled lines of the page beneath */}
+                    <div
+                      className="absolute inset-0 rounded-sm opacity-[0.14]"
+                      style={{
+                        backgroundImage:
+                          "repeating-linear-gradient(oklch(0.7 0.04 80) 0 1px, transparent 1px 9px)",
+                      }}
+                    />
+                    {/* Ragged torn-paper stub still clinging to the binding (top) edge */}
+                    <div className="torn-stub absolute inset-x-0 top-0 h-1/3 bg-card shadow-[0_4px_7px_rgba(0,0,0,0.55)]" />
+                    {/* Locked content */}
+                    <div className="relative flex h-full flex-col items-center justify-center text-center">
+                      <Lock className="size-4 text-muted-foreground md:size-5" />
+                      <span className="mt-1 font-serif text-xl font-black text-border md:text-2xl">
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <span className="font-sans text-[8px] font-bold tracking-chip text-muted-foreground md:text-[9px]">
+                        ΚΛΕΙΔΩΜΕΝΟ
+                      </span>
+                    </div>
+                  </>
                 )}
-                <span
-                  className={`mt-1 font-serif text-xl font-black md:text-2xl ${
-                    revealed ? "text-brass" : "text-border"
-                  }`}
-                >
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <span className="font-sans text-[8px] font-bold tracking-chip text-muted-foreground md:text-[9px]">
-                  {revealed ? "ΑΝΟΙΧΤΟ" : "ΚΛΕΙΔΩΜΕΝΟ"}
-                </span>
               </motion.div>
             )
           })}
