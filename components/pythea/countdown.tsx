@@ -36,10 +36,13 @@ export function Countdown({
   targetMs,
   onDone,
   size = "md",
+  tone = "dark",
 }: {
   targetMs: number
   onDone?: () => void
   size?: "sm" | "md" | "lg"
+  /** "dark" for the dark site background, "ink" for light parchment pages. */
+  tone?: "dark" | "ink"
 }) {
   const [time, setTime] = useState<TimeLeft | null>(null)
 
@@ -69,22 +72,29 @@ export function Countdown({
         ? "min-w-10 px-1.5 py-1 text-base"
         : "min-w-12 px-2 py-1.5 text-xl md:text-2xl"
 
+  const cellTone =
+    tone === "ink"
+      ? "border-ink/25 bg-[oklch(0.88_0.04_82)] text-ink"
+      : "border-border bg-card text-foreground"
+  const labelTone = tone === "ink" ? "text-ink/55" : "text-muted-foreground"
+  const colonTone = tone === "ink" ? "text-[oklch(0.5_0.1_40)]" : "text-brass/50"
+
   return (
     <div className="flex items-stretch gap-2" role="timer" aria-label="Αντίστροφη μέτρηση">
       {cells.map((c, i) => (
         <div key={c.label} className="flex items-center gap-2">
           <div className="flex flex-col items-center">
             <span
-              className={`flex items-center justify-center rounded-sm border border-border bg-card font-serif font-black tabular-nums text-foreground ${box}`}
+              className={`flex items-center justify-center rounded-sm border font-serif font-black tabular-nums ${cellTone} ${box}`}
             >
               {String(c.value).padStart(2, "0")}
             </span>
-            <span className="mt-1.5 font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
+            <span className={`mt-1.5 font-sans text-[10px] font-bold tracking-chip ${labelTone}`}>
               {c.label}
             </span>
           </div>
           {i < cells.length - 1 && (
-            <span className="self-start pt-1 font-serif text-xl text-brass/50 md:text-2xl">
+            <span className={`self-start pt-1 font-serif text-xl md:text-2xl ${colonTone}`}>
               :
             </span>
           )}
