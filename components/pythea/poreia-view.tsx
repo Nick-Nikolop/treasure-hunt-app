@@ -4,37 +4,31 @@ import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { motion } from "framer-motion"
 import {
-  Landmark,
-  Swords,
-  Home,
-  Watch,
-  Lightbulb,
-  DoorOpen,
-  Pyramid,
-  Package,
-  Snowflake,
   Lock,
   Compass,
   ArrowLeft,
   ChevronLeft,
   ChevronRight,
   Feather,
-  type LucideIcon,
 } from "lucide-react"
 import type { Clue, LockedClue } from "@/lib/clues"
 import { Countdown } from "@/components/pythea/countdown"
 
-const ICONS: Record<Clue["icon"], LucideIcon> = {
-  Landmark,
-  Swords,
-  Home,
-  Watch,
-  Lightbulb,
-  DoorOpen,
-  Pyramid,
-  Package,
-  Snowflake,
+/** Maps each country to its real vintage stamp image in /public/stamps. */
+const STAMP_SRC: Record<string, string> = {
+  Κίνα: "/stamps/china.png",
+  Ταϊλάνδη: "/stamps/thailand.png",
+  Γαλλία: "/stamps/france.png",
+  Ελβετία: "/stamps/helvetia.png",
+  Σερβία: "/stamps/serbia.png",
+  Ισπανία: "/stamps/spain.png",
+  Αίγυπτος: "/stamps/egypt.png",
+  Ρωσία: "/stamps/russia.png",
+  Φινλανδία: "/stamps/finland.png",
 }
+
+/** A small set of natural-looking tilt angles, picked by clue order. */
+const STAMP_ROTATION = [-6, 5, -4, 7, -7, 4, -5, 6, -3]
 
 type Props = {
   unlocked: Clue[]
@@ -457,10 +451,9 @@ function CoverPage() {
 }
 
 function CluePageBody({ clue }: { clue: Clue }) {
-  const Icon = ICONS[clue.icon]
   return (
     <div>
-      {/* Entry header with a passport-style stamp */}
+      {/* Entry header with a real vintage stamp affixed to the page */}
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="font-sans text-[11px] font-bold tracking-chip text-ink/55">
@@ -473,7 +466,7 @@ function CluePageBody({ clue }: { clue: Clue }) {
             {clue.subtitle}
           </p>
         </div>
-        <PassportStamp icon={Icon} order={clue.order} />
+        <JournalStamp clue={clue} />
       </div>
 
       <div className="mt-7 flex flex-col gap-4">
@@ -500,27 +493,27 @@ function CluePageBody({ clue }: { clue: Clue }) {
   )
 }
 
-function PassportStamp({
-  icon: Icon,
-  order,
-}: {
-  icon: LucideIcon
-  order: number
-}) {
+/** A real vintage stamp, tilted and shadowed as if pasted into the journal. */
+function JournalStamp({ clue }: { clue: Clue }) {
+  const src = STAMP_SRC[clue.country]
+  if (!src) return null
+  // Deterministic tilt per entry so it never jumps between renders.
+  const rotate = STAMP_ROTATION[(clue.order - 1) % STAMP_ROTATION.length]
   return (
-    <div className="relative hidden shrink-0 -rotate-6 select-none sm:block">
-      <div className="flex size-24 flex-col items-center justify-center rounded-full border-[3px] border-[oklch(0.5_0.09_200)] text-[oklch(0.45_0.09_200)] opacity-80">
-        <Icon className="size-7" />
-        <span className="mt-1 font-sans text-[8px] font-bold tracking-chip">
-          ΣΦΡΑΓΙΔΑ
-        </span>
-        <span className="font-serif text-lg font-black leading-none">
-          {String(order).padStart(2, "0")}
-        </span>
-      </div>
-      {/* inner ring */}
-      <span className="pointer-events-none absolute inset-2 rounded-full border border-[oklch(0.5_0.09_200)] opacity-50" />
-    </div>
+    <motion.div
+      initial={{ opacity: 0, scale: 0.92, rotate: rotate - 5 }}
+      animate={{ opacity: 1, scale: 1, rotate }}
+      transition={{ duration: 0.55, delay: 0.3, ease: "easeOut" }}
+      className="relative hidden shrink-0 select-none sm:block"
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src || "/placeholder.svg"}
+        alt={`Γραμματόσημο από ${clue.country}`}
+        draggable={false}
+        className="block h-auto w-24 drop-shadow-[0_7px_12px_rgba(40,30,15,0.32)] md:w-28"
+      />
+    </motion.div>
   )
 }
 
