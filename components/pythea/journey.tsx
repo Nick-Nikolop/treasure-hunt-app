@@ -73,10 +73,10 @@ export function Journey({ unlockedCount, total, nextUnlockMs }: Props) {
                   delay: i * 0.06,
                   ease: "backOut",
                 }}
-                className={`group relative flex aspect-square flex-col items-center justify-center rounded-sm border text-center transition-colors ${
+                className={`group relative flex aspect-square flex-col items-center justify-center text-center transition-colors ${
                   revealed
-                    ? "border-brass/70 bg-brass/10"
-                    : "border-border bg-card/40"
+                    ? "rounded-sm border border-brass/70 bg-brass/10"
+                    : "torn-tile bg-card/60"
                 }`}
               >
                 {revealed ? (
