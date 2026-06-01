@@ -185,6 +185,25 @@
     background: var(--brass);
     color: var(--ink);
   }
+
+  /* Smooth dark <-> light theme crossfade. Only color-related properties
+     ease, so layout and interactive transforms stay snappy. */
+  html,
+  body,
+  body * {
+    transition-property: background-color, border-color, color, fill, stroke,
+      box-shadow, text-shadow;
+    transition-duration: 600ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html,
+    body,
+    body * {
+      transition-duration: 0ms;
+    }
+  }
 }
 
 /* ------------------------------------------------------------------ */
