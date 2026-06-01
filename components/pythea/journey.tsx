@@ -104,7 +104,11 @@ export function Journey({ unlockedCount, total, nextUnlockMs }: Props) {
                 className="group relative aspect-square"
               >
                 {revealed ? (
-                  <div className="flex h-full flex-col items-center justify-center rounded-sm border border-brass/70 bg-brass/10 text-center">
+                  <a
+                    href={`/journal?page=${i + 1}`}
+                    aria-label={t.journey.openCardAria(i + 1)}
+                    className="flex h-full flex-col items-center justify-center rounded-sm border border-brass/70 bg-brass/10 text-center transition-colors hover:border-brass hover:bg-brass/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  >
                     <Check className="size-4 text-brass md:size-5" />
                     <span className="mt-1 font-serif text-xl font-black text-brass md:text-2xl">
                       {String(i + 1).padStart(2, "0")}
@@ -112,7 +116,7 @@ export function Journey({ unlockedCount, total, nextUnlockMs }: Props) {
                     <span className="font-sans text-[8px] font-bold tracking-chip text-muted-foreground md:text-[9px]">
                       {t.journey.open}
                     </span>
-                  </div>
+                  </a>
                 ) : (
                   <>
                     {/* Recessed journal interior revealed where the page was torn out */}

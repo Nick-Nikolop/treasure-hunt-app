@@ -133,7 +133,15 @@ export function PoreiaView({
     if (max > 0) setMeasuredH(max)
   }, [isMobile, measuredH, pages, t])
 
-  const [index, setIndex] = useState(0)
+  // Deep link: /journal?page=N opens directly on that page (used by the
+  // "open" cards on the home page). Initialised lazily so we land on the
+  // right page before the first paint instead of flashing the cover.
+  const [index, setIndex] = useState(() => {
+    if (typeof window === "undefined") return 0
+    const raw = new URLSearchParams(window.location.search).get("page")
+    const n = raw ? Number.parseInt(raw, 10) : Number.NaN
+    return Number.isFinite(n) && n > 0 ? n : 0
+  })
   // The leaf currently turning. null when the book is at rest.
   const [flip, setFlip] = useState<{
     dir: 1 | -1
