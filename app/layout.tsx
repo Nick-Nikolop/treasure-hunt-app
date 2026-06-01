@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Alegreya, Alegreya_Sans } from 'next/font/google'
+import { Alegreya, Alegreya_Sans, Mansalva } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
@@ -15,6 +15,15 @@ const alegreyaSans = Alegreya_Sans({
   subsets: ['greek', 'latin'],
   weight: ['400', '500', '700', '800'],
   variable: '--font-alegreya-sans',
+  display: 'swap',
+})
+
+// Handwriting style with Greek glyph coverage, used for the journal's
+// "handwritten" reading mode.
+const mansalva = Mansalva({
+  subsets: ['greek', 'latin'],
+  weight: ['400'],
+  variable: '--font-mansalva',
   display: 'swap',
 })
 
@@ -50,7 +59,7 @@ export default function RootLayout({
   return (
     <html
       lang="el"
-      className={`${alegreya.variable} ${alegreyaSans.variable} bg-background`}
+      className={`${alegreya.variable} ${alegreyaSans.variable} ${mansalva.variable} bg-background`}
     >
       <body className="font-serif antialiased">
         {children}

@@ -98,6 +98,21 @@ export function PoreiaView({
     to: number
   } | null>(null)
 
+  // Reading mode: handwritten (default, in keeping with a real journal) vs the
+  // easier-to-read serif. Persisted so the choice survives refresh.
+  const [handwritten, setHandwritten] = useState(true)
+  useEffect(() => {
+    const saved = window.localStorage.getItem("pythea_handwritten")
+    if (saved !== null) setHandwritten(saved === "1")
+  }, [])
+  const toggleHand = useCallback(() => {
+    setHandwritten((h) => {
+      const next = !h
+      window.localStorage.setItem("pythea_handwritten", next ? "1" : "0")
+      return next
+    })
+  }, [])
+
   // Keep the index valid if the page count shrinks (e.g. reset override).
   useEffect(() => {
     setIndex((i) => Math.min(i, pages.length - 1))
@@ -172,6 +187,48 @@ export function PoreiaView({
         </span>
       </motion.div>
 
+      {/* Reading mode toggle: handwritten vs. easy-to-read */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6, delay: 0.1 }}
+        className="mb-6 flex items-center justify-end gap-3"
+      >
+        <span className="font-sans text-[11px] font-bold tracking-chip text-muted-foreground">
+          ΓΡΑΦΗ
+        </span>
+        <div
+          role="group"
+          aria-label="Είδος γραφής"
+          className="inline-flex items-center gap-1 rounded-full border border-border bg-card/60 p-1"
+        >
+          <button
+            type="button"
+            onClick={() => handwritten || toggleHand()}
+            aria-pressed={handwritten}
+            className={`rounded-full px-3 py-1.5 font-hand text-base leading-none transition-colors ${
+              handwritten
+                ? "bg-brass text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Χειρόγραφη
+          </button>
+          <button
+            type="button"
+            onClick={() => handwritten && toggleHand()}
+            aria-pressed={!handwritten}
+            className={`rounded-full px-3 py-1.5 font-sans text-xs font-bold tracking-wide transition-colors ${
+              handwritten
+                ? "text-muted-foreground hover:text-foreground"
+                : "bg-brass text-primary-foreground"
+            }`}
+          >
+            Ευανάγνωστη
+          </button>
+        </div>
+      </motion.div>
+
       {/* The book, centered. Pages are bound on the left; a turned page rotates
           around the spine and tucks behind the journal. The stage clips at the
           spine so the leaf slips behind instead of floating away on the left. */}
@@ -207,6 +264,7 @@ export function PoreiaView({
                 pageNumber={baseIndex}
                 totalPages={pages.length}
                 onCountdownDone={refresh}
+                handwritten={handwritten}
               />
 
               {/* The turning leaf, always above the base page while it moves */}
@@ -234,6 +292,7 @@ export function PoreiaView({
                       pageNumber={leafIndex}
                       totalPages={pages.length}
                       onCountdownDone={refresh}
+                      handwritten={handwritten}
                     />
                     {/* Lift shadow that deepens toward the middle of the turn */}
                     <motion.div
@@ -317,11 +376,13 @@ function JournalPage({
   pageNumber,
   totalPages,
   onCountdownDone,
+  handwritten,
 }: {
   page: Page
   pageNumber: number
   totalPages: number
   onCountdownDone: () => void
+  handwritten: boolean
 }) {
   if (page.kind === "cover") return <CoverPage />
 
@@ -350,7 +411,9 @@ function JournalPage({
       <div className="pointer-events-none absolute inset-y-0 left-14 w-px bg-[oklch(0.55_0.17_28_/_0.45)] md:left-20" />
 
       <div className={`relative flex flex-col ${PAGE_HEIGHT} py-10 pl-16 pr-6 md:py-12 md:pl-24 md:pr-12`}>
-        {page.kind === "clue" && <CluePageBody clue={page.clue} />}
+        {page.kind === "clue" && (
+          <CluePageBody clue={page.clue} handwritten={handwritten} />
+        )}
         {page.kind === "sealed" && (
           <SealedPageBody
             unlockMs={page.unlockMs}
@@ -456,7 +519,13 @@ function CoverPage() {
   )
 }
 
-function CluePageBody({ clue }: { clue: Clue }) {
+function CluePageBody({
+  clue,
+  handwritten,
+}: {
+  clue: Clue
+  handwritten: boolean
+}) {
   const Icon = ICONS[clue.icon]
   return (
     <div>
@@ -466,10 +535,22 @@ function CluePageBody({ clue }: { clue: Clue }) {
           <p className="font-sans text-[11px] font-bold tracking-chip text-ink/55">
             ΚΑΤΑΧΩΡΗΣΗ Νο. {String(clue.order).padStart(2, "0")}
           </p>
-          <h2 className="mt-1 font-serif text-4xl font-black leading-none text-ink md:text-5xl">
+          <h2
+            className={
+              handwritten
+                ? "mt-1 font-hand text-4xl leading-tight text-ink md:text-5xl"
+                : "mt-1 font-serif text-4xl font-black leading-none text-ink md:text-5xl"
+            }
+          >
             {clue.country}
           </h2>
-          <p className="mt-2 font-serif text-lg italic text-[oklch(0.45_0.08_40)]">
+          <p
+            className={
+              handwritten
+                ? "mt-2 font-hand text-xl text-[oklch(0.45_0.08_40)]"
+                : "mt-2 font-serif text-lg italic text-[oklch(0.45_0.08_40)]"
+            }
+          >
             {clue.subtitle}
           </p>
         </div>
@@ -477,24 +558,39 @@ function CluePageBody({ clue }: { clue: Clue }) {
       </div>
 
       <div className="mt-7 flex flex-col gap-4">
-        {clue.body.map((p, idx) => (
-          <p
-            key={idx}
-            className={`text-pretty font-serif text-[1.05rem] leading-8 text-ink/85 ${
-              idx === 0
-                ? "first-letter:float-left first-letter:mr-2 first-letter:mt-1 first-letter:font-serif first-letter:text-6xl first-letter:font-black first-letter:leading-[0.7] first-letter:text-[oklch(0.45_0.1_40)]"
-                : ""
-            }`}
-          >
-            {p}
-          </p>
-        ))}
+        {clue.body.map((p, idx) =>
+          handwritten ? (
+            <p
+              key={idx}
+              className="text-pretty font-hand text-[1.45rem] leading-9 text-[oklch(0.28_0.06_255)]"
+            >
+              {p}
+            </p>
+          ) : (
+            <p
+              key={idx}
+              className={`text-pretty font-serif text-[1.05rem] leading-8 text-ink/85 ${
+                idx === 0
+                  ? "first-letter:float-left first-letter:mr-2 first-letter:mt-1 first-letter:font-serif first-letter:text-6xl first-letter:font-black first-letter:leading-[0.7] first-letter:text-[oklch(0.45_0.1_40)]"
+                  : ""
+              }`}
+            >
+              {p}
+            </p>
+          ),
+        )}
       </div>
 
       {/* signature flourish */}
       <div className="mt-8 flex items-center gap-3">
         <span className="h-px w-12 bg-ink/25" />
-        <span className="font-serif text-base italic text-ink/55">
+        <span
+          className={
+            handwritten
+              ? "font-hand text-xl text-ink/60"
+              : "font-serif text-base italic text-ink/55"
+          }
+        >
           Π. Μ.
         </span>
       </div>
@@ -559,7 +655,7 @@ function SealedPageBody({
       <p className="mt-7 max-w-sm text-pretty font-serif text-lg italic leading-relaxed text-ink/65">
         {notStarted
           ? "Το πρώτο σημάδι θα εμφανιστεί μόλις ο Πυθέας ανοίξει τον χάρτη του."
-          : "Γύρνα ξανά όταν λήξει ο χρόνος. Η επόμενη σελίδα θα έχει χαραχτεί στο ημερολόγιο."}
+          : "Γύρνα ξανά όταν λήξει ο χρόνος. Η επόμενη σελίδα θα έχει χαραχτεί στο ημ��ρολόγιο."}
       </p>
     </div>
   )
