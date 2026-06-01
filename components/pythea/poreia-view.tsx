@@ -329,11 +329,11 @@ export function PoreiaView({
           type="button"
           onClick={() => go(index - 1)}
           disabled={index === 0 || flip !== null}
-          aria-label="Προηγούμενη σελίδα"
+          aria-label={t.journal.prevAria}
           className="inline-flex shrink-0 items-center gap-2 rounded-sm border border-border bg-card/60 px-3 py-2.5 font-sans text-[11px] font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass disabled:cursor-not-allowed disabled:opacity-30 md:px-4 md:text-xs"
         >
           <ChevronLeft className="size-4" />
-          <span className="hidden sm:inline">ΠΡΟΗΓΟΥΜΕΝΗ</span>
+          <span className="hidden sm:inline">{t.journal.prev}</span>
         </button>
 
         {/* Page dots */}
@@ -342,7 +342,7 @@ export function PoreiaView({
             <button
               key={i}
               type="button"
-              aria-label={`Σελίδα ${i + 1}`}
+              aria-label={t.journal.pageAria(i + 1)}
               onClick={() => go(i)}
               className={`h-2 w-2 rounded-full transition-all ${
                 i === index
@@ -359,10 +359,10 @@ export function PoreiaView({
           type="button"
           onClick={() => go(index + 1)}
           disabled={index === pages.length - 1 || flip !== null}
-          aria-label="Επόμενη σελίδα"
+          aria-label={t.journal.nextAria}
           className="inline-flex shrink-0 items-center gap-2 rounded-sm border border-border bg-card/60 px-3 py-2.5 font-sans text-[11px] font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass disabled:cursor-not-allowed disabled:opacity-30 md:px-4 md:text-xs"
         >
-          <span className="hidden sm:inline">ΕΠΟΜΕΝΗ</span>
+          <span className="hidden sm:inline">{t.journal.next}</span>
           <ChevronRight className="size-4" />
         </button>
       </div>
@@ -513,6 +513,7 @@ function BindingRings() {
 }
 
 function CoverPage() {
+  const { t } = useI18n()
   return (
     <article className={`relative flex ${PAGE_HEIGHT} flex-col items-center justify-center overflow-hidden rounded-r-lg rounded-l-sm border border-[oklch(0.28_0.03_60)] bg-[oklch(0.24_0.03_56)] px-6 py-12 text-center shadow-[0_30px_60px_-25px_rgba(0,0,0,0.8)] md:px-8 md:py-14`}>
       {/* leather grain */}
@@ -536,43 +537,47 @@ function CoverPage() {
 
       <Compass className="size-12 animate-compass-sway text-brass" />
       <p className="mt-7 font-sans text-[11px] font-bold tracking-chip text-brass/80">
-        ΙΔΙΟΚΤΗΤΗΣ
+        {t.journal.coverOwner}
       </p>
       <h1 className="mt-2 text-balance font-serif text-4xl font-black leading-tight text-parchment text-shadow-vintage md:text-5xl">
-        Πυθέας ο Μεσσήνιος
+        {t.journal.coverTitle}
       </h1>
       <div className="my-6 h-px w-24 bg-brass/50" />
       <p className="max-w-sm text-pretty font-serif text-lg italic leading-relaxed text-parchment/75">
-        Ημερολόγιο ενός ταξιδιού γύρω από τον κόσμο, κρυμμένο μέσα σε μία πόλη.
+        {t.journal.coverSubtitle}
       </p>
       <p className="mt-10 font-sans text-[11px] font-bold tracking-chip text-parchment/45">
-        ΓΥΡΙΣΕ ΣΕΛΙΔΑ ΓΙΑ ΝΑ ΞΕΚΙΝΗΣΕΙΣ
+        {t.journal.coverFlip}
       </p>
     </article>
   )
 }
 
 function CluePageBody({ clue }: { clue: Clue }) {
+  const { t, locale } = useI18n()
+  const country = locale === "en" ? clue.countryEn : clue.country
+  const subtitle = locale === "en" ? clue.subtitleEn : clue.subtitle
+  const body = locale === "en" ? clue.bodyEn : clue.body
   return (
     <div>
       {/* Entry header with a real vintage stamp affixed to the page */}
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="font-sans text-[11px] font-bold tracking-chip text-ink/55">
-            ΚΑΤΑΧΩΡΗΣΗ Νο. {String(clue.order).padStart(2, "0")}
+            {t.journal.entryNo} {String(clue.order).padStart(2, "0")}
           </p>
           <h2 className="mt-1 text-balance font-serif text-3xl font-black leading-none text-ink md:text-5xl">
-            {clue.country}
+            {country}
           </h2>
           <p className="mt-2 font-serif text-base italic text-[oklch(0.45_0.08_40)] md:text-lg">
-            {clue.subtitle}
+            {subtitle}
           </p>
         </div>
         <JournalStamp clue={clue} />
       </div>
 
       <div className="mt-6 flex flex-col gap-4 md:mt-7">
-        {clue.body.map((p, idx) => (
+        {body.map((p, idx) => (
           <p
             key={idx}
             className={`text-pretty font-serif text-base leading-7 text-ink/85 md:text-[1.05rem] md:leading-8 ${
@@ -589,7 +594,7 @@ function CluePageBody({ clue }: { clue: Clue }) {
       {/* signature flourish */}
       <div className="mt-8 flex items-center gap-3">
         <span className="h-px w-12 bg-ink/25" />
-        <span className="font-serif text-base italic text-ink/55">Π. Μ.</span>
+        <span className="font-serif text-base italic text-ink/55">{t.journal.signature}</span>
       </div>
     </div>
   )
@@ -597,6 +602,7 @@ function CluePageBody({ clue }: { clue: Clue }) {
 
 /** A real vintage stamp, tilted and shadowed as if pasted into the journal. */
 function JournalStamp({ clue }: { clue: Clue }) {
+  const { t, locale } = useI18n()
   const src = STAMP_SRC[clue.country]
   if (!src) return null
   // Deterministic tilt per entry, applied as a static transform so the stamp
@@ -610,7 +616,7 @@ function JournalStamp({ clue }: { clue: Clue }) {
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={src || "/placeholder.svg"}
-        alt={`Γραμματόσημο από ${clue.country}`}
+        alt={t.journal.stampAlt(locale === "en" ? clue.countryEn : clue.country)}
         draggable={false}
         loading="eager"
         decoding="sync"
@@ -632,6 +638,7 @@ function SealedPageBody({
   order: number
   onDone: () => void
 }) {
+  const { t } = useI18n()
   return (
     <div className="flex flex-1 flex-col items-center justify-center text-center">
       {/* Wax seal */}
@@ -644,7 +651,9 @@ function SealedPageBody({
       </div>
 
       <p className="mt-6 text-balance font-sans text-[11px] font-bold tracking-chip text-ink/55 md:mt-7">
-        {notStarted ? "ΤΟ ΗΜΕΡΟΛΟΓΙΟ ΑΝΟΙΓΕΙ ΣΕ" : `Η ΣΕΛΙΔΑ Νο. ${String(order).padStart(2, "0")} ΣΦΡΑΓΙΣΤΗΚΕ`}
+        {notStarted
+          ? t.journal.sealedNotStartedLabel
+          : t.journal.sealedLabel(String(order).padStart(2, "0"))}
       </p>
 
       <div className="mt-5 text-ink">
@@ -652,28 +661,26 @@ function SealedPageBody({
       </div>
 
       <p className="mt-7 max-w-sm text-pretty font-serif text-base italic leading-relaxed text-ink/65 md:text-lg">
-        {notStarted
-          ? "Το πρώτο σημάδι θα εμφανιστεί μόλις ο Πυθέας ανοίξει τον χάρτη του."
-          : "Γύρνα ξανά όταν λήξει ο χρόνος. Η επόμενη σελίδα θα έχει χαραχτεί στο ημερολόγιο."}
+        {notStarted ? t.journal.sealedNotStartedBody : t.journal.sealedBody}
       </p>
     </div>
   )
 }
 
 function FinalPageBody() {
+  const { t } = useI18n()
   return (
     <div className="flex flex-1 flex-col items-center justify-center text-center">
       <Compass className="size-12 text-[oklch(0.5_0.12_60)]" />
       <p className="mt-6 font-sans text-[11px] font-bold tracking-chip text-ink/55">
-        ΤΕΛΟΣ ΤΟΥ ΗΜΕΡΟΛΟΓΙΟΥ
+        {t.journal.finalLabel}
       </p>
       <p className="mt-4 max-w-md text-pretty font-serif text-xl font-bold italic leading-relaxed text-ink/85 md:text-2xl">
-        Όλα τα σημάδια αποκαλύφθηκαν. Ο θησαυρός περιμένει εκείνους που έμαθαν να
-        κοιτούν την Καλαμάτα σαν εξερευνητές.
+        {t.journal.finalBody}
       </p>
       <div className="mt-7 flex items-center gap-3">
         <span className="h-px w-12 bg-ink/25" />
-        <span className="font-serif text-base italic text-ink/55">Π. Μ.</span>
+        <span className="font-serif text-base italic text-ink/55">{t.journal.signature}</span>
       </div>
     </div>
   )
