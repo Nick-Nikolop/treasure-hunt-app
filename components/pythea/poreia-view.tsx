@@ -198,10 +198,16 @@ export function PoreiaView({
           {/* Drop shadow underlay, kept outside the clip so it is not cut off */}
           <div className="pointer-events-none absolute inset-0 -z-10 rounded-r-lg rounded-l-sm shadow-[0_30px_60px_-25px_rgba(0,0,0,0.7)]" />
 
-          {/* Page-thickness stack along the right edge (unturned pages) */}
-          <div className="pointer-events-none absolute -right-1 bottom-1 top-2 -z-20 w-3 rounded-r-lg bg-gradient-to-r from-[oklch(0.82_0.04_82)] to-[oklch(0.7_0.04_80)] shadow-xl" />
-          <div className="pointer-events-none absolute inset-x-2 -bottom-1.5 top-2.5 -z-20 rounded-r-lg rounded-l-sm bg-[oklch(0.86_0.04_82)]" />
-          <div className="pointer-events-none absolute inset-x-1 -bottom-0.5 top-1.5 -z-20 rounded-r-lg rounded-l-sm bg-[oklch(0.9_0.04_82)]" />
+          {/* Page-thickness stack along the right edge (unturned pages).
+              Hidden when the visible page is sealed/torn so the ragged edge
+              reveals the dark desk behind instead of more clean paper. */}
+          {basePage.kind !== "sealed" && (
+            <>
+              <div className="pointer-events-none absolute -right-1 bottom-1 top-2 -z-20 w-3 rounded-r-lg bg-gradient-to-r from-[oklch(0.82_0.04_82)] to-[oklch(0.7_0.04_80)] shadow-xl" />
+              <div className="pointer-events-none absolute inset-x-2 -bottom-1.5 top-2.5 -z-20 rounded-r-lg rounded-l-sm bg-[oklch(0.86_0.04_82)]" />
+              <div className="pointer-events-none absolute inset-x-1 -bottom-0.5 top-1.5 -z-20 rounded-r-lg rounded-l-sm bg-[oklch(0.9_0.04_82)]" />
+            </>
+          )}
 
           {/* Clipping stage: a leaf rotating past the spine is hidden here, so
               it reads as tucking behind the journal rather than flying off. */}
@@ -337,8 +343,18 @@ function JournalPage({
 }) {
   if (page.kind === "cover") return <CoverPage />
 
+  // Sealed pages are rendered as if torn out of the journal: a ragged outer
+  // edge replaces the clean page, signalling the entry is not yet readable.
+  const torn = page.kind === "sealed"
+
   return (
-    <article className="relative overflow-hidden rounded-r-lg rounded-l-sm border border-[oklch(0.78_0.04_80)] bg-paper text-ink shadow-[0_30px_60px_-25px_rgba(0,0,0,0.7)]">
+    <article
+      className={`relative overflow-hidden rounded-l-sm border border-[oklch(0.78_0.04_80)] bg-paper text-ink ${
+        torn
+          ? "torn-page rounded-r-none"
+          : "rounded-r-lg shadow-[0_30px_60px_-25px_rgba(0,0,0,0.7)]"
+      }`}
+    >
       {/* Spiral binding rings on the left */}
       <BindingRings />
       {/* Paper fiber grain */}
@@ -570,7 +586,7 @@ function SealedPageBody({
       <p className="mt-7 max-w-sm text-pretty font-serif text-lg italic leading-relaxed text-ink/65">
         {notStarted
           ? "Το πρώτο σημάδι θα εμφανιστεί μόλις ο Πυθέας ανοίξει τον χάρτη του."
-          : "Γύρνα ξανά όταν λήξει ο χρόνος. Η επόμενη σελίδα θα έχει χαραχτεί στο ημ��ρολόγιο."}
+          : "Γύρνα ξανά όταν λήξει ο χρόνος. Η επόμενη σελίδα θα έχει χαραχτεί στο ημερολόγιο."}
       </p>
     </div>
   )

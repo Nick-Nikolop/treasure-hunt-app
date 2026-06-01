@@ -229,6 +229,45 @@ body {
   .tracking-chip {
     letter-spacing: 0.28em;
   }
+  /* Ripped-out journal leaf: a ragged right edge as if torn from the book.
+     The left (spine) side stays straight; the outer edge is jagged. */
+  .torn-page {
+    clip-path: polygon(
+      0% 0%,
+      97% 0%,
+      100% 3%,
+      96% 6%,
+      99% 9%,
+      95% 13%,
+      100% 16%,
+      96% 19%,
+      98% 23%,
+      94% 26%,
+      100% 30%,
+      96% 33%,
+      99% 37%,
+      95% 40%,
+      100% 44%,
+      96% 47%,
+      98% 51%,
+      94% 54%,
+      100% 58%,
+      96% 61%,
+      99% 65%,
+      95% 68%,
+      100% 72%,
+      96% 75%,
+      98% 79%,
+      94% 82%,
+      100% 86%,
+      96% 89%,
+      99% 93%,
+      95% 96%,
+      100% 99%,
+      0% 100%
+    );
+    filter: drop-shadow(-2px 6px 10px rgba(0, 0, 0, 0.45));
+  }
   .bg-paper {
     background-color: var(--parchment);
     background-image: radial-gradient(

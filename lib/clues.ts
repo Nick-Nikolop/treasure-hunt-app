@@ -106,7 +106,7 @@ export const CLUES: Clue[] = [
     subtitle: "Το σπίτι του ξένου",
     icon: "DoorOpen",
     body: [
-      "Από τα Βαλκάνια κατευθύνθηκα δυτικά, προς την Ισπανία. Εκεί βρήκα χρώμα, μουσική, θάλασσες, πλατείες και ανθρώπους που ήξεραν να κάνουν τον ξένο να αισθάνεται φιλοξενούμενος.",
+      "Από τα Βαλκάνια κατευθύνθηκα δυτικά, προς την Ισπανία. Εκεί βρήκα χρώμα, μουσική, θάλασσες, πλατείες ��αι ανθρώπους που ήξεραν να κάνουν τον ξένο να αισθάνεται φιλοξενούμενος.",
       "Κάθε ταξιδιώτης, πιστεύω, χρειάζεται κάπου να νιώσει πως κάποιος τον αναγνωρίζει, ακόμη κι αν βρίσκεται μακριά από την πατρίδα του.",
       "Γι’ αυτό και το επόμενο σημάδι το άφησα σε ένα σημείο της Καλαμάτας όπου ένας Ισπανός θα μπορούσε να χτυπήσει την πόρτα και να νιώσει, έστω για λίγο, σαν να βρίσκεται σε γνώριμο έδαφος.",
     ],
@@ -177,7 +177,9 @@ export function unlockedCountAt(
   ) {
     return Math.max(0, Math.min(TOTAL_CLUES, Math.floor(previewOverride)))
   }
-  if (nowMs < START_MS) return 0
+  // The first clue is always revealed, even before the official start time,
+  // so visitors always have a starting point in the journal.
+  if (nowMs < START_MS) return 1
   const elapsedHours = (nowMs - START_MS) / 3600_000
   return Math.min(TOTAL_CLUES, Math.floor(elapsedHours / INTERVAL_HOURS) + 1)
 }
