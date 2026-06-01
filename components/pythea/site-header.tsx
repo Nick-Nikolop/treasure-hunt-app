@@ -11,6 +11,17 @@ const NAV = [
   { label: "Πώς Παίζεται", href: "/#how" },
 ]
 
+// Greek all-caps convention: drop the tonos (e.g. ΙΣΤΟΡΊΑ -> ΙΣΤΟΡΙΑ) while
+// keeping the dialytika. JS toUpperCase() keeps the accent, so strip it here.
+function greekCaps(s: string) {
+  return s
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0301\u0342\u0340\u0341]/g, "")
+    .replace(/\u0344/g, "\u0308")
+    .normalize("NFC")
+}
+
 export function SiteHeader() {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
@@ -49,9 +60,9 @@ export function SiteHeader() {
             <a
               key={item.href}
               href={item.href}
-              className="group relative font-sans text-xs font-semibold tracking-chip text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {item.label.toUpperCase()}
+            className="group relative font-sans text-xs font-semibold tracking-chip text-muted-foreground transition-colors hover:text-foreground"
+          >
+                {greekCaps(item.label)}
               <span className="absolute -bottom-1 left-0 h-px w-0 bg-brass transition-all duration-300 group-hover:w-full" />
             </a>
           ))}
@@ -91,9 +102,9 @@ export function SiteHeader() {
                   onClick={() => setOpen(false)}
                   className="rounded-sm px-2 py-3 font-sans text-sm font-semibold tracking-chip text-muted-foreground hover:bg-card hover:text-foreground"
                 >
-                  {item.label.toUpperCase()}
-                </a>
-              ))}
+            {greekCaps(item.label)}
+          </a>
+        ))}
               <a
                 href="/#register"
                 onClick={() => setOpen(false)}
