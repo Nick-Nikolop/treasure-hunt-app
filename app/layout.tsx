@@ -1,14 +1,27 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Alegreya, Alegreya_Sans } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
-const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
+const alegreya = Alegreya({
+  subsets: ['greek', 'latin'],
+  weight: ['400', '500', '700', '800', '900'],
+  style: ['normal', 'italic'],
+  variable: '--font-alegreya',
+  display: 'swap',
+})
+
+const alegreyaSans = Alegreya_Sans({
+  subsets: ['greek', 'latin'],
+  weight: ['400', '500', '700', '800'],
+  variable: '--font-alegreya-sans',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
+  title: 'Το Ταξίδι του Πυθέα του Μεσσήνιου',
+  description:
+    'Κυνήγι θησαυρού στην Καλαμάτα. Ακολούθησε τα ίχνη ενός πολυταξιδεμένου εξερευνητή και μάθε να κοιτάς την πόλη σαν να την ανακαλύπτεις για πρώτη φορά.',
   generator: 'v0.app',
   icons: {
     icon: [
@@ -35,8 +48,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className="font-sans antialiased">
+    <html
+      lang="el"
+      className={`${alegreya.variable} ${alegreyaSans.variable} bg-background`}
+    >
+      <body className="font-serif antialiased">
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

@@ -4,39 +4,45 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* Deep ink / aged paper, brass and teal. Vintage cartography. */
+  --background: oklch(0.16 0.018 62);
+  --foreground: oklch(0.9 0.035 78);
+  --card: oklch(0.2 0.02 60);
+  --card-foreground: oklch(0.9 0.035 78);
+  --popover: oklch(0.19 0.02 60);
+  --popover-foreground: oklch(0.9 0.035 78);
+  --primary: oklch(0.78 0.13 78);
+  --primary-foreground: oklch(0.17 0.02 62);
+  --secondary: oklch(0.3 0.035 200);
+  --secondary-foreground: oklch(0.9 0.035 78);
+  --muted: oklch(0.26 0.02 62);
+  --muted-foreground: oklch(0.72 0.03 80);
+  --accent: oklch(0.58 0.08 196);
+  --accent-foreground: oklch(0.96 0.02 80);
+  --destructive: oklch(0.55 0.18 28);
+  --destructive-foreground: oklch(0.96 0.02 80);
+  --border: oklch(0.34 0.025 66);
+  --input: oklch(0.3 0.02 66);
+  --ring: oklch(0.78 0.13 78);
+  --chart-1: oklch(0.78 0.13 78);
+  --chart-2: oklch(0.58 0.08 196);
+  --chart-3: oklch(0.7 0.1 120);
+  --chart-4: oklch(0.6 0.15 40);
+  --chart-5: oklch(0.5 0.06 260);
+  --radius: 0.3rem;
+  /* Custom vintage tokens */
+  --parchment: oklch(0.93 0.04 82);
+  --ink: oklch(0.16 0.018 62);
+  --brass: oklch(0.78 0.13 78);
+  --teal: oklch(0.58 0.08 196);
+  --sidebar: oklch(0.2 0.02 60);
+  --sidebar-foreground: oklch(0.9 0.035 78);
+  --sidebar-primary: oklch(0.78 0.13 78);
+  --sidebar-primary-foreground: oklch(0.17 0.02 62);
+  --sidebar-accent: oklch(0.58 0.08 196);
+  --sidebar-accent-foreground: oklch(0.96 0.02 80);
+  --sidebar-border: oklch(0.34 0.025 66);
+  --sidebar-ring: oklch(0.78 0.13 78);
 }
 
 .dark {
@@ -75,8 +81,13 @@
 }
 
 @theme inline {
-  --font-sans: 'Geist', 'Geist Fallback';
-  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
+  --font-sans: var(--font-alegreya-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-alegreya), ui-serif, Georgia, serif;
+  --font-mono: var(--font-alegreya-sans), ui-monospace, monospace;
+  --color-parchment: var(--parchment);
+  --color-ink: var(--ink);
+  --color-brass: var(--brass);
+  --color-teal: var(--teal);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -121,5 +132,71 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: 'liga' 1, 'kern' 1;
+  }
+  ::selection {
+    background: var(--brass);
+    color: var(--ink);
+  }
+}
+
+@layer utilities {
+  /* Film grain overlay */
+  .grain-layer {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 180px 180px;
+  }
+  /* Subtle aged-paper / vignette glow */
+  .vignette {
+    background: radial-gradient(
+      ellipse at 50% 30%,
+      transparent 0%,
+      transparent 45%,
+      color-mix(in oklch, var(--ink) 70%, transparent) 100%
+    );
+  }
+  .text-shadow-vintage {
+    text-shadow: 0 1px 0 color-mix(in oklch, var(--ink) 60%, transparent),
+      0 0 40px color-mix(in oklch, var(--brass) 25%, transparent);
+  }
+  .tracking-chip {
+    letter-spacing: 0.28em;
+  }
+  .bg-paper {
+    background-color: var(--parchment);
+    background-image: radial-gradient(
+        color-mix(in oklch, var(--ink) 7%, transparent) 1px,
+        transparent 1px
+      ),
+      radial-gradient(
+        color-mix(in oklch, var(--ink) 5%, transparent) 1px,
+        transparent 1px
+      );
+    background-position: 0 0, 12px 12px;
+    background-size: 24px 24px;
+  }
+  @keyframes float-slow {
+    0%,
+    100% {
+      transform: translateY(0) rotate(0deg);
+    }
+    50% {
+      transform: translateY(-12px) rotate(2deg);
+    }
+  }
+  .animate-float-slow {
+    animation: float-slow 7s ease-in-out infinite;
+  }
+  @keyframes compass-sway {
+    0%,
+    100% {
+      transform: rotate(-8deg);
+    }
+    50% {
+      transform: rotate(8deg);
+    }
+  }
+  .animate-compass-sway {
+    animation: compass-sway 6s ease-in-out infinite;
   }
 }
