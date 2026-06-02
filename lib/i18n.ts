@@ -59,6 +59,8 @@ const el = {
     titleEm: "Μία πόλη.",
     intro:
       "Άνοιξε το ημερολόγιο του Πυθέα και διάβασε τις καταχωρήσεις του, μία μία. Κάθε σελίδα κουβαλά μια χώρα του ταξιδιού του και ένα σημάδι κρυμμένο σε μια γωνιά της Καλαμάτας. Οι σελίδες ξεκλειδώνουν με τον καιρό. Κανείς δεν ξέρει ποια χώρα κρύβει η επόμενη.",
+  mapAlt: "Παλιός χάρτης της Καλαμάτας με την ακτή, τα βουνά και το λιμάνι",
+  mapCaption: "ΚΑΛΑΜΑΤΑ · Ο ΧΑΡΤΗΣ ΤΩΝ ΣΗΜΑΔΙΩΝ",
   open: "ΑΝΟΙΧΤΟ",
   locked: "ΚΛΕΙΔΩΜΕΝΟ",
   openCardAria: (n: number) => `Άνοιξε το ημερολόγιο στη σελίδα ${n}`,
@@ -152,7 +154,7 @@ const el = {
     sealedNotStartedBody:
       "Το πρώτο σημάδι θα εμφανιστεί μόλις ο Πυθέας ανοίξει τον χάρτη του.",
     sealedBody:
-      "Γύρνα ξανά όταν λήξει ο χρόνος. Η επόμενη σελίδα θα έχει χαραχτεί στο ημερολόγιο.",
+      "Γύρ��α ξανά όταν λήξει ο χρόνος. Η επόμενη σελίδα θα έχει χαραχτεί στο ημερολόγιο.",
     finalLabel: "ΤΕΛΟΣ ΤΟΥ ΗΜΕΡΟΛΟΓΙΟΥ",
     finalBody:
       "Όλα τα σημάδια αποκαλύφθηκαν. Ο θησαυρός περιμένει εκείνους που έμαθαν να κοιτούν την Καλαμάτα σαν εξερευνητές.",
@@ -222,8 +224,10 @@ const en: Dictionary = {
     titlePre: "Nine countries. Nine marks.",
     titleEm: "One city.",
     intro:
-      "Open the journal of Pytheas and read his entries, one by one. Each page carries a country from his voyage and a mark hidden in a corner of Kalamata. The pages unlock over time. No one knows which country the next one holds.",
-    open: "OPEN",
+  "Open the journal of Pytheas and read his entries, one by one. Each page carries a country from his voyage and a mark hidden in a corner of Kalamata. The pages unlock over time. No one knows which country the next one holds.",
+    mapAlt: "Antique map of Kalamata showing the coastline, mountains and harbor",
+    mapCaption: "KALAMATA · THE MAP OF MARKS",
+  open: "OPEN",
     locked: "LOCKED",
     openCardAria: (n: number) => `Open the journal at page ${n}`,
   statCountries: "COUNTRIES",

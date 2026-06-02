@@ -36,26 +36,52 @@ export function Journey({ unlockedCount, total, nextUnlockMs }: Props) {
           <span className="h-px flex-1 bg-border" />
         </motion.div>
 
-        <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.8, delay: 0.1 }}
-          className="max-w-2xl text-balance font-serif text-4xl font-black leading-tight text-foreground md:text-6xl"
-        >
-          {t.journey.titlePre}{" "}
-          <span className="italic text-brass">{t.journey.titleEm}</span>
-        </motion.h2>
+        <div className="grid items-center gap-10 md:grid-cols-[1fr_auto] md:gap-12">
+          <div>
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.8, delay: 0.1 }}
+              className="max-w-2xl text-balance font-serif text-4xl font-black leading-tight text-foreground md:text-6xl"
+            >
+              {t.journey.titlePre}{" "}
+              <span className="italic text-brass">{t.journey.titleEm}</span>
+            </motion.h2>
 
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="mt-5 max-w-xl text-pretty font-serif text-lg leading-relaxed text-muted-foreground"
-        >
-          {t.journey.intro}
-        </motion.p>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="mt-5 max-w-xl text-pretty font-serif text-lg leading-relaxed text-muted-foreground"
+            >
+              {t.journey.intro}
+            </motion.p>
+          </div>
+
+          {/* Vintage cartographic view of Kalamata, framed as an aged plate */}
+          <motion.figure
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+            className="relative mx-auto w-full max-w-sm md:w-72 lg:w-80"
+          >
+            <div className="overflow-hidden rounded-sm border border-brass/40 bg-card p-2 shadow-[0_20px_45px_-25px_rgba(0,0,0,0.7)]">
+              <img
+                src="/map-square.jpg"
+                alt={t.journey.mapAlt}
+                width={640}
+                height={640}
+                className="aspect-square w-full rounded-[2px] object-cover"
+              />
+            </div>
+            <figcaption className="mt-3 text-center font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
+              {t.journey.mapCaption}
+            </figcaption>
+          </motion.figure>
+        </div>
 
         {/* Editorial stat strip anchoring the "9 / 9 / 1" tagline */}
         <motion.dl
