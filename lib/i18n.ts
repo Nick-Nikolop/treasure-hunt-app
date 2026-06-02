@@ -76,6 +76,7 @@ const el = {
   nextOpensIn: "Το επόμενο σημάδι ανοίγει σε",
   allOpen: "Όλα τα σημάδια είναι ανοιχτά. Ο θησαυρός περιμένει.",
   cta: "ΑΝΟΙΞΕ ΤΟ ΗΜΕΡΟΛΟΓΙΟ",
+  openJournal: "Άνοιξε το ημερολόγιο",
   },
   treasure: {
     section: "ΙΙΙ. Ο ΘΗΣΑΥΡΟΣ",
@@ -241,6 +242,7 @@ const en: Dictionary = {
   nextOpensIn: "The next mark opens in",
   allOpen: "Every mark is open. The treasure awaits.",
   cta: "OPEN THE JOURNAL",
+  openJournal: "Open the journal",
   },
   treasure: {
     section: "III. THE TREASURE",

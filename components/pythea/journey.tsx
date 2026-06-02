@@ -1,11 +1,13 @@
 "use client"
 
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useCallback } from "react"
 import { motion } from "framer-motion"
 import { Lock, Check, Compass, ArrowRight } from "lucide-react"
 import { Countdown } from "@/components/pythea/countdown"
 import { useI18n } from "@/components/pythea/language-provider"
+import { JournalCover } from "@/components/pythea/journal-cover"
 
 type Props = {
   unlockedCount: number
@@ -262,6 +264,32 @@ export function Journey({ unlockedCount, total, nextUnlockMs }: Props) {
             {t.journey.cta}
             <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
           </a>
+        </motion.div>
+
+        {/* The same closed journal from the journal page, shown as a clickable
+            preview right below the countdown. Clicking it opens the journal,
+            so the homepage preview and the real book are one and the same. */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="mt-12 flex justify-center"
+        >
+          <Link
+            href="/journal"
+            aria-label={t.journey.openJournal}
+            className="group block w-full max-w-xs rounded-r-lg rounded-l-sm transition-transform duration-300 hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-4 focus-visible:ring-offset-background"
+          >
+            <JournalCover
+              heightClass="min-h-[26rem] md:min-h-[30rem]"
+              className="transition-shadow duration-300 group-hover:shadow-[0_45px_75px_-20px_rgba(0,0,0,0.9)]"
+            />
+            <span className="mt-4 flex items-center justify-center gap-1.5 font-sans text-[11px] font-bold tracking-chip text-brass">
+              {t.journey.openJournal}
+              <ArrowRight className="size-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+            </span>
+          </Link>
         </motion.div>
       </div>
     </section>
