@@ -77,9 +77,6 @@ export function Journey({ unlockedCount, total, nextUnlockMs }: Props) {
                 className="aspect-square w-full rounded-[2px] object-cover"
               />
             </div>
-            <figcaption className="mt-3 text-center font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
-              {t.journey.mapCaption}
-            </figcaption>
           </motion.figure>
         </div>
 
