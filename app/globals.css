@@ -345,7 +345,7 @@ body {
      stronger parchment wash so it reads as a faded sepia chart, not a muddy
      dark band crashing into the cream page. */
   .light .hero-scrim {
-  background-color: color-mix(in oklch, var(--background) 78%, transparent);
+  background-color: color-mix(in oklch, var(--background) 58%, transparent);
   }
   .text-shadow-vintage {
     text-shadow: 0 1px 0 color-mix(in oklch, var(--ink) 55%, transparent),
