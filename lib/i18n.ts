@@ -59,6 +59,7 @@ const el = {
     titleEm: "Μία πόλη.",
     intro:
       "Άνοιξε το ημερολόγιο του Πυθέα και διάβασε τις καταχωρήσεις του, μία μία. Κάθε σελίδα κουβαλά μια χώρα του ταξιδιού του και ένα σημάδι κρυμμένο σε μια γωνιά της Καλαμάτας. Οι σελίδες ξεκλειδώνουν με τον καιρό. Κανείς δεν ξέρει ποια χώρα κρύβει η επόμενη.",
+  mapAlt: "Παλιός χάρτης της Καλαμάτας με την ακτή, τα βουνά και το λιμάνι",
   openJournal: "Άνοιξε το ημερολόγιο",
   open: "ΑΝΟΙΧΤΟ",
   locked: "ΚΛΕΙΔΩΜΕΝΟ",
@@ -224,6 +225,7 @@ const en: Dictionary = {
     titleEm: "One city.",
     intro:
   "Open the journal of Pytheas and read his entries, one by one. Each page carries a country from his voyage and a mark hidden in a corner of Kalamata. The pages unlock over time. No one knows which country the next one holds.",
+    mapAlt: "Antique map of Kalamata showing the coastline, mountains and harbor",
     openJournal: "Open the journal",
   open: "OPEN",
     locked: "LOCKED",
