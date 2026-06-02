@@ -6,6 +6,7 @@ import { Journey } from "@/components/pythea/journey"
 import { Treasure } from "@/components/pythea/treasure"
 import { HowItWorks } from "@/components/pythea/how-it-works"
 import { Register } from "@/components/pythea/register"
+import { FloatingCta } from "@/components/pythea/floating-cta"
 import { SiteFooter } from "@/components/pythea/site-footer"
 import { cookies } from "next/headers"
 import { buildClueState, isOverrideAuthorized, PREVIEW_COOKIE } from "@/lib/clues"
@@ -41,6 +42,7 @@ export default async function Page() {
         <HowItWorks />
         <Register />
       </main>
+      <FloatingCta />
       <SiteFooter />
     </>
   )
