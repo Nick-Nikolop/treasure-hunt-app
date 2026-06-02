@@ -1,11 +1,13 @@
 "use client"
 
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useCallback } from "react"
 import { motion } from "framer-motion"
 import { Lock, Check, Compass, ArrowRight } from "lucide-react"
 import { Countdown } from "@/components/pythea/countdown"
 import { useI18n } from "@/components/pythea/language-provider"
+import { JournalCover } from "@/components/pythea/journal-cover"
 
 type Props = {
   unlockedCount: number
@@ -60,24 +62,31 @@ export function Journey({ unlockedCount, total, nextUnlockMs }: Props) {
             </motion.p>
           </div>
 
-          {/* Vintage cartographic view of Kalamata, framed as an aged plate */}
-          <motion.figure
+          {/* The same closed journal shown on the journal page. Clicking it
+              opens the journal page so the homepage preview and the real book
+              are one and the same object. */}
+          <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="relative mx-auto w-full max-w-sm md:w-72 lg:w-80"
+            className="relative mx-auto w-full max-w-[17rem] md:w-64 lg:w-72"
           >
-            <div className="overflow-hidden rounded-sm border border-brass/40 bg-card p-2 shadow-[0_20px_45px_-25px_rgba(0,0,0,0.7)]">
-              <img
-                src="/map-square.jpg"
-                alt={t.journey.mapAlt}
-                width={640}
-                height={640}
-                className="aspect-square w-full rounded-[2px] object-cover"
+            <Link
+              href="/journal"
+              aria-label={t.journey.openJournal}
+              className="group block rounded-r-lg rounded-l-sm transition-transform duration-300 hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-4 focus-visible:ring-offset-background"
+            >
+              <JournalCover
+                heightClass="min-h-[24rem] md:min-h-[28rem]"
+                className="transition-shadow duration-300 group-hover:shadow-[0_40px_70px_-20px_rgba(0,0,0,0.9)]"
               />
-            </div>
-          </motion.figure>
+              <span className="mt-4 flex items-center justify-center gap-1.5 font-sans text-[11px] font-bold tracking-chip text-brass">
+                {t.journey.openJournal}
+                <ArrowRight className="size-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+              </span>
+            </Link>
+          </motion.div>
         </div>
 
         {/* Editorial stat strip anchoring the "9 / 9 / 1" tagline */}
