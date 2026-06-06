@@ -36,6 +36,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    console.log("[v0] handleSubmit fired", { mode, email })
     setError(null)
 
     if (isSignUp) {
