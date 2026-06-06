@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Compass, Menu, X } from "lucide-react"
 import { ThemeToggle } from "@/components/pythea/theme-toggle"
 import { LanguageToggle } from "@/components/pythea/language-toggle"
+import { AuthNav } from "@/components/pythea/auth-nav"
 import { useI18n } from "@/components/pythea/language-provider"
 
 // Greek all-caps convention: drop the tonos (e.g. ΙΣΤΟΡΊΑ -> ΙΣΤΟΡΙΑ) while
@@ -75,6 +76,7 @@ export function SiteHeader() {
         <div className="hidden items-center gap-3 md:flex">
           <LanguageToggle />
           <ThemeToggle />
+          <AuthNav />
           <a
             href="/#register"
             className="inline-flex items-center gap-2 rounded-sm border border-brass/60 px-4 py-2 font-sans text-xs font-bold tracking-chip text-brass transition-colors hover:bg-brass hover:text-primary-foreground"
@@ -124,6 +126,7 @@ export function SiteHeader() {
               >
                 {greekCaps(t.nav.register)}
               </a>
+              <AuthNav compact onNavigate={() => setOpen(false)} />
             </div>
           </motion.div>
         )}

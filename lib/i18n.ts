@@ -150,7 +150,7 @@ const el = {
     entryNo: "ΚΑΤΑΧΩΡΗΣΗ Νο.",
     stampAlt: (country: string) => `Γραμματόσημο από ${country}`,
     signature: "Π. Μ.",
-    sealedNotStartedLabel: "ΤΟ ΗΜΕΡΟΛΟΓΙΟ ΑΝΟΙΓΕΙ ΣΕ",
+    sealedNotStartedLabel: "ΤΟ ΗΜΕΡΟΛΟΓΙΟ ΑΝΟΙΓΕ�� ΣΕ",
     sealedLabel: (n: string) => `Η ΣΕΛΙΔΑ Νο. ${n} ΣΦΡΑΓΙΣΤΗΚΕ`,
     sealedNotStartedBody:
       "Το πρώτο σημάδι θα εμφανιστεί μόλις ο Πυθέας ανοίξει τον χάρτη του.",
@@ -180,6 +180,54 @@ const el = {
   lang: {
     toggleToEn: "Switch to English",
     toggleToEl: "Αλλαγή σε Ελληνικά",
+  },
+  auth: {
+    // shared
+    brand: "ΠΥΘΕΑΣ",
+    brandSub: "Ο ΜΕΣΣΗΝΙΟΣ",
+    backHome: "Επιστροφή στην αρχική",
+    or: "ή",
+    emailLabel: "Email",
+    emailPlaceholder: "navigator@pythea.gr",
+    passwordLabel: "Κωδικός",
+    passwordPlaceholder: "Τουλάχιστον 8 χαρακτήρες",
+    firstNameLabel: "Όνομα",
+    firstNamePlaceholder: "Πυθέας",
+    lastNameLabel: "Επώνυμο (προαιρετικό)",
+    lastNamePlaceholder: "ο Μεσσήνιος",
+    yearLabel: "Έτος γέννησης",
+    yearPlaceholder: "1990",
+    optional: "προαιρετικό",
+    showPassword: "Εμφάνιση κωδικού",
+    hidePassword: "Απόκρυψη κωδικού",
+    // sign up
+    signUpEyebrow: "ΝΕΟΣ ΕΞΕΡΕΥΝΗΤΗΣ",
+    signUpTitle: "Φτιάξε τον λογαριασμό σου",
+    signUpSubtitle:
+      "Γράψου στο πλήρωμα και κράτα τη δική σου πορεία στο ταξίδι του Πυθέα.",
+    signUpCta: "Δημιουργία λογαριασμού",
+    signUpLoading: "Γίνεται εγγραφή...",
+    haveAccount: "Έχεις ήδη λογαριασμό;",
+    goToSignIn: "Σύνδεση",
+    // sign in
+    signInEyebrow: "ΚΑΛΩΣ ΗΡΘΕΣ ΠΙΣΩ",
+    signInTitle: "Σύνδεση",
+    signInSubtitle: "Συνέχισε την πορεία σου από εκεί που την άφησες.",
+    signInCta: "Σύνδεση",
+    signInLoading: "Γίνεται σύνδεση...",
+    noAccount: "Δεν έχεις λογαριασμό;",
+    goToSignUp: "Δημιουργία λογαριασμού",
+    // account / nav
+    account: "Ο ΛΟΓΑΡΙΑΣΜΟΣ ΜΟΥ",
+    signOut: "Αποσύνδεση",
+    greeting: (name: string) => `Καλώς ήρθες, ${name}`,
+    // validation / errors
+    errRequired: "Συμπλήρωσε το όνομα και το email σου.",
+    errPasswordShort: "Ο κωδικός πρέπει να έχει τουλάχιστον 8 χαρακτήρες.",
+    errYearInvalid: "Δώσε ένα έγκυρο έτος γέννησης.",
+    errEmailTaken: "Υπάρχει ήδη λογαριασμός με αυτό το email.",
+    errInvalidCredentials: "Λάθος email ή κωδικός.",
+    errGeneric: "Κάτι πήγε στραβά. Δοκίμασε ξανά.",
   },
 }
 
@@ -346,6 +394,54 @@ const en: Dictionary = {
   lang: {
     toggleToEn: "Switch to English",
     toggleToEl: "Αλλαγή σε Ελληνικά",
+  },
+  auth: {
+    // shared
+    brand: "PYTHEAS",
+    brandSub: "OF MESSENE",
+    backHome: "Back to home",
+    or: "or",
+    emailLabel: "Email",
+    emailPlaceholder: "navigator@pythea.com",
+    passwordLabel: "Password",
+    passwordPlaceholder: "At least 8 characters",
+    firstNameLabel: "First name",
+    firstNamePlaceholder: "Pytheas",
+    lastNameLabel: "Last name (optional)",
+    lastNamePlaceholder: "of Messene",
+    yearLabel: "Year of birth",
+    yearPlaceholder: "1990",
+    optional: "optional",
+    showPassword: "Show password",
+    hidePassword: "Hide password",
+    // sign up
+    signUpEyebrow: "NEW EXPLORER",
+    signUpTitle: "Create your account",
+    signUpSubtitle:
+      "Join the crew and keep your own course through the voyage of Pytheas.",
+    signUpCta: "Create account",
+    signUpLoading: "Creating account...",
+    haveAccount: "Already have an account?",
+    goToSignIn: "Sign in",
+    // sign in
+    signInEyebrow: "WELCOME BACK",
+    signInTitle: "Sign in",
+    signInSubtitle: "Pick up your course right where you left off.",
+    signInCta: "Sign in",
+    signInLoading: "Signing in...",
+    noAccount: "Don't have an account?",
+    goToSignUp: "Create account",
+    // account / nav
+    account: "MY ACCOUNT",
+    signOut: "Sign out",
+    greeting: (name: string) => `Welcome, ${name}`,
+    // validation / errors
+    errRequired: "Enter your first name and email.",
+    errPasswordShort: "Password must be at least 8 characters.",
+    errYearInvalid: "Enter a valid year of birth.",
+    errEmailTaken: "An account with this email already exists.",
+    errInvalidCredentials: "Wrong email or password.",
+    errGeneric: "Something went wrong. Please try again.",
   },
 }
 
