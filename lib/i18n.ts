@@ -121,10 +121,82 @@ const el = {
     submit: "ΚΛΕΙΣΕ ΘΕΣΗ",
     noSpam: "Κανένα spam. Μόνο ό,τι χρειάζεσαι για να ξεκινήσεις το ταξίδι.",
   },
+  crew: {
+    section: "V. ΤΟ ΠΛΗΡΩΜΑ",
+    badge: "ΚΑΛΟΚΑΙΡΙ 2026 · ΚΑΛΑΜΑΤΑ",
+    title: "Μπες στο πλήρωμα.",
+    subtitle:
+      "Φτιάξε τον δικό σου λογαριασμό και κράτα τη θέση σου στο ταξίδι. Όταν ανοίξουν οι ομάδες, θα είσαι έτοιμος να σαλπάρεις με τους δικούς σου.",
+    perks: [
+      {
+        title: "Η δική σου πορεία",
+        text: "Ο λογαριασμός σου κρατά την πρόοδό σου καθώς ξεκλειδώνουν τα σημάδια.",
+      },
+      {
+        title: "Ομάδες σε λίγο καιρό",
+        text: "Σύντομα θα μπορείς να φτιάξεις ή να μπεις σε ομάδα 2 έως 5 ατόμων.",
+      },
+      {
+        title: "Πρώτος στα νέα",
+        text: "Ημερομηνία, κανόνες και ώρα εκκίνησης έρχονται πρώτα σε όσους έχουν λογαριασμό.",
+      },
+    ],
+    ctaSignUp: "ΔΗΜΙΟΥΡΓΙΑ ΛΟΓΑΡΙΑΣΜΟΥ",
+    ctaSignIn: "ΕΧΩ ΗΔΗ ΛΟΓΑΡΙΑΣΜΟ",
+    welcomeBadge: "ΜΕΛΟΣ ΤΟΥ ΠΛΗΡΩΜΑΤΟΣ",
+    welcomeTitle: (name: string) => `Καλώς ήρθες, ${name}.`,
+    welcomeBody:
+      "Η θέση σου στο πλήρωμα είναι κρατημένη. Άνοιξε το ημερολόγιο και διάβασε τα σημάδια που έχουν αποκαλυφθεί ως τώρα.",
+    welcomeCta: "ΑΝΟΙΞΕ ΤΟ ΗΜΕΡΟΛΟΓΙΟ",
+    welcomeTeams: "Οι ομάδες ανοίγουν σε λίγο καιρό. Θα ειδοποιηθείς πρώτος.",
+  },
+  faq: {
+    section: "VI. ΑΠΟΡΙΕΣ",
+    titlePre: "Ό,τι θες να ξέρεις",
+    titleEm: "πριν σαλπάρεις.",
+    items: [
+      {
+        q: "Τι είναι το Ταξίδι του Πυθέα;",
+        a: "Ένα κυνήγι θησαυρού στην Καλαμάτα. Ακολουθείς τα ίχνη του Πυθέα του Μεσσήνιου, λύνεις γρίφους σε γωνιές της πόλης και ψάχνεις τον θησαυρό που έκρυψε πριν χαθεί.",
+      },
+      {
+        q: "Πότε ξεκινά;",
+        a: "Το καλοκαίρι του 2026. Μέχρι τότε, οι σελίδες του ημερολογίου ξεκλειδώνουν σταδιακά και αποκαλύπτουν τα σημάδια, ένα ένα.",
+      },
+      {
+        q: "Πόσα άτομα έχει μια ομάδα;",
+        a: "Από δύο έως πέντε άτομα. Η δυνατότητα να φτιάξεις ή να μπεις σε ομάδα ανοίγει σε λίγο καιρό. Προς το παρόν φτιάχνεις τον προσωπικό σου λογαριασμό.",
+      },
+      {
+        q: "Χρειάζομαι λογαριασμό;",
+        a: "Ναι. Με τον λογαριασμό σου κρατάς την πορεία σου στο ταξίδι και μαθαίνεις πρώτος τα νέα. Η εγγραφή θέλει μόνο όνομα, email και κωδικό.",
+      },
+      {
+        q: "Πώς ξεκλειδώνουν τα σημάδια;",
+        a: "Με τον καιρό. Κάθε σελίδα του ημερολογίου ανοίγει σε προκαθορισμένη στιγμή και κανείς δεν ξέρει ποια χώρα κρύβει η επόμενη.",
+      },
+      {
+        q: "Τι κερδίζει η πρώτη ομάδα;",
+        a: "Τον θησαυρό του Πυθέα. Τι ακριβώς είναι, το μαθαίνουν μόνο όσοι φτάσουν ως το τέλος.",
+      },
+    ],
+  },
   footer: {
     title: "Το Ταξίδι του Πυθέα του Μεσσήνιου",
     tagline: "ΚΥΝΗΓΙ ΘΗΣΑΥΡΟΥ · ΚΑΛΑΜΑΤΑ · ΚΑΛΟΚΑΙΡΙ 2026",
     motto: "ΑΝΑΚΑΛΥΨΕ ΤΟ ΑΓΝΩΣΤΟ ΜΕΣΑ ΣΤΟ ΓΝΩΡΙΜΟ",
+    colExplore: "ΕΞΕΡΕΥΝΗΣΗ",
+    colAccount: "ΛΟΓΑΡΙΑΣΜΟΣ",
+    linkStory: "Η Ιστορία",
+    linkJourney: "Η Διαδρομή",
+    linkTreasure: "Ο Θησαυρός",
+    linkHow: "Πώς Παίζεται",
+    linkFaq: "Απορίες",
+    linkJournal: "Το Ημερολόγιο",
+    linkSignUp: "Δημιουργία λογαριασμού",
+    linkSignIn: "Σύνδεση",
+    rights: "Με κάθε επιφύλαξη.",
+    wordmark: "ΠΥΘΕΑΣ",
   },
   countdown: {
     days: "ΜΕΡΕΣ",
@@ -335,10 +407,82 @@ const en: Dictionary = {
     submit: "RESERVE A SPOT",
     noSpam: "No spam. Only what you need to begin the journey.",
   },
+  crew: {
+    section: "V. THE CREW",
+    badge: "SUMMER 2026 · KALAMATA",
+    title: "Join the crew.",
+    subtitle:
+      "Create your own account and hold your place on the voyage. When teams open, you'll be ready to set sail with your own.",
+    perks: [
+      {
+        title: "Your own course",
+        text: "Your account keeps your progress as the marks unlock.",
+      },
+      {
+        title: "Teams coming soon",
+        text: "Soon you'll be able to create or join a team of 2 to 5 people.",
+      },
+      {
+        title: "First to know",
+        text: "Date, rules and start time reach account holders first.",
+      },
+    ],
+    ctaSignUp: "CREATE ACCOUNT",
+    ctaSignIn: "I ALREADY HAVE AN ACCOUNT",
+    welcomeBadge: "MEMBER OF THE CREW",
+    welcomeTitle: (name: string) => `Welcome, ${name}.`,
+    welcomeBody:
+      "Your place in the crew is held. Open the journal and read the marks revealed so far.",
+    welcomeCta: "OPEN THE JOURNAL",
+    welcomeTeams: "Teams open soon. You'll be the first to know.",
+  },
+  faq: {
+    section: "VI. QUESTIONS",
+    titlePre: "Everything you need to know",
+    titleEm: "before you set sail.",
+    items: [
+      {
+        q: "What is the Voyage of Pytheas?",
+        a: "A treasure hunt through Kalamata. You follow the trail of Pytheas the Messenian, solve riddles in corners of the city and search for the treasure he hid before he vanished.",
+      },
+      {
+        q: "When does it start?",
+        a: "In the summer of 2026. Until then, the pages of the journal unlock gradually, revealing the marks one by one.",
+      },
+      {
+        q: "How many people are on a team?",
+        a: "Two to five. The ability to create or join a team opens soon. For now you create your personal account.",
+      },
+      {
+        q: "Do I need an account?",
+        a: "Yes. Your account keeps your course through the voyage and brings you the news first. Signing up takes only a name, an email and a password.",
+      },
+      {
+        q: "How do the marks unlock?",
+        a: "Over time. Each page of the journal opens at a set moment, and no one knows which country the next one holds.",
+      },
+      {
+        q: "What does the first team win?",
+        a: "The treasure of Pytheas. What exactly it is, only those who reach the end will learn.",
+      },
+    ],
+  },
   footer: {
     title: "The Voyage of Pytheas the Messenian",
     tagline: "TREASURE HUNT · KALAMATA · SUMMER 2026",
     motto: "DISCOVER THE UNKNOWN WITHIN THE FAMILIAR",
+    colExplore: "EXPLORE",
+    colAccount: "ACCOUNT",
+    linkStory: "The Story",
+    linkJourney: "The Route",
+    linkTreasure: "The Treasure",
+    linkHow: "How to Play",
+    linkFaq: "Questions",
+    linkJournal: "The Journal",
+    linkSignUp: "Create account",
+    linkSignIn: "Sign in",
+    rights: "All rights reserved.",
+    wordmark: "PYTHEAS",
   },
   countdown: {
     days: "DAYS",

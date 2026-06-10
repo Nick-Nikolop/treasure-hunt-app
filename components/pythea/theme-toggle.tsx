@@ -17,7 +17,12 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
     <button
       type="button"
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      aria-label={isDark ? "Εναλλαγή σε φωτεινό θέμα" : "Εναλλαγή σε σκούρο θέμα"}
+      // The theme is only known on the client, so gate every theme-dependent
+      // attribute on `mounted` and silence the unavoidable first-paint diff.
+      aria-label={
+        mounted && isDark ? "Εναλλαγή σε φωτεινό θέμα" : "Εναλλαγή σε σκούρο θέμα"
+      }
+      suppressHydrationWarning
       className={`inline-flex size-10 items-center justify-center rounded-sm border border-border text-foreground transition-colors hover:border-brass hover:text-brass ${className}`}
     >
       {mounted ? (

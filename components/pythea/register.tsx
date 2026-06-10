@@ -1,21 +1,34 @@
 "use client"
 
-import { useState } from "react"
+import Link from "next/link"
 import { motion } from "framer-motion"
-import { Check, Send } from "lucide-react"
+import { Anchor, BookOpen, Compass, Mail, UserPlus, Users } from "lucide-react"
+import { useSession } from "@/lib/auth-client"
 import { useI18n } from "@/components/pythea/language-provider"
 
+const PERK_ICONS = [Compass, Users, Mail]
+
+/**
+ * "Join the crew" section. Replaces the old mock email form with the real
+ * account flow: signed-out visitors get sign-up / sign-in CTAs and the perks
+ * of an account, signed-in explorers get a personal welcome and a path into
+ * the journal. Keeps the #register anchor used by the nav and floating CTA.
+ */
 export function Register() {
   const { t } = useI18n()
-  const [sent, setSent] = useState(false)
+  const { data: session, isPending } = useSession()
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setSent(true)
-  }
+  const firstName = session?.user
+    ? (session.user as { firstName?: string }).firstName ||
+      session.user.name?.split(" ")[0] ||
+      session.user.email
+    : null
 
   return (
-    <section id="register" className="relative mx-auto max-w-5xl scroll-mt-20 px-5 pb-32 pt-8 md:scroll-mt-28 md:pb-48">
+    <section
+      id="register"
+      className="relative mx-auto max-w-5xl scroll-mt-20 px-5 pb-32 pt-8 md:scroll-mt-28 md:pb-48"
+    >
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -28,74 +41,101 @@ export function Register() {
           style={{ background: "radial-gradient(circle, var(--brass), transparent 70%)" }}
           aria-hidden
         />
+        <div
+          className="pointer-events-none absolute -bottom-24 -left-24 size-72 rounded-full opacity-10 blur-3xl"
+          style={{ background: "radial-gradient(circle, var(--brass), transparent 70%)" }}
+          aria-hidden
+        />
 
-        <div className="relative grid gap-10 md:grid-cols-[1.1fr_1fr] md:items-center">
-          <div>
-            <span className="font-sans text-xs font-bold tracking-chip text-brass">
-              {t.register.badge}
-            </span>
-            <h2 className="mt-4 text-balance font-serif text-4xl font-black leading-tight text-foreground md:text-5xl">
-              {t.register.title}
-            </h2>
-            <p className="mt-4 max-w-md text-pretty font-serif text-lg leading-relaxed text-muted-foreground">
-              {t.register.subtitle}
-            </p>
+        {isPending ? (
+          <div className="relative flex min-h-64 items-center justify-center" aria-hidden>
+            <span className="size-10 animate-pulse rounded-full border border-brass/40" />
           </div>
-
-          {sent ? (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, ease: "backOut" }}
-              className="flex flex-col items-start gap-3 rounded-sm border border-brass/50 bg-background/50 p-6"
-            >
-              <span className="flex size-11 items-center justify-center rounded-full bg-brass text-primary-foreground">
-                <Check className="size-5" />
+        ) : session?.user ? (
+          /* ── Signed in: personal welcome ───────────────────────────── */
+          <div className="relative flex flex-col items-start gap-6 md:flex-row md:items-center md:justify-between md:gap-12">
+            <div>
+              <span className="inline-flex items-center gap-2 font-sans text-xs font-bold tracking-chip text-brass">
+                <Anchor className="size-3.5" />
+                {t.crew.welcomeBadge}
               </span>
-              <h3 className="font-serif text-2xl font-extrabold text-foreground">
-                {t.register.sentTitle}
-              </h3>
-              <p className="font-serif leading-relaxed text-muted-foreground">
-                {t.register.sentBody}
+              <h2 className="mt-4 text-balance font-serif text-4xl font-black leading-tight text-foreground md:text-5xl">
+                {t.crew.welcomeTitle(firstName ?? "")}
+              </h2>
+              <p className="mt-4 max-w-xl text-pretty font-serif text-lg leading-relaxed text-muted-foreground">
+                {t.crew.welcomeBody}
               </p>
-            </motion.div>
-          ) : (
-            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-              <label htmlFor="team" className="sr-only">
-                {t.register.teamLabel}
-              </label>
-              <input
-                id="team"
-                name="team"
-                type="text"
-                required
-                placeholder={t.register.teamPlaceholder}
-                className="rounded-sm border border-input bg-background/60 px-4 py-3 font-serif text-foreground placeholder:text-muted-foreground/70 focus:border-brass focus:outline-none"
-              />
-              <label htmlFor="email" className="sr-only">
-                {t.register.emailLabel}
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                placeholder={t.register.emailPlaceholder}
-                className="rounded-sm border border-input bg-background/60 px-4 py-3 font-serif text-foreground placeholder:text-muted-foreground/70 focus:border-brass focus:outline-none"
-              />
-              <button
-                type="submit"
-                className="mt-1 inline-flex items-center justify-center gap-2 rounded-sm bg-brass px-6 py-3.5 font-sans text-sm font-bold tracking-chip text-primary-foreground transition-transform hover:-translate-y-0.5"
-              >
-                <Send className="size-4" />
-                {t.register.submit}
-              </button>
-              <p className="font-sans text-[11px] leading-relaxed text-muted-foreground">
-                {t.register.noSpam}
+              <p className="mt-3 font-sans text-[11px] font-semibold tracking-chip text-muted-foreground">
+                {t.crew.welcomeTeams}
               </p>
-            </form>
-          )}
-        </div>
+            </div>
+            <Link
+              href="/journal"
+              className="inline-flex shrink-0 items-center gap-2 rounded-sm bg-brass px-7 py-3.5 font-sans text-sm font-bold tracking-chip text-primary-foreground transition-transform hover:-translate-y-0.5"
+            >
+              <BookOpen className="size-4" />
+              {t.crew.welcomeCta}
+            </Link>
+          </div>
+        ) : (
+          /* ── Signed out: account CTA + perks ───────────────────────── */
+          <div className="relative grid gap-10 md:grid-cols-[1.1fr_1fr] md:items-center">
+            <div>
+              <span className="font-sans text-xs font-bold tracking-chip text-brass">
+                {t.crew.badge}
+              </span>
+              <h2 className="mt-4 text-balance font-serif text-4xl font-black leading-tight text-foreground md:text-5xl">
+                {t.crew.title}
+              </h2>
+              <p className="mt-4 max-w-md text-pretty font-serif text-lg leading-relaxed text-muted-foreground">
+                {t.crew.subtitle}
+              </p>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Link
+                  href="/sign-up"
+                  className="inline-flex items-center justify-center gap-2 rounded-sm bg-brass px-6 py-3.5 font-sans text-sm font-bold tracking-chip text-primary-foreground transition-transform hover:-translate-y-0.5"
+                >
+                  <UserPlus className="size-4" />
+                  {t.crew.ctaSignUp}
+                </Link>
+                <Link
+                  href="/sign-in"
+                  className="inline-flex items-center justify-center gap-2 rounded-sm border border-border px-6 py-3.5 font-sans text-sm font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass"
+                >
+                  {t.crew.ctaSignIn}
+                </Link>
+              </div>
+            </div>
+
+            <ul className="flex flex-col gap-4">
+              {t.crew.perks.map((perk, i) => {
+                const Icon = PERK_ICONS[i]
+                return (
+                  <motion.li
+                    key={perk.title}
+                    initial={{ opacity: 0, x: 24 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true, margin: "-60px" }}
+                    transition={{ duration: 0.6, delay: i * 0.12, ease: [0.16, 1, 0.3, 1] }}
+                    className="flex items-start gap-4 rounded-sm border border-border bg-background/50 p-5"
+                  >
+                    <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full border border-brass/50 text-brass">
+                      <Icon className="size-4" />
+                    </span>
+                    <div>
+                      <h3 className="font-serif text-lg font-extrabold leading-snug text-foreground">
+                        {perk.title}
+                      </h3>
+                      <p className="mt-1 text-pretty font-serif text-sm leading-relaxed text-muted-foreground">
+                        {perk.text}
+                      </p>
+                    </div>
+                  </motion.li>
+                )
+              })}
+            </ul>
+          </div>
+        )}
       </motion.div>
     </section>
   )
