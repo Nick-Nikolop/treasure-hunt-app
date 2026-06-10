@@ -237,6 +237,15 @@ const el = {
     hintTap: "Πάτα ή σύρε για να γυρίσεις σελίδα",
     hintKeys: "ή χρησιμοποίησε τα πλήκτρα ← →",
     footerNote: "Νέες σελίδες χαράσσονται στο ημερολόγιο όσο ξεκλειδώνουν τα σημάδια.",
+    mapLabel: "Ο ΧΑΡΤΗΣ ΤΟΥ ΤΑΞΙΔΙΟΥ",
+    mapTitle: "Η πορεία",
+    mapLead:
+      "Κάθε στάση χαράσσεται στον χάρτη μόλις αποκαλυφθεί. Οι υπόλοιπες μένουν άγραφες.",
+    mapHome: "ΚΑΛΑΜΑΤΑ",
+    mapUnknown: "Άγνωστη στάση",
+    mapTreasure: "Ο ΘΗΣΑΥΡΟΣ",
+    postmark: "ΚΑΛΑΜΑΤΑ",
+    finalStampsLabel: "ΟΛΑ ΤΑ ΓΡΑΜΜΑΤΟΣΗΜΑ ΤΟΥ ΤΑΞΙΔΙΟΥ",
   },
   controls: {
     openAria: "Άνοιγμα πίνακα δοκιμών",
@@ -523,6 +532,15 @@ const en: Dictionary = {
     hintTap: "Tap or swipe to turn the page",
     hintKeys: "or use the ← → keys",
     footerNote: "New pages are written into the journal as marks unlock.",
+    mapLabel: "THE VOYAGE CHART",
+    mapTitle: "The course",
+    mapLead:
+      "Each stop is drawn onto the chart the moment it is revealed. The rest remain unwritten.",
+    mapHome: "KALAMATA",
+    mapUnknown: "Unknown stop",
+    mapTreasure: "THE TREASURE",
+    postmark: "KALAMATA",
+    finalStampsLabel: "EVERY STAMP OF THE VOYAGE",
   },
   controls: {
     openAria: "Open test panel",

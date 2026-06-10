@@ -127,8 +127,10 @@ export function Journey({ unlockedCount, total, nextUnlockMs }: Props) {
                 className="group relative aspect-square"
               >
                 {revealed ? (
+                  /* +2: the journal binds the voyage chart at page 1, so
+                     clue N lives on page N+1. */
                   <a
-                    href={`/journal?page=${i + 1}`}
+                    href={`/journal?page=${i + 2}`}
                     aria-label={t.journey.openCardAria(i + 1)}
                     className="flex h-full flex-col items-center justify-center rounded-sm border border-brass/70 bg-brass/10 text-center transition-colors hover:border-brass hover:bg-brass/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                   >

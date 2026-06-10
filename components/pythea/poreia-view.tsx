@@ -43,13 +43,18 @@ type Props = {
   nextUnlockMs: number | null
 }
 
-// A page in the journal can be the cover, a revealed clue, a sealed page, or
-// the closing page once everything is found.
+// A stop drawn on the voyage chart. Built only from already-unlocked clues,
+// so locked countries never reach the browser.
+type MapStop = { order: number; country: string; countryEn: string }
+
+// A page in the journal can be the cover, the voyage chart, a revealed clue,
+// a sealed page, or the closing page once everything is found.
 type Page =
   | { kind: "cover" }
+  | { kind: "map"; stops: MapStop[]; total: number; allDone: boolean }
   | { kind: "clue"; clue: Clue }
   | { kind: "sealed"; unlockMs: number; notStarted: boolean; order: number }
-  | { kind: "final" }
+  | { kind: "final"; stamps: MapStop[] }
 
 const FLIP_DURATION = 1.5
 
@@ -74,9 +79,18 @@ export function PoreiaView({
   const notStarted = unlockedCount === 0
   const allDone = unlockedCount === total
 
-  // Build the ordered list of pages once per state change.
+  // Build the ordered list of pages once per state change. The voyage chart
+  // is bound just inside the cover and only ever knows unlocked stops.
   const pages = useMemo<Page[]>(() => {
-    const list: Page[] = [{ kind: "cover" }]
+    const stops: MapStop[] = unlocked.map((c) => ({
+      order: c.order,
+      country: c.country,
+      countryEn: c.countryEn,
+    }))
+    const list: Page[] = [
+      { kind: "cover" },
+      { kind: "map", stops, total, allDone },
+    ]
     for (const clue of unlocked) list.push({ kind: "clue", clue })
     if (nextUnlockMs !== null) {
       list.push({
@@ -86,9 +100,9 @@ export function PoreiaView({
         order: unlockedCount + 1,
       })
     }
-    if (allDone) list.push({ kind: "final" })
+    if (allDone) list.push({ kind: "final", stamps: stops })
     return list
-  }, [unlocked, nextUnlockMs, notStarted, allDone, unlockedCount])
+  }, [unlocked, nextUnlockMs, notStarted, allDone, unlockedCount, total])
 
   // Deep link: /journal?page=N opens directly on that page (used by the
   // "open" cards on the home page). Initialised lazily so we land on the
@@ -550,6 +564,13 @@ function JournalPage({
           fill ? "h-full" : PAGE_HEIGHT
         }`}
       >
+        {page.kind === "map" && (
+          <MapPageBody
+            stops={page.stops}
+            total={page.total}
+            allDone={page.allDone}
+          />
+        )}
         {page.kind === "clue" && <CluePageBody clue={page.clue} />}
         {page.kind === "sealed" && (
           <SealedPageBody
@@ -559,7 +580,7 @@ function JournalPage({
             onDone={onCountdownDone}
           />
         )}
-        {page.kind === "final" && <FinalPageBody />}
+        {page.kind === "final" && <FinalPageBody stamps={page.stamps} />}
       </div>
 
       {/* Page number footer */}
@@ -688,6 +709,22 @@ function CluePageBody({ clue }: { clue: Clue }) {
         <span className="h-px w-12 bg-ink/25" />
         <span className="font-serif text-base italic text-ink/55">{t.journal.signature}</span>
       </div>
+
+      {/* A faded ring left by an inkwell or a cup, different on every entry.
+          Deterministic by order so it never moves between visits. */}
+      <div
+        aria-hidden
+        className={`pointer-events-none absolute rounded-full ${
+          ["right-10 bottom-14 size-24", "left-3 bottom-28 size-20", "right-20 bottom-24 size-16"][
+            (clue.order - 1) % 3
+          ]
+        }`}
+        style={{
+          transform: `rotate(${(clue.order * 47) % 360}deg) scaleX(1.08)`,
+          boxShadow:
+            "inset 0 0 0 2.5px oklch(0.5 0.07 60 / 0.13), inset 0 0 0 6px oklch(0.5 0.07 60 / 0.05)",
+        }}
+      />
     </div>
   )
 }
@@ -715,6 +752,55 @@ function JournalStamp({ clue }: { clue: Clue }) {
         fetchPriority="high"
         className="block h-auto w-24 drop-shadow-[0_7px_12px_rgba(40,30,15,0.32)] md:w-28"
       />
+      <Postmark />
+    </div>
+  )
+}
+
+/** An ink cancellation mark struck across the stamp's corner, as if the entry
+ *  really went through a post office. Pure SVG, blended into the paper. */
+function Postmark() {
+  const { t } = useI18n()
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute -bottom-4 -left-9 opacity-[0.55] mix-blend-multiply"
+      style={{ transform: "rotate(-12deg)" }}
+    >
+      <svg
+        width="104"
+        height="62"
+        viewBox="0 0 104 62"
+        className="text-[oklch(0.38_0.05_250)]"
+      >
+        <circle cx="31" cy="31" r="27" fill="none" stroke="currentColor" strokeWidth="1.7" />
+        <circle cx="31" cy="31" r="21" fill="none" stroke="currentColor" strokeWidth="0.8" />
+        <text
+          x="31"
+          y="28.5"
+          textAnchor="middle"
+          fontSize="7.5"
+          letterSpacing="0.5"
+          fill="currentColor"
+          className="font-sans font-bold"
+        >
+          {t.journal.postmark}
+        </text>
+        <text x="31" y="40" textAnchor="middle" fontSize="8" fill="currentColor" className="font-serif">
+          2026
+        </text>
+        {/* cancellation waves running off the ring */}
+        {[16, 24, 32, 40].map((y) => (
+          <path
+            key={y}
+            d={`M60 ${y} q 7 -3.5 14 0 t 14 0 t 12 0`}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+        ))}
+      </svg>
     </div>
   )
 }
@@ -733,10 +819,20 @@ function SealedPageBody({
   const { t } = useI18n()
   return (
     <div className="flex flex-1 flex-col items-center justify-center text-center">
-      {/* Wax seal */}
+      {/* Wax seal, embossed like a real signet pressing */}
       <div className="relative">
-        <div className="flex size-24 items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_30%,oklch(0.62_0.16_40),oklch(0.42_0.14_34))] shadow-[0_10px_24px_-8px_rgba(0,0,0,0.6)] md:size-28">
-          <Lock className="size-8 text-[oklch(0.92_0.04_60)] md:size-9" />
+        <div className="relative flex size-24 items-center justify-center overflow-hidden rounded-full bg-[radial-gradient(circle_at_35%_30%,oklch(0.62_0.16_40),oklch(0.42_0.14_34))] shadow-[0_10px_24px_-8px_rgba(0,0,0,0.6)] md:size-28">
+          {/* compass rose ghost pressed into the wax */}
+          <Compass
+            aria-hidden
+            className="absolute size-20 text-[oklch(0.3_0.12_32)]/45 md:size-[5.5rem]"
+            strokeWidth={1}
+          />
+          {/* embossed inner rim */}
+          <span className="pointer-events-none absolute inset-2 rounded-full border border-[oklch(0.7_0.14_42)]/50 shadow-[inset_0_2px_4px_rgba(0,0,0,0.35)]" />
+          {/* top-light catching the wax */}
+          <span className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_30%_22%,rgba(255,255,255,0.22),transparent_42%)]" />
+          <Lock className="relative size-8 text-[oklch(0.92_0.04_60)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] md:size-9" />
         </div>
         {/* wax drips / irregular edge */}
         <span className="pointer-events-none absolute -inset-1 rounded-full border-2 border-dashed border-[oklch(0.5_0.13_36)/0.4]" />
@@ -759,8 +855,8 @@ function SealedPageBody({
   )
 }
 
-function FinalPageBody() {
-  const { t } = useI18n()
+function FinalPageBody({ stamps }: { stamps: MapStop[] }) {
+  const { t, locale } = useI18n()
   return (
     <div className="flex flex-1 flex-col items-center justify-center text-center">
       <Compass className="size-12 text-[oklch(0.5_0.12_60)]" />
@@ -770,10 +866,230 @@ function FinalPageBody() {
       <p className="mt-4 max-w-md text-pretty font-serif text-xl font-bold italic leading-relaxed text-ink/85 md:text-2xl">
         {t.journal.finalBody}
       </p>
+
+      {/* The complete stamp collection, fanned out like keepsakes */}
+      <p className="mt-8 font-sans text-[10px] font-bold tracking-chip text-ink/45">
+        {t.journal.finalStampsLabel}
+      </p>
+      <div className="mt-3 flex flex-wrap items-center justify-center">
+        {stamps.map((s, i) =>
+          STAMP_SRC[s.country] ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={s.order}
+              src={STAMP_SRC[s.country] || "/placeholder.svg"}
+              alt={t.journal.stampAlt(locale === "en" ? s.countryEn : s.country)}
+              draggable={false}
+              className="-ml-2 block h-auto w-12 drop-shadow-[0_4px_8px_rgba(40,30,15,0.3)] first:ml-0 md:w-14"
+              style={{
+                transform: `rotate(${STAMP_ROTATION[i % STAMP_ROTATION.length]}deg)`,
+              }}
+            />
+          ) : null,
+        )}
+      </div>
+
       <div className="mt-7 flex items-center gap-3">
         <span className="h-px w-12 bg-ink/25" />
         <span className="font-serif text-base italic text-ink/55">{t.journal.signature}</span>
       </div>
+    </div>
+  )
+}
+
+/* ───────────────────────────────────────────────────────────────────────── */
+
+// Hand-plotted positions of the nine stops on the chart. The route path
+// below is drawn through these same points, so they must move together.
+const STOP_XY: Array<[number, number]> = [
+  [62, 64],
+  [190, 88],
+  [318, 64],
+  [338, 168],
+  [212, 196],
+  [84, 186],
+  [66, 296],
+  [198, 318],
+  [330, 296],
+]
+
+// The full course, sketched as one winding stroke through every stop.
+const ROUTE_D =
+  "M62 64 C105 40 150 100 190 88 C235 76 280 40 318 64 C350 85 355 130 338 168 " +
+  "C322 205 255 180 212 196 C170 212 120 165 84 186 C50 207 52 255 66 296 " +
+  "C78 330 155 300 198 318 C240 335 300 320 330 296"
+
+// The last leg home to the treasure, only inked when the course is complete.
+const TAIL_D = "M330 296 C355 275 300 395 212 420"
+
+/** The voyage chart bound inside the front cover. Unlocked stops are inked
+ *  with their country names; the rest of the course stays a faint sketch. */
+function MapPageBody({
+  stops,
+  total,
+  allDone,
+}: {
+  stops: MapStop[]
+  total: number
+  allDone: boolean
+}) {
+  const { t, locale } = useI18n()
+  // Fraction of the route inked so far: stop k sits at (k-1)/(total-1).
+  const frac = total > 1 ? (stops.length - 1) / (total - 1) : 1
+
+  return (
+    <div className="flex flex-1 flex-col">
+      <p className="font-sans text-[11px] font-bold tracking-chip text-ink/55">
+        {t.journal.mapLabel}
+      </p>
+      <h2 className="mt-1 text-balance font-serif text-3xl font-black leading-none text-ink md:text-4xl">
+        {t.journal.mapTitle}
+      </h2>
+      <p className="mt-2 max-w-sm text-pretty font-serif text-sm italic leading-relaxed text-ink/60 md:text-base">
+        {t.journal.mapLead}
+      </p>
+
+      <svg
+        viewBox="0 0 400 480"
+        role="img"
+        aria-label={t.journal.mapLabel}
+        className="mt-2 w-full flex-1 text-ink"
+      >
+        {/* Decorative compass in the top corner */}
+        <g transform="translate(354, 42)" opacity="0.45">
+          <circle r="17" fill="none" stroke="currentColor" strokeWidth="1.2" />
+          <circle r="2" fill="currentColor" />
+          <path d="M0 -13 L3 0 L0 13 L-3 0 Z" fill="currentColor" opacity="0.7" />
+          <path d="M-13 0 L0 3 L13 0 L0 -3 Z" fill="currentColor" opacity="0.35" />
+          <text y="-22" textAnchor="middle" fontSize="9" fill="currentColor" className="font-serif font-bold">
+            N
+          </text>
+        </g>
+
+        {/* Scattered sea waves */}
+        {[
+          [36, 408],
+          [330, 392],
+          [40, 130],
+        ].map(([x, y]) => (
+          <g key={`${x}-${y}`} transform={`translate(${x}, ${y})`} opacity="0.3">
+            <path d="M0 0 q 6 -4 12 0 t 12 0" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+            <path d="M5 7 q 6 -4 12 0 t 12 0" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+          </g>
+        ))}
+
+        {/* The complete course, a faint pencil sketch */}
+        <path
+          d={ROUTE_D}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeDasharray="5 7"
+          strokeLinecap="round"
+          opacity="0.22"
+        />
+
+        {/* The inked portion of the course, drawn live up to the last stop */}
+        {frac > 0 && (
+          <motion.path
+            d={ROUTE_D}
+            fill="none"
+            stroke="oklch(0.45 0.1 40)"
+            strokeWidth="2.4"
+            strokeLinecap="round"
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: frac }}
+            transition={{ duration: 1.8, ease: "easeInOut", delay: 0.35 }}
+          />
+        )}
+
+        {/* The final leg to the treasure */}
+        <path
+          d={TAIL_D}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.4"
+          strokeDasharray="2 8"
+          strokeLinecap="round"
+          opacity="0.25"
+        />
+        {allDone && (
+          <motion.path
+            d={TAIL_D}
+            fill="none"
+            stroke="oklch(0.45 0.1 40)"
+            strokeWidth="2.4"
+            strokeLinecap="round"
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={{ duration: 0.9, ease: "easeInOut", delay: 2.1 }}
+          />
+        )}
+
+        {/* The treasure X at Kalamata */}
+        <g transform="translate(212, 420)" opacity={allDone ? 1 : 0.25}>
+          <path
+            d="M-9 -9 L9 9 M9 -9 L-9 9"
+            stroke={allDone ? "oklch(0.45 0.13 30)" : "currentColor"}
+            strokeWidth={allDone ? 4 : 2.5}
+            strokeLinecap="round"
+          />
+          {allDone && (
+            <>
+              <text y="26" textAnchor="middle" fontSize="11" fill="currentColor" className="font-sans font-bold" letterSpacing="1.5">
+                {t.journal.mapTreasure}
+              </text>
+              <text y="40" textAnchor="middle" fontSize="9" fill="currentColor" opacity="0.6" className="font-serif italic">
+                {t.journal.mapHome}
+              </text>
+            </>
+          )}
+        </g>
+
+        {/* Locked stops: empty circles waiting to be inked */}
+        {STOP_XY.slice(stops.length).map(([x, y], i) => (
+          <g key={`locked-${i}`} transform={`translate(${x}, ${y})`} opacity="0.4">
+            <circle r="6" fill="none" stroke="currentColor" strokeWidth="1.3" strokeDasharray="2.5 3" />
+            <text y="3.5" textAnchor="middle" fontSize="9" fill="currentColor" className="font-serif italic">
+              <title>{t.journal.mapUnknown}</title>?
+            </text>
+          </g>
+        ))}
+
+        {/* Unlocked stops, appearing one after another as the ink dries */}
+        {stops.map((s, i) => {
+          const [x, y] = STOP_XY[i] ?? [200, 240]
+          const name = locale === "en" ? s.countryEn : s.country
+          // Alternate the label above/below the node; clamp near the edges.
+          const labelAbove = i % 2 === 0
+          const lx = Math.min(355, Math.max(45, x))
+          return (
+            <motion.g
+              key={s.order}
+              initial={{ opacity: 0, scale: 0.6 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.45, delay: 0.45 + i * 0.18, ease: "easeOut" }}
+              style={{ transformOrigin: `${x}px ${y}px` }}
+            >
+              <circle cx={x} cy={y} r="9.5" fill="oklch(0.45 0.1 40)" />
+              <circle cx={x} cy={y} r="9.5" fill="none" stroke="oklch(0.3 0.08 40)" strokeWidth="1" opacity="0.5" />
+              <text x={x} y={y + 3.5} textAnchor="middle" fontSize="9.5" fill="oklch(0.94 0.02 80)" className="font-sans font-bold">
+                {s.order}
+              </text>
+              <text
+                x={lx}
+                y={labelAbove ? y - 16 : y + 24}
+                textAnchor="middle"
+                fontSize="11.5"
+                fill="currentColor"
+                className="font-serif font-bold italic"
+              >
+                {name}
+              </text>
+            </motion.g>
+          )
+        })}
+      </svg>
     </div>
   )
 }
