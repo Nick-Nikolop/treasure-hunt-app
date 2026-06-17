@@ -130,11 +130,15 @@ export function AuthNav({
               <span className="truncate font-sans text-sm font-bold text-foreground">{email}</span>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild className="cursor-pointer">
-              <Link href="/teams" className="flex items-center gap-2.5 font-sans text-sm font-semibold">
-                <Users className="size-4 text-brass" />
-                {t.auth.crewNav}
-              </Link>
+            <DropdownMenuItem
+              onSelect={() => {
+                setMenuOpen(false)
+                router.push("/teams")
+              }}
+              className="flex cursor-pointer items-center gap-2.5 font-sans text-sm font-semibold"
+            >
+              <Users className="size-4 text-brass" />
+              {t.auth.crewNav}
             </DropdownMenuItem>
             <DropdownMenuItem
               onSelect={() => {
