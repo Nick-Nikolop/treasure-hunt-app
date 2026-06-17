@@ -7,6 +7,7 @@ import { ThemeToggle } from "@/components/pythea/theme-toggle"
 import { LanguageToggle } from "@/components/pythea/language-toggle"
 import { AuthNav } from "@/components/pythea/auth-nav"
 import { useI18n } from "@/components/pythea/language-provider"
+import { useSession } from "@/lib/auth-client"
 
 // Greek all-caps convention: drop the tonos (e.g. ΙΣΤΟΡΊΑ -> ΙΣΤΟΡΙΑ) while
 // keeping the dialytika. JS toUpperCase() keeps the accent, so strip it here.
@@ -21,8 +22,10 @@ function greekCaps(s: string) {
 
 export function SiteHeader() {
   const { t } = useI18n()
+  const { data: session } = useSession()
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
+  const loggedIn = !!session?.user
 
   const nav = [
     { label: t.nav.story, href: "/#story" },
@@ -77,12 +80,14 @@ export function SiteHeader() {
           <LanguageToggle />
           <ThemeToggle />
           <AuthNav />
-          <a
-            href="/#register"
-            className="inline-flex items-center gap-2 rounded-sm border border-brass/60 px-4 py-2 font-sans text-xs font-bold tracking-chip text-brass transition-colors hover:bg-brass hover:text-primary-foreground"
-          >
-            {greekCaps(t.nav.register)}
-          </a>
+          {!loggedIn && (
+            <a
+              href="/#register"
+              className="inline-flex items-center gap-2 rounded-sm border border-brass/60 px-4 py-2 font-sans text-xs font-bold tracking-chip text-brass transition-colors hover:bg-brass hover:text-primary-foreground"
+            >
+              {greekCaps(t.nav.register)}
+            </a>
+          )}
         </div>
 
         <div className="flex items-center gap-2 md:hidden">
@@ -119,13 +124,15 @@ export function SiteHeader() {
             {greekCaps(item.label)}
           </a>
         ))}
-              <a
-                href="/#register"
-                onClick={() => setOpen(false)}
-                className="mt-2 rounded-sm bg-brass px-2 py-3 text-center font-sans text-sm font-bold tracking-chip text-primary-foreground"
-              >
-                {greekCaps(t.nav.register)}
-              </a>
+              {!loggedIn && (
+                <a
+                  href="/#register"
+                  onClick={() => setOpen(false)}
+                  className="mt-2 rounded-sm bg-brass px-2 py-3 text-center font-sans text-sm font-bold tracking-chip text-primary-foreground"
+                >
+                  {greekCaps(t.nav.register)}
+                </a>
+              )}
               <AuthNav compact onNavigate={() => setOpen(false)} />
             </div>
           </motion.div>

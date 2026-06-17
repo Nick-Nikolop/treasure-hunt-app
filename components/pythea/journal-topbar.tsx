@@ -5,6 +5,7 @@ import { motion } from "framer-motion"
 import { ArrowLeft, Compass, Feather } from "lucide-react"
 import { ThemeToggle } from "@/components/pythea/theme-toggle"
 import { LanguageToggle } from "@/components/pythea/language-toggle"
+import { AuthNav } from "@/components/pythea/auth-nav"
 import { useI18n } from "@/components/pythea/language-provider"
 
 type Props = {
@@ -72,6 +73,7 @@ export function JournalTopbar({ unlockedCount, total }: Props) {
           </span>
           <LanguageToggle />
           <ThemeToggle />
+          <AuthNav />
         </div>
       </nav>
     </motion.header>

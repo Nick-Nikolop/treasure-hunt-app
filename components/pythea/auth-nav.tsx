@@ -3,9 +3,18 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { LogOut, User, Users } from "lucide-react"
+import { ChevronDown, KeyRound, LogOut, User, Users } from "lucide-react"
 import { authClient, useSession } from "@/lib/auth-client"
 import { useI18n } from "@/components/pythea/language-provider"
+import { ChangePasswordDialog } from "@/components/pythea/change-password-dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 function greekCaps(s: string) {
   return s
@@ -17,9 +26,10 @@ function greekCaps(s: string) {
 }
 
 /**
- * Header auth control. Shows a sign-in link when logged out, and the user's
- * first name plus a sign-out button when logged in. `compact` renders the
- * stacked mobile-menu variant.
+ * Header auth control. Logged out: a single sign-in link. Logged in: one tidy
+ * account menu (greeting + email, link to the team, change password, sign out)
+ * so the top bar stays calm instead of stacking several buttons. `compact`
+ * renders the inline mobile-menu variant.
  */
 export function AuthNav({
   compact = false,
@@ -32,6 +42,8 @@ export function AuthNav({
   const { data: session, isPending } = useSession()
   const router = useRouter()
   const [signingOut, setSigningOut] = useState(false)
+  const [pwOpen, setPwOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   async function handleSignOut() {
     setSigningOut(true)
@@ -43,67 +55,112 @@ export function AuthNav({
   }
 
   if (isPending) {
-    return <span className="inline-block h-8 w-20 animate-pulse rounded-sm bg-muted/40" aria-hidden />
+    return <span className="inline-block h-9 w-24 animate-pulse rounded-sm bg-muted/40" aria-hidden />
   }
 
   if (session?.user) {
-    const label =
-      // Prefer the explicit first name, fall back to the display name.
+    const firstName =
       (session.user as { firstName?: string }).firstName ||
       session.user.name?.split(" ")[0] ||
       session.user.email
+    const email = session.user.email
 
+    // Mobile: render the items inline inside the open menu sheet.
     if (compact) {
       return (
-        <div className="mt-2 flex flex-col gap-1">
-          <span className="px-2 py-2 font-sans text-xs font-bold tracking-chip text-brass">
-            {t.auth.greeting(label)}
-          </span>
+        <div className="mt-2 flex flex-col gap-1 border-t border-border/60 pt-3">
+          <div className="flex items-center gap-2 px-2 py-1">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brass/15 font-serif text-sm font-black text-brass">
+              {firstName.slice(0, 1).toUpperCase()}
+            </span>
+            <span className="flex flex-col">
+              <span className="font-sans text-sm font-bold text-foreground">{firstName}</span>
+              <span className="font-sans text-[11px] text-muted-foreground">{email}</span>
+            </span>
+          </div>
           <Link
             href="/teams"
             onClick={onNavigate}
-            className="flex items-center gap-2 rounded-sm px-2 py-3 text-left font-sans text-sm font-semibold tracking-chip text-muted-foreground hover:bg-card hover:text-foreground"
+            className="flex items-center gap-2.5 rounded-sm px-2 py-3 text-left font-sans text-sm font-semibold tracking-chip text-muted-foreground hover:bg-card hover:text-foreground"
           >
             <Users className="size-4" />
             {greekCaps(t.auth.crewNav)}
           </Link>
           <button
             type="button"
+            onClick={() => {
+              onNavigate?.()
+              setPwOpen(true)
+            }}
+            className="flex items-center gap-2.5 rounded-sm px-2 py-3 text-left font-sans text-sm font-semibold tracking-chip text-muted-foreground hover:bg-card hover:text-foreground"
+          >
+            <KeyRound className="size-4" />
+            {greekCaps(t.auth.changePassword)}
+          </button>
+          <button
+            type="button"
             onClick={handleSignOut}
             disabled={signingOut}
-            className="flex items-center gap-2 rounded-sm px-2 py-3 text-left font-sans text-sm font-semibold tracking-chip text-muted-foreground hover:bg-card hover:text-foreground disabled:opacity-60"
+            className="flex items-center gap-2.5 rounded-sm px-2 py-3 text-left font-sans text-sm font-semibold tracking-chip text-muted-foreground hover:bg-card hover:text-foreground disabled:opacity-60"
           >
             <LogOut className="size-4" />
             {greekCaps(t.auth.signOut)}
           </button>
+          <ChangePasswordDialog open={pwOpen} onClose={() => setPwOpen(false)} />
         </div>
       )
     }
 
+    // Desktop: one calm trigger that opens a dropdown.
     return (
-      <div className="flex items-center gap-3">
-        <span className="inline-flex items-center gap-1.5 font-sans text-xs font-bold tracking-chip text-foreground">
-          <User className="size-3.5 text-brass" />
-          {label}
-        </span>
-        <Link
-          href="/teams"
-          className="inline-flex items-center gap-1.5 rounded-sm border border-border px-3 py-2 font-sans text-xs font-bold tracking-chip text-muted-foreground transition-colors hover:border-brass/60 hover:text-foreground"
-        >
-          <Users className="size-3.5" />
-          {greekCaps(t.auth.crewNav)}
-        </Link>
-        <button
-          type="button"
-          onClick={handleSignOut}
-          disabled={signingOut}
-          aria-label={t.auth.signOut}
-          className="inline-flex items-center gap-1.5 rounded-sm border border-border px-3 py-2 font-sans text-xs font-bold tracking-chip text-muted-foreground transition-colors hover:border-brass/60 hover:text-foreground disabled:opacity-60"
-        >
-          <LogOut className="size-3.5" />
-          {greekCaps(t.auth.signOut)}
-        </button>
-      </div>
+      <>
+        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+          <DropdownMenuTrigger className="group inline-flex items-center gap-2 rounded-sm border border-border px-2.5 py-2 font-sans text-xs font-bold tracking-chip text-foreground outline-none transition-colors hover:border-brass/60 focus-visible:border-brass data-[state=open]:border-brass/60">
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-brass/15 font-serif text-xs font-black text-brass">
+              {firstName.slice(0, 1).toUpperCase()}
+            </span>
+            <span className="max-w-[8rem] truncate">{firstName}</span>
+            <ChevronDown className="size-3.5 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-60">
+            <DropdownMenuLabel className="flex flex-col gap-0.5 py-2">
+              <span className="font-sans text-[10px] font-bold uppercase tracking-chip text-muted-foreground">
+                {t.auth.signedInAs}
+              </span>
+              <span className="truncate font-sans text-sm font-bold text-foreground">{email}</span>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild className="cursor-pointer">
+              <Link href="/teams" className="flex items-center gap-2.5 font-sans text-sm font-semibold">
+                <Users className="size-4 text-brass" />
+                {t.auth.crewNav}
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => {
+                // Let the menu close and restore focus before mounting the
+                // dialog, otherwise Radix's focus trap keeps the dialog inert.
+                setMenuOpen(false)
+                setTimeout(() => setPwOpen(true), 0)
+              }}
+              className="flex cursor-pointer items-center gap-2.5 font-sans text-sm font-semibold"
+            >
+              <KeyRound className="size-4 text-brass" />
+              {t.auth.changePassword}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onSelect={handleSignOut}
+              disabled={signingOut}
+              className="flex cursor-pointer items-center gap-2.5 font-sans text-sm font-semibold text-destructive focus:text-destructive"
+            >
+              <LogOut className="size-4" />
+              {t.auth.signOut}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <ChangePasswordDialog open={pwOpen} onClose={() => setPwOpen(false)} />
+      </>
     )
   }
 
@@ -124,6 +181,7 @@ export function AuthNav({
       href="/sign-in"
       className="inline-flex items-center gap-2 font-sans text-xs font-bold tracking-chip text-muted-foreground transition-colors hover:text-foreground"
     >
+      <User className="size-3.5" />
       {greekCaps(t.auth.signInCta)}
     </Link>
   )
