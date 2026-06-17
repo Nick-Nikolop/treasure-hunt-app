@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Compass, Menu, X } from "lucide-react"
 import { ThemeToggle } from "@/components/pythea/theme-toggle"
 import { LanguageToggle } from "@/components/pythea/language-toggle"
-import { AuthNav } from "@/components/pythea/auth-nav"
+import { AuthNav, type SessionUser } from "@/components/pythea/auth-nav"
 import { useI18n } from "@/components/pythea/language-provider"
 import { useSession } from "@/lib/auth-client"
 
@@ -20,12 +20,14 @@ function greekCaps(s: string) {
     .normalize("NFC")
 }
 
-export function SiteHeader() {
+export function SiteHeader({ initialUser = null }: { initialUser?: SessionUser | null }) {
   const { t } = useI18n()
-  const { data: session } = useSession()
+  const { data: session, isPending } = useSession()
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
-  const loggedIn = !!session?.user
+  // Use the server-resolved user until the client session query settles, so
+  // the register CTA doesn't flash in for a logged-in visitor on first paint.
+  const loggedIn = isPending ? !!initialUser : !!session?.user
 
   const nav = [
     { label: t.nav.story, href: "/#story" },
@@ -79,7 +81,7 @@ export function SiteHeader() {
         <div className="hidden items-center gap-3 md:flex">
           <LanguageToggle />
           <ThemeToggle />
-          <AuthNav />
+          <AuthNav initialUser={initialUser} />
           {!loggedIn && (
             <a
               href="/#register"
@@ -133,7 +135,7 @@ export function SiteHeader() {
                   {greekCaps(t.nav.register)}
                 </a>
               )}
-              <AuthNav compact onNavigate={() => setOpen(false)} />
+              <AuthNav compact onNavigate={() => setOpen(false)} initialUser={initialUser} />
             </div>
           </motion.div>
         )}

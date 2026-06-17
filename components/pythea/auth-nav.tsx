@@ -25,18 +25,31 @@ function greekCaps(s: string) {
     .normalize("NFC")
 }
 
+/** Minimal shape the header needs to render the signed-in state. */
+export type SessionUser = {
+  firstName?: string | null
+  name?: string | null
+  email: string
+}
+
 /**
  * Header auth control. Logged out: a single sign-in link. Logged in: one tidy
  * account menu (greeting + email, link to the team, change password, sign out)
  * so the top bar stays calm instead of stacking several buttons. `compact`
  * renders the inline mobile-menu variant.
+ *
+ * `initialUser` is resolved on the server and used for the first paint so the
+ * correct state shows immediately, with no logged-out flash before the client
+ * session query resolves.
  */
 export function AuthNav({
   compact = false,
   onNavigate,
+  initialUser = null,
 }: {
   compact?: boolean
   onNavigate?: () => void
+  initialUser?: SessionUser | null
 }) {
   const { t } = useI18n()
   const { data: session, isPending } = useSession()
@@ -54,16 +67,17 @@ export function AuthNav({
     router.refresh()
   }
 
-  if (isPending) {
-    return <span className="inline-block h-9 w-24 animate-pulse rounded-sm bg-muted/40" aria-hidden />
-  }
+  // While the client session query is still pending (including the SSR/first
+  // paint), trust the server-resolved user. Once it resolves, use the live
+  // session so sign-out/sign-in update immediately.
+  const user: SessionUser | null = isPending ? initialUser : session?.user ?? null
 
-  if (session?.user) {
+  if (user) {
     const firstName =
-      (session.user as { firstName?: string }).firstName ||
-      session.user.name?.split(" ")[0] ||
-      session.user.email
-    const email = session.user.email
+      user.firstName ||
+      user.name?.split(" ")[0] ||
+      user.email
+    const email = user.email
 
     // Mobile: render the items inline inside the open menu sheet.
     if (compact) {

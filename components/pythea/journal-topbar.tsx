@@ -5,12 +5,13 @@ import { motion } from "framer-motion"
 import { ArrowLeft, Compass, Feather } from "lucide-react"
 import { ThemeToggle } from "@/components/pythea/theme-toggle"
 import { LanguageToggle } from "@/components/pythea/language-toggle"
-import { AuthNav } from "@/components/pythea/auth-nav"
+import { AuthNav, type SessionUser } from "@/components/pythea/auth-nav"
 import { useI18n } from "@/components/pythea/language-provider"
 
 type Props = {
   unlockedCount: number
   total: number
+  initialUser?: SessionUser | null
 }
 
 /**
@@ -19,7 +20,7 @@ type Props = {
  * the journal eyebrow in the centre, and a live progress chip plus the
  * language / theme toggles on the right.
  */
-export function JournalTopbar({ unlockedCount, total }: Props) {
+export function JournalTopbar({ unlockedCount, total, initialUser = null }: Props) {
   const { t } = useI18n()
   const [scrolled, setScrolled] = useState(false)
 
@@ -73,7 +74,7 @@ export function JournalTopbar({ unlockedCount, total }: Props) {
           </span>
           <LanguageToggle />
           <ThemeToggle />
-          <AuthNav />
+          <AuthNav initialUser={initialUser} />
         </div>
       </nav>
     </motion.header>

@@ -24,6 +24,13 @@ export default async function PoreiaPage() {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) redirect("/sign-in?redirect=/journal")
 
+  // Pass the server-resolved user to the topbar for a flash-free first paint.
+  const initialUser = {
+    firstName: (session.user as { firstName?: string | null }).firstName ?? null,
+    name: session.user.name ?? null,
+    email: session.user.email,
+  }
+
   // The testing control panel is available only where overrides are allowed
   // (the v0 preview / development). On the live site it stays hidden.
   const showControls = isOverrideAuthorized()
@@ -41,6 +48,7 @@ export default async function PoreiaPage() {
       <JournalTopbar
         unlockedCount={state.unlockedCount}
         total={state.total}
+        initialUser={initialUser}
       />
       <div className="flex min-h-screen flex-col">
         <PoreiaView
