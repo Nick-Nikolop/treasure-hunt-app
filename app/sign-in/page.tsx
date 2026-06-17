@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation"
+import { Suspense } from "react"
 import { headers } from "next/headers"
 import { auth } from "@/lib/auth"
 import { Atmosphere } from "@/components/pythea/atmosphere"
@@ -11,7 +12,9 @@ export default async function SignInPage() {
   return (
     <>
       <Atmosphere />
-      <AuthForm mode="sign-in" />
+      <Suspense fallback={null}>
+        <AuthForm mode="sign-in" />
+      </Suspense>
     </>
   )
 }

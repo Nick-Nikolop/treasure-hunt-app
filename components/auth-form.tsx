@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
 import { Compass, Eye, EyeOff, ArrowLeft, Loader2 } from "lucide-react"
 import { authClient } from "@/lib/auth-client"
@@ -12,6 +12,7 @@ type Mode = "sign-in" | "sign-up"
 
 export function AuthForm({ mode }: { mode: Mode }) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { t } = useI18n()
   const a = t.auth
   const isSignUp = mode === "sign-up"
@@ -86,7 +87,11 @@ export function AuthForm({ mode }: { mode: Mode }) {
       }
     }
 
-    router.push("/")
+    // Honor a ?redirect= target (e.g. an invite link), but only allow internal
+    // paths to avoid open-redirects. Default home.
+    const raw = searchParams.get("redirect")
+    const dest = raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : "/"
+    router.push(dest)
     router.refresh()
   }
 
@@ -269,7 +274,11 @@ export function AuthForm({ mode }: { mode: Mode }) {
           <p className="mt-6 text-center font-serif text-sm text-muted-foreground">
             {isSignUp ? `${a.haveAccount} ` : `${a.noAccount} `}
             <Link
-              href={isSignUp ? "/sign-in" : "/sign-up"}
+              href={`${isSignUp ? "/sign-in" : "/sign-up"}${
+                searchParams.get("redirect")
+                  ? `?redirect=${encodeURIComponent(searchParams.get("redirect")!)}`
+                  : ""
+              }`}
               className="font-bold text-brass underline-offset-4 hover:underline"
             >
               {isSignUp ? a.goToSignIn : a.goToSignUp}
