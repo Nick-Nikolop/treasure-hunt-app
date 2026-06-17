@@ -91,7 +91,7 @@ const el = {
     steps: [
       {
         title: "Φτιάξε την ομάδα σου",
-        text: "Μάζεψε τους συνεξερευνητές σου. Δύο έως πέντε άτομα ανά ομάδα, όσοι τολμούν να κοιτούν αλλιώς.",
+        text: "Μάζεψε τους συνεξερευνητές σου. Ως και οκτώ άτομα ανά ομάδα, όσοι τολμούν να κοιτούν αλλιώς.",
       },
       {
         title: "Ακολούθησε τον χάρτη",
@@ -134,7 +134,7 @@ const el = {
       },
       {
         title: "Ομάδες σε λίγο καιρό",
-        text: "Σύντομα θα μπορείς να φτιάξεις ή να μπεις σε ομάδα 2 έως 5 ατόμων.",
+        text: "Σύντομα θα μπορείς να φτιάξεις ή να μπεις σε ομάδα ως και 8 ατόμων.",
       },
       {
         title: "Πρώτος στα νέα",
@@ -241,7 +241,7 @@ const el = {
       },
       {
         q: "Πόσα άτομα έχει μια ομάδα;",
-        a: "Από δύο έως πέντε άτομα. Η δ��������νατότητα να φτιάξεις ή να μπεις σε ομάδα ανοίγει σε λίγο καιρό. Προς το παρόν φτιάχνεις τον προσωπικό σου λογαριασμό.",
+        a: "Ως και οκτώ άτομα. Η δυνατότητα να φτιάξεις ή να μπεις σε ομάδα ανοίγει σε λίγο καιρό. Προς το παρόν φτιάχνεις τον προσωπικό σου λογαριασμό.",
       },
       {
         q: "Χρειάζομαι λογαριασμό;",
@@ -477,7 +477,7 @@ const en: Dictionary = {
     steps: [
       {
         title: "Build your team",
-        text: "Gather your fellow explorers. Two to five people per team, those who dare to look differently.",
+        text: "Gather your fellow explorers. Up to eight people per team, those who dare to look differently.",
       },
       {
         title: "Follow the map",
@@ -520,7 +520,7 @@ const en: Dictionary = {
       },
       {
         title: "Teams coming soon",
-        text: "Soon you'll be able to create or join a team of 2 to 5 people.",
+        text: "Soon you'll be able to create or join a team of up to 8 people.",
       },
       {
         title: "First to know",
@@ -620,7 +620,7 @@ const en: Dictionary = {
       },
       {
         q: "How many people are on a team?",
-        a: "Two to five. The ability to create or join a team opens soon. For now you create your personal account.",
+        a: "Up to eight. The ability to create or join a team opens soon. For now you create your personal account.",
       },
       {
         q: "Do I need an account?",
