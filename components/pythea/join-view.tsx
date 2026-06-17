@@ -10,7 +10,7 @@ import { joinCrewByCode } from "@/app/teams/actions"
 
 /**
  * Confirm-and-join card shown to a signed-in visitor who opened an invite
- * link. Handles the invalid/full states and the "already in another crew"
+ * link. Handles the invalid/full states and the "already in another team"
  * case, otherwise lets them join with one tap.
  */
 export function JoinView({

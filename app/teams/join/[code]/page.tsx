@@ -9,7 +9,7 @@ import { JoinView } from "@/components/pythea/join-view"
 export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
-  title: "Πρόσκληση σε πλήρωμα",
+  title: "Πρόσκληση σε ομάδα",
   robots: { index: false, follow: false },
 }
 

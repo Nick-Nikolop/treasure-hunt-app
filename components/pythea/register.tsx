@@ -9,7 +9,7 @@ import { useI18n } from "@/components/pythea/language-provider"
 const PERK_ICONS = [Compass, Users, Mail]
 
 /**
- * "Join the crew" section. Replaces the old mock email form with the real
+ * "Join the team" section. Replaces the old mock email form with the real
  * account flow: signed-out visitors get sign-up / sign-in CTAs and the perks
  * of an account, signed-in explorers get a personal welcome and a path into
  * the journal. Keeps the #register anchor used by the nav and floating CTA.
