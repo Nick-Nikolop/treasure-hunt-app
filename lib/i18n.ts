@@ -241,7 +241,7 @@ const el = {
       },
       {
         q: "Πόσα άτομα έχει μια ομάδα;",
-        a: "Από δύο έως πέντε άτομα. Η δυνατότητα να φτιάξεις ή να μπεις σε ομάδα ανοίγει σε λίγο καιρό. Προς το παρόν φτιάχνεις τον προσωπικό σου λογαριασμό.",
+        a: "Από δύο έως πέντε άτομα. Η δ��νατότητα να φτιάξεις ή να μπεις σε ομάδα ανοίγει σε λίγο καιρό. Προς το παρόν φτιάχνεις τον προσωπικό σου λογαριασμό.",
       },
       {
         q: "Χρειάζομαι λογαριασμό;",
@@ -379,7 +379,7 @@ const el = {
     signOut: "Αποσύνδεση",
     greeting: (name: string) => `Καλώς ήρθες, ${name}`,
     // validation / errors
-    errRequired: "Συμπλήρωσε το όνομα και το email σου.",
+    errRequired: "Συμπ��ήρωσε το όνομα και το email σου.",
     errPasswordShort: "Ο κωδικός πρέπει να έχει τουλάχιστον 8 χαρακτήρες.",
     errYearInvalid: "Δώσε ένα έγκυρο έτος γέννησης.",
     errEmailTaken: "Υπάρχει ήδη λογαριασμός με αυτό το email.",
@@ -740,6 +740,7 @@ const en: Dictionary = {
     goToSignUp: "Create account",
     // account / nav
     account: "MY ACCOUNT",
+    crewNav: "Crew",
     signOut: "Sign out",
     greeting: (name: string) => `Welcome, ${name}`,
     // validation / errors

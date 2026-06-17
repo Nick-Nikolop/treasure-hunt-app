@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { LogOut, User } from "lucide-react"
+import { LogOut, User, Users } from "lucide-react"
 import { authClient, useSession } from "@/lib/auth-client"
 import { useI18n } from "@/components/pythea/language-provider"
 
@@ -59,6 +59,14 @@ export function AuthNav({
           <span className="px-2 py-2 font-sans text-xs font-bold tracking-chip text-brass">
             {t.auth.greeting(label)}
           </span>
+          <Link
+            href="/teams"
+            onClick={onNavigate}
+            className="flex items-center gap-2 rounded-sm px-2 py-3 text-left font-sans text-sm font-semibold tracking-chip text-muted-foreground hover:bg-card hover:text-foreground"
+          >
+            <Users className="size-4" />
+            {greekCaps(t.auth.crewNav)}
+          </Link>
           <button
             type="button"
             onClick={handleSignOut}
