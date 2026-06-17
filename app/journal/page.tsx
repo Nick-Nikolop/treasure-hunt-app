@@ -1,5 +1,7 @@
 import type { Metadata } from "next"
-import { cookies } from "next/headers"
+import { cookies, headers } from "next/headers"
+import { redirect } from "next/navigation"
+import { auth } from "@/lib/auth"
 import { Atmosphere } from "@/components/pythea/atmosphere"
 import { JournalTopbar } from "@/components/pythea/journal-topbar"
 import { PoreiaView } from "@/components/pythea/poreia-view"
@@ -18,6 +20,10 @@ export const metadata: Metadata = {
 }
 
 export default async function PoreiaPage() {
+  // The journal is gated: only registered, signed-in accounts can view it.
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session?.user) redirect("/sign-in?redirect=/journal")
+
   // The testing control panel is available only where overrides are allowed
   // (the v0 preview / development). On the live site it stays hidden.
   const showControls = isOverrideAuthorized()
