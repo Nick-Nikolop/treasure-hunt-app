@@ -65,17 +65,23 @@ export function Register() {
               <p className="mt-4 max-w-xl text-pretty font-serif text-lg leading-relaxed text-muted-foreground">
                 {t.crew.welcomeBody}
               </p>
-              <p className="mt-3 font-sans text-[11px] font-semibold tracking-chip text-muted-foreground">
-                {t.crew.welcomeTeams}
-              </p>
             </div>
-            <Link
-              href="/journal"
-              className="inline-flex shrink-0 items-center gap-2 rounded-sm bg-brass px-7 py-3.5 font-sans text-sm font-bold tracking-chip text-primary-foreground transition-transform hover:-translate-y-0.5"
-            >
-              <BookOpen className="size-4" />
-              {t.crew.welcomeCta}
-            </Link>
+            <div className="flex shrink-0 flex-col gap-3 sm:flex-row md:flex-col">
+              <Link
+                href="/journal"
+                className="inline-flex items-center justify-center gap-2 rounded-sm bg-brass px-7 py-3.5 font-sans text-sm font-bold tracking-chip text-primary-foreground transition-transform hover:-translate-y-0.5"
+              >
+                <BookOpen className="size-4" />
+                {t.crew.welcomeCta}
+              </Link>
+              <Link
+                href="/teams"
+                className="inline-flex items-center justify-center gap-2 rounded-sm border border-brass/60 px-7 py-3.5 font-sans text-sm font-bold tracking-chip text-brass transition-colors hover:bg-brass/10"
+              >
+                <Users className="size-4" />
+                {t.auth.crewNav}
+              </Link>
+            </div>
           </div>
         ) : (
           /* ── Signed out: account CTA + perks ───────────────────────── */

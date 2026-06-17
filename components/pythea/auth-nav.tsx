@@ -86,6 +86,13 @@ export function AuthNav({
           <User className="size-3.5 text-brass" />
           {label}
         </span>
+        <Link
+          href="/teams"
+          className="inline-flex items-center gap-1.5 rounded-sm border border-border px-3 py-2 font-sans text-xs font-bold tracking-chip text-muted-foreground transition-colors hover:border-brass/60 hover:text-foreground"
+        >
+          <Users className="size-3.5" />
+          {greekCaps(t.auth.crewNav)}
+        </Link>
         <button
           type="button"
           onClick={handleSignOut}
