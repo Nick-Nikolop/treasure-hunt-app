@@ -11,6 +11,7 @@ import {
   ShieldOff,
   Trash2,
   UserMinus,
+  UserPlus,
   Users,
   Pencil,
   Crown,
@@ -22,6 +23,7 @@ import {
   adminDeleteUser,
   adminSetRole,
   adminKickFromTeam,
+  adminAssignToTeam,
   adminDisbandTeam,
   adminRenameTeam,
   type AdminData,
@@ -62,6 +64,8 @@ export function AdminDashboard({
   const [confirm, setConfirm] = useState<Confirm | null>(null)
   const [renameTeam, setRenameTeam] = useState<AdminTeamRow | null>(null)
   const [renameValue, setRenameValue] = useState("")
+  const [assignTarget, setAssignTarget] = useState<AdminUserRow | null>(null)
+  const [assignValue, setAssignValue] = useState("")
 
   const errorText: Record<string, string> = {
     cannot_delete_self: "You can't delete your own account here.",
@@ -69,6 +73,8 @@ export function AdminDashboard({
     last_admin: "You can't remove the last superadmin.",
     not_found: "That record no longer exists.",
     not_in_team: "That user isn't in a team.",
+    already_in_team: "That user is already in that team.",
+    team_full: "That team is already full.",
     too_short: "Name is too short.",
     too_long: "Name is too long.",
   }
@@ -180,6 +186,11 @@ export function AdminDashboard({
                 u={u}
                 isSelf={u.id === currentUserId}
                 pending={pending}
+                hasTeams={data.teams.length > 0}
+                onAssign={() => {
+                  setAssignTarget(u)
+                  setAssignValue("")
+                }}
                 onResetPassword={() => setPwTarget({ id: u.id, email: u.email })}
                 onToggleRole={() =>
                   runAction(
@@ -306,6 +317,79 @@ export function AdminDashboard({
           </div>
         </form>
       </ModalShell>
+
+      {/* Assign / move to team */}
+      <ModalShell
+        open={assignTarget !== null}
+        onClose={() => setAssignTarget(null)}
+        labelledBy="assign-title"
+      >
+        <h2 id="assign-title" className="font-serif text-2xl font-black text-foreground">
+          {assignTarget?.teamId ? "Move to another team" : "Assign to a team"}
+        </h2>
+        <p className="mt-1 font-sans text-sm text-muted-foreground">
+          {assignTarget?.teamId ? (
+            <>
+              {assignTarget?.email} is currently in{" "}
+              <span className="text-foreground">{assignTarget?.teamName}</span>. Pick a new team.
+            </>
+          ) : (
+            <>{assignTarget?.email} isn&apos;t in a team yet. Pick one to add them to.</>
+          )}
+        </p>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            if (assignTarget && assignValue) {
+              const id = assignTarget.id
+              const teamId = assignValue
+              runAction(() => adminAssignToTeam(id, teamId), "User assigned to team.")
+              setAssignTarget(null)
+            }
+          }}
+          className="mt-5"
+        >
+          <label
+            htmlFor="assign-team"
+            className="font-sans text-xs font-bold tracking-chip text-muted-foreground"
+          >
+            TEAM
+          </label>
+          <select
+            id="assign-team"
+            value={assignValue}
+            onChange={(e) => setAssignValue(e.target.value)}
+            className="mt-1.5 w-full rounded-sm border border-border bg-background px-3 py-2.5 font-sans text-sm text-foreground outline-none transition-colors focus:border-brass"
+          >
+            <option value="" disabled>
+              Select a team...
+            </option>
+            {data.teams.map((tm) => (
+              <option key={tm.id} value={tm.id} disabled={tm.id === assignTarget?.teamId}>
+                {tm.name} ({tm.members.length}/{8})
+                {tm.id === assignTarget?.teamId ? " — current" : ""}
+              </option>
+            ))}
+          </select>
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row-reverse">
+            <button
+              type="submit"
+              disabled={pending || !assignValue}
+              className="inline-flex flex-1 items-center justify-center rounded-sm bg-brass px-5 py-3 font-sans text-sm font-bold tracking-chip text-background transition-transform hover:-translate-y-0.5 disabled:opacity-50"
+            >
+              {assignTarget?.teamId ? "Move" : "Assign"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setAssignTarget(null)}
+              disabled={pending}
+              className="inline-flex flex-1 items-center justify-center rounded-sm border border-border px-5 py-3 font-sans text-sm font-bold tracking-chip text-foreground transition-colors hover:border-brass disabled:opacity-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </ModalShell>
     </main>
   )
 }
@@ -403,6 +487,8 @@ function UserCard({
   u,
   isSelf,
   pending,
+  hasTeams,
+  onAssign,
   onResetPassword,
   onToggleRole,
   onKick,
@@ -411,6 +497,8 @@ function UserCard({
   u: AdminUserRow
   isSelf: boolean
   pending: boolean
+  hasTeams: boolean
+  onAssign: () => void
   onResetPassword: () => void
   onToggleRole: () => void
   onKick: () => void
@@ -463,6 +551,13 @@ function UserCard({
           title="Reset password"
           icon={KeyRound}
           label="Password"
+        />
+        <IconBtn
+          onClick={onAssign}
+          disabled={pending || !hasTeams}
+          title={hasTeams ? (u.teamId ? "Move to another team" : "Assign to a team") : "No teams exist yet"}
+          icon={UserPlus}
+          label={u.teamId ? "Move" : "Assign"}
         />
         {u.teamId && (
           <IconBtn onClick={onKick} disabled={pending} title="Kick from team" icon={UserMinus} label="Kick" />

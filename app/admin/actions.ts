@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { account, session, team, teamMember, user } from "@/lib/db/schema"
 import { requireAdmin, isBootstrapEmail, superadminCount } from "@/lib/admin"
+import { MAX_CREW_SIZE } from "@/lib/teams"
 import { and, asc, desc, eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { randomUUID } from "node:crypto"
@@ -239,6 +240,59 @@ export async function adminKickFromTeam(targetUserId: string): Promise<ActionRes
 
   await handleOwnerDeparture(targetUserId)
   await db.delete(teamMember).where(eq(teamMember.userId, targetUserId))
+
+  revalidatePath("/admin")
+  return { ok: true }
+}
+
+/**
+ * Assign a user to a team, or move them from their current team to another.
+ * The user always joins as a plain "member". If they currently own a team,
+ * ownership is handed off (or the team disbanded) before they move out.
+ */
+export async function adminAssignToTeam(
+  targetUserId: string,
+  teamId: string,
+): Promise<ActionResult> {
+  await requireAdmin()
+
+  // Target must exist.
+  const targetRows = await db
+    .select({ id: user.id })
+    .from(user)
+    .where(eq(user.id, targetUserId))
+    .limit(1)
+  if (targetRows.length === 0) return { ok: false, error: "not_found" }
+
+  // Destination team must exist.
+  const teamRows = await db.select({ id: team.id }).from(team).where(eq(team.id, teamId)).limit(1)
+  if (teamRows.length === 0) return { ok: false, error: "not_found" }
+
+  // No-op if they're already on that team.
+  const current = await db
+    .select({ teamId: teamMember.teamId })
+    .from(teamMember)
+    .where(eq(teamMember.userId, targetUserId))
+    .limit(1)
+  if (current[0]?.teamId === teamId) return { ok: false, error: "already_in_team" }
+
+  // Respect the crew size cap on the destination.
+  const destMembers = await db
+    .select({ userId: teamMember.userId })
+    .from(teamMember)
+    .where(eq(teamMember.teamId, teamId))
+  if (destMembers.length >= MAX_CREW_SIZE) return { ok: false, error: "team_full" }
+
+  // Detach from their current team (handing off ownership first if needed),
+  // then attach to the destination as a member.
+  await handleOwnerDeparture(targetUserId)
+  await db.delete(teamMember).where(eq(teamMember.userId, targetUserId))
+  await db.insert(teamMember).values({
+    id: randomUUID(),
+    teamId,
+    userId: targetUserId,
+    role: "member",
+  })
 
   revalidatePath("/admin")
   return { ok: true }
