@@ -147,7 +147,7 @@ const el = {
     welcomeBadge: "ΜΕΛΟΣ ΤΗΣ ΟΜΑΔΑΣ",
     welcomeTitle: (name: string) => `Καλώς ήρθες, ${name}.`,
     welcomeBody:
-      "Η θέση σου στην ομάδα είναι κρατημένη. Άνοιξε το ημερολόγιο και διάβασε τα σημάδια που έχουν αποκαλυφθεί ως τώρα.",
+      "Η θέση σου στην ομάδα είναι κρατημένη. Άνοιξε το ημερολόγιο και διάβασε τα σημάδια που έχουν αποκαλυ��θεί ως τώρα.",
     welcomeCta: "ΑΝΟΙΞΕ ΤΟ ΗΜΕΡΟΛΟΓΙΟ",
     welcomeTeams: "Οι ομάδες ανοίγουν σε λίγο καιρό. Θα ειδοποιηθείς πρώτος.",
   },
@@ -234,14 +234,14 @@ const el = {
     items: [
       {
         q: "Τι είναι το Ταξίδι του Πυθέα;",
-        a: "Ένα κυνήγι θησαυρού στην Καλαμάτα. Ακολουθείς τα ίχνη του Πυθέα του Μεσσήνιου, λύνεις γρίφους σε γωνιές της πόλης και ψάχνεις τον θησαυρό που έκρυψε πριν χαθεί.",
+        a: "Ένα κυνήγι θησαυρού στην Καλαμάτα. Ακολουθείς τα ίχνη του Πυθέα του Μεσσήνιου, λύνε��ς γρίφους σε γωνιές της πόλης και ψάχνεις τον θησαυρό που έκρυψε πριν χαθεί.",
       },
       {
         q: "Πότε ξεκινά;",
         a: "Το καλοκαίρι του 2026. Μέχρι τότε, οι σελίδες του ημερολογίου ξεκλειδώνουν σταδιακά και αποκαλύπτουν τα σημάδια, ένα ένα.",
       },
       {
-        q: "Πόσα άτομα έ��ει μια ομάδα;",
+        q: "Πόσα άτομα έ����ει μια ομάδα;",
         a: "Ως και οκτώ άτομα. Η δυνατότητα να φτιάξεις ή να μπεις σε ομάδα ανοίγει σε λίγο καιρό. Προς το παρόν φτιάχνεις τον προσωπικό σου λογαριασμό.",
       },
       {
@@ -363,6 +363,19 @@ const el = {
     you: "ΕΣΥ",
     home: "ΑΡΧΙΚΗ",
     membersLabel: "Μέλη",
+    // Interactive map
+    mapHint: "Πάτα ένα λιμάνι στον χάρτη για να δεις ποιος βρίσκεται εκεί.",
+    youAreHere: "Εδώ είσαι",
+    unknownWaters: "Άγνωστα νερά",
+    portLabel: (n: number) => `Λιμάνι Νο. ${String(n).padStart(2, "0")}`,
+    explorersHere: (n: number) => (n === 1 ? "1 εδώ" : `${n} εδώ`),
+    noOneHere: "Κανείς δεν έχει φτάσει εδώ ακόμα.",
+    sealedPort: "Δεν έχεις φτάσει ακόμα σε αυτό το λιμάνι, οπότε μένει στη σκιά. Όσοι προπορεύονται φαίνονται εδώ χωρίς να αποκαλύπτεται η χώρα.",
+    standingsLabel: "ΠΛΗΡΗΣ ΚΑΤΑΤΑΞΗ",
+    legendYou: "Εσύ",
+    legendReached: "Φτασμένο λιμάνι",
+    legendSealed: "Κρυμμένο μπροστά",
+    finished: "Τερμάτισε",
   },
   controls: {
     openAria: "Άνοιγμα πίνακα δοκιμών",
@@ -404,7 +417,7 @@ const el = {
     signUpSubtitle:
       "Γράψου στην ομάδα και κράτα τη δική σου πορεία στο ταξίδι του Πυθέα.",
     signUpCta: "Δημιουργία λογαριασμού",
-    signUpLoading: "Γίνεται εγγραφή...",
+    signUpLoading: "Γίνετα�� εγγραφή...",
     haveAccount: "Έχεις ήδη λογαριασμό;",
     goToSignIn: "Σύνδεση",
     // sign in
@@ -784,6 +797,19 @@ const en: Dictionary = {
     you: "YOU",
     home: "HOME",
     membersLabel: "Members",
+    // Interactive map
+    mapHint: "Tap a port on the chart to see who is there.",
+    youAreHere: "You are here",
+    unknownWaters: "Uncharted waters",
+    portLabel: (n: number) => `Port No. ${String(n).padStart(2, "0")}`,
+    explorersHere: (n: number) => (n === 1 ? "1 here" : `${n} here`),
+    noOneHere: "No one has reached here yet.",
+    sealedPort: "You have not reached this port yet, so it stays in shadow. Anyone ahead of you appears here without revealing the country.",
+    standingsLabel: "FULL STANDINGS",
+    legendYou: "You",
+    legendReached: "Reached port",
+    legendSealed: "Hidden ahead",
+    finished: "Finished",
   },
   controls: {
     openAria: "Open test panel",

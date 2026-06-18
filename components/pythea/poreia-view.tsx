@@ -13,6 +13,7 @@ import {
   Keyboard,
 } from "lucide-react"
 import type { Clue, LockedClue } from "@/lib/clues"
+import { STOP_XY, ROUTE_D, TAIL_D } from "@/lib/voyage-map"
 import { Countdown } from "@/components/pythea/countdown"
 import { useI18n } from "@/components/pythea/language-provider"
 import { JournalCover } from "@/components/pythea/journal-cover"
@@ -914,29 +915,6 @@ function FinalPageBody({ stamps }: { stamps: MapStop[] }) {
 }
 
 /* ───────────────────────────────────────────────────────────────────────── */
-
-// Hand-plotted positions of the nine stops on the chart. The route path
-// below is drawn through these same points, so they must move together.
-const STOP_XY: Array<[number, number]> = [
-  [62, 64],
-  [190, 88],
-  [318, 64],
-  [338, 168],
-  [212, 196],
-  [84, 186],
-  [66, 296],
-  [198, 318],
-  [330, 296],
-]
-
-// The full course, sketched as one winding stroke through every stop.
-const ROUTE_D =
-  "M62 64 C105 40 150 100 190 88 C235 76 280 40 318 64 C350 85 355 130 338 168 " +
-  "C322 205 255 180 212 196 C170 212 120 165 84 186 C50 207 52 255 66 296 " +
-  "C78 330 155 300 198 318 C240 335 300 320 330 296"
-
-// The last leg home to the treasure, only inked when the course is complete.
-const TAIL_D = "M330 296 C355 275 300 395 212 420"
 
 /** The voyage chart bound inside the front cover. Unlocked stops are inked
  *  with their country names; the rest of the course stays a faint sketch. */
