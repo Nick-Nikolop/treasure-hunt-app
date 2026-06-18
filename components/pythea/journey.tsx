@@ -10,10 +10,11 @@ import { useI18n } from "@/components/pythea/language-provider"
 type Props = {
   unlockedCount: number
   total: number
-  nextUnlockMs: number | null
+  /** Countdown target for lead 1, or null once it has opened. */
+  countdownToMs: number | null
 }
 
-export function Journey({ unlockedCount, total, nextUnlockMs }: Props) {
+export function Journey({ unlockedCount, total, countdownToMs }: Props) {
   const { t } = useI18n()
   const router = useRouter()
   const refresh = useCallback(() => {
@@ -241,18 +242,16 @@ export function Journey({ unlockedCount, total, nextUnlockMs }: Props) {
                 {t.journey.status(unlockedCount, total)}
               </span>
             </div>
-            {nextUnlockMs ? (
+            {countdownToMs ? (
               <div className="mt-4">
                 <p className="mb-3 font-serif text-sm italic text-muted-foreground">
-                  {unlockedCount === 0
-                    ? t.journey.firstOpensIn
-                    : t.journey.nextOpensIn}
+                  {t.journey.firstOpensIn}
                 </p>
-                <Countdown targetMs={nextUnlockMs} onDone={refresh} />
+                <Countdown targetMs={countdownToMs} onDone={refresh} />
               </div>
             ) : (
               <p className="mt-4 font-serif text-base italic text-foreground">
-                {t.journey.allOpen}
+                {unlockedCount >= total ? t.journey.allOpen : t.journey.huntBegun}
               </p>
             )}
           </div>

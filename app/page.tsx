@@ -9,9 +9,9 @@ import { Register } from "@/components/pythea/register"
 import { Faq } from "@/components/pythea/faq"
 import { FloatingCta } from "@/components/pythea/floating-cta"
 import { SiteFooter } from "@/components/pythea/site-footer"
-import { cookies, headers } from "next/headers"
+import { headers } from "next/headers"
 import { auth } from "@/lib/auth"
-import { buildClueState, isOverrideAuthorized, PREVIEW_COOKIE } from "@/lib/clues"
+import { isLeadOneOpen, START_MS, TOTAL_CLUES } from "@/lib/clues"
 
 // Recompute against the live clock on each request (for the countdown state).
 export const dynamic = "force-dynamic"
@@ -29,16 +29,12 @@ export default async function Page() {
       }
     : null
 
-  // Respect the per-browser testing override so the landing teaser count
-  // stays in sync with the journey page during testing. Public, time-locked
-  // behavior is unchanged for real visitors.
-  const allow = isOverrideAuthorized()
-  const store = await cookies()
-  const cookieVal = store.get(PREVIEW_COOKIE)?.value
-  const preview = allow && cookieVal !== undefined ? Number(cookieVal) : undefined
-
-  // Only non-spoiler counts are passed to the landing page.
-  const state = buildClueState(Date.now(), preview, allow)
+  // The landing teaser is a public, global view. Only lead 1 is time-gated;
+  // the rest are unlocked privately by each player scanning QR codes, so the
+  // public page shows the countdown to lead 1 and then "the hunt has begun".
+  const lead1Open = isLeadOneOpen(Date.now())
+  const publicCount = lead1Open ? 1 : 0
+  const countdownToMs = lead1Open ? null : START_MS
 
   return (
     <>
@@ -48,9 +44,9 @@ export default async function Page() {
         <Hero />
         <Story />
         <Journey
-          unlockedCount={state.unlockedCount}
-          total={state.total}
-          nextUnlockMs={state.nextUnlockMs}
+          unlockedCount={publicCount}
+          total={TOTAL_CLUES}
+          countdownToMs={countdownToMs}
         />
         <Treasure />
         <HowItWorks />

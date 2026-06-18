@@ -1,15 +1,15 @@
 // ─────────────────────────────────────────────────────────────────────────
-//  ΠΥΘΕΑΣ Ο ΜΕΣΣΗΝΙΟΣ — Clue schedule & content
+//  ΠΥΘΕΑΣ Ο ΜΕΣΣΗΝΙΟΣ — Clue content & progression rules
 //
-//  HOW THE TIMING WORKS
-//  Clue #1 unlocks exactly at START_ISO.
-//  Each following clue unlocks INTERVAL_HOURS later than the previous one.
-//  Example: with INTERVAL_HOURS = 24, clue #2 opens 24h after START_ISO,
-//  clue #3 opens 48h after START_ISO, and so on.
+//  HOW PROGRESSION WORKS
+//  Clue #1 unlocks for everyone at START_ISO (a countdown ticks down to it).
+//  Clues #2..#9 unlock only by scanning the physical QR code hidden at each
+//  location, strictly in order. A player's progress is stored per-user in the
+//  database (see lib/hunt.ts); being in a team means a teammate's scan unlocks
+//  the lead for the whole crew.
 //
 //  TO CHANGE THE START: edit START_ISO below. Keep the +03:00 offset so the
 //  time is locked to Greek summer time (EEST) no matter where a visitor is.
-//  TO CHANGE THE CADENCE: edit INTERVAL_HOURS.
 //
 //  IMPORTANT: clue content (country + location hint) is a spoiler. It is only
 //  ever sent to the browser AFTER a clue has unlocked. Locked clues never leave
@@ -17,7 +17,6 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 export const START_ISO = "2026-07-01T21:00:00+03:00"
-export const INTERVAL_HOURS = 24
 
 /** Cookie name used by the per-browser testing override. */
 export const PREVIEW_COOKIE = "pythea_preview"
@@ -131,7 +130,7 @@ export const CLUES: Clue[] = [
     subtitleEn: "The man who lit the world",
     icon: "Lightbulb",
     body: [
-      "Συνεχίζοντας προς τα Βαλκάνια, έφτασα στη Σερβία. Μια χώρα όχι μεγάλη σε έκταση, αλλά αρκετά μεγάλη ώστε να γεννήσει έναν από τους ανθρώπους που άλλαξαν τον τρόπο με τον οποίο ο κόσμος βλέπει το φως.",
+      "Συνεχίζοντας προς τα Βαλκάνια, έφτασα στη Σερβία. Μια χώρα όχι μεγάλη σε έκταση, αλλά αρκετά μεγάλη ώστε να γεννήσει έναν από τους ανθρ��πους που άλλαξαν τον τρόπο με τον οποίο ο κόσμος βλέπει το φως.",
       "Πάντα θαύμαζα όσους δεν ταξίδευαν μόνο με καράβια και άλογα, αλλά και με τη σκέψη. Κι έτσι, στην Καλαμάτα άφησα το επόμενο στοιχείο εκεί όπου το βλέμμα ενός μεγάλου Σέρβου επιστήμονα μένει ζωγραφισμένο πάνω στην πόλη.",
       "Αν τον βρεις, στάσου για λίγο μπροστά του. Κάπου εκεί κρύβεται η συνέχεια.",
     ],
@@ -203,7 +202,7 @@ export const CLUES: Clue[] = [
     subtitleEn: "The map's final mark",
     icon: "Snowflake",
     body: [
-      "Το τελευταίο μου ταξίδι ήταν προς τον μακρινό βορρά. Εκεί όπου οι λίμνες μοιάζουν αμέτρητες, τα δάση δεν τελειώνουν εύκολα, και τον χειμώνα ο ουρανός μπορεί να φωτιστεί από χρώματα που δεν μοιάζουν αληθινά.",
+      "Το τελευταίο μου ταξίδι ήταν προς τον μακρινό βορρά. Εκεί όπου οι λίμνες μοιάζουν αμέτρητες, τα δάση δεν τελειώνουν εύκολα, και τον χειμώνα ο ουρανός μπορεί να φω��ιστεί από χρώματα που δεν μοιάζουν αληθινά.",
       "Στη Φινλανδία βρήκα σιωπή. Όχι μοναξιά, αλλά εκείνη τη βαθιά σιωπή που σε αναγκάζει να ακούσεις καλύτερα τις σκέψεις σου. Και τότε κατάλαβα το τελευταίο μυστικό του χάρτη: πως ο θησαυρός δεν βρίσκεται μόνο στο τέλος της διαδρομής. Βρίσκεται σε όλα όσα πρόσεξες για να φτάσεις εκεί.",
       "Κάποτε, σε μια γωνιά της Καλαμάτας, μαζεύονταν άνθρωποι από αυτή τη μακρινή βόρεια χώρα. Σήμερα έχουν φύγει, και το μέρος έχει αλλάξει. Όμως άφησα ένα σημάδι πίσω, κρυμμένο σε κοινή θέα, για όσους ξέρουν να κοιτούν όχι αυτό που φαίνεται πρώτο, αλλά αυτό που επιμένει να υπάρχει από παλιά.",
       "Εκεί θα βρεις το τελευταίο στοιχείο.",
@@ -219,39 +218,32 @@ export const CLUES: Clue[] = [
 
 export const TOTAL_CLUES = CLUES.length
 
-const START_MS = new Date(START_ISO).getTime()
+/** The first lead is the only time-gated one. */
+export const FIRST_LEAD_ORDER = 1
 
-/** Absolute unlock time (ms epoch) for a 1-based clue order. */
-export function unlockTimeMs(order: number): number {
-  return START_MS + (order - 1) * INTERVAL_HOURS * 3600_000
+export const START_MS = new Date(START_ISO).getTime()
+
+/** Whether lead 1 has opened for everyone yet (purely time-based). */
+export function isLeadOneOpen(nowMs: number): boolean {
+  return nowMs >= START_MS
 }
 
 /**
- * How many clues are unlocked at a given moment.
- *
- * `previewOverride` forces a specific number of clues open for testing.
- * It is honored only when `allowOverride` is true. The caller decides that:
- * it is true in development, or in production when the visitor supplied the
- * correct secret key (see isOverrideAuthorized). This lets organizers preview
- * clues early on the live site while the public cannot.
+ * The number of leads a player sees as unlocked, combining their stored
+ * progress with the global time gate on lead 1. A player can never see fewer
+ * than the leads they have actually unlocked, and once START passes everyone
+ * sees at least lead 1.
  */
-export function unlockedCountAt(
-  nowMs: number,
-  previewOverride?: number,
-  allowOverride = false,
-): number {
-  if (
-    allowOverride &&
-    previewOverride !== undefined &&
-    Number.isFinite(previewOverride)
-  ) {
-    return Math.max(0, Math.min(TOTAL_CLUES, Math.floor(previewOverride)))
-  }
-  // The first clue is always revealed, even before the official start time,
-  // so visitors always have a starting point in the journal.
-  if (nowMs < START_MS) return 1
-  const elapsedHours = (nowMs - START_MS) / 3600_000
-  return Math.min(TOTAL_CLUES, Math.floor(elapsedHours / INTERVAL_HOURS) + 1)
+export function effectiveUnlockedCount(progress: number, nowMs: number): number {
+  const fromProgress = clampProgress(progress)
+  const fromTime = isLeadOneOpen(nowMs) ? 1 : 0
+  return Math.max(fromProgress, fromTime)
+}
+
+/** Clamp any raw progress value to the valid 0..TOTAL_CLUES range. */
+export function clampProgress(value: number): number {
+  if (!Number.isFinite(value)) return 0
+  return Math.max(0, Math.min(TOTAL_CLUES, Math.floor(value)))
 }
 
 /**
@@ -269,35 +261,37 @@ export function isOverrideAuthorized(providedKey?: string): boolean {
   return providedKey === secret
 }
 
-/** Epoch ms when the next still-locked clue opens, or null if all are open. */
-export function nextUnlockMs(unlockedCount: number): number | null {
-  if (unlockedCount >= TOTAL_CLUES) return null
-  return unlockTimeMs(unlockedCount + 1)
-}
-
-/** Shape sent to the client for a locked clue: no spoilers, only timing. */
+/**
+ * Shape sent to the client for a still-sealed lead. No spoilers: only the
+ * order and how it opens. "time" leads carry the unlock timestamp for the
+ * countdown; "qr" leads open by scanning the physical code.
+ */
 export type LockedClue = {
   order: number
-  unlockMs: number
+  gate: "time" | "qr"
+  /** Only present for time-gated leads (lead 1). */
+  unlockMs?: number
 }
 
-/** Computes the public-safe payload for the journey page. */
-export function buildClueState(
-  nowMs: number,
-  previewOverride?: number,
-  allowOverride = false,
-) {
-  const unlockedCount = unlockedCountAt(nowMs, previewOverride, allowOverride)
-  const unlocked = CLUES.slice(0, unlockedCount)
-  const locked: LockedClue[] = CLUES.slice(unlockedCount).map((c) => ({
+/**
+ * Computes the public-safe payload for the journey page from a player's
+ * effective unlocked count.
+ */
+export function buildClueState(unlockedCount: number, nowMs: number) {
+  const count = clampProgress(unlockedCount)
+  const unlocked = CLUES.slice(0, count)
+  const locked: LockedClue[] = CLUES.slice(count).map((c) => ({
     order: c.order,
-    unlockMs: unlockTimeMs(c.order),
+    gate: c.order === FIRST_LEAD_ORDER ? "time" : "qr",
+    unlockMs: c.order === FIRST_LEAD_ORDER ? START_MS : undefined,
   }))
+  // The single next sealed lead (the one the player is working towards).
+  const next = locked[0] ?? null
   return {
-    unlockedCount,
+    unlockedCount: count,
     total: TOTAL_CLUES,
     startMs: START_MS,
-    nextUnlockMs: nextUnlockMs(unlockedCount),
+    next,
     unlocked,
     locked,
   }

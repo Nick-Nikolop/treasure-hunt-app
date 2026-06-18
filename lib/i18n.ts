@@ -58,7 +58,7 @@ const el = {
     titlePre: "Εννέα χώρες. Εννέα σημάδια.",
     titleEm: "Μία πόλη.",
     intro:
-      "Άνοιξε το ημερολόγιο του Πυθέα και διάβασε τις καταχωρήσεις του, μία μία. Κάθε σελίδα κουβαλά μια χώρα του ταξιδιού του και ένα σημάδι κρυμμένο σε μια γωνιά της Καλαμάτας. Οι σελίδες ξεκλειδώνουν με τον καιρό. Κανείς δεν ξέρει ποια χώρα κρύβει η επόμενη.",
+      "Άνοιξε το ημερολόγιο του Πυθέα και διάβασε τις καταχωρήσεις του, μία μία. Κάθε σελίδα κουβαλά μια χώρα του ταξιδιού του και ένα σημάδι κρυμμένο σε μια γωνιά της Καλαμάτας. Το πρώτο σημάδι ανοίγει την ημέρα της εκκίνησης. Τα υπόλοιπα τα ξεκλειδώνεις βρίσκοντας τους κωδικούς QR στην πόλη.",
   mapAlt: "Παλιός χάρτης της Καλαμάτας με την ακτή, τα βουνά και το λιμάνι",
   mapCaption: "ΚΑΛΑΜΑΤΑ · Ο ΧΑΡΤΗΣ ΤΩΝ ΣΗΜΑΔΙΩΝ",
   open: "ΑΝΟΙΧΤΟ",
@@ -68,12 +68,13 @@ const el = {
   statMarks: "ΣΗΜΑΔΙΑ",
   statCity: "ΠΟΛΗ",
   legendOpen: "Ανοιχτή σελίδα, έτοιμη να διαβαστεί.",
-  legendLocked: "Σφραγισμένη σελίδα, ξεκλειδώνει με τον καιρό.",
+  legendLocked: "Σφραγισμένη σελίδα. Ξεκλειδώνει σαρώνοντας τον κωδικό QR στο σημείο.",
   progressLabel: "ΠΡΟΟΔΟΣ ΑΠΟΚΑΛΥΨΗΣ",
   status: (n: number, total: number) =>
   `${n} ΑΠΟ ${total} ΣΗΜΑΔΙΑ ΑΠΟΚΑΛΥΦΘΗΚΑΝ`,
   firstOpensIn: "Το πρώτο σημάδι ανοίγει σε",
   nextOpensIn: "Το επόμενο σημάδι ανοίγει σε",
+  huntBegun: "Το κυνήγι ξεκίνησε. Βρες τα σημάδια στην πόλη και σάρωσε τους κωδικούς QR.",
   allOpen: "Όλα τα σημάδια είναι ανοιχτά. Ο θησαυρός περιμένει.",
   cta: "ΑΝΟΙΞΕ ΤΟ ΗΜΕΡΟΛΟΓΙΟ",
   openJournal: "Άνοιξε το ημερολόγιο",
@@ -152,7 +153,7 @@ const el = {
   },
   teams: {
     metaTitle: "Η Ομάδα σου",
-    metaDescription: "Φτιάξε ή διαχειρίσου την ομάδα σου για το Ταξίδι του Πυθέα.",
+    metaDescription: "��τιάξε ή διαχειρίσου την ομάδα σου για το Ταξίδι του Πυθέα.",
     back: "ΠΙΣΩ ΣΤΗΝ ΑΡΧΙΚΗ",
     loading: "Φόρτωση ομάδας...",
     // No team yet: create or join.
@@ -241,7 +242,7 @@ const el = {
       },
       {
         q: "Πόσα άτομα έχει μια ομάδα;",
-        a: "Ως και οκτώ άτομα. Η δυνατότητα να φτιάξεις ή να μπεις σε ομάδα ανοίγει σε λίγο καιρό. Προς το παρόν φτιάχνεις τον προσωπικό σου λογαριασμό.",
+        a: "Ως και οκτώ άτομα. Η δυνατότητα να φτιάξεις ή να μπεις σε ομάδα ανοίγει σε λίγο καιρό. Προς το παρόν φτιάχνεις τον πρ��σωπικό σου λογαριασμό.",
       },
       {
         q: "Χρειάζομαι λογαριασμό;",
@@ -446,7 +447,7 @@ const en: Dictionary = {
     titlePre: "Nine countries. Nine marks.",
     titleEm: "One city.",
     intro:
-  "Open the journal of Pytheas and read his entries, one by one. Each page carries a country from his voyage and a mark hidden in a corner of Kalamata. The pages unlock over time. No one knows which country the next one holds.",
+  "Open the journal of Pytheas and read his entries, one by one. Each page carries a country from his voyage and a mark hidden in a corner of Kalamata. The first mark opens on launch day. You unlock the rest by finding the QR codes hidden around the city.",
     mapAlt: "Antique map of Kalamata showing the coastline, mountains and harbor",
     mapCaption: "KALAMATA · THE MAP OF MARKS",
   open: "OPEN",
@@ -456,11 +457,12 @@ const en: Dictionary = {
   statMarks: "MARKS",
   statCity: "CITY",
   legendOpen: "An open page, ready to be read.",
-  legendLocked: "A sealed page, unlocking over time.",
+  legendLocked: "A sealed page. It unlocks by scanning the QR code at its location.",
   progressLabel: "REVEAL PROGRESS",
   status: (n: number, total: number) => `${n} OF ${total} MARKS REVEALED`,
   firstOpensIn: "The first mark opens in",
   nextOpensIn: "The next mark opens in",
+  huntBegun: "The hunt has begun. Find the marks around the city and scan the QR codes.",
   allOpen: "Every mark is open. The treasure awaits.",
   cta: "OPEN THE JOURNAL",
   openJournal: "Open the journal",

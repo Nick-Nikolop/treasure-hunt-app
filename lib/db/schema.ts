@@ -76,3 +76,23 @@ export const teamMember = pgTable("team_member", {
   role: text("role").notNull().default("member"),
   joinedAt: timestamp("joinedAt").notNull().defaultNow(),
 })
+
+// One row per (user, lead) the user has unlocked. This is the history that
+// powers both progression and the leaderboard ("reached lead N at time T").
+// `source` records how it was unlocked: "qr" | "time" | "admin".
+export const leadUnlock = pgTable("lead_unlock", {
+  id: text("id").primaryKey(),
+  userId: text("userId").notNull(),
+  leadOrder: integer("leadOrder").notNull(),
+  unlockedAt: timestamp("unlockedAt").notNull().defaultNow(),
+  source: text("source").notNull().default("qr"),
+})
+
+// The secret token printed inside each lead's physical QR code. One row per
+// lead that is unlocked by scanning (leads 2..9). Stable so printed codes keep
+// working; regenerating a token invalidates the old printed QR.
+export const clueToken = pgTable("clue_token", {
+  leadOrder: integer("leadOrder").primaryKey(),
+  token: text("token").notNull().unique(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+})
