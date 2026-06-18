@@ -6,6 +6,7 @@ import Link from "next/link"
 import {
   ArrowLeft,
   KeyRound,
+  Plus,
   Search,
   Shield,
   ShieldOff,
@@ -19,11 +20,13 @@ import {
 import { ModalShell } from "@/components/pythea/modal-shell"
 import { ConfirmDialog } from "@/components/pythea/confirm-dialog"
 import { AdminPasswordDialog } from "@/components/pythea/admin-password-dialog"
+import { MAX_CREW_SIZE } from "@/lib/teams"
 import {
   adminDeleteUser,
   adminSetRole,
   adminKickFromTeam,
   adminAssignToTeam,
+  adminCreateTeam,
   adminDisbandTeam,
   adminRenameTeam,
   type AdminData,
@@ -66,6 +69,8 @@ export function AdminDashboard({
   const [renameValue, setRenameValue] = useState("")
   const [assignTarget, setAssignTarget] = useState<AdminUserRow | null>(null)
   const [assignValue, setAssignValue] = useState("")
+  const [createOpen, setCreateOpen] = useState(false)
+  const [createValue, setCreateValue] = useState("")
 
   const errorText: Record<string, string> = {
     cannot_delete_self: "You can't delete your own account here.",
@@ -220,6 +225,20 @@ export function AdminDashboard({
           </ul>
         ) : (
           <ul className="flex flex-col gap-3">
+            <li className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setCreateValue("")
+                  setCreateOpen(true)
+                }}
+                disabled={pending}
+                className="inline-flex items-center gap-2 rounded-sm bg-brass px-4 py-2.5 font-sans text-sm font-bold tracking-chip text-background transition-transform hover:-translate-y-0.5 disabled:opacity-50"
+              >
+                <Plus className="size-4" />
+                New team
+              </button>
+            </li>
             {filteredTeams.map((tm) => (
               <TeamCard
                 key={tm.id}
@@ -366,7 +385,7 @@ export function AdminDashboard({
             </option>
             {data.teams.map((tm) => (
               <option key={tm.id} value={tm.id} disabled={tm.id === assignTarget?.teamId}>
-                {tm.name} ({tm.members.length}/{8})
+                {tm.name} ({tm.members.length}/{MAX_CREW_SIZE})
                 {tm.id === assignTarget?.teamId ? " — current" : ""}
               </option>
             ))}
@@ -382,6 +401,56 @@ export function AdminDashboard({
             <button
               type="button"
               onClick={() => setAssignTarget(null)}
+              disabled={pending}
+              className="inline-flex flex-1 items-center justify-center rounded-sm border border-border px-5 py-3 font-sans text-sm font-bold tracking-chip text-foreground transition-colors hover:border-brass disabled:opacity-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </ModalShell>
+
+      {/* Create team */}
+      <ModalShell open={createOpen} onClose={() => setCreateOpen(false)} labelledBy="create-title">
+        <h2 id="create-title" className="font-serif text-2xl font-black text-foreground">
+          Create a team
+        </h2>
+        <p className="mt-1 font-sans text-sm text-muted-foreground">
+          Starts empty with all {MAX_CREW_SIZE} seats open. Assign users into it from the Users tab.
+        </p>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            const name = createValue
+            runAction(() => adminCreateTeam(name), "Team created.")
+            setCreateOpen(false)
+          }}
+          className="mt-5"
+        >
+          <label
+            htmlFor="create-team-name"
+            className="font-sans text-xs font-bold tracking-chip text-muted-foreground"
+          >
+            TEAM NAME
+          </label>
+          <input
+            id="create-team-name"
+            value={createValue}
+            onChange={(e) => setCreateValue(e.target.value)}
+            placeholder="The Argonauts"
+            className="mt-1.5 w-full rounded-sm border border-border bg-background px-3 py-2.5 font-sans text-sm text-foreground outline-none transition-colors focus:border-brass"
+          />
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row-reverse">
+            <button
+              type="submit"
+              disabled={pending || createValue.trim().length < 2}
+              className="inline-flex flex-1 items-center justify-center rounded-sm bg-brass px-5 py-3 font-sans text-sm font-bold tracking-chip text-background transition-transform hover:-translate-y-0.5 disabled:opacity-50"
+            >
+              Create
+            </button>
+            <button
+              type="button"
+              onClick={() => setCreateOpen(false)}
               disabled={pending}
               className="inline-flex flex-1 items-center justify-center rounded-sm border border-border px-5 py-3 font-sans text-sm font-bold tracking-chip text-foreground transition-colors hover:border-brass disabled:opacity-50"
             >

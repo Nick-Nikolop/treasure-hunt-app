@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { account, session, team, teamMember, user } from "@/lib/db/schema"
 import { requireAdmin, isBootstrapEmail, superadminCount } from "@/lib/admin"
-import { MAX_CREW_SIZE } from "@/lib/teams"
+import { MAX_CREW_SIZE, generateInviteCode } from "@/lib/teams"
 import { and, asc, desc, eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { randomUUID } from "node:crypto"
@@ -326,6 +326,46 @@ export async function adminRenameTeam(teamId: string, name: string): Promise<Act
   await db.update(team).set({ name: trimmed }).where(eq(team.id, teamId))
   revalidatePath("/admin")
   return { ok: true }
+}
+
+/**
+ * Create a new, empty team. The admin is recorded as the owner so the
+ * `ownerId` column is satisfied, but no membership row is created, leaving all
+ * 8 seats open for users to be assigned into via adminAssignToTeam.
+ */
+export async function adminCreateTeam(name: string): Promise<ActionResult> {
+  await requireAdmin()
+
+  const trimmed = name.trim()
+  if (trimmed.length < 2) return { ok: false, error: "too_short" }
+  if (trimmed.length > 40) return { ok: false, error: "too_long" }
+
+  const admin = await requireAdmin()
+  const code = await uniqueInviteCode()
+
+  await db.insert(team).values({
+    id: randomUUID(),
+    name: trimmed,
+    ownerId: admin.id,
+    inviteCode: code,
+  })
+
+  revalidatePath("/admin")
+  return { ok: true }
+}
+
+/** Generate an invite code not already in use. Mirrors the teams feature. */
+async function uniqueInviteCode(): Promise<string> {
+  for (let i = 0; i < 6; i++) {
+    const code = generateInviteCode()
+    const existing = await db
+      .select({ id: team.id })
+      .from(team)
+      .where(eq(team.inviteCode, code))
+      .limit(1)
+    if (existing.length === 0) return code
+  }
+  return randomUUID().replace(/-/g, "").slice(0, 10).toUpperCase()
 }
 
 /**
