@@ -3,9 +3,10 @@
 import { useMemo, useState } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
-import { ArrowLeft, Feather, Trophy, Users, User as UserIcon, MapPin, Flag } from "lucide-react"
+import { ArrowLeft, Feather, Trophy, Users, User as UserIcon, MapPin, Flag, X } from "lucide-react"
 import { ThemeToggle } from "@/components/pythea/theme-toggle"
 import { LanguageToggle } from "@/components/pythea/language-toggle"
+import { ModalShell } from "@/components/pythea/modal-shell"
 import { useI18n } from "@/components/pythea/language-provider"
 import { STOP_XY, ROUTE_D, TAIL_D, TREASURE_XY, MAP_VIEWBOX } from "@/lib/voyage-map"
 import type { LeaderboardEntry } from "@/lib/hunt"
@@ -57,8 +58,9 @@ export function LeaderboardView({
     return map
   }, [revealedPorts])
 
-  // Which port is open in the detail panel. Default to where the viewer is.
-  const [selected, setSelected] = useState<number>(viewerProgress)
+  // Which port is open in the detail modal. Null means no modal is open, so
+  // the info surfaces only when the player taps a port or a standings row.
+  const [selected, setSelected] = useState<number | null>(null)
 
   const fmt = (ms: number | null) => {
     if (ms === null) return lb.notStarted
@@ -73,9 +75,9 @@ export function LeaderboardView({
   const frac = total > 1 ? (viewerProgress - 1) / (total - 1) : 1
   const allDone = viewerProgress >= total
 
-  const selectedPort = portName.get(selected) ?? null
-  const selectedEntries = byPort.get(selected) ?? []
-  const selectedRevealed = selected <= viewerProgress
+  const selectedPort = selected !== null ? (portName.get(selected) ?? null) : null
+  const selectedEntries = selected !== null ? (byPort.get(selected) ?? []) : []
+  const selectedRevealed = selected !== null && selected <= viewerProgress
 
   return (
     <>
@@ -311,53 +313,6 @@ export function LeaderboardView({
           </div>
         </section>
 
-        {/* Who is at the selected port */}
-        <section className="mt-6 rounded-sm border border-border bg-card/40 p-5 md:p-6">
-          <div className="flex items-center gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-sm bg-brass/15 font-serif text-base font-black text-brass">
-              {String(selected).padStart(2, "0")}
-            </span>
-            <div className="min-w-0">
-              <h2 className="truncate font-serif text-xl font-black text-foreground md:text-2xl">
-                {selectedRevealed && selectedPort
-                  ? locale === "en"
-                    ? selectedPort.countryEn
-                    : selectedPort.country
-                  : lb.unknownWaters}
-              </h2>
-              <p className="font-sans text-[11px] font-bold tracking-chip text-muted-foreground">
-                {lb.portLabel(selected)}
-                {selected === viewerProgress && (
-                  <span className="ml-2 text-brass">{lb.youAreHere}</span>
-                )}
-              </p>
-            </div>
-          </div>
-
-          {!selectedRevealed && (
-            <p className="mt-4 text-pretty font-serif text-sm italic leading-relaxed text-muted-foreground">
-              {lb.sealedPort}
-            </p>
-          )}
-
-          {selectedEntries.length === 0 ? (
-            <p className="mt-5 font-serif text-base italic text-muted-foreground">{lb.noOneHere}</p>
-          ) : (
-            <ul className="mt-5 flex flex-col gap-2.5">
-              {selectedEntries.map((entry) => (
-                <PortEntryRow
-                  key={`${entry.kind}-${entry.id}`}
-                  entry={entry}
-                  total={total}
-                  isMe={entry.id === myEntryId}
-                  reachedText={fmt(entry.reachedAt)}
-                  lb={lb}
-                />
-              ))}
-            </ul>
-          )}
-        </section>
-
         {/* Full standings, compact */}
         <section className="mt-8">
           <p className="font-sans text-[11px] font-bold tracking-chip text-muted-foreground">
@@ -424,6 +379,70 @@ export function LeaderboardView({
           </ol>
         </section>
       </main>
+
+      {/* Port detail surfaces in a modal right where the player tapped, so the
+          standings and map never need scrolling to read who is where. */}
+      <ModalShell
+        open={selected !== null}
+        onClose={() => setSelected(null)}
+        labelledBy="port-detail-title"
+      >
+        <button
+          type="button"
+          onClick={() => setSelected(null)}
+          aria-label={lb.home}
+          className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
+          <X className="size-4" />
+        </button>
+
+        <div className="flex items-center gap-3 pr-8">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-sm bg-brass/15 font-serif text-base font-black text-brass">
+            {String(selected ?? 0).padStart(2, "0")}
+          </span>
+          <div className="min-w-0">
+            <h2
+              id="port-detail-title"
+              className="truncate font-serif text-xl font-black text-foreground md:text-2xl"
+            >
+              {selectedRevealed && selectedPort
+                ? locale === "en"
+                  ? selectedPort.countryEn
+                  : selectedPort.country
+                : lb.unknownWaters}
+            </h2>
+            <p className="font-sans text-[11px] font-bold tracking-chip text-muted-foreground">
+              {selected !== null && lb.portLabel(selected)}
+              {selected === viewerProgress && (
+                <span className="ml-2 text-brass">{lb.youAreHere}</span>
+              )}
+            </p>
+          </div>
+        </div>
+
+        {!selectedRevealed && (
+          <p className="mt-4 text-pretty font-serif text-sm italic leading-relaxed text-muted-foreground">
+            {lb.sealedPort}
+          </p>
+        )}
+
+        {selectedEntries.length === 0 ? (
+          <p className="mt-5 font-serif text-base italic text-muted-foreground">{lb.noOneHere}</p>
+        ) : (
+          <ul className="mt-5 flex max-h-[55vh] flex-col gap-2.5 overflow-y-auto">
+            {selectedEntries.map((entry) => (
+              <PortEntryRow
+                key={`${entry.kind}-${entry.id}`}
+                entry={entry}
+                total={total}
+                isMe={entry.id === myEntryId}
+                reachedText={fmt(entry.reachedAt)}
+                lb={lb}
+              />
+            ))}
+          </ul>
+        )}
+      </ModalShell>
     </>
   )
 }
