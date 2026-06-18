@@ -223,9 +223,12 @@ export const FIRST_LEAD_ORDER = 1
 
 export const START_MS = new Date(START_ISO).getTime()
 
-/** Whether lead 1 has opened for everyone yet (purely time-based). */
-export function isLeadOneOpen(nowMs: number): boolean {
-  return nowMs >= START_MS
+/**
+ * Whether lead 1 has opened for everyone. Lead 1 is now open by default, so
+ * there is no countdown: everyone starts the hunt able to read the first clue.
+ */
+export function isLeadOneOpen(_nowMs: number): boolean {
+  return true
 }
 
 /**
