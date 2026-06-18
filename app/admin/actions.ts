@@ -2,9 +2,16 @@
 
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
-import { account, session, team, teamMember, user } from "@/lib/db/schema"
+import { account, leadUnlock, session, team, teamMember, user } from "@/lib/db/schema"
 import { requireAdmin, isBootstrapEmail, superadminCount } from "@/lib/admin"
 import { MAX_CREW_SIZE, generateInviteCode } from "@/lib/teams"
+import {
+  setProgressForUsers,
+  getClueTokens,
+  regenerateToken,
+  type ClueTokenRow,
+} from "@/lib/hunt"
+import { TOTAL_CLUES, effectiveUnlockedCount } from "@/lib/clues"
 import { and, asc, desc, eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { randomUUID } from "node:crypto"
@@ -23,6 +30,8 @@ export type AdminUserRow = {
   teamId: string | null
   teamName: string | null
   teamRole: string | null
+  /** Effective unlocked-lead count for this user (stored + lead-1 time gate). */
+  progress: number
 }
 
 export type AdminTeamRow = {
@@ -31,6 +40,8 @@ export type AdminTeamRow = {
   ownerId: string
   inviteCode: string
   createdAt: Date
+  /** Furthest lead any member of the team has reached. */
+  progress: number
   members: {
     userId: string
     name: string
@@ -43,6 +54,10 @@ export type AdminData = {
   users: AdminUserRow[]
   teams: AdminTeamRow[]
   superadminCount: number
+  /** Total number of leads in the hunt (for progress controls). */
+  totalLeads: number
+  /** QR scan links, one per lead order (2..9). */
+  tokens: ClueTokenRow[]
 }
 
 /** Load every user and team for the dashboard. Superadmin only. */
@@ -82,21 +97,38 @@ export async function getAdminData(): Promise<AdminData> {
     .leftJoin(user, eq(user.id, teamMember.userId))
     .orderBy(asc(teamMember.joinedAt))
 
-  const teamsWithMembers: AdminTeamRow[] = teams.map((tm) => ({
-    id: tm.id,
-    name: tm.name,
-    ownerId: tm.ownerId,
-    inviteCode: tm.inviteCode,
-    createdAt: tm.createdAt,
-    members: allMembers
-      .filter((m) => m.teamId === tm.id)
-      .map((m) => ({
+  // Per-user stored progress (highest unlocked lead), folded with the lead-1
+  // time gate to get each user's effective progress.
+  const now = Date.now()
+  const unlocks = await db
+    .select({ userId: leadUnlock.userId, leadOrder: leadUnlock.leadOrder })
+    .from(leadUnlock)
+  const storedByUser = new Map<string, number>()
+  for (const row of unlocks) {
+    storedByUser.set(row.userId, Math.max(storedByUser.get(row.userId) ?? 0, row.leadOrder))
+  }
+  const progressOf = (userId: string) =>
+    effectiveUnlockedCount(storedByUser.get(userId) ?? 0, now)
+
+  const teamsWithMembers: AdminTeamRow[] = teams.map((tm) => {
+    const memberRows = allMembers.filter((m) => m.teamId === tm.id)
+    // A team's progress is the furthest any of its members has reached.
+    const teamProgress = memberRows.reduce((max, m) => Math.max(max, progressOf(m.userId)), 0)
+    return {
+      id: tm.id,
+      name: tm.name,
+      ownerId: tm.ownerId,
+      inviteCode: tm.inviteCode,
+      createdAt: tm.createdAt,
+      progress: teamProgress,
+      members: memberRows.map((m) => ({
         userId: m.userId,
         name: m.name ?? "",
         email: m.email ?? "",
         role: m.role,
       })),
-  }))
+    }
+  })
 
   return {
     users: users.map((u) => ({
@@ -111,9 +143,12 @@ export async function getAdminData(): Promise<AdminData> {
       teamId: u.teamId,
       teamName: u.teamName,
       teamRole: u.teamRole,
+      progress: progressOf(u.id),
     })),
     teams: teamsWithMembers,
     superadminCount: await superadminCount(),
+    totalLeads: TOTAL_CLUES,
+    tokens: await getClueTokens(),
   }
 }
 
@@ -366,6 +401,81 @@ async function uniqueInviteCode(): Promise<string> {
     if (existing.length === 0) return code
   }
   return randomUUID().replace(/-/g, "").slice(0, 10).toUpperCase()
+}
+
+/**
+ * Set a single user's progress to an exact lead (0..TOTAL_CLUES). This only
+ * affects that user; teammates are not touched. Use the team action to move a
+ * whole crew together.
+ */
+export async function adminSetUserProgress(
+  targetUserId: string,
+  targetLead: number,
+): Promise<ActionResult> {
+  await requireAdmin()
+
+  if (!Number.isFinite(targetLead) || targetLead < 0 || targetLead > TOTAL_CLUES) {
+    return { ok: false, error: "bad_value" }
+  }
+  const exists = await db
+    .select({ id: user.id })
+    .from(user)
+    .where(eq(user.id, targetUserId))
+    .limit(1)
+  if (exists.length === 0) return { ok: false, error: "not_found" }
+
+  await setProgressForUsers([targetUserId], Math.floor(targetLead))
+  revalidatePath("/admin")
+  return { ok: true }
+}
+
+/**
+ * Set an entire team's progress to an exact lead. Every current member is
+ * brought to the same point (added or trimmed). Mirrors how a real scan
+ * advances the whole crew.
+ */
+export async function adminSetTeamProgress(
+  teamId: string,
+  targetLead: number,
+): Promise<ActionResult> {
+  await requireAdmin()
+
+  if (!Number.isFinite(targetLead) || targetLead < 0 || targetLead > TOTAL_CLUES) {
+    return { ok: false, error: "bad_value" }
+  }
+  const memberRows = await db
+    .select({ userId: teamMember.userId })
+    .from(teamMember)
+    .where(eq(teamMember.teamId, teamId))
+  if (memberRows.length === 0) return { ok: false, error: "empty_team" }
+
+  await setProgressForUsers(
+    memberRows.map((m) => m.userId),
+    Math.floor(targetLead),
+  )
+  revalidatePath("/admin")
+  return { ok: true }
+}
+
+/** Reset a single user's progress back to the start (no QR leads held). */
+export async function adminResetUserProgress(targetUserId: string): Promise<ActionResult> {
+  return adminSetUserProgress(targetUserId, 0)
+}
+
+/** Reset an entire team's progress back to the start. */
+export async function adminResetTeamProgress(teamId: string): Promise<ActionResult> {
+  return adminSetTeamProgress(teamId, 0)
+}
+
+/** Issue a fresh QR token for a lead, invalidating the old printed code. */
+export async function adminRegenerateToken(leadOrder: number): Promise<ActionResult> {
+  await requireAdmin()
+  if (!Number.isFinite(leadOrder) || leadOrder < 2 || leadOrder > TOTAL_CLUES) {
+    return { ok: false, error: "bad_value" }
+  }
+  await regenerateToken(Math.floor(leadOrder))
+  revalidatePath("/admin")
+  return { ok: true }
 }
 
 /**

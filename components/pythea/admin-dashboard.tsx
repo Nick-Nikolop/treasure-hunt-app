@@ -16,6 +16,12 @@ import {
   Users,
   Pencil,
   Crown,
+  Flag,
+  RotateCcw,
+  QrCode,
+  Copy,
+  Check,
+  RefreshCw,
 } from "lucide-react"
 import { ModalShell } from "@/components/pythea/modal-shell"
 import { ConfirmDialog } from "@/components/pythea/confirm-dialog"
@@ -29,13 +35,18 @@ import {
   adminCreateTeam,
   adminDisbandTeam,
   adminRenameTeam,
+  adminSetUserProgress,
+  adminSetTeamProgress,
+  adminResetUserProgress,
+  adminResetTeamProgress,
+  adminRegenerateToken,
   type AdminData,
   type AdminUserRow,
   type AdminTeamRow,
   type ActionResult,
 } from "@/app/admin/actions"
 
-type Tab = "users" | "teams"
+type Tab = "users" | "teams" | "qr"
 
 type Confirm = {
   title: string
@@ -71,6 +82,13 @@ export function AdminDashboard({
   const [assignValue, setAssignValue] = useState("")
   const [createOpen, setCreateOpen] = useState(false)
   const [createValue, setCreateValue] = useState("")
+  // Progress editor: targets either a user or a whole team.
+  const [progressTarget, setProgressTarget] = useState<
+    | { kind: "user"; id: string; label: string; current: number }
+    | { kind: "team"; id: string; label: string; current: number }
+    | null
+  >(null)
+  const [progressValue, setProgressValue] = useState(0)
 
   const errorText: Record<string, string> = {
     cannot_delete_self: "You can't delete your own account here.",
@@ -82,6 +100,8 @@ export function AdminDashboard({
     team_full: "That team is already full.",
     too_short: "Name is too short.",
     too_long: "Name is too long.",
+    bad_value: "That progress value is out of range.",
+    empty_team: "That team has no members to set progress for.",
   }
 
   function runAction(fn: () => Promise<ActionResult>, successText: string) {
@@ -169,16 +189,21 @@ export function AdminDashboard({
           <TabButton active={tab === "teams"} onClick={() => setTab("teams")} icon={Crown}>
             Teams
           </TabButton>
+          <TabButton active={tab === "qr"} onClick={() => setTab("qr")} icon={QrCode}>
+            QR codes
+          </TabButton>
         </div>
-        <div className="relative w-full sm:max-w-xs">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={tab === "users" ? "Search users..." : "Search teams..."}
-            className="w-full rounded-sm border border-border bg-background py-2.5 pl-9 pr-3 font-sans text-sm text-foreground outline-none transition-colors focus:border-brass"
-          />
-        </div>
+        {tab !== "qr" && (
+          <div className="relative w-full sm:max-w-xs">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={tab === "users" ? "Search users..." : "Search teams..."}
+              className="w-full rounded-sm border border-border bg-background py-2.5 pl-9 pr-3 font-sans text-sm text-foreground outline-none transition-colors focus:border-brass"
+            />
+          </div>
+        )}
       </div>
 
       {/* Content */}
@@ -189,9 +214,24 @@ export function AdminDashboard({
               <UserCard
                 key={u.id}
                 u={u}
+                totalLeads={data.totalLeads}
                 isSelf={u.id === currentUserId}
                 pending={pending}
                 hasTeams={data.teams.length > 0}
+                onSetProgress={() => {
+                  const label =
+                    [u.firstName, u.lastName].filter(Boolean).join(" ") || u.name || u.email
+                  setProgressTarget({ kind: "user", id: u.id, label, current: u.progress })
+                  setProgressValue(u.progress)
+                }}
+                onResetProgress={() =>
+                  setConfirm({
+                    title: "Reset progress",
+                    body: `Reset ${u.email} back to the start? They will hold no QR leads.`,
+                    confirmLabel: "Reset",
+                    run: () => adminResetUserProgress(u.id),
+                  })
+                }
                 onAssign={() => {
                   setAssignTarget(u)
                   setAssignValue("")
@@ -223,7 +263,7 @@ export function AdminDashboard({
             ))}
             {filteredUsers.length === 0 && <Empty>No users match your search.</Empty>}
           </ul>
-        ) : (
+        ) : tab === "teams" ? (
           <ul className="flex flex-col gap-3">
             <li className="flex justify-end">
               <button
@@ -243,11 +283,24 @@ export function AdminDashboard({
               <TeamCard
                 key={tm.id}
                 tm={tm}
+                totalLeads={data.totalLeads}
                 pending={pending}
                 onRename={() => {
                   setRenameTeam(tm)
                   setRenameValue(tm.name)
                 }}
+                onSetProgress={() => {
+                  setProgressTarget({ kind: "team", id: tm.id, label: tm.name, current: tm.progress })
+                  setProgressValue(tm.progress)
+                }}
+                onResetProgress={() =>
+                  setConfirm({
+                    title: "Reset team progress",
+                    body: `Reset "${tm.name}" back to the start? Every member will hold no QR leads.`,
+                    confirmLabel: "Reset",
+                    run: () => adminResetTeamProgress(tm.id),
+                  })
+                }
                 onDisband={() =>
                   setConfirm({
                     title: "Disband team",
@@ -268,6 +321,19 @@ export function AdminDashboard({
             ))}
             {filteredTeams.length === 0 && <Empty>No teams match your search.</Empty>}
           </ul>
+        ) : (
+          <QrPanel
+            tokens={data.tokens}
+            pending={pending}
+            onRegenerate={(leadOrder) =>
+              setConfirm({
+                title: "Regenerate QR link",
+                body: `Issue a fresh link for lead No. ${String(leadOrder).padStart(2, "0")}? Any QR code already printed from the old link will stop working.`,
+                confirmLabel: "Regenerate",
+                run: () => adminRegenerateToken(leadOrder),
+              })
+            }
+          />
         )}
       </div>
 
@@ -459,6 +525,85 @@ export function AdminDashboard({
           </div>
         </form>
       </ModalShell>
+
+      {/* Set progress (user or team) */}
+      <ModalShell
+        open={progressTarget !== null}
+        onClose={() => setProgressTarget(null)}
+        labelledBy="progress-title"
+      >
+        <h2 id="progress-title" className="font-serif text-2xl font-black text-foreground">
+          Set progress
+        </h2>
+        <p className="mt-1 font-sans text-sm text-muted-foreground">
+          {progressTarget?.kind === "team" ? (
+            <>
+              Move the whole team <span className="text-foreground">{progressTarget?.label}</span> to a
+              specific lead. Every member is brought to the same point.
+            </>
+          ) : (
+            <>
+              Set <span className="text-foreground">{progressTarget?.label}</span> to a specific lead.
+              This only affects this user.
+            </>
+          )}
+        </p>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            if (!progressTarget) return
+            const { kind, id } = progressTarget
+            const value = progressValue
+            runAction(
+              () =>
+                kind === "team"
+                  ? adminSetTeamProgress(id, value)
+                  : adminSetUserProgress(id, value),
+              "Progress updated.",
+            )
+            setProgressTarget(null)
+          }}
+          className="mt-5"
+        >
+          <label
+            htmlFor="progress-value"
+            className="font-sans text-xs font-bold tracking-chip text-muted-foreground"
+          >
+            LEAD (0 = START, {data.totalLeads} = FINISHED)
+          </label>
+          <select
+            id="progress-value"
+            value={progressValue}
+            onChange={(e) => setProgressValue(Number(e.target.value))}
+            className="mt-1.5 w-full rounded-sm border border-border bg-background px-3 py-2.5 font-sans text-sm text-foreground outline-none transition-colors focus:border-brass"
+          >
+            {Array.from({ length: data.totalLeads + 1 }, (_, i) => (
+              <option key={i} value={i}>
+                {i === 0
+                  ? "0 — Not started"
+                  : `Lead ${String(i).padStart(2, "0")}${i === data.totalLeads ? " — Finished" : ""}`}
+              </option>
+            ))}
+          </select>
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row-reverse">
+            <button
+              type="submit"
+              disabled={pending}
+              className="inline-flex flex-1 items-center justify-center rounded-sm bg-brass px-5 py-3 font-sans text-sm font-bold tracking-chip text-background transition-transform hover:-translate-y-0.5 disabled:opacity-50"
+            >
+              Save
+            </button>
+            <button
+              type="button"
+              onClick={() => setProgressTarget(null)}
+              disabled={pending}
+              className="inline-flex flex-1 items-center justify-center rounded-sm border border-border px-5 py-3 font-sans text-sm font-bold tracking-chip text-foreground transition-colors hover:border-brass disabled:opacity-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </ModalShell>
     </main>
   )
 }
@@ -554,9 +699,12 @@ function IconBtn({
 
 function UserCard({
   u,
+  totalLeads,
   isSelf,
   pending,
   hasTeams,
+  onSetProgress,
+  onResetProgress,
   onAssign,
   onResetPassword,
   onToggleRole,
@@ -564,9 +712,12 @@ function UserCard({
   onDelete,
 }: {
   u: AdminUserRow
+  totalLeads: number
   isSelf: boolean
   pending: boolean
   hasTeams: boolean
+  onSetProgress: () => void
+  onResetProgress: () => void
   onAssign: () => void
   onResetPassword: () => void
   onToggleRole: () => void
@@ -592,21 +743,37 @@ function UserCard({
             )}
           </div>
           <p className="truncate font-sans text-xs text-muted-foreground">{u.email}</p>
-          <p className="mt-0.5 font-sans text-[11px] text-muted-foreground">
+          <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 font-sans text-[11px] text-muted-foreground">
             {u.teamName ? (
-              <>
+              <span>
                 Team: <span className="text-foreground">{u.teamName}</span>
                 {u.teamRole === "owner" && " (owner)"}
-              </>
+              </span>
             ) : (
-              "No team"
+              <span>No team</span>
             )}
-            {" · "}
-            Joined {fmtDate(u.createdAt)}
+            <span aria-hidden>·</span>
+            <ProgressBadge progress={u.progress} total={totalLeads} />
+            <span aria-hidden>·</span>
+            <span>Joined {fmtDate(u.createdAt)}</span>
           </p>
         </div>
       </div>
       <div className="flex flex-wrap gap-2">
+        <IconBtn
+          onClick={onSetProgress}
+          disabled={pending}
+          title="Set progress"
+          icon={Flag}
+          label="Progress"
+        />
+        <IconBtn
+          onClick={onResetProgress}
+          disabled={pending || u.progress === 0}
+          title="Reset progress to start"
+          icon={RotateCcw}
+          label="Reset"
+        />
         <IconBtn
           onClick={onToggleRole}
           disabled={pending || isSelf}
@@ -646,14 +813,20 @@ function UserCard({
 
 function TeamCard({
   tm,
+  totalLeads,
   pending,
   onRename,
+  onSetProgress,
+  onResetProgress,
   onDisband,
   onKick,
 }: {
   tm: AdminTeamRow
+  totalLeads: number
   pending: boolean
   onRename: () => void
+  onSetProgress: () => void
+  onResetProgress: () => void
   onDisband: () => void
   onKick: (userId: string, email: string) => void
 }) {
@@ -661,12 +834,13 @@ function TeamCard({
     <li className="rounded-sm border border-border bg-card/40 p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Crown className="size-4 text-brass" />
             <span className="font-serif text-lg font-black text-foreground">{tm.name}</span>
             <span className="font-sans text-[11px] text-muted-foreground">
               {tm.members.length} member(s)
             </span>
+            <ProgressBadge progress={tm.progress} total={totalLeads} />
           </div>
           <p className="mt-0.5 font-sans text-[11px] text-muted-foreground">
             Invite code: <span className="font-mono text-foreground">{tm.inviteCode}</span> · Created{" "}
@@ -674,6 +848,14 @@ function TeamCard({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <IconBtn onClick={onSetProgress} disabled={pending} title="Set team progress" icon={Flag} label="Progress" />
+          <IconBtn
+            onClick={onResetProgress}
+            disabled={pending || tm.progress === 0}
+            title="Reset team progress"
+            icon={RotateCcw}
+            label="Reset"
+          />
           <IconBtn onClick={onRename} disabled={pending} title="Rename team" icon={Pencil} label="Rename" />
           <IconBtn
             onClick={onDisband}
@@ -710,6 +892,116 @@ function TeamCard({
           </li>
         ))}
       </ul>
+    </li>
+  )
+}
+
+function ProgressBadge({ progress, total }: { progress: number; total: number }) {
+  const done = progress >= total
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-sm px-2 py-0.5 font-sans text-[10px] font-bold uppercase tracking-chip ${
+        progress === 0
+          ? "bg-border/40 text-muted-foreground"
+          : done
+            ? "bg-brass/20 text-brass"
+            : "bg-brass/10 text-foreground"
+      }`}
+      title="Leads unlocked"
+    >
+      <Flag className="size-3" />
+      {progress}/{total}
+    </span>
+  )
+}
+
+/**
+ * The QR codes panel: one row per lead (2..9) showing the scan link an
+ * organizer turns into a printed QR code, with copy and regenerate controls.
+ */
+function QrPanel({
+  tokens,
+  pending,
+  onRegenerate,
+}: {
+  tokens: AdminData["tokens"]
+  pending: boolean
+  onRegenerate: (leadOrder: number) => void
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="rounded-sm border border-border bg-card/40 p-4">
+        <div className="flex items-center gap-2">
+          <QrCode className="size-4 text-brass" />
+          <h2 className="font-serif text-lg font-black text-foreground">QR scan links</h2>
+        </div>
+        <p className="mt-1 font-sans text-[13px] leading-relaxed text-muted-foreground">
+          Each link below unlocks one lead. Turn each into a QR code (any QR generator works) and
+          hide it at the matching location. When a player scans it, that lead opens for them and
+          their whole team. Lead 01 opens on a timer, so it has no QR code.
+        </p>
+      </div>
+      <ul className="flex flex-col gap-2.5">
+        {tokens.length === 0 && <Empty>No QR links have been generated yet.</Empty>}
+        {tokens.map((tk) => (
+          <QrRow key={tk.leadOrder} tk={tk} pending={pending} onRegenerate={onRegenerate} />
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+function QrRow({
+  tk,
+  pending,
+  onRegenerate,
+}: {
+  tk: AdminData["tokens"][number]
+  pending: boolean
+  onRegenerate: (leadOrder: number) => void
+}) {
+  const [copied, setCopied] = useState(false)
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(tk.link)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      // Clipboard can fail in some embedded contexts; ignore silently.
+    }
+  }
+
+  return (
+    <li className="flex flex-col gap-3 rounded-sm border border-border bg-card/40 p-4 md:flex-row md:items-center md:justify-between">
+      <div className="flex min-w-0 items-center gap-3">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-sm bg-brass/15 font-serif text-sm font-black text-brass">
+          {String(tk.leadOrder).padStart(2, "0")}
+        </span>
+        <div className="min-w-0">
+          <p className="font-sans text-[11px] font-bold uppercase tracking-chip text-muted-foreground">
+            Lead {String(tk.leadOrder).padStart(2, "0")}
+          </p>
+          <p className="truncate font-mono text-xs text-foreground">{tk.link}</p>
+        </div>
+      </div>
+      <div className="flex shrink-0 flex-wrap gap-2">
+        <IconBtn
+          onClick={copy}
+          disabled={pending}
+          title="Copy link"
+          icon={copied ? Check : Copy}
+          label={copied ? "Copied" : "Copy"}
+        />
+        <IconBtn
+          onClick={() => onRegenerate(tk.leadOrder)}
+          disabled={pending}
+          title="Regenerate link"
+          danger
+          icon={RefreshCw}
+          label="Regenerate"
+        />
+      </div>
     </li>
   )
 }
