@@ -22,14 +22,21 @@ export function ModalShell({
 }) {
   const panelRef = useRef<HTMLDivElement>(null)
 
+  // Focus the panel only when the dialog transitions open. Keyed on `open`
+  // alone so re-renders (e.g. typing in an input) don't keep stealing focus.
+  useEffect(() => {
+    if (!open) return
+    panelRef.current?.focus()
+  }, [open])
+
+  // Escape-to-close. Re-subscribing when `onClose` changes is harmless and
+  // keeps the handler current without touching focus.
   useEffect(() => {
     if (!open) return
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose()
     }
     document.addEventListener("keydown", onKey)
-    // Focus the panel for keyboard users.
-    panelRef.current?.focus()
     return () => document.removeEventListener("keydown", onKey)
   }, [open, onClose])
 
