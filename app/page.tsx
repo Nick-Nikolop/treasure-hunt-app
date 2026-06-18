@@ -25,6 +25,7 @@ export default async function Page() {
         firstName: (session.user as { firstName?: string | null }).firstName ?? null,
         name: session.user.name ?? null,
         email: session.user.email,
+        role: (session.user as { role?: string | null }).role ?? null,
       }
     : null
 

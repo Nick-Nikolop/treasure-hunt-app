@@ -10,6 +10,8 @@ export const user = pgTable("user", {
   firstName: text("firstName"),
   lastName: text("lastName"),
   yearOfBirth: integer("yearOfBirth"),
+  // Access level: "user" (default) or "superadmin". Drives the admin dashboard.
+  role: text("role").notNull().default("user"),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 })

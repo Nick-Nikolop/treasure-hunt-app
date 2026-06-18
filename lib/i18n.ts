@@ -241,7 +241,7 @@ const el = {
       },
       {
         q: "Πόσα άτομα έχει μια ομάδα;",
-        a: "Ως και οκτώ άτομα. Η δυνατότητα να φτιάξεις ή να μπεις σε ομάδα ανοίγει σε λίγο καιρό. Προς το παρόν φτιάχνεις τον προσωπικό σου λογαριασμό.",
+        a: "Ως και οκτώ άτομα. Η δυνατότητα να φτιάξεις ή να μπεις σε ομάδα ανοίγει σε λίγο καιρό. Προς το παρόν φτιάχνεις τον πρ��σωπικό σου λογαριασμό.",
       },
       {
         q: "Χρειάζομαι λογαριασμό;",
@@ -378,6 +378,7 @@ const el = {
     account: "Ο ΛΟΓΑΡΙΑΣΜΟΣ ΜΟΥ",
     accountMenu: "Λογαριασμός",
     crewNav: "Η ομάδα σου",
+    adminNav: "Διαχείριση",
     signOut: "Αποσύνδεση",
     greeting: (name: string) => `Καλώς ήρθες, ${name}`,
     signedInAs: "Συνδεδεμένος ως",
@@ -757,6 +758,7 @@ const en: Dictionary = {
     account: "MY ACCOUNT",
     accountMenu: "Account",
     crewNav: "Your team",
+    adminNav: "Admin",
     signOut: "Sign out",
     greeting: (name: string) => `Welcome, ${name}`,
     signedInAs: "Signed in as",

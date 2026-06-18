@@ -29,6 +29,7 @@ export default async function PoreiaPage() {
     firstName: (session.user as { firstName?: string | null }).firstName ?? null,
     name: session.user.name ?? null,
     email: session.user.email,
+    role: (session.user as { role?: string | null }).role ?? null,
   }
 
   // The testing control panel is available only where overrides are allowed

@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { ChevronDown, KeyRound, LogOut, User, Users } from "lucide-react"
+import { ChevronDown, KeyRound, LogOut, Shield, User, Users } from "lucide-react"
 import { authClient, useSession } from "@/lib/auth-client"
 import { useI18n } from "@/components/pythea/language-provider"
 import { ChangePasswordDialog } from "@/components/pythea/change-password-dialog"
@@ -30,6 +30,7 @@ export type SessionUser = {
   firstName?: string | null
   name?: string | null
   email: string
+  role?: string | null
 }
 
 /**
@@ -70,7 +71,9 @@ export function AuthNav({
   // While the client session query is still pending (including the SSR/first
   // paint), trust the server-resolved user. Once it resolves, use the live
   // session so sign-out/sign-in update immediately.
-  const user: SessionUser | null = isPending ? initialUser : session?.user ?? null
+  const user: SessionUser | null = isPending
+    ? initialUser
+    : ((session?.user as SessionUser | undefined) ?? null)
 
   if (user) {
     const firstName =
@@ -78,6 +81,7 @@ export function AuthNav({
       user.name?.split(" ")[0] ||
       user.email
     const email = user.email
+    const isAdmin = user.role === "superadmin"
 
     // Mobile: render the items inline inside the open menu sheet.
     if (compact) {
@@ -100,6 +104,16 @@ export function AuthNav({
             <Users className="size-4" />
             {greekCaps(t.auth.crewNav)}
           </Link>
+          {isAdmin && (
+            <Link
+              href="/admin"
+              onClick={onNavigate}
+              className="flex items-center gap-2.5 rounded-sm px-2 py-3 text-left font-sans text-sm font-semibold tracking-chip text-brass hover:bg-card"
+            >
+              <Shield className="size-4" />
+              {greekCaps(t.auth.adminNav)}
+            </Link>
+          )}
           <button
             type="button"
             onClick={() => {
@@ -154,6 +168,18 @@ export function AuthNav({
               <Users className="size-4 text-brass" />
               {t.auth.crewNav}
             </DropdownMenuItem>
+            {isAdmin && (
+              <DropdownMenuItem
+                onSelect={() => {
+                  setMenuOpen(false)
+                  router.push("/admin")
+                }}
+                className="flex cursor-pointer items-center gap-2.5 font-sans text-sm font-semibold text-brass focus:text-brass"
+              >
+                <Shield className="size-4" />
+                {t.auth.adminNav}
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem
               onSelect={() => {
                 // Let the menu close and restore focus before mounting the

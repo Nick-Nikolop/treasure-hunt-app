@@ -51,6 +51,13 @@ export const auth = betterAuth({
         required: false,
         input: true,
       },
+      // Access level. Read-only from the client (input: false) so users can
+      // never set their own role; only the admin actions / DB change it.
+      role: {
+        type: "string",
+        required: false,
+        input: false,
+      },
     },
   },
   ...(process.env.NODE_ENV === "development"
