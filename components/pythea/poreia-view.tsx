@@ -40,7 +40,8 @@ type Props = {
   unlockedCount: number
   total: number
   startMs: number
-  nextUnlockMs: number | null
+  /** The single next sealed lead the player is working towards, or null. */
+  next: LockedClue | null
 }
 
 // A stop drawn on the voyage chart. Built only from already-unlocked clues,
@@ -53,7 +54,7 @@ type Page =
   | { kind: "cover" }
   | { kind: "map"; stops: MapStop[]; total: number; allDone: boolean }
   | { kind: "clue"; clue: Clue }
-  | { kind: "sealed"; unlockMs: number; notStarted: boolean; order: number }
+  | { kind: "sealed"; gate: "time" | "qr"; unlockMs?: number; notStarted: boolean; order: number }
   | { kind: "final"; stamps: MapStop[] }
 
 const FLIP_DURATION = 1.5
@@ -67,7 +68,7 @@ export function PoreiaView({
   locked,
   unlockedCount,
   total,
-  nextUnlockMs,
+  next,
 }: Props) {
   const { t } = useI18n()
   const isMobile = useIsMobile()
@@ -92,17 +93,18 @@ export function PoreiaView({
       { kind: "map", stops, total, allDone },
     ]
     for (const clue of unlocked) list.push({ kind: "clue", clue })
-    if (nextUnlockMs !== null) {
+    if (next) {
       list.push({
         kind: "sealed",
-        unlockMs: nextUnlockMs,
+        gate: next.gate,
+        unlockMs: next.unlockMs,
         notStarted,
-        order: unlockedCount + 1,
+        order: next.order,
       })
     }
     if (allDone) list.push({ kind: "final", stamps: stops })
     return list
-  }, [unlocked, nextUnlockMs, notStarted, allDone, unlockedCount, total])
+  }, [unlocked, next, notStarted, allDone, total])
 
   // Deep link: /journal?page=N opens directly on that page (used by the
   // "open" cards on the home page). Initialised lazily so we land on the
@@ -574,6 +576,7 @@ function JournalPage({
         {page.kind === "clue" && <CluePageBody clue={page.clue} />}
         {page.kind === "sealed" && (
           <SealedPageBody
+            gate={page.gate}
             unlockMs={page.unlockMs}
             notStarted={page.notStarted}
             order={page.order}
@@ -806,17 +809,23 @@ function Postmark() {
 }
 
 function SealedPageBody({
+  gate,
   unlockMs,
   notStarted,
   order,
   onDone,
 }: {
-  unlockMs: number
+  gate: "time" | "qr"
+  unlockMs?: number
   notStarted: boolean
   order: number
   onDone: () => void
 }) {
   const { t } = useI18n()
+  // Only the first lead is time-gated and shows a live countdown. Every other
+  // sealed page opens by scanning its physical QR code, so it shows the
+  // "find and scan" guidance instead of a ticking clock.
+  const showCountdown = gate === "time" && typeof unlockMs === "number"
   return (
     <div className="flex flex-1 flex-col items-center justify-center text-center">
       {/* Wax seal, embossed like a real signet pressing */}
@@ -844,9 +853,11 @@ function SealedPageBody({
           : t.journal.sealedLabel(String(order).padStart(2, "0"))}
       </p>
 
-      <div className="mt-5 text-ink">
-        <Countdown targetMs={unlockMs} onDone={onDone} size="lg" tone="ink" />
-      </div>
+      {showCountdown && (
+        <div className="mt-5 text-ink">
+          <Countdown targetMs={unlockMs as number} onDone={onDone} size="lg" tone="ink" />
+        </div>
+      )}
 
       <p className="mt-7 max-w-sm text-pretty font-serif text-base italic leading-relaxed text-ink/65 md:text-lg">
         {notStarted ? t.journal.sealedNotStartedBody : t.journal.sealedBody}

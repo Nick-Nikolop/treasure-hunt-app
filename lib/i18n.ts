@@ -153,7 +153,7 @@ const el = {
   },
   teams: {
     metaTitle: "Η Ομάδα σου",
-    metaDescription: "��τιάξε ή διαχειρίσου την ομάδα σου για το Ταξίδι του Πυθέα.",
+    metaDescription: "Φτιάξε ή διαχειρίσου την ομάδα σου για το Ταξίδι του Πυθέα.",
     back: "ΠΙΣΩ ΣΤΗΝ ΑΡΧΙΚΗ",
     loading: "Φόρτωση ομάδας...",
     // No team yet: create or join.
@@ -242,7 +242,7 @@ const el = {
       },
       {
         q: "Πόσα άτομα έχει μια ομάδα;",
-        a: "Ως και οκτώ άτομα. Η δυνατότητα να φτιάξεις ή να μπεις σε ομάδα ανοίγει σε λίγο καιρό. Προς το παρόν φτιάχνεις τον πρ��σωπικό σου λογαριασμό.",
+        a: "Ως και οκτώ άτομα. Η δυνατότητα να φτιάξεις ή να μπεις σε ομάδα ανοίγει σε λίγο καιρό. Προς το παρόν φτιάχνεις τον προσωπικό σου λογαριασμό.",
       },
       {
         q: "Χρειάζομαι λογαριασμό;",
@@ -304,16 +304,16 @@ const el = {
     sealedNotStartedBody:
       "Το πρώτο σημάδι θα εμφανιστεί μόλις ο Πυθέας ανοίξει τον χάρτη του.",
     sealedBody:
-      "Γύρνα ξανά όταν λήξει ο χρόνος. Η επόμενη σελίδα θα έχει χαραχτεί στο ημερολόγιο.",
+      "Βρες τον κωδικό QR κρυμμένο στο επόμενο σημείο της πόλης και σάρωσέ τον για να χαραχτεί αυτή η σελίδα στο ημερολόγιο.",
     finalLabel: "ΤΕΛΟΣ ΤΟΥ ΗΜΕΡΟΛΟΓΙΟΥ",
     finalBody:
       "Όλα τα σημάδια αποκαλύφθηκαν. Ο θησαυρός περιμένει εκείνους που έμαθαν να κοιτούν την Καλαμάτα σαν εξερευνητές.",
     home: "ΑΡΧΙΚΗ",
-    lead: "Κάθε σελίδα κρατά ένα σημάδι από τα ταξίδια του Πυθέα. Νέες σελίδες ξεκλειδώνουν με τον καιρό.",
+    lead: "Κάθε σελίδα κρατά ένα σημάδι από τα ταξίδια του Πυθέα. Νέες σελίδες ξεκλειδώνουν σαρώνοντας τους κωδικούς QR στην πόλη.",
     progress: "ΣΗΜΑΔΙΑ",
     hintTap: "Πάτα ή σύρε για να γυρίσεις σελίδα",
     hintKeys: "ή χρησιμοποίησε τα πλήκτρα ← →",
-    footerNote: "Νέες σελίδες χαράσσονται στο ημερολόγιο όσο ξεκλειδώνουν τα σημάδια.",
+    footerNote: "Νέες σελίδες χαράσσονται στο ημερολόγιο όσο σαρώνεις τους κωδικούς QR.",
     mapLabel: "Ο ΧΑΡΤΗΣ ΤΟΥ ΤΑΞΙΔΙΟΥ",
     mapTitle: "Η πορεία",
     mapLead:
@@ -323,6 +323,44 @@ const el = {
     mapTreasure: "Ο ΘΗΣΑΥΡΟΣ",
     postmark: "ΚΑΛΑΜΑΤΑ",
     finalStampsLabel: "ΟΛΑ ΤΑ ΓΡΑΜΜΑΤΟΣΗΜΑ ΤΟΥ ΤΑΞΙΔΙΟΥ",
+  },
+  scan: {
+    unlockedLabel: "ΝΕΟ ΣΗΜΑΔΙ ΞΕΚΛΕΙΔΩΘΗΚΕ",
+    unlockedTitle: (n: string) => `Σελίδα Νο. ${n} αποκαλύφθηκε`,
+    unlockedBody: (country: string) =>
+      `Ο Πυθέας σε οδήγησε στην ${country}. Η σελίδα χαράχτηκε στο ημερολόγιό σου.`,
+    alreadyLabel: "ΤΟ ΕΧΕΙΣ ΗΔΗ",
+    alreadyTitle: "Αυτό το σημάδι είναι ήδη ανοιχτό",
+    alreadyBody: "Εσύ ή η ομάδα σου έχετε ήδη ξεκλειδώσει αυτή τη σελίδα.",
+    outOfOrderLabel: "ΟΧΙ ΑΚΟΜΑ",
+    outOfOrderTitle: "Δεν είναι η σειρά αυτού του σημαδιού",
+    outOfOrderBody: (required: number) =>
+      `Πρέπει πρώτα να βρεις το σημάδι Νο. ${String(required).padStart(2, "0")}. Ακολούθησε τα σημάδια με τη σειρά.`,
+    invalidLabel: "ΑΓΝΩΣΤΟ ΣΗΜΑΔΙ",
+    invalidTitle: "Αυτός ο κωδικός δεν αναγνωρίζεται",
+    invalidBody:
+      "Ο κωδικός QR δεν είναι έγκυρος. Σιγουρέψου ότι σάρωσες ένα από τα επίσημα σημάδια του κυνηγιού.",
+    openJournal: "ΑΝΟΙΞΕ ΤΟ ΗΜΕΡΟΛΟΓΙΟ",
+    viewLeaderboard: "ΚΑΤΑΤΑΞΗ",
+  },
+  leaderboard: {
+    metaTitle: "Κατάταξη — Το Ταξίδι του Πυθέα",
+    metaDescription: "Δες ποιος προηγείται στο κυνήγι θησαυρού του Πυθέα.",
+    eyebrow: "ΚΑΤΑΤΑΞΗ",
+    title: "Ποιος προηγείται",
+    lead: "Ομάδες και μοναχικοί εξερευνητές, κατά σειρά ανάλογα με το πόσο μακριά έφτασαν και πόσο γρήγορα.",
+    rankLabel: "ΘΕΣΗ",
+    nameLabel: "ΟΜΑΔΑ / ΕΞΕΡΕΥΝΗΤΗΣ",
+    progressLabel: "ΣΗΜΑΔΙΑ",
+    reachedLabel: "ΕΦΤΑΣΕ",
+    teamTag: "ΟΜΑΔΑ",
+    soloTag: "ΑΤΟΜΙΚΟ",
+    notStarted: "Δεν ξεκίνησε ακόμα",
+    marksOf: (n: number, total: number) => `${n} / ${total}`,
+    empty: "Κανείς δεν έχει ξεκινήσει ακόμα. Να είσαι ο πρώτος που θα βρει ένα σημάδι.",
+    you: "ΕΣΥ",
+    home: "ΑΡΧΙΚΗ",
+    membersLabel: "Μέλη",
   },
   controls: {
     openAria: "Άνοιγμα πίνακα δοκιμών",
@@ -685,16 +723,16 @@ const en: Dictionary = {
     sealedNotStartedBody:
       "The first mark will appear once Pytheas opens his map.",
     sealedBody:
-      "Come back when the timer ends. The next page will have been written into the journal.",
+      "Find the QR code hidden at the next spot in the city and scan it to have this page written into your journal.",
     finalLabel: "END OF THE JOURNAL",
     finalBody:
       "Every mark has been revealed. The treasure awaits those who learned to look at Kalamata like explorers.",
     home: "HOME",
-    lead: "Each page holds a mark from the travels of Pytheas. New pages unlock over time.",
+    lead: "Each page holds a mark from the travels of Pytheas. New pages unlock by scanning the QR codes around the city.",
     progress: "MARKS",
     hintTap: "Tap or swipe to turn the page",
     hintKeys: "or use the ← → keys",
-    footerNote: "New pages are written into the journal as marks unlock.",
+    footerNote: "New pages are written into the journal as you scan the QR codes.",
     mapLabel: "THE VOYAGE CHART",
     mapTitle: "The course",
     mapLead:
@@ -704,6 +742,44 @@ const en: Dictionary = {
     mapTreasure: "THE TREASURE",
     postmark: "KALAMATA",
     finalStampsLabel: "EVERY STAMP OF THE VOYAGE",
+  },
+  scan: {
+    unlockedLabel: "NEW MARK UNLOCKED",
+    unlockedTitle: (n: string) => `Page No. ${n} revealed`,
+    unlockedBody: (country: string) =>
+      `Pytheas led you to ${country}. The page has been written into your journal.`,
+    alreadyLabel: "ALREADY YOURS",
+    alreadyTitle: "This mark is already open",
+    alreadyBody: "You or your team have already unlocked this page.",
+    outOfOrderLabel: "NOT YET",
+    outOfOrderTitle: "This mark is out of order",
+    outOfOrderBody: (required: number) =>
+      `You need to find mark No. ${String(required).padStart(2, "0")} first. Follow the marks in order.`,
+    invalidLabel: "UNKNOWN MARK",
+    invalidTitle: "This code is not recognised",
+    invalidBody:
+      "The QR code is not valid. Make sure you scanned one of the official marks of the hunt.",
+    openJournal: "OPEN THE JOURNAL",
+    viewLeaderboard: "LEADERBOARD",
+  },
+  leaderboard: {
+    metaTitle: "Leaderboard — The Voyage of Pytheas",
+    metaDescription: "See who leads the treasure hunt of Pytheas.",
+    eyebrow: "LEADERBOARD",
+    title: "Who is in the lead",
+    lead: "Teams and solo explorers, ranked by how far they have reached and how fast.",
+    rankLabel: "RANK",
+    nameLabel: "TEAM / EXPLORER",
+    progressLabel: "MARKS",
+    reachedLabel: "REACHED",
+    teamTag: "TEAM",
+    soloTag: "SOLO",
+    notStarted: "Not started yet",
+    marksOf: (n: number, total: number) => `${n} / ${total}`,
+    empty: "No one has started yet. Be the first to find a mark.",
+    you: "YOU",
+    home: "HOME",
+    membersLabel: "Members",
   },
   controls: {
     openAria: "Open test panel",

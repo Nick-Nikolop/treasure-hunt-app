@@ -1,7 +1,10 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Trophy, Users, User as UserIcon, MapPin } from "lucide-react"
+import Link from "next/link"
+import { ArrowLeft, Feather, Trophy, Users, User as UserIcon, MapPin } from "lucide-react"
+import { ThemeToggle } from "@/components/pythea/theme-toggle"
+import { LanguageToggle } from "@/components/pythea/language-toggle"
 import { useI18n } from "@/components/pythea/language-provider"
 import type { LeaderboardEntry } from "@/lib/hunt"
 
@@ -29,8 +32,32 @@ export function LeaderboardView({ entries, total, myEntryId }: Props) {
   }
 
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-5 pb-24 pt-28 md:px-8 md:pt-32">
-      <header className="text-center">
+    <>
+      {/* Fixed topbar: home affordance, eyebrow, language / theme toggles. */}
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
+        <nav className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-5 py-4 md:px-8">
+          <Link
+            href="/journal"
+            className="group flex items-center gap-2.5 text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-1" />
+            <span className="font-sans text-[11px] font-bold tracking-chip">{lb.home}</span>
+          </Link>
+          <div className="hidden items-center gap-2.5 md:flex">
+            <Feather className="size-4 text-brass" />
+            <span className="font-sans text-[11px] font-bold tracking-chip text-brass">
+              {lb.eyebrow}
+            </span>
+          </div>
+          <div className="flex items-center gap-2.5 md:gap-3">
+            <LanguageToggle />
+            <ThemeToggle />
+          </div>
+        </nav>
+      </header>
+
+      <main className="mx-auto w-full max-w-3xl flex-1 px-5 pb-24 pt-28 md:px-8 md:pt-32">
+        <header className="text-center">
         <p className="font-sans text-[11px] font-bold tracking-chip text-brass">{lb.eyebrow}</p>
         <h1 className="mt-3 text-balance font-serif text-4xl font-black text-foreground md:text-5xl">
           {lb.title}
@@ -130,6 +157,7 @@ export function LeaderboardView({ entries, total, myEntryId }: Props) {
           })}
         </ol>
       )}
-    </main>
+      </main>
+    </>
   )
 }
