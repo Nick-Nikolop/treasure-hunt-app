@@ -241,7 +241,7 @@ const el = {
         a: "Το καλοκαίρι του 2026. Μέχρι τότε, οι σελίδες του ημερολογίου ξεκλειδώνουν σταδιακά και αποκαλύπτουν τα σημάδια, ένα ένα.",
       },
       {
-        q: "Πόσα άτομα έχει μια ομάδα;",
+        q: "Πόσα άτομα έ��ει μια ομάδα;",
         a: "Ως και οκτώ άτομα. Η δυνατότητα να φτιάξεις ή να μπεις σε ομάδα ανοίγει σε λίγο καιρό. Προς το παρόν φτιάχνεις τον προσωπικό σου λογαριασμό.",
       },
       {
@@ -300,11 +300,13 @@ const el = {
     stampAlt: (country: string) => `Γραμματόσημο από ${country}`,
     signature: "Π. Μ.",
     sealedNotStartedLabel: "ΤΟ ΗΜΕΡΟΛΟΓΙΟ ΑΝΟΙΓΕΙ ΣΕ",
-    sealedLabel: (n: string) => `Η ΣΕΛΙΔΑ Νο. ${n} ΣΦΡΑΓΙΣΤΗΚΕ`,
+    sealedLabel: (n: string) => `ΕΠΟΜΕΝΗ ΣΕΛΙΔΑ · Νο. ${n}`,
+    sealedTitle: (n: string) => `Η σελίδα Νο. ${n} είναι ακόμα σφραγισμένη`,
+    sealedNotStartedTitle: "Το ημερολόγιο δεν έχει ανοίξει ακόμα",
     sealedNotStartedBody:
       "Το πρώτο σημάδι θα εμφανιστεί μόλις ο Πυθέας ανοίξει τον χάρτη του.",
-    sealedBody:
-      "Βρες τον κωδικό QR κρυμμένο στο επόμενο σημείο της πόλης και σάρωσέ τον για να χαραχτεί αυτή η σελίδα στο ημερολόγιο.",
+    sealedBody: (n: string) =>
+      `Η σελίδα Νο. ${n} μένει κάτω από το κερί μέχρι να φτάσεις στο σημείο της μέσα στην πόλη. Εντόπισε τον κρυμμένο κωδικό QR στην επόμενη στάση και σάρωσέ τον: η σφραγίδα σπάει και η σελίδα χαράσσεται στο ημερολόγιό σου.`,
     finalLabel: "ΤΕΛΟΣ ΤΟΥ ΗΜΕΡΟΛΟΓΙΟΥ",
     finalBody:
       "Όλα τα σημάδια αποκαλύφθηκαν. Ο θησαυρός περιμένει εκείνους που έμαθαν να κοιτούν την Καλαμάτα σαν εξερευνητές.",
@@ -719,11 +721,13 @@ const en: Dictionary = {
     stampAlt: (country: string) => `Stamp from ${country}`,
     signature: "P. M.",
     sealedNotStartedLabel: "THE JOURNAL OPENS IN",
-    sealedLabel: (n: string) => `PAGE No. ${n} IS SEALED`,
+    sealedLabel: (n: string) => `NEXT PAGE · No. ${n}`,
+    sealedTitle: (n: string) => `Page No. ${n} is still sealed`,
+    sealedNotStartedTitle: "The journal has not opened yet",
     sealedNotStartedBody:
       "The first mark will appear once Pytheas opens his map.",
-    sealedBody:
-      "Find the QR code hidden at the next spot in the city and scan it to have this page written into your journal.",
+    sealedBody: (n: string) =>
+      `Page No. ${n} stays under wax until you reach its place in the city. Track down the hidden QR code at the next stop and scan it: the seal breaks and the page is written into your journal.`,
     finalLabel: "END OF THE JOURNAL",
     finalBody:
       "Every mark has been revealed. The treasure awaits those who learned to look at Kalamata like explorers.",

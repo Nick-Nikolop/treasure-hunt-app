@@ -826,6 +826,7 @@ function SealedPageBody({
   // sealed page opens by scanning its physical QR code, so it shows the
   // "find and scan" guidance instead of a ticking clock.
   const showCountdown = gate === "time" && typeof unlockMs === "number"
+  const orderLabel = String(order).padStart(2, "0")
   return (
     <div className="flex flex-1 flex-col items-center justify-center text-center">
       {/* Wax seal, embossed like a real signet pressing */}
@@ -850,7 +851,7 @@ function SealedPageBody({
       <p className="mt-6 text-balance font-sans text-[11px] font-bold tracking-chip text-ink/55 md:mt-7">
         {notStarted
           ? t.journal.sealedNotStartedLabel
-          : t.journal.sealedLabel(String(order).padStart(2, "0"))}
+          : t.journal.sealedLabel(orderLabel)}
       </p>
 
       {showCountdown && (
@@ -859,8 +860,12 @@ function SealedPageBody({
         </div>
       )}
 
-      <p className="mt-7 max-w-sm text-pretty font-serif text-base italic leading-relaxed text-ink/65 md:text-lg">
-        {notStarted ? t.journal.sealedNotStartedBody : t.journal.sealedBody}
+      <h3 className="mt-4 text-balance font-serif text-xl font-black text-ink md:text-2xl">
+        {notStarted ? t.journal.sealedNotStartedTitle : t.journal.sealedTitle(orderLabel)}
+      </h3>
+
+      <p className="mt-3 max-w-sm text-pretty font-serif text-base italic leading-relaxed text-ink/65 md:text-lg">
+        {notStarted ? t.journal.sealedNotStartedBody : t.journal.sealedBody(orderLabel)}
       </p>
     </div>
   )
