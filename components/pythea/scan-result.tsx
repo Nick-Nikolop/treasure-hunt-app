@@ -80,11 +80,11 @@ export function ScanResult({ result }: { result: UnlockResult }) {
       <h1 className="mt-3 text-balance font-serif text-3xl font-black text-foreground md:text-4xl">
         {view.title}
       </h1>
-      <p className="mx-auto mt-4 max-w-sm text-pretty font-serif text-base italic leading-relaxed text-muted-foreground md:text-lg">
+      <p className="mx-auto mt-4 max-w-sm whitespace-pre-line text-pretty font-serif text-base italic leading-relaxed text-muted-foreground md:text-lg">
         {view.body}
       </p>
 
-      <div className="mt-8 flex flex-col items-stretch gap-2.5 sm:flex-row sm:justify-center">
+      <div className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:justify-center">
         <Link
           href="/journal"
           className="inline-flex items-center justify-center gap-2 rounded-sm bg-brass px-5 py-3 font-sans text-xs font-bold tracking-chip text-primary-foreground transition-opacity hover:opacity-90"

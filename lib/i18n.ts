@@ -234,14 +234,14 @@ const el = {
     items: [
       {
         q: "Τι είναι το Ταξίδι του Πυθέα;",
-        a: "Ένα κυνήγι θησαυρού στην Καλαμάτα. Ακολουθείς τα ίχνη του Πυθέα του Μεσσήνιου, λύνεις γρίφους σε γωνιές της πόλης και ψάχνεις τον θησαυρό που έκρυψε πριν χαθεί.",
+        a: "Ένα κυνήγι θησαυρού στην Καλαμάτα. Ακολουθείς τα ίχνη του Πυθέα του Μεσσήνιου, λύνε��ς γρίφους σε γωνιές της πόλης και ψάχνεις τον θησαυρό που έκρυψε πριν χαθεί.",
       },
       {
         q: "Πότε ξεκινά;",
         a: "Το καλοκαίρι του 2026. Μέχρι τότε, οι σελίδες του ημερολογίου ξεκλειδώνουν σταδιακά και αποκαλύπτουν τα σημάδια, ένα ένα.",
       },
       {
-        q: "Πόσα άτομα έχει μια ομάδα;",
+        q: "Πόσα άτομα έ��ει μια ομάδα;",
         a: "Ως και οκτώ άτομα. Η δυνατότητα να φτιάξεις ή να μπεις σε ομάδα ανοίγει σε λίγο καιρό. Προς το παρόν φτιάχνεις τον προσωπικό σου λογαριασμό.",
       },
       {
@@ -328,9 +328,15 @@ const el = {
   },
   scan: {
     unlockedLabel: "ΝΕΟ ΣΗΜΑΔΙ ΞΕΚΛΕΙΔΩΘΗΚΕ",
-    unlockedTitle: (n: string) => `Σελίδα Νο. ${n} αποκαλύφθηκε`,
-    unlockedBody: (country: string) =>
-      `Ο Πυθέας σε οδήγησε στην ${country}. Η σελίδα χαράχτηκε στο ημερολόγιό σου.`,
+    unlockedTitle: (n: string) => `Η Σελίδα Νο. ${n} αποκαλύφθηκε`,
+    unlockedBody: (country: string) => {
+      // Greek keeps the final -ν of "στην" before vowels and κ, π, τ, ξ, ψ;
+      // otherwise it becomes "στη" (e.g. "στη Γαλλία", "στην Ισπανία").
+      const first = country.trim().charAt(0).toLowerCase()
+      const keepsNu = "αεηιουωάέήίόύώ".includes(first) || "κπτξψ".includes(first)
+      const sti = keepsNu ? "στην" : "στη"
+      return `Ο Πυθέας σε οδήγησε ${sti} ${country}.\nΗ νέα σελίδα χαράχτηκε στο ημερολόγιό σου.`
+    },
     alreadyLabel: "ΤΟ ΕΧΕΙΣ ΗΔΗ",
     alreadyTitle: "Αυτό το σημάδι είναι ήδη ανοιχτό",
     alreadyBody: "Εσύ ή η ομάδα σου έχετε ήδη ξεκλειδώσει αυτή τη σελίδα.",
@@ -764,7 +770,7 @@ const en: Dictionary = {
     unlockedLabel: "NEW MARK UNLOCKED",
     unlockedTitle: (n: string) => `Page No. ${n} revealed`,
     unlockedBody: (country: string) =>
-      `Pytheas led you to ${country}. The page has been written into your journal.`,
+      `Pytheas led you to ${country}.\nThe new page has been written into your journal.`,
     alreadyLabel: "ALREADY YOURS",
     alreadyTitle: "This mark is already open",
     alreadyBody: "You or your team have already unlocked this page.",
