@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
-import { ArrowLeft, Compass, Feather } from "lucide-react"
+import Link from "next/link"
+import { ArrowLeft, Compass, Feather, Trophy } from "lucide-react"
 import { ThemeToggle } from "@/components/pythea/theme-toggle"
 import { LanguageToggle } from "@/components/pythea/language-toggle"
 import { AuthNav, type SessionUser } from "@/components/pythea/auth-nav"
@@ -72,6 +73,13 @@ export function JournalTopbar({ unlockedCount, total, initialUser = null }: Prop
             <span className="text-muted-foreground/70">/ {total}</span>
             <span className="hidden sm:inline">{t.journal.progress}</span>
           </span>
+          <Link
+            href="/leaderboard"
+            aria-label={t.scan.viewLeaderboard}
+            className="inline-flex items-center justify-center rounded-sm border border-border bg-card/60 p-2 text-muted-foreground transition-colors hover:border-brass hover:text-brass"
+          >
+            <Trophy className="size-4" />
+          </Link>
           <LanguageToggle />
           <ThemeToggle />
           <AuthNav initialUser={initialUser} />
