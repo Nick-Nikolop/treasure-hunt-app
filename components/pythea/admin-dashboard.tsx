@@ -1,8 +1,9 @@
 "use client"
 
-import { useMemo, useState, useTransition } from "react"
+import { useEffect, useMemo, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import QRCodeLib from "qrcode"
 import {
   ArrowLeft,
   KeyRound,
@@ -22,6 +23,7 @@ import {
   Copy,
   Check,
   RefreshCw,
+  Download,
 } from "lucide-react"
 import { ModalShell } from "@/components/pythea/modal-shell"
 import { ConfirmDialog } from "@/components/pythea/confirm-dialog"
@@ -961,6 +963,8 @@ function QrRow({
   onRegenerate: (leadOrder: number) => void
 }) {
   const [copied, setCopied] = useState(false)
+  const [qrOpen, setQrOpen] = useState(false)
+  const orderLabel = String(tk.leadOrder).padStart(2, "0")
 
   async function copy() {
     try {
@@ -976,16 +980,23 @@ function QrRow({
     <li className="flex flex-col gap-3 rounded-sm border border-border bg-card/40 p-4 md:flex-row md:items-center md:justify-between">
       <div className="flex min-w-0 items-center gap-3">
         <span className="flex size-9 shrink-0 items-center justify-center rounded-sm bg-brass/15 font-serif text-sm font-black text-brass">
-          {String(tk.leadOrder).padStart(2, "0")}
+          {orderLabel}
         </span>
         <div className="min-w-0">
           <p className="font-sans text-[11px] font-bold uppercase tracking-chip text-muted-foreground">
-            Lead {String(tk.leadOrder).padStart(2, "0")}
+            Lead {orderLabel}
           </p>
           <p className="truncate font-mono text-xs text-foreground">{tk.link}</p>
         </div>
       </div>
       <div className="flex shrink-0 flex-wrap gap-2">
+        <IconBtn
+          onClick={() => setQrOpen(true)}
+          disabled={pending}
+          title="Show QR code"
+          icon={QrCode}
+          label="QR code"
+        />
         <IconBtn
           onClick={copy}
           disabled={pending}
@@ -1002,6 +1013,116 @@ function QrRow({
           label="Regenerate"
         />
       </div>
+
+      <QrCodeModal
+        open={qrOpen}
+        onClose={() => setQrOpen(false)}
+        link={tk.link}
+        orderLabel={orderLabel}
+      />
     </li>
+  )
+}
+
+/**
+ * Renders the scan link as a downloadable QR image. The PNG is generated in the
+ * browser from the live link, so it always matches the current (possibly
+ * regenerated) token. Organizers preview it here and download a print-ready file.
+ */
+function QrCodeModal({
+  open,
+  onClose,
+  link,
+  orderLabel,
+}: {
+  open: boolean
+  onClose: () => void
+  link: string
+  orderLabel: string
+}) {
+  const [dataUrl, setDataUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!open) return
+    let active = true
+    setDataUrl(null)
+    QRCodeLib.toDataURL(link, {
+      width: 1024,
+      margin: 2,
+      errorCorrectionLevel: "M",
+      color: { dark: "#1a1a1a", light: "#ffffff" },
+    })
+      .then((url) => {
+        if (active) setDataUrl(url)
+      })
+      .catch(() => {
+        if (active) setDataUrl(null)
+      })
+    return () => {
+      active = false
+    }
+  }, [open, link])
+
+  function download() {
+    if (!dataUrl) return
+    const a = document.createElement("a")
+    a.href = dataUrl
+    a.download = `pythea-lead-${orderLabel}.png`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+  }
+
+  return (
+    <ModalShell open={open} onClose={onClose} labelledBy="qr-modal-title">
+      <h2 id="qr-modal-title" className="font-serif text-2xl font-black text-foreground">
+        Lead {orderLabel} QR code
+      </h2>
+      <p className="mt-1 font-sans text-sm text-muted-foreground">
+        Print this and hide it at the matching location. Scanning it unlocks lead {orderLabel}.
+      </p>
+
+      <div className="mt-6 flex justify-center">
+        <div className="rounded-md border border-border bg-white p-3">
+          {dataUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={dataUrl || "/placeholder.svg"}
+              alt={`QR code for lead ${orderLabel}`}
+              width={256}
+              height={256}
+              className="size-56"
+            />
+          ) : (
+            <div className="flex size-56 items-center justify-center" aria-hidden>
+              <span className="size-8 animate-pulse rounded-full border border-muted-foreground/40" />
+            </div>
+          )}
+        </div>
+      </div>
+
+      <p className="mt-4 break-all text-center font-mono text-[11px] text-muted-foreground">
+        {link}
+      </p>
+
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row-reverse">
+        <button
+          type="button"
+          onClick={download}
+          disabled={!dataUrl}
+          className="inline-flex flex-1 items-center justify-center gap-2 rounded-sm bg-brass px-5 py-3 font-sans text-sm font-bold tracking-chip text-background transition-transform hover:-translate-y-0.5 disabled:opacity-50"
+        >
+          <Download className="size-4" />
+          Download PNG
+        </button>
+        <button
+          type="button"
+          onClick={onClose}
+          className="inline-flex flex-1 items-center justify-center rounded-sm border border-border px-5 py-3 font-sans text-sm font-bold tracking-chip text-foreground transition-colors hover:border-brass"
+        >
+          Close
+        </button>
+      </div>
+    </ModalShell>
   )
 }
