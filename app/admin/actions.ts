@@ -20,7 +20,21 @@ import {
   normalizeLeadOrder,
   type HintRow,
 } from "@/lib/hints"
-import { TOTAL_CLUES, effectiveUnlockedCount, CLUES } from "@/lib/clues"
+import {
+  getScoreConfig,
+  getLeadDifficulties,
+  setScoreConfig,
+  setLeadDifficulties,
+} from "@/lib/scoring"
+import {
+  TOTAL_CLUES,
+  FINISH_ORDER,
+  effectiveUnlockedCount,
+  CLUES,
+  isDifficulty,
+  type Difficulty,
+  type ScoreConfig,
+} from "@/lib/clues"
 import { and, asc, desc, eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { randomUUID } from "node:crypto"
@@ -71,6 +85,10 @@ export type AdminData = {
   hints: HintRow[]
   /** Lead options (order + country names) for the hint association dropdown. */
   leadOptions: { order: number; country: string; countryEn: string }[]
+  /** Global scoring tiers (placement points + difficulty bonuses). */
+  scoreConfig: ScoreConfig
+  /** Difficulty per lead order (1..TOTAL_CLUES). */
+  leadDifficulties: { order: number; difficulty: Difficulty }[]
 }
 
 /** Load every user and team for the dashboard. Superadmin only. */
@@ -143,6 +161,8 @@ export async function getAdminData(): Promise<AdminData> {
     }
   })
 
+  const difficultyMap = await getLeadDifficulties()
+
   return {
     users: users.map((u) => ({
       id: u.id,
@@ -168,7 +188,52 @@ export async function getAdminData(): Promise<AdminData> {
       country: c.country,
       countryEn: c.countryEn,
     })),
+    scoreConfig: await getScoreConfig(),
+    leadDifficulties: CLUES.map((c) => ({
+      order: c.order,
+      difficulty: difficultyMap.get(c.order) ?? "easy",
+    })),
   }
+}
+
+/**
+ * Save the scoring settings: the global placement tiers and each lead's
+ * difficulty. Scores are computed live from these on every leaderboard read,
+ * so saving here instantly recalculates every standing.
+ */
+export async function adminSaveScoring(input: {
+  config: ScoreConfig
+  difficulties: { leadOrder: number; difficulty: Difficulty }[]
+}): Promise<ActionResult> {
+  await requireAdmin()
+
+  const c = input.config
+  const nums = [
+    c.firstPoints,
+    c.secondPoints,
+    c.thirdPoints,
+    c.restPoints,
+    c.mediumBonus,
+    c.hardBonus,
+  ]
+  if (nums.some((n) => !Number.isFinite(n) || n < 0)) {
+    return { ok: false, error: "bad_value" }
+  }
+  if (
+    !Array.isArray(input.difficulties) ||
+    input.difficulties.some((d) => !isDifficulty(d.difficulty))
+  ) {
+    return { ok: false, error: "bad_value" }
+  }
+
+  await setScoreConfig(c)
+  await setLeadDifficulties(input.difficulties)
+
+  // Standings are derived live, but revalidate both surfaces so the new numbers
+  // show immediately.
+  revalidatePath("/admin")
+  revalidatePath("/leaderboard")
+  return { ok: true }
 }
 
 /** Permanently delete a user account and all of its data. */
@@ -489,10 +554,12 @@ export async function adminResetTeamProgress(teamId: string): Promise<ActionResu
 /** Issue a fresh QR token for a lead, invalidating the old printed code. */
 export async function adminRegenerateToken(leadOrder: number): Promise<ActionResult> {
   await requireAdmin()
-  if (!Number.isFinite(leadOrder) || leadOrder < 2 || leadOrder > TOTAL_CLUES) {
+  const order = Math.floor(leadOrder)
+  const valid = (order >= 2 && order <= TOTAL_CLUES) || order === FINISH_ORDER
+  if (!Number.isFinite(leadOrder) || !valid) {
     return { ok: false, error: "bad_value" }
   }
-  await regenerateToken(Math.floor(leadOrder))
+  await regenerateToken(order)
   revalidatePath("/admin")
   return { ok: true }
 }

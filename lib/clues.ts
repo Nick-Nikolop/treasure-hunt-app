@@ -130,7 +130,7 @@ export const CLUES: Clue[] = [
     subtitleEn: "The man who lit the world",
     icon: "Lightbulb",
     body: [
-      "Συνεχίζοντας προς τα Βαλκάνια, έφτασα στη Σερβία. Μια χώρα όχι μεγάλη σε έκταση, αλλά αρκετά μεγάλη ώστε να γεννήσει έναν από τους ανθρώπους που άλλαξαν τον τρόπο με τον οποίο ο κόσμος βλέπει το φως.",
+      "Συνεχίζοντας προς τα Βαλκάνια, έφτασα στη Σερβία. Μια χώρα όχι μεγάλη σε έ��ταση, αλλά αρκετά μεγάλη ώστε να γεννήσει έναν από τους ανθρώπους που άλλαξαν τον τρόπο με τον οποίο ο κόσμος βλέπει το φως.",
       "Πάντα θαύμαζα όσους δεν ταξίδευαν μόνο με καράβια και άλογα, αλλά και με τη σκέψη. Κι έτσι, στην Καλαμάτα άφησα το επόμενο στοιχείο εκεί όπου το βλέμμα ενός μεγάλου Σέρβου επιστήμονα μένει ζωγραφισμένο πάνω στην πόλη.",
       "Αν τον βρεις, στάσου για λίγο μπροστά του. Κάπου εκεί κρύβεται η συνέχεια.",
     ],
@@ -202,7 +202,7 @@ export const CLUES: Clue[] = [
     subtitleEn: "The map's final mark",
     icon: "Snowflake",
     body: [
-      "Το τελευταίο μου ταξίδι ήταν προς τον μακρινό βορρά. Εκεί όπου οι λίμνες μοιάζουν αμέτρητες, τα δάση δεν τελειώνουν εύκολα, και τον χειμώνα ο ουρανός μπορεί να φωτιστεί από χρώματα που δεν μοιάζουν αληθινά.",
+      "Το τελευταίο μου ταξίδι ήταν προς τον μακρινό βορρά. Εκεί όπου οι λίμνες μοιάζουν αμέτρητες, τα δάση δεν τελειώνουν εύκολα, και τον χειμώνα ο ου��ανός μπορεί να φωτιστεί από χρώματα που δεν μοιάζουν αληθινά.",
       "Στη Φινλανδία βρήκα σιωπή. Όχι μοναξιά, αλλά εκείνη τη βαθιά σιωπή που σε αναγκάζει να ακούσεις καλύτερα τις σκέψεις σου. Και τότε κατάλαβα το τελευταίο μυστικό του χάρτη: πως ο θησαυρός δεν βρίσκεται μόνο στο τέλος της διαδρομής. Βρίσκεται σε όλα όσα πρόσεξες για να φτάσεις εκεί.",
       "Κάποτε, σε μια γωνιά της Καλαμάτας, μαζεύονταν άνθρωποι από αυτή τη μακρινή βόρεια χώρα. Σήμερα έχουν φύγει, και το μέρος έχει αλλάξει. Όμως άφησα ένα σημάδι πίσω, κρυμμένο σε κοινή θέα, για όσους ξέρουν να κοιτούν όχι αυτό που φαίνεται πρώτο, αλλά αυτό που επιμένει να υπάρχει από παλιά.",
       "Εκεί θα βρεις το τελευταίο στοιχείο.",
@@ -220,6 +220,74 @@ export const TOTAL_CLUES = CLUES.length
 
 /** The first lead is the only time-gated one. */
 export const FIRST_LEAD_ORDER = 1
+
+/**
+ * Virtual lead order for the "finish" scan. The last real lead (TOTAL_CLUES) is
+ * only counted as solved once the crew scans the dedicated finishing QR, which
+ * stores a row at this order. It never affects displayed progress (which clamps
+ * to TOTAL_CLUES) — it exists purely so the final lead can be scored like the
+ * others (you earn lead N's points when you "leave" it for the next stop).
+ */
+export const FINISH_ORDER = TOTAL_CLUES + 1
+
+// ── Scoring ─────────────────────────────────────────────────────────────────
+
+export type Difficulty = "easy" | "medium" | "hard"
+
+export type ScoreConfig = {
+  /** Points for the 1st/2nd/3rd entity to complete a lead, then everyone else. */
+  firstPoints: number
+  secondPoints: number
+  thirdPoints: number
+  restPoints: number
+  /** Flat bonus added to every placement tier on medium / hard leads. */
+  mediumBonus: number
+  hardBonus: number
+}
+
+/** Defaults used when no config row exists yet. */
+export const DEFAULT_SCORE_CONFIG: ScoreConfig = {
+  firstPoints: 100,
+  secondPoints: 70,
+  thirdPoints: 50,
+  restPoints: 30,
+  mediumBonus: 50,
+  hardBonus: 150,
+}
+
+export const DEFAULT_DIFFICULTY: Difficulty = "easy"
+
+export function isDifficulty(value: unknown): value is Difficulty {
+  return value === "easy" || value === "medium" || value === "hard"
+}
+
+/** The bonus added to a lead's placement points for its difficulty. */
+export function difficultyBonus(config: ScoreConfig, difficulty: Difficulty): number {
+  if (difficulty === "hard") return config.hardBonus
+  if (difficulty === "medium") return config.mediumBonus
+  return 0
+}
+
+/**
+ * Points a single placement earns on a lead of a given difficulty.
+ * `placement` is 0-based: 0 = first to complete, 1 = second, 2 = third, and
+ * anything else falls into the "rest" tier.
+ */
+export function pointsForPlacement(
+  config: ScoreConfig,
+  difficulty: Difficulty,
+  placement: number,
+): number {
+  const base =
+    placement === 0
+      ? config.firstPoints
+      : placement === 1
+        ? config.secondPoints
+        : placement === 2
+          ? config.thirdPoints
+          : config.restPoints
+  return base + difficultyBonus(config, difficulty)
+}
 
 export const START_MS = new Date(START_ISO).getTime()
 

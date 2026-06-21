@@ -25,6 +25,8 @@ import {
   RefreshCw,
   Download,
   Lightbulb,
+  Trophy,
+  Save,
 } from "lucide-react"
 import { ModalShell } from "@/components/pythea/modal-shell"
 import { ConfirmDialog } from "@/components/pythea/confirm-dialog"
@@ -44,13 +46,15 @@ import {
   adminResetUserProgress,
   adminResetTeamProgress,
   adminRegenerateToken,
+  adminSaveScoring,
   type AdminData,
   type AdminUserRow,
   type AdminTeamRow,
   type ActionResult,
 } from "@/app/admin/actions"
+import type { Difficulty, ScoreConfig } from "@/lib/clues"
 
-type Tab = "users" | "teams" | "qr" | "hints"
+type Tab = "users" | "teams" | "qr" | "hints" | "scoring"
 
 type Confirm = {
   title: string
@@ -199,8 +203,11 @@ export function AdminDashboard({
           <TabButton active={tab === "hints"} onClick={() => setTab("hints")} icon={Lightbulb}>
             Hints
           </TabButton>
+          <TabButton active={tab === "scoring"} onClick={() => setTab("scoring")} icon={Trophy}>
+            Scoring
+          </TabButton>
         </div>
-        {tab !== "qr" && tab !== "hints" && (
+        {tab !== "qr" && tab !== "hints" && tab !== "scoring" && (
           <div className="relative w-full sm:max-w-xs">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <input
@@ -331,18 +338,35 @@ export function AdminDashboard({
         ) : tab === "qr" ? (
           <QrPanel
             tokens={data.tokens}
+            totalLeads={data.totalLeads}
             pending={pending}
             onRegenerate={(leadOrder) =>
               setConfirm({
                 title: "Regenerate QR link",
-                body: `Issue a fresh link for lead No. ${String(leadOrder).padStart(2, "0")}? Any QR code already printed from the old link will stop working.`,
+                body:
+                  leadOrder > data.totalLeads
+                    ? "Issue a fresh link for the finishing QR? Any code already printed from the old link will stop working."
+                    : `Issue a fresh link for lead No. ${String(leadOrder).padStart(2, "0")}? Any QR code already printed from the old link will stop working.`,
                 confirmLabel: "Regenerate",
                 run: () => adminRegenerateToken(leadOrder),
               })
             }
           />
-        ) : (
+        ) : tab === "hints" ? (
           <AdminHintsPanel hints={data.hints} leadOptions={data.leadOptions} />
+        ) : (
+          <ScoringPanel
+            config={data.scoreConfig}
+            leadDifficulties={data.leadDifficulties}
+            leadOptions={data.leadOptions}
+            pending={pending}
+            onSave={(config, difficulties) =>
+              runAction(
+                () => adminSaveScoring({ config, difficulties }),
+                "Scoring saved. All standings have been recalculated.",
+              )
+            }
+          />
         )}
       </div>
 
@@ -931,15 +955,17 @@ function ProgressBadge({ progress, total }: { progress: number; total: number })
 }
 
 /**
- * The QR codes panel: one row per lead (2..9) showing the scan link an
- * organizer turns into a printed QR code, with copy and regenerate controls.
+ * The QR codes panel: one row per scannable lead (2..9) plus the finishing QR,
+ * showing the scan link an organizer turns into a printed QR code.
  */
 function QrPanel({
   tokens,
+  totalLeads,
   pending,
   onRegenerate,
 }: {
   tokens: AdminData["tokens"]
+  totalLeads: number
   pending: boolean
   onRegenerate: (leadOrder: number) => void
 }) {
@@ -953,13 +979,20 @@ function QrPanel({
         <p className="mt-1 font-sans text-[13px] leading-relaxed text-muted-foreground">
           Each link below unlocks one lead. Turn each into a QR code (any QR generator works) and
           hide it at the matching location. When a player scans it, that lead opens for them and
-          their whole team. Lead 01 opens on a timer, so it has no QR code.
+          their whole team. Lead 01 opens on a timer, so it has no QR code. The final FINISH code
+          marks the last lead as solved, so its placement points get awarded.
         </p>
       </div>
       <ul className="flex flex-col gap-2.5">
         {tokens.length === 0 && <Empty>No QR links have been generated yet.</Empty>}
         {tokens.map((tk) => (
-          <QrRow key={tk.leadOrder} tk={tk} pending={pending} onRegenerate={onRegenerate} />
+          <QrRow
+            key={tk.leadOrder}
+            tk={tk}
+            isFinish={tk.leadOrder > totalLeads}
+            pending={pending}
+            onRegenerate={onRegenerate}
+          />
         ))}
       </ul>
     </div>
@@ -968,16 +1001,19 @@ function QrPanel({
 
 function QrRow({
   tk,
+  isFinish,
   pending,
   onRegenerate,
 }: {
   tk: AdminData["tokens"][number]
+  isFinish: boolean
   pending: boolean
   onRegenerate: (leadOrder: number) => void
 }) {
   const [copied, setCopied] = useState(false)
   const [qrOpen, setQrOpen] = useState(false)
-  const orderLabel = String(tk.leadOrder).padStart(2, "0")
+  const orderLabel = isFinish ? "FIN" : String(tk.leadOrder).padStart(2, "0")
+  const title = isFinish ? "Finish" : `Lead ${orderLabel}`
 
   async function copy() {
     try {
@@ -997,7 +1033,7 @@ function QrRow({
         </span>
         <div className="min-w-0">
           <p className="font-sans text-[11px] font-bold uppercase tracking-chip text-muted-foreground">
-            Lead {orderLabel}
+            {title}
           </p>
           <p className="truncate font-mono text-xs text-foreground">{tk.link}</p>
         </div>

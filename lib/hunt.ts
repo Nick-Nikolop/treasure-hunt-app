@@ -12,14 +12,23 @@ import { db } from "@/lib/db"
 import { clueToken, leadUnlock, teamMember, team, user } from "@/lib/db/schema"
 import {
   TOTAL_CLUES,
+  FINISH_ORDER,
   clampProgress,
   effectiveUnlockedCount,
   isLeadOneOpen,
   START_MS,
   CLUES,
+  pointsForPlacement,
+  type Difficulty,
 } from "@/lib/clues"
+import { getScoreConfig, getLeadDifficulties } from "@/lib/scoring"
 import { and, eq, gt, inArray } from "drizzle-orm"
 import { randomUUID } from "node:crypto"
+
+/** A fresh, URL-safe random token for a printed QR code. */
+function freshToken(): string {
+  return randomUUID().replace(/-/g, "").slice(0, 18)
+}
 
 /** Absolute base URL of the site, mirroring lib/auth.ts's cascade. */
 export function siteUrl(): string {
@@ -152,7 +161,41 @@ export type UnlockResult =
   | { status: "unlocked"; leadOrder: number; country: string; countryEn: string }
   | { status: "already"; leadOrder: number; country: string; countryEn: string }
   | { status: "out_of_order"; required: number; current: number; leadOrder: number }
+  | { status: "finished"; country: string; countryEn: string }
   | { status: "invalid" }
+
+/** Whether any member of the crew has scanned the finishing QR. */
+async function crewHasFinished(userIds: string[]): Promise<boolean> {
+  if (userIds.length === 0) return false
+  const rows = await db
+    .select({ id: leadUnlock.id })
+    .from(leadUnlock)
+    .where(and(inArray(leadUnlock.userId, userIds), eq(leadUnlock.leadOrder, FINISH_ORDER)))
+    .limit(1)
+  return rows.length > 0
+}
+
+/** Stamp the finishing row for every crew member that doesn't have one yet. */
+async function insertFinishRows(userIds: string[], at: Date): Promise<void> {
+  if (userIds.length === 0) return
+  const existing = await db
+    .select({ userId: leadUnlock.userId })
+    .from(leadUnlock)
+    .where(and(inArray(leadUnlock.userId, userIds), eq(leadUnlock.leadOrder, FINISH_ORDER)))
+  const have = new Set(existing.map((r) => r.userId))
+  const values = userIds
+    .filter((uid) => !have.has(uid))
+    .map((uid) => ({
+      id: randomUUID(),
+      userId: uid,
+      leadOrder: FINISH_ORDER,
+      source: "qr",
+      unlockedAt: at,
+    }))
+  if (values.length > 0) {
+    await db.insert(leadUnlock).values(values).onConflictDoNothing()
+  }
+}
 
 /**
  * Attempt to unlock a lead from a scanned QR token, for `userId` and their
@@ -166,6 +209,28 @@ export async function unlockByToken(userId: string, token: string): Promise<Unlo
     .limit(1)
   const leadOrder = tokenRows[0]?.leadOrder
   if (!leadOrder) return { status: "invalid" }
+
+  // The finishing QR marks the final lead as solved. It carries no real clue
+  // and never raises displayed progress; it only lets the last lead be scored.
+  if (leadOrder === FINISH_ORDER) {
+    const crew = await getCrewUserIds(userId)
+    const now = Date.now()
+    const current = await getCrewEffectiveProgress(crew, now)
+    const last = CLUES[CLUES.length - 1]
+    if (current < TOTAL_CLUES) {
+      return { status: "out_of_order", required: TOTAL_CLUES, current, leadOrder: FINISH_ORDER }
+    }
+    if (await crewHasFinished(crew)) {
+      return {
+        status: "already",
+        leadOrder: TOTAL_CLUES,
+        country: last.country,
+        countryEn: last.countryEn,
+      }
+    }
+    await insertFinishRows(crew, new Date(now))
+    return { status: "finished", country: last.country, countryEn: last.countryEn }
+  }
 
   const clue = CLUES.find((c) => c.order === leadOrder)
   if (!clue) return { status: "invalid" }
@@ -191,8 +256,26 @@ export async function unlockByToken(userId: string, token: string): Promise<Unlo
 
 export type ClueTokenRow = { leadOrder: number; token: string; link: string }
 
+/**
+ * Make sure a stable token exists for every scannable lead (2..TOTAL_CLUES) and
+ * for the finishing QR (FINISH_ORDER). Idempotent: existing tokens (and their
+ * printed QR codes) are left untouched; only missing ones are created.
+ */
+async function ensureTokens(): Promise<void> {
+  const existing = await db.select({ leadOrder: clueToken.leadOrder }).from(clueToken)
+  const have = new Set(existing.map((r) => r.leadOrder))
+  const orders = [...Array.from({ length: TOTAL_CLUES - 1 }, (_, i) => i + 2), FINISH_ORDER]
+  const values = orders
+    .filter((order) => !have.has(order))
+    .map((order) => ({ leadOrder: order, token: freshToken() }))
+  if (values.length > 0) {
+    await db.insert(clueToken).values(values).onConflictDoNothing()
+  }
+}
+
 /** All QR tokens with their absolute scan links, ordered by lead. */
 export async function getClueTokens(): Promise<ClueTokenRow[]> {
+  await ensureTokens()
   const rows = await db
     .select({ leadOrder: clueToken.leadOrder, token: clueToken.token })
     .from(clueToken)
@@ -203,7 +286,7 @@ export async function getClueTokens(): Promise<ClueTokenRow[]> {
 
 /** Replace a lead's token with a fresh one. Invalidates any printed QR. */
 export async function regenerateToken(leadOrder: number): Promise<string> {
-  const fresh = randomUUID().replace(/-/g, "").slice(0, 18)
+  const fresh = freshToken()
   await db
     .insert(clueToken)
     .values({ leadOrder, token: fresh })
@@ -218,6 +301,8 @@ export type LeaderboardEntry = {
   id: string
   name: string
   progress: number
+  /** Total leaderboard score: sum of placement points earned across all leads. */
+  score: number
   /** Epoch ms the entity reached its current progress, or null at 0. */
   reachedAt: number | null
   /** Member display names, for teams. */
@@ -238,10 +323,17 @@ function countryFor(progress: number): { country: string | null; countryEn: stri
 
 /**
  * Build the full leaderboard: every team and every team-less user, ranked by
- * furthest lead reached, then by who got there first.
+ * total score (highest first), then furthest lead, then who got there first.
+ *
+ * Scoring: a lead is "completed" the moment a crew leaves it for the next stop
+ * (i.e. reaches lead N+1; the very last lead is completed by scanning the
+ * finishing QR). For each lead we rank everyone who completed it by how early
+ * they did, and award placement points (1st/2nd/3rd/rest) plus the lead's
+ * difficulty bonus. A score is the sum of those points across all leads, and is
+ * always recomputed live from the current settings.
  */
 export async function getLeaderboard(nowMs: number = Date.now()): Promise<LeaderboardEntry[]> {
-  const [users, members, teams, unlocks] = await Promise.all([
+  const [users, members, teams, unlocks, config, difficulties] = await Promise.all([
     db
       .select({ id: user.id, name: user.name, firstName: user.firstName, email: user.email })
       .from(user),
@@ -252,12 +344,14 @@ export async function getLeaderboard(nowMs: number = Date.now()): Promise<Leader
     db
       .select({ userId: leadUnlock.userId, leadOrder: leadUnlock.leadOrder, unlockedAt: leadUnlock.unlockedAt })
       .from(leadUnlock),
+    getScoreConfig(),
+    getLeadDifficulties(),
   ])
 
   const lead1Open = isLeadOneOpen(nowMs)
   const userById = new Map(users.map((u) => [u.id, u]))
 
-  // Per-user: highest lead + when they reached it.
+  // Per-user unlock rows (every lead they hold, including the finishing row).
   const byUser = new Map<string, { order: number; at: number }[]>()
   for (const row of unlocks) {
     const list = byUser.get(row.userId) ?? []
@@ -266,12 +360,24 @@ export async function getLeaderboard(nowMs: number = Date.now()): Promise<Leader
   }
   function userProgress(userId: string): { progress: number; reachedAt: number | null } {
     const rows = byUser.get(userId) ?? []
-    const storedMax = rows.reduce((m, r) => Math.max(m, r.order), 0)
+    // Ignore the virtual finishing order when computing displayed progress.
+    const storedMax = rows.reduce((m, r) => (r.order <= TOTAL_CLUES ? Math.max(m, r.order) : m), 0)
     const progress = effectiveUnlockedCount(storedMax, nowMs)
     if (progress === 0) return { progress: 0, reachedAt: null }
     if (progress === 1) return { progress: 1, reachedAt: lead1Open ? START_MS : null }
     const at = rows.find((r) => r.order === storedMax)?.at ?? null
     return { progress, reachedAt: at }
+  }
+
+  // Earliest moment any member of a crew reached a given lead order (or null).
+  function crewReachedAt(memberIds: string[], order: number): number | null {
+    let best: number | null = null
+    for (const uid of memberIds) {
+      for (const r of byUser.get(uid) ?? []) {
+        if (r.order === order && (best === null || r.at < best)) best = r.at
+      }
+    }
+    return best
   }
 
   // Teams.
@@ -284,20 +390,13 @@ export async function getLeaderboard(nowMs: number = Date.now()): Promise<Leader
     teamMembersOf.set(m.teamId, list)
   }
 
-  const entries: LeaderboardEntry[] = []
+  // Build every entity (team + solo) with its member ids retained for scoring.
+  const entities: { entry: LeaderboardEntry; memberIds: string[] }[] = []
 
   for (const tm of teams) {
     const memberIds = teamMembersOf.get(tm.id) ?? []
-    if (memberIds.length === 0) {
-      entries.push({
-        kind: "team", id: tm.id, name: tm.name, progress: 0, reachedAt: null,
-        members: [], country: null, countryEn: null,
-      })
-      continue
-    }
     const perMember = memberIds.map((id) => userProgress(id))
     const progress = perMember.reduce((m, p) => Math.max(m, p.progress), 0)
-    // Earliest moment any member reached the crew's furthest lead.
     const times = perMember
       .filter((p) => p.progress === progress && p.reachedAt !== null)
       .map((p) => p.reachedAt as number)
@@ -306,25 +405,46 @@ export async function getLeaderboard(nowMs: number = Date.now()): Promise<Leader
       .map((id) => userById.get(id))
       .filter(Boolean)
       .map((u) => displayName(u as { firstName: string | null; name: string; email: string }))
-    entries.push({
-      kind: "team", id: tm.id, name: tm.name, progress, reachedAt,
-      members: memberNames, ...countryFor(progress),
+    entities.push({
+      entry: {
+        kind: "team", id: tm.id, name: tm.name, progress, score: 0, reachedAt,
+        members: memberNames, ...countryFor(progress),
+      },
+      memberIds,
     })
   }
 
-  // Team-less users.
   for (const u of users) {
     if (memberTeamId.has(u.id)) continue
     const { progress, reachedAt } = userProgress(u.id)
-    entries.push({
-      kind: "solo", id: u.id, name: displayName(u), progress, reachedAt,
-      members: [], ...countryFor(progress),
+    entities.push({
+      entry: {
+        kind: "solo", id: u.id, name: displayName(u), progress, score: 0, reachedAt,
+        members: [], ...countryFor(progress),
+      },
+      memberIds: [u.id],
     })
   }
 
-  // Rank: furthest first, then earliest to get there, then name. Zero-progress
-  // and not-yet-reached entries sink to the bottom.
+  // Score each lead: rank everyone who completed it (reached the next stop) by
+  // completion time, then award placement points + the lead's difficulty bonus.
+  for (let lead = 1; lead <= TOTAL_CLUES; lead++) {
+    const difficulty: Difficulty = difficulties.get(lead) ?? "easy"
+    const finishers = entities
+      .map((e) => ({ e, at: crewReachedAt(e.memberIds, lead + 1) }))
+      .filter((x): x is { e: (typeof entities)[number]; at: number } => x.at !== null)
+      .sort((a, b) => a.at - b.at || a.e.entry.id.localeCompare(b.e.entry.id))
+    finishers.forEach((f, idx) => {
+      f.e.entry.score += pointsForPlacement(config, difficulty, idx)
+    })
+  }
+
+  const entries = entities.map((e) => e.entry)
+
+  // Rank: highest score first, then furthest lead, then earliest to get there,
+  // then name. Zero-score / zero-progress entries sink to the bottom.
   entries.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score
     if (b.progress !== a.progress) return b.progress - a.progress
     const aAt = a.reachedAt ?? Number.POSITIVE_INFINITY
     const bAt = b.reachedAt ?? Number.POSITIVE_INFINITY

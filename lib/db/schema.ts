@@ -109,3 +109,27 @@ export const hint = pgTable("hint", {
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 })
+
+// Global leaderboard scoring tiers. A single row (id = "default"). Placement
+// points are the base awarded to the 1st/2nd/3rd finisher of each lead, with
+// everyone else getting `restPoints`. Medium/Hard leads add a flat bonus to
+// every tier (so the difficulty just shifts the whole reward up).
+export const scoreConfig = pgTable("score_config", {
+  id: text("id").primaryKey().default("default"),
+  firstPoints: integer("firstPoints").notNull().default(100),
+  secondPoints: integer("secondPoints").notNull().default(70),
+  thirdPoints: integer("thirdPoints").notNull().default(50),
+  restPoints: integer("restPoints").notNull().default(30),
+  mediumBonus: integer("mediumBonus").notNull().default(50),
+  hardBonus: integer("hardBonus").notNull().default(150),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+})
+
+// Per-lead difficulty set by admins. One row per lead order; missing rows mean
+// the lead defaults to "easy". Difficulty selects which bonus (if any) is added
+// to that lead's placement points.
+export const leadDifficulty = pgTable("lead_difficulty", {
+  leadOrder: integer("leadOrder").primaryKey(),
+  difficulty: text("difficulty").notNull().default("easy"),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+})
