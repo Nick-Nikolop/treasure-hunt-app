@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation"
 import { useCallback } from "react"
 import { motion } from "framer-motion"
-import { Lock, Check, Compass, ArrowRight, BookOpen } from "lucide-react"
+import { Compass, ArrowRight, BookOpen } from "lucide-react"
 import { Countdown } from "@/components/pythea/countdown"
 import { useI18n } from "@/components/pythea/language-provider"
 
@@ -60,15 +60,15 @@ export function Journey({ unlockedCount, total, countdownToMs }: Props) {
               {t.journey.intro}
             </motion.p>
 
-            {/* Quiet link down to the legend (Story section) for anyone who
-                wants the backstory before reading the journal. */}
+            {/* Prominent link down to the legend (Story section) for anyone
+                who wants the backstory before reading the journal. */}
             <motion.a
               href="#story"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 0.8, delay: 0.3 }}
-              className="group mt-6 inline-flex items-center gap-2 font-sans text-xs font-bold tracking-chip text-brass transition-colors hover:text-brass/80"
+              className="group mt-7 inline-flex items-center gap-2.5 rounded-sm border-2 border-brass bg-brass/10 px-5 py-3 font-sans text-sm font-bold tracking-chip text-brass shadow-[0_0_0_0_oklch(0.72_0.13_75/0.5)] transition-all hover:bg-brass hover:text-primary-foreground hover:shadow-[0_8px_24px_-8px_oklch(0.72_0.13_75/0.7)]"
             >
               <BookOpen className="size-4" />
               {t.journey.readLegend}
@@ -124,70 +124,6 @@ export function Journey({ unlockedCount, total, countdownToMs }: Props) {
             </div>
           ))}
         </motion.dl>
-
-        {/* Sealed markers, no spoilers */}
-        <div className="mt-12 grid grid-cols-3 gap-3 sm:grid-cols-3 md:grid-cols-9">
-          {Array.from({ length: total }).map((_, i) => {
-            const revealed = i < unlockedCount
-            return (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0.8, y: 16 }}
-                whileInView={{ opacity: 1, scale: 1, y: 0 }}
-                viewport={{ once: true, margin: "-60px" }}
-                transition={{
-                  duration: 0.5,
-                  delay: i * 0.06,
-                  ease: "backOut",
-                }}
-                className="group relative aspect-square"
-              >
-                {revealed ? (
-                  /* +2: the journal binds the voyage chart at page 1, so
-                     clue N lives on page N+1. */
-                  <a
-                    href={`/journal?page=${i + 2}`}
-                    aria-label={t.journey.openCardAria(i + 1)}
-                    className="flex h-full flex-col items-center justify-center rounded-sm border border-brass/70 bg-brass/10 text-center transition-colors hover:border-brass hover:bg-brass/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                  >
-                    <Check className="size-4 text-brass md:size-5" />
-                    <span className="mt-1 font-serif text-xl font-black text-brass md:text-2xl">
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                    <span className="font-sans text-[8px] font-bold tracking-chip text-muted-foreground md:text-[9px]">
-                      {t.journey.open}
-                    </span>
-                  </a>
-                ) : (
-                  <>
-                    {/* Recessed journal interior revealed where the page was torn out */}
-                    <div className="absolute inset-0 rounded-sm bg-sealed shadow-[inset_0_4px_12px_rgba(0,0,0,0.4),inset_0_-3px_8px_rgba(0,0,0,0.28)]" />
-                    {/* Faint ruled lines of the page beneath */}
-                    <div
-                      className="absolute inset-0 rounded-sm opacity-[0.12]"
-                      style={{
-                        backgroundImage:
-                          "repeating-linear-gradient(var(--sealed-foreground) 0 1px, transparent 1px 9px)",
-                      }}
-                    />
-                    {/* Ragged torn-paper stub still clinging to the binding (top) edge */}
-                    <div className="torn-stub absolute inset-x-0 top-0 h-1/3 bg-card shadow-[0_4px_7px_rgba(0,0,0,0.35)]" />
-                    {/* Locked content */}
-                    <div className="relative flex h-full flex-col items-center justify-center text-center">
-                      <Lock className="size-4 text-sealed-foreground/70 md:size-5" />
-                      <span className="mt-1 font-serif text-xl font-black text-sealed-foreground/40 md:text-2xl">
-                        {String(i + 1).padStart(2, "0")}
-                      </span>
-                      <span className="font-sans text-[8px] font-bold tracking-chip text-sealed-foreground/65 md:text-[9px]">
-                        {t.journey.locked}
-                      </span>
-                    </div>
-                  </>
-                )}
-              </motion.div>
-            )
-          })}
-        </div>
 
         {/* Status + countdown + CTA */}
         <motion.div
