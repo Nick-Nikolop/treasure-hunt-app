@@ -112,7 +112,7 @@ export function SiteHeader({
                 {currentCountry && (
                   <span className="hidden flex-col leading-tight lg:flex">
                     <span className="font-sans text-[8px] font-bold uppercase tracking-chip text-muted-foreground/60">
-                      {t.journal.leadShort} {String(progress.current?.order ?? 0).padStart(2, "0")}
+                      {t.journal.leadShort} #{progress.current?.order ?? 0}
                     </span>
                     <span className="font-serif text-xs font-black text-foreground">
                       {currentCountry}
