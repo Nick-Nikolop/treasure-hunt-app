@@ -43,15 +43,15 @@ export function JournalTopbar({ unlockedCount, total, initialUser = null }: Prop
           : "border-b border-transparent"
       }`}
     >
-      <nav className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-5 py-4 md:px-8">
+      <nav className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-4 sm:px-5 md:px-8">
         {/* Home affordance */}
         <a
           href="/"
-          className="group flex items-center gap-2.5 text-muted-foreground transition-colors hover:text-foreground"
+          className="group flex shrink-0 items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground sm:gap-2.5"
         >
-          <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-1" />
+          <ArrowLeft className="size-4 shrink-0 transition-transform group-hover:-translate-x-1" />
           <Compass className="hidden size-5 text-brass transition-transform duration-700 group-hover:rotate-180 sm:block" />
-          <span className="font-sans text-[11px] font-bold tracking-chip">
+          <span className="hidden font-sans text-[11px] font-bold tracking-chip sm:inline">
             {t.journal.home}
           </span>
         </a>
@@ -65,8 +65,8 @@ export function JournalTopbar({ unlockedCount, total, initialUser = null }: Prop
         </div>
 
         {/* Progress + toggles */}
-        <div className="flex items-center gap-2.5 md:gap-3">
-          <span className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-card/60 px-2.5 py-1.5 font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
+        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2.5 md:gap-3">
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-sm border border-border bg-card/60 px-2 py-1.5 font-sans text-[10px] font-bold tracking-chip text-muted-foreground sm:gap-1.5 sm:px-2.5">
             <span className="font-serif text-sm font-black text-brass">
               {unlockedCount}
             </span>
@@ -76,7 +76,7 @@ export function JournalTopbar({ unlockedCount, total, initialUser = null }: Prop
           <Link
             href="/leaderboard"
             aria-label={t.scan.viewLeaderboard}
-            className="inline-flex items-center justify-center rounded-sm border border-border bg-card/60 p-2 text-muted-foreground transition-colors hover:border-brass hover:text-brass"
+            className="inline-flex shrink-0 items-center justify-center rounded-sm border border-border bg-card/60 p-2 text-muted-foreground transition-colors hover:border-brass hover:text-brass"
           >
             <Trophy className="size-4" />
           </Link>

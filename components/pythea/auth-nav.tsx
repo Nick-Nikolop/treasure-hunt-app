@@ -143,12 +143,12 @@ export function AuthNav({
     return (
       <>
         <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-          <DropdownMenuTrigger className="group inline-flex items-center gap-2 rounded-sm border border-border px-2.5 py-2 font-sans text-xs font-bold tracking-chip text-foreground outline-none transition-colors hover:border-brass/60 focus-visible:border-brass data-[state=open]:border-brass/60">
+          <DropdownMenuTrigger className="group inline-flex shrink-0 items-center gap-1.5 rounded-sm border border-border px-2 py-2 font-sans text-xs font-bold tracking-chip text-foreground outline-none transition-colors hover:border-brass/60 focus-visible:border-brass data-[state=open]:border-brass/60 sm:gap-2 sm:px-2.5">
             <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-brass/15 font-serif text-xs font-black text-brass">
               {firstName.slice(0, 1).toUpperCase()}
             </span>
-            <span className="max-w-[8rem] truncate">{firstName}</span>
-            <ChevronDown className="size-3.5 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+            <span className="hidden max-w-[4.5rem] truncate sm:inline sm:max-w-[8rem]">{firstName}</span>
+            <ChevronDown className="size-3.5 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-60">
             <DropdownMenuLabel className="flex flex-col gap-0.5 py-2">
