@@ -58,7 +58,9 @@ export function ScanResult({ result }: { result: UnlockResult }) {
           icon: <Lock className="size-9 text-muted-foreground" aria-hidden />,
           label: s.outOfOrderLabel,
           title: s.outOfOrderTitle,
-          body: s.outOfOrderBody(result.required),
+          // Point players to the lead they should actually be finding next
+          // (one past where their crew currently is), not the scanned link's lead.
+          body: s.outOfOrderBody(result.current + 1),
           showLeaderboard: false,
         }
       case "invalid":

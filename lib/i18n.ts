@@ -347,8 +347,8 @@ const el = {
     alreadyBody: "Εσύ ή η ομάδα σου έχετε ήδη ξεκλειδώσει αυτή τη σελίδα.",
     outOfOrderLabel: "ΟΧΙ ΑΚΟΜΑ",
     outOfOrderTitle: "Δεν είναι η σειρά αυτού του σημαδιού",
-    outOfOrderBody: (required: number) =>
-      `Πρέπει πρώτα να βρεις το σημάδι Νο. ${String(required).padStart(2, "0")}. Ακολούθησε τα σημάδια με τη σειρά.`,
+    outOfOrderBody: (nextLead: number) =>
+      `Πρέπει πρώτα να βρεις το σημάδι Νο. ${String(nextLead).padStart(2, "0")}. Ακολούθησε τα σημάδια με τη σειρά.`,
     invalidLabel: "ΑΓΝΩΣΤΟ ΣΗΜΑΔΙ",
     invalidTitle: "Αυτός ο κωδικός δεν αναγνωρίζεται",
     invalidBody:
@@ -804,8 +804,8 @@ const en: Dictionary = {
     alreadyBody: "You or your team have already unlocked this page.",
     outOfOrderLabel: "NOT YET",
     outOfOrderTitle: "This mark is out of order",
-    outOfOrderBody: (required: number) =>
-      `You need to find mark No. ${String(required).padStart(2, "0")} first. Follow the marks in order.`,
+    outOfOrderBody: (nextLead: number) =>
+      `You need to find mark No. ${String(nextLead).padStart(2, "0")} first. Follow the marks in order.`,
     invalidLabel: "UNKNOWN MARK",
     invalidTitle: "This code is not recognised",
     invalidBody:
