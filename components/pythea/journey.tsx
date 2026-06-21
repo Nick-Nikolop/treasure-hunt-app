@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation"
 import { useCallback } from "react"
 import { motion } from "framer-motion"
-import { Lock, Check, Compass, ArrowRight } from "lucide-react"
+import { Lock, Check, Compass, ArrowRight, BookOpen } from "lucide-react"
 import { Countdown } from "@/components/pythea/countdown"
 import { useI18n } from "@/components/pythea/language-provider"
 
@@ -59,6 +59,21 @@ export function Journey({ unlockedCount, total, countdownToMs }: Props) {
             >
               {t.journey.intro}
             </motion.p>
+
+            {/* Quiet link down to the legend (Story section) for anyone who
+                wants the backstory before reading the journal. */}
+            <motion.a
+              href="#story"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="group mt-6 inline-flex items-center gap-2 font-sans text-xs font-bold tracking-chip text-brass transition-colors hover:text-brass/80"
+            >
+              <BookOpen className="size-4" />
+              {t.journey.readLegend}
+              <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+            </motion.a>
           </div>
 
           {/* Vintage cartographic view of Kalamata, framed as an aged plate */}

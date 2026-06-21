@@ -42,15 +42,16 @@ export default async function Page() {
       <SiteHeader initialUser={initialUser} />
       <main className="relative">
         <Hero />
-        <Story />
-        {/* The crew welcome / join panel sits above the "Ι. Ο ΘΡΥΛΟΣ" legend so
-            signed-in explorers see their journal CTA before the lead map. */}
+        {/* Welcome / join panel first, then the path (9 countries / 9 leads),
+            then the "Ι. Ο ΘΡΥΛΟΣ" legend. The path links down to the legend for
+            anyone who wants the backstory. */}
         <Register />
         <Journey
           unlockedCount={publicCount}
           total={TOTAL_CLUES}
           countdownToMs={countdownToMs}
         />
+        <Story />
         <Treasure />
         <HowItWorks />
         <Faq />
