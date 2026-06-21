@@ -105,31 +105,33 @@ export function SiteHeader({
             <Link
               href="/leaderboard"
               aria-label={t.scan.viewLeaderboard}
-              className="group inline-flex shrink-0 items-center gap-2.5 rounded-sm border border-border bg-card/60 py-1.5 pl-2.5 pr-2 transition-colors hover:border-brass"
+              className="group inline-flex shrink-0 items-center gap-2"
             >
-              {/* Current lead: number + country */}
-              {currentCountry && (
-                <span className="hidden items-center gap-1.5 font-sans text-[10px] font-bold tracking-chip text-muted-foreground lg:inline-flex">
-                  <span className="text-muted-foreground/70">
-                    {t.journal.leadShort} {String(progress.current?.order ?? 0).padStart(2, "0")}
+              {/* Location pill: current lead number + country, with a quiet progress count. */}
+              <span className="inline-flex items-center gap-2 rounded-sm border border-border bg-card/60 px-2.5 py-1.5 transition-colors group-hover:border-brass/60">
+                {currentCountry && (
+                  <span className="hidden flex-col leading-tight lg:flex">
+                    <span className="font-sans text-[8px] font-bold uppercase tracking-chip text-muted-foreground/60">
+                      {t.journal.leadShort} {String(progress.current?.order ?? 0).padStart(2, "0")}
+                    </span>
+                    <span className="font-serif text-xs font-black text-foreground">
+                      {currentCountry}
+                    </span>
                   </span>
-                  <span className="text-foreground">{currentCountry}</span>
+                )}
+                {currentCountry && <span className="hidden h-5 w-px bg-border lg:inline-block" />}
+                <span className="inline-flex items-baseline gap-0.5 font-sans text-[10px] font-bold tracking-chip text-muted-foreground/70">
+                  <span className="font-serif text-sm font-black text-foreground">
+                    {progress.unlocked}
+                  </span>
+                  /{progress.total}
                 </span>
-              )}
-              {currentCountry && <span className="hidden h-4 w-px bg-border lg:inline-block" />}
-              {/* Progress */}
-              <span className="inline-flex items-center gap-1 font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
-                <span className="font-serif text-sm font-black text-muted-foreground">
-                  {progress.unlocked}
-                </span>
-                <span className="text-muted-foreground/70">/ {progress.total}</span>
               </span>
-              <span className="h-4 w-px bg-border" />
-              {/* Score */}
-              <span className="inline-flex items-center gap-1.5">
+              {/* Score pill: brass-tinted to read as the primary stat. */}
+              <span className="inline-flex items-center gap-1.5 rounded-sm border border-brass/40 bg-brass/10 px-2.5 py-1.5 transition-colors group-hover:border-brass">
                 <Trophy className="size-3.5 text-brass" />
                 <span className="font-serif text-sm font-black text-brass">{progress.score}</span>
-                <span className="font-sans text-[9px] font-bold tracking-chip text-muted-foreground/70">
+                <span className="font-sans text-[9px] font-bold uppercase tracking-chip text-brass/70">
                   {t.leaderboard.points}
                 </span>
               </span>
@@ -151,16 +153,15 @@ export function SiteHeader({
             <Link
               href="/leaderboard"
               aria-label={t.scan.viewLeaderboard}
-              className="inline-flex shrink-0 items-center gap-2 rounded-sm border border-border bg-card/60 px-2 py-1.5 font-sans text-[10px] font-bold tracking-chip text-muted-foreground"
+              className="inline-flex shrink-0 items-center gap-1.5"
             >
-              <span className="inline-flex items-center gap-1">
-                <span className="font-serif text-sm font-black text-muted-foreground">
+              <span className="inline-flex items-baseline gap-0.5 rounded-sm border border-border bg-card/60 px-2 py-1.5 font-sans text-[10px] font-bold tracking-chip text-muted-foreground/70">
+                <span className="font-serif text-sm font-black text-foreground">
                   {progress.unlocked}
                 </span>
-                <span className="text-muted-foreground/70">/ {progress.total}</span>
+                /{progress.total}
               </span>
-              <span className="h-3.5 w-px bg-border" />
-              <span className="inline-flex items-center gap-1">
+              <span className="inline-flex items-center gap-1 rounded-sm border border-brass/40 bg-brass/10 px-2 py-1.5">
                 <Trophy className="size-3 text-brass" />
                 <span className="font-serif text-sm font-black text-brass">{progress.score}</span>
               </span>
