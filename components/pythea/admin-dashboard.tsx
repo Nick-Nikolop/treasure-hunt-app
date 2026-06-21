@@ -186,7 +186,7 @@ export function AdminDashboard({
 
       {/* Tabs + search */}
       <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="inline-flex rounded-sm border border-border p-1">
+        <div className="flex max-w-full overflow-x-auto rounded-sm border border-border p-1 sm:inline-flex">
           <TabButton active={tab === "users"} onClick={() => setTab("users")} icon={Users}>
             Users
           </TabButton>
@@ -643,8 +643,8 @@ function TabButton({
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex items-center gap-2 rounded-sm px-4 py-2 font-sans text-sm font-bold tracking-chip transition-colors ${
-        active ? "bg-brass text-background" : "text-muted-foreground hover:text-foreground"
+      className={`inline-flex shrink-0 items-center gap-2 rounded-sm px-3 py-2 font-sans text-sm font-bold tracking-chip transition-colors sm:px-4 ${
+      active ? "bg-brass text-background" : "text-muted-foreground hover:text-foreground"
       }`}
     >
       <Icon className="size-4" />
