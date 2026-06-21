@@ -11,7 +11,16 @@ import {
   regenerateToken,
   type ClueTokenRow,
 } from "@/lib/hunt"
-import { TOTAL_CLUES, effectiveUnlockedCount } from "@/lib/clues"
+import {
+  listHints,
+  createHint,
+  updateHint,
+  deleteHint,
+  regenerateHintToken,
+  normalizeLeadOrder,
+  type HintRow,
+} from "@/lib/hints"
+import { TOTAL_CLUES, effectiveUnlockedCount, CLUES } from "@/lib/clues"
 import { and, asc, desc, eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { randomUUID } from "node:crypto"
@@ -58,6 +67,10 @@ export type AdminData = {
   totalLeads: number
   /** QR scan links, one per lead order (2..9). */
   tokens: ClueTokenRow[]
+  /** Admin-authored hints, newest first. */
+  hints: HintRow[]
+  /** Lead options (order + country names) for the hint association dropdown. */
+  leadOptions: { order: number; country: string; countryEn: string }[]
 }
 
 /** Load every user and team for the dashboard. Superadmin only. */
@@ -149,6 +162,12 @@ export async function getAdminData(): Promise<AdminData> {
     superadminCount: await superadminCount(),
     totalLeads: TOTAL_CLUES,
     tokens: await getClueTokens(),
+    hints: await listHints(),
+    leadOptions: CLUES.map((c) => ({
+      order: c.order,
+      country: c.country,
+      countryEn: c.countryEn,
+    })),
   }
 }
 
@@ -474,6 +493,62 @@ export async function adminRegenerateToken(leadOrder: number): Promise<ActionRes
     return { ok: false, error: "bad_value" }
   }
   await regenerateToken(Math.floor(leadOrder))
+  revalidatePath("/admin")
+  return { ok: true }
+}
+
+// ── Hints (admin) ───────────────────────────────────────────────────────────
+
+/**
+ * Create a hint. `leadOrder` is optional: pass a number (1..TOTAL_CLUES) to tie
+ * the hint to a lead, or null/empty to leave it unassociated.
+ */
+export async function adminCreateHint(input: {
+  title: string
+  body: string
+  leadOrder: number | null
+}): Promise<ActionResult> {
+  await requireAdmin()
+  const title = input.title?.trim() ?? ""
+  const body = input.body?.trim() ?? ""
+  if (title.length < 2) return { ok: false, error: "too_short" }
+  if (title.length > 120) return { ok: false, error: "too_long" }
+  if (body.length < 1) return { ok: false, error: "too_short" }
+
+  await createHint({ title, body, leadOrder: normalizeLeadOrder(input.leadOrder) })
+  revalidatePath("/admin")
+  return { ok: true }
+}
+
+/** Update a hint's title, body, and optional lead association. */
+export async function adminUpdateHint(
+  id: string,
+  input: { title: string; body: string; leadOrder: number | null },
+): Promise<ActionResult> {
+  await requireAdmin()
+  const title = input.title?.trim() ?? ""
+  const body = input.body?.trim() ?? ""
+  if (title.length < 2) return { ok: false, error: "too_short" }
+  if (title.length > 120) return { ok: false, error: "too_long" }
+  if (body.length < 1) return { ok: false, error: "too_short" }
+
+  await updateHint(id, { title, body, leadOrder: normalizeLeadOrder(input.leadOrder) })
+  revalidatePath("/admin")
+  return { ok: true }
+}
+
+/** Delete a hint. Its shareable link stops working immediately. */
+export async function adminDeleteHint(id: string): Promise<ActionResult> {
+  await requireAdmin()
+  await deleteHint(id)
+  revalidatePath("/admin")
+  return { ok: true }
+}
+
+/** Issue a fresh link for a hint, invalidating the old one. */
+export async function adminRegenerateHintToken(id: string): Promise<ActionResult> {
+  await requireAdmin()
+  await regenerateHintToken(id)
   revalidatePath("/admin")
   return { ok: true }
 }

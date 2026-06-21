@@ -147,7 +147,7 @@ const el = {
     welcomeBadge: "ΜΕΛΟΣ ΤΗΣ ΟΜΑΔΑΣ",
     welcomeTitle: (name: string) => `Καλώς ήρθες, ${name}.`,
     welcomeBody:
-      "Η θέση σου στην ομάδα είναι κρατημένη. Άνοιξε το ημερολόγιο και διάβασε τα σημάδια που έχουν αποκαλυφθεί ως τώρα.",
+      "Η θέση σου στην ομάδα είναι κρατημένη. Άνοιξε το ημερολόγιο και διάβασε τα σημάδια που έχουν αποκαλ��φθεί ως τώρα.",
     welcomeCta: "ΑΝΟΙΞΕ ΤΟ ΗΜΕΡΟΛΟΓΙΟ",
     welcomeTeams: "Οι ομάδες ανοίγουν σε λίγο καιρό. Θα ειδοποιηθείς πρώτος.",
   },
@@ -350,6 +350,17 @@ const el = {
       "Ο κωδικός QR δεν είναι έγκυρος. Σιγουρέψου ότι σάρωσες ένα από τα επίσημα σημάδια του κυνηγιού.",
     openJournal: "ΑΝΟΙΞΕ ΤΟ ΗΜΕΡΟΛΟΓΙΟ",
     viewLeaderboard: "ΚΑΤΑΤΑΞΗ",
+  },
+  hint: {
+    eyebrow: "ΜΙΑ ΒΟΗΘΕΙΑ",
+    forLead: (n: string, country: string) => `Για το σημάδι Νο. ${n} · ${country}`,
+    generalLabel: "Γενική βοήθεια",
+    openJournal: "ΑΝΟΙΞΕ ΤΟ ΗΜΕΡΟΛΟΓΙΟ",
+    backHome: "ΕΠΙΣΤΡΟΦΗ ΣΤΗΝ ΑΡΧΗ",
+    notFoundTitle: "Αυτή η βοήθεια δεν βρέθηκε",
+    notFoundBody:
+      "Ο σύνδεσμος δεν είναι έγκυρος ή η βοήθεια αφαιρέθηκε. Σιγουρέψου ότι άνοιξες τον σωστό σύνδεσμο.",
+    signInPrompt: "Συνδέσου για να δεις αυτή τη βοήθεια.",
   },
   leaderboard: {
     metaTitle: "Κατάταξη — Το Ταξίδι του Πυθέα",
@@ -784,6 +795,17 @@ const en: Dictionary = {
       "The QR code is not valid. Make sure you scanned one of the official marks of the hunt.",
     openJournal: "OPEN THE JOURNAL",
     viewLeaderboard: "LEADERBOARD",
+  },
+  hint: {
+    eyebrow: "A HELPING HAND",
+    forLead: (n: string, country: string) => `For mark No. ${n} · ${country}`,
+    generalLabel: "General hint",
+    openJournal: "OPEN THE JOURNAL",
+    backHome: "BACK TO START",
+    notFoundTitle: "This hint was not found",
+    notFoundBody:
+      "The link is not valid or the hint was removed. Make sure you opened the right link.",
+    signInPrompt: "Sign in to view this hint.",
   },
   leaderboard: {
     metaTitle: "Leaderboard — The Voyage of Pytheas",

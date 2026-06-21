@@ -96,3 +96,16 @@ export const clueToken = pgTable("clue_token", {
   token: text("token").notNull().unique(),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
 })
+
+// An admin-authored hint. Reached via a shareable link (/hint/<token>) and
+// shown only to signed-in explorers. `leadOrder` is optional: when set, the
+// hint page shows which lead it belongs to (number + country).
+export const hint = pgTable("hint", {
+  id: text("id").primaryKey(),
+  token: text("token").notNull().unique(),
+  title: text("title").notNull(),
+  body: text("body").notNull(),
+  leadOrder: integer("leadOrder"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+})

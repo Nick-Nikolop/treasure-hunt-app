@@ -24,10 +24,12 @@ import {
   Check,
   RefreshCw,
   Download,
+  Lightbulb,
 } from "lucide-react"
 import { ModalShell } from "@/components/pythea/modal-shell"
 import { ConfirmDialog } from "@/components/pythea/confirm-dialog"
 import { AdminPasswordDialog } from "@/components/pythea/admin-password-dialog"
+import { AdminHintsPanel } from "@/components/pythea/admin-hints-panel"
 import { MAX_CREW_SIZE } from "@/lib/teams"
 import {
   adminDeleteUser,
@@ -48,7 +50,7 @@ import {
   type ActionResult,
 } from "@/app/admin/actions"
 
-type Tab = "users" | "teams" | "qr"
+type Tab = "users" | "teams" | "qr" | "hints"
 
 type Confirm = {
   title: string
@@ -194,8 +196,11 @@ export function AdminDashboard({
           <TabButton active={tab === "qr"} onClick={() => setTab("qr")} icon={QrCode}>
             QR codes
           </TabButton>
+          <TabButton active={tab === "hints"} onClick={() => setTab("hints")} icon={Lightbulb}>
+            Hints
+          </TabButton>
         </div>
-        {tab !== "qr" && (
+        {tab !== "qr" && tab !== "hints" && (
           <div className="relative w-full sm:max-w-xs">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <input
@@ -323,7 +328,7 @@ export function AdminDashboard({
             ))}
             {filteredTeams.length === 0 && <Empty>No teams match your search.</Empty>}
           </ul>
-        ) : (
+        ) : tab === "qr" ? (
           <QrPanel
             tokens={data.tokens}
             pending={pending}
@@ -336,6 +341,8 @@ export function AdminDashboard({
               })
             }
           />
+        ) : (
+          <AdminHintsPanel hints={data.hints} leadOptions={data.leadOptions} />
         )}
       </div>
 
