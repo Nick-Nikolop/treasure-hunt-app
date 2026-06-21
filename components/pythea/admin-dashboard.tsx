@@ -163,7 +163,7 @@ export function AdminDashboard({
             Superadmin tools. Changes here are immediate and permanent.
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="grid grid-cols-3 gap-2 sm:flex sm:gap-3">
           <Stat label="USERS" value={data.users.length} />
           <Stat label="TEAMS" value={data.teams.length} />
           <Stat label="ADMINS" value={data.superadminCount} />
@@ -619,7 +619,7 @@ export function AdminDashboard({
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="flex min-w-[4.5rem] flex-col items-center rounded-sm border border-border bg-card/50 px-4 py-2">
+    <div className="flex flex-col items-center rounded-sm border border-border bg-card/50 px-3 py-2 sm:min-w-[4.5rem] sm:px-4">
       <span className="font-serif text-2xl font-black text-brass">{value}</span>
       <span className="font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
         {label}
@@ -879,15 +879,21 @@ function TeamCard({
       <ul className="mt-3 flex flex-col gap-1.5 border-t border-border/60 pt-3">
         {tm.members.map((m) => (
           <li key={m.userId} className="flex items-center justify-between gap-3">
-            <span className="min-w-0 truncate font-sans text-sm text-foreground">
-              {m.name || m.email}
-              {m.role === "owner" && (
-                <span className="ml-2 font-sans text-[10px] font-bold uppercase tracking-chip text-brass">
-                  Owner
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="truncate font-sans text-sm text-foreground">
+                  {m.name || m.email}
                 </span>
-              )}
-              <span className="ml-2 font-sans text-xs text-muted-foreground">{m.email}</span>
-            </span>
+                {m.role === "owner" && (
+                  <span className="shrink-0 font-sans text-[10px] font-bold uppercase tracking-chip text-brass">
+                    Owner
+                  </span>
+                )}
+              </div>
+              <span className="block truncate font-sans text-xs text-muted-foreground">
+                {m.email}
+              </span>
+            </div>
             <button
               type="button"
               onClick={() => onKick(m.userId, m.email)}
@@ -1090,7 +1096,7 @@ function QrCodeModal({
       </p>
 
       <div className="mt-6 flex justify-center">
-        <div className="rounded-md border border-border bg-white p-3">
+        <div className="w-full max-w-[15rem] rounded-md border border-border bg-white p-3">
           {dataUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -1098,10 +1104,10 @@ function QrCodeModal({
               alt={`QR code for lead ${orderLabel}`}
               width={256}
               height={256}
-              className="size-56"
+              className="aspect-square w-full"
             />
           ) : (
-            <div className="flex size-56 items-center justify-center" aria-hidden>
+            <div className="flex aspect-square w-full items-center justify-center" aria-hidden>
               <span className="size-8 animate-pulse rounded-full border border-muted-foreground/40" />
             </div>
           )}
