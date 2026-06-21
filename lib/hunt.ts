@@ -83,6 +83,28 @@ export async function getCrewUserIds(userId: string): Promise<string[]> {
   return members.map((m) => m.userId)
 }
 
+/**
+ * The signed-in user's current leaderboard score. Derived from the live
+ * standings (placements are relative to everyone), matching the user's own
+ * solo entry or their crew's team entry. Returns 0 if not yet ranked.
+ */
+export async function getUserScore(
+  userId: string,
+  nowMs: number = Date.now(),
+): Promise<number> {
+  const me = await db
+    .select({ teamId: teamMember.teamId })
+    .from(teamMember)
+    .where(eq(teamMember.userId, userId))
+    .limit(1)
+  const teamId = me[0]?.teamId ?? null
+  const board = await getLeaderboard(nowMs)
+  const entry = teamId
+    ? board.find((e) => e.kind === "team" && e.id === teamId)
+    : board.find((e) => e.kind === "solo" && e.id === userId)
+  return entry?.score ?? 0
+}
+
 /** The effective progress for a crew = the furthest any member has reached. */
 export async function getCrewEffectiveProgress(
   userIds: string[],

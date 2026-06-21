@@ -25,13 +25,26 @@ export function SiteHeader({
 }: {
   initialUser?: SessionUser | null
   /**
-   * When supplied (e.g. on the journal), the header shows a live progress chip
-   * and a leaderboard shortcut alongside the account menu.
+   * When supplied (e.g. on the journal), the header shows the player's live
+   * score, the lead they're currently at (number + country), and a leaderboard
+   * shortcut alongside the account menu.
    */
-  progress?: { unlocked: number; total: number } | null
+  progress?: {
+    unlocked: number
+    total: number
+    score: number
+    /** The lead the player is currently on (furthest reached). */
+    current: { order: number; country: string; countryEn: string } | null
+  } | null
 }) {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const { data: session, isPending } = useSession()
+
+  const currentCountry = progress?.current
+    ? locale === "en"
+      ? progress.current.countryEn
+      : progress.current.country
+    : null
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
   // Use the server-resolved user until the client session query settles, so
@@ -89,22 +102,38 @@ export function SiteHeader({
 
         <div className="hidden items-center gap-3 md:flex">
           {progress && (
-            <>
-              <span className="inline-flex shrink-0 items-center gap-1.5 rounded-sm border border-border bg-card/60 px-2.5 py-1.5 font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
-                <span className="font-serif text-sm font-black text-brass">
+            <Link
+              href="/leaderboard"
+              aria-label={t.scan.viewLeaderboard}
+              className="group inline-flex shrink-0 items-center gap-2.5 rounded-sm border border-border bg-card/60 py-1.5 pl-2.5 pr-2 transition-colors hover:border-brass"
+            >
+              {/* Current lead: number + country */}
+              {currentCountry && (
+                <span className="hidden items-center gap-1.5 font-sans text-[10px] font-bold tracking-chip text-muted-foreground lg:inline-flex">
+                  <span className="text-muted-foreground/70">
+                    {t.journal.leadShort} {String(progress.current?.order ?? 0).padStart(2, "0")}
+                  </span>
+                  <span className="text-foreground">{currentCountry}</span>
+                </span>
+              )}
+              {currentCountry && <span className="hidden h-4 w-px bg-border lg:inline-block" />}
+              {/* Progress */}
+              <span className="inline-flex items-center gap-1 font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
+                <span className="font-serif text-sm font-black text-muted-foreground">
                   {progress.unlocked}
                 </span>
                 <span className="text-muted-foreground/70">/ {progress.total}</span>
-                <span>{t.journal.progress}</span>
               </span>
-              <Link
-                href="/leaderboard"
-                aria-label={t.scan.viewLeaderboard}
-                className="inline-flex shrink-0 items-center justify-center rounded-sm border border-border bg-card/60 p-2 text-muted-foreground transition-colors hover:border-brass hover:text-brass"
-              >
-                <Trophy className="size-4" />
-              </Link>
-            </>
+              <span className="h-4 w-px bg-border" />
+              {/* Score */}
+              <span className="inline-flex items-center gap-1.5">
+                <Trophy className="size-3.5 text-brass" />
+                <span className="font-serif text-sm font-black text-brass">{progress.score}</span>
+                <span className="font-sans text-[9px] font-bold tracking-chip text-muted-foreground/70">
+                  {t.leaderboard.points}
+                </span>
+              </span>
+            </Link>
           )}
           <AuthNav initialUser={initialUser} />
           {!loggedIn && (
@@ -119,12 +148,23 @@ export function SiteHeader({
 
         <div className="flex items-center gap-2 md:hidden">
           {progress && (
-            <span className="inline-flex shrink-0 items-center gap-1 rounded-sm border border-border bg-card/60 px-2 py-1.5 font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
-              <span className="font-serif text-sm font-black text-brass">
-                {progress.unlocked}
+            <Link
+              href="/leaderboard"
+              aria-label={t.scan.viewLeaderboard}
+              className="inline-flex shrink-0 items-center gap-2 rounded-sm border border-border bg-card/60 px-2 py-1.5 font-sans text-[10px] font-bold tracking-chip text-muted-foreground"
+            >
+              <span className="inline-flex items-center gap-1">
+                <span className="font-serif text-sm font-black text-muted-foreground">
+                  {progress.unlocked}
+                </span>
+                <span className="text-muted-foreground/70">/ {progress.total}</span>
               </span>
-              <span className="text-muted-foreground/70">/ {progress.total}</span>
-            </span>
+              <span className="h-3.5 w-px bg-border" />
+              <span className="inline-flex items-center gap-1">
+                <Trophy className="size-3 text-brass" />
+                <span className="font-serif text-sm font-black text-brass">{progress.score}</span>
+              </span>
+            </Link>
           )}
           <button
             type="button"

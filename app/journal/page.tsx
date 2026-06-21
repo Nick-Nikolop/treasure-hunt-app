@@ -8,7 +8,7 @@ import { PoreiaView } from "@/components/pythea/poreia-view"
 import { SiteFooter } from "@/components/pythea/site-footer"
 import { ClueControls } from "@/components/pythea/clue-controls"
 import { buildClueState, isOverrideAuthorized, PREVIEW_COOKIE } from "@/lib/clues"
-import { getCrewUserIds, getCrewEffectiveProgress } from "@/lib/hunt"
+import { getCrewUserIds, getCrewEffectiveProgress, getUserScore } from "@/lib/hunt"
 
 // Recompute against the live server clock, the player's stored progress, and
 // the per-browser testing cookie.
@@ -52,12 +52,20 @@ export default async function PoreiaPage() {
 
   const state = buildClueState(unlockedCount, now)
 
+  // The player's live score (always 0 before they're ranked) and the lead they
+  // are currently at (the furthest clue they've unlocked) for the topbar.
+  const score = await getUserScore(session.user.id, now)
+  const currentClue = state.unlocked[state.unlocked.length - 1] ?? null
+  const current = currentClue
+    ? { order: currentClue.order, country: currentClue.country, countryEn: currentClue.countryEn }
+    : null
+
   return (
     <>
       <Atmosphere />
       <SiteHeader
         initialUser={initialUser}
-        progress={{ unlocked: state.unlockedCount, total: state.total }}
+        progress={{ unlocked: state.unlockedCount, total: state.total, score, current }}
       />
       <div className="flex min-h-screen flex-col">
         <PoreiaView
