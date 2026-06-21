@@ -4,8 +4,6 @@ import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { ArrowLeft, Compass, Feather, Trophy } from "lucide-react"
-import { ThemeToggle } from "@/components/pythea/theme-toggle"
-import { LanguageToggle } from "@/components/pythea/language-toggle"
 import { AuthNav, type SessionUser } from "@/components/pythea/auth-nav"
 import { useI18n } from "@/components/pythea/language-provider"
 
@@ -80,8 +78,6 @@ export function JournalTopbar({ unlockedCount, total, initialUser = null }: Prop
           >
             <Trophy className="size-4" />
           </Link>
-          <LanguageToggle />
-          <ThemeToggle />
           <AuthNav initialUser={initialUser} />
         </div>
       </nav>

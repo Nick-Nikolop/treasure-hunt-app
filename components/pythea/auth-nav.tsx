@@ -3,10 +3,11 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { ChevronDown, KeyRound, LogOut, Shield, User, Users } from "lucide-react"
+import { ChevronDown, KeyRound, LogOut, Settings, Shield, User, Users } from "lucide-react"
 import { authClient, useSession } from "@/lib/auth-client"
 import { useI18n } from "@/components/pythea/language-provider"
 import { ChangePasswordDialog } from "@/components/pythea/change-password-dialog"
+import { SettingsControls } from "@/components/pythea/settings-controls"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -114,6 +115,13 @@ export function AuthNav({
               {greekCaps(t.auth.adminNav)}
             </Link>
           )}
+          <div className="mt-1 border-t border-border/60 pt-2">
+            <span className="flex items-center gap-2.5 px-2 py-1 font-sans text-[11px] font-bold uppercase tracking-chip text-muted-foreground">
+              <Settings className="size-4" />
+              {greekCaps(t.auth.settings)}
+            </span>
+            <SettingsControls tone="sheet" />
+          </div>
           <button
             type="button"
             onClick={() => {
@@ -180,6 +188,16 @@ export function AuthNav({
                 {t.auth.adminNav}
               </DropdownMenuItem>
             )}
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="flex items-center gap-2 py-1 font-sans text-[10px] font-bold uppercase tracking-chip text-muted-foreground">
+              <Settings className="size-3.5" />
+              {t.auth.settings}
+            </DropdownMenuLabel>
+            {/* Plain wrapper (not a DropdownMenuItem) so interacting with the
+                controls does not close the menu. SettingsControls stops click
+                propagation internally. */}
+            <SettingsControls tone="menu" />
+            <DropdownMenuSeparator />
             <DropdownMenuItem
               onSelect={() => {
                 // Let the menu close and restore focus before mounting the
@@ -210,23 +228,47 @@ export function AuthNav({
 
   if (compact) {
     return (
-      <Link
-        href="/sign-in"
-        onClick={onNavigate}
-        className="mt-2 rounded-sm border border-brass/60 px-2 py-3 text-center font-sans text-sm font-bold tracking-chip text-brass"
-      >
-        {greekCaps(t.auth.signInCta)}
-      </Link>
+      <div className="mt-2 flex flex-col gap-1 border-t border-border/60 pt-3">
+        <span className="flex items-center gap-2.5 px-2 py-1 font-sans text-[11px] font-bold uppercase tracking-chip text-muted-foreground">
+          <Settings className="size-4" />
+          {greekCaps(t.auth.settings)}
+        </span>
+        <SettingsControls tone="sheet" />
+        <Link
+          href="/sign-in"
+          onClick={onNavigate}
+          className="mt-2 rounded-sm border border-brass/60 px-2 py-3 text-center font-sans text-sm font-bold tracking-chip text-brass"
+        >
+          {greekCaps(t.auth.signInCta)}
+        </Link>
+      </div>
     )
   }
 
   return (
-    <Link
-      href="/sign-in"
-      className="inline-flex items-center gap-2 font-sans text-xs font-bold tracking-chip text-muted-foreground transition-colors hover:text-foreground"
-    >
-      <User className="size-3.5" />
-      {greekCaps(t.auth.signInCta)}
-    </Link>
+    <div className="flex items-center gap-2">
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          aria-label={t.auth.settings}
+          className="inline-flex size-9 shrink-0 items-center justify-center rounded-sm border border-border text-muted-foreground outline-none transition-colors hover:border-brass hover:text-brass focus-visible:border-brass data-[state=open]:border-brass"
+        >
+          <Settings className="size-4" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-60">
+          <DropdownMenuLabel className="flex items-center gap-2 py-1 font-sans text-[10px] font-bold uppercase tracking-chip text-muted-foreground">
+            <Settings className="size-3.5" />
+            {t.auth.settings}
+          </DropdownMenuLabel>
+          <SettingsControls tone="menu" />
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <Link
+        href="/sign-in"
+        className="inline-flex items-center gap-2 font-sans text-xs font-bold tracking-chip text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <User className="size-3.5" />
+        {greekCaps(t.auth.signInCta)}
+      </Link>
+    </div>
   )
 }

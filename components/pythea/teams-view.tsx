@@ -14,8 +14,7 @@ import {
   UserPlus,
   Users,
 } from "lucide-react"
-import { ThemeToggle } from "@/components/pythea/theme-toggle"
-import { LanguageToggle } from "@/components/pythea/language-toggle"
+import { SettingsMenu } from "@/components/pythea/settings-controls"
 import { useI18n } from "@/components/pythea/language-provider"
 import { InviteDialog } from "@/components/pythea/invite-dialog"
 import { ConfirmDialog } from "@/components/pythea/confirm-dialog"
@@ -55,8 +54,7 @@ export function TeamsView({ crew, maxSize }: Props) {
           </span>
         </a>
         <div className="flex items-center gap-2.5">
-          <LanguageToggle />
-          <ThemeToggle />
+          <SettingsMenu />
         </div>
       </div>
 

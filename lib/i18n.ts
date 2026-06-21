@@ -234,7 +234,7 @@ const el = {
     items: [
       {
         q: "Τι είναι το Ταξίδι του Πυθέα;",
-        a: "Ένα κυνήγι θησαυρού στην Καλαμάτα. Ακολουθείς τα ίχνη του Πυθέα του Μεσσήνιου, λύνε��ς γρίφους σε γωνιές της πόλης και ψάχνεις τον θησαυρό που έκρυψε πριν χαθεί.",
+        a: "Ένα κυνήγι θησαυρού στην Καλαμάτα. Ακολουθείς τα ίχνη του Πυθέα του Μεσσήνιου, λύ��ε��ς γρίφους σε γωνιές της πόλης και ψάχνεις τον θησαυρό που έκρυψε πριν χαθεί.",
       },
       {
         q: "Πότε ξεκινά;",
@@ -453,6 +453,12 @@ const el = {
     signOut: "Αποσύνδεση",
     greeting: (name: string) => `Καλώς ήρθες, ${name}`,
     signedInAs: "Συνδεδεμένος ως",
+    // settings (theme + language) shown inside the account dropdown
+    settings: "Ρυθμίσεις",
+    appearance: "Εμφάνιση",
+    themeLight: "Φωτεινό",
+    themeDark: "Σκοτεινό",
+    language: "Γλώσσα",
     // change password
     changePassword: "Αλλαγή κωδικού",
     changePasswordTitle: "Αλλαγή κωδικού",
@@ -898,6 +904,12 @@ const en: Dictionary = {
     signOut: "Sign out",
     greeting: (name: string) => `Welcome, ${name}`,
     signedInAs: "Signed in as",
+    // settings (theme + language) shown inside the account dropdown
+    settings: "Settings",
+    appearance: "Appearance",
+    themeLight: "Light",
+    themeDark: "Dark",
+    language: "Language",
     // change password
     changePassword: "Change password",
     changePasswordTitle: "Change password",

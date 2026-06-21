@@ -3,8 +3,6 @@
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Compass, Menu, X } from "lucide-react"
-import { ThemeToggle } from "@/components/pythea/theme-toggle"
-import { LanguageToggle } from "@/components/pythea/language-toggle"
 import { AuthNav, type SessionUser } from "@/components/pythea/auth-nav"
 import { useI18n } from "@/components/pythea/language-provider"
 import { useSession } from "@/lib/auth-client"
@@ -79,8 +77,6 @@ export function SiteHeader({ initialUser = null }: { initialUser?: SessionUser |
         </div>
 
         <div className="hidden items-center gap-3 md:flex">
-          <LanguageToggle />
-          <ThemeToggle />
           <AuthNav initialUser={initialUser} />
           {!loggedIn && (
             <a
@@ -93,8 +89,6 @@ export function SiteHeader({ initialUser = null }: { initialUser?: SessionUser |
         </div>
 
         <div className="flex items-center gap-2 md:hidden">
-          <LanguageToggle />
-          <ThemeToggle />
           <button
             type="button"
             aria-label={t.nav.openMenu}

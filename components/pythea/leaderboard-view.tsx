@@ -4,8 +4,7 @@ import { useMemo, useState } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { ArrowLeft, Feather, Trophy, Users, User as UserIcon, MapPin, Flag, X } from "lucide-react"
-import { ThemeToggle } from "@/components/pythea/theme-toggle"
-import { LanguageToggle } from "@/components/pythea/language-toggle"
+import { SettingsMenu } from "@/components/pythea/settings-controls"
 import { ModalShell } from "@/components/pythea/modal-shell"
 import { useI18n } from "@/components/pythea/language-provider"
 import { STOP_XY, ROUTE_D, TAIL_D, TREASURE_XY, MAP_VIEWBOX } from "@/lib/voyage-map"
@@ -98,8 +97,7 @@ export function LeaderboardView({
             </span>
           </div>
           <div className="flex items-center gap-2.5 md:gap-3">
-            <LanguageToggle />
-            <ThemeToggle />
+            <SettingsMenu />
           </div>
         </nav>
       </header>
