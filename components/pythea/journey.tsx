@@ -189,59 +189,6 @@ export function Journey({ unlockedCount, total, countdownToMs }: Props) {
           })}
         </div>
 
-        {/* Legend explaining the two page states */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.6, delay: 0.15 }}
-          className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-8"
-        >
-          <div className="flex items-center gap-2.5">
-            <span className="flex size-6 shrink-0 items-center justify-center rounded-sm border border-brass/70 bg-brass/10">
-              <Check className="size-3.5 text-brass" />
-            </span>
-            <span className="font-serif text-sm italic text-muted-foreground">
-              {t.journey.legendOpen}
-            </span>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <span className="flex size-6 shrink-0 items-center justify-center rounded-sm bg-sealed shadow-[inset_0_2px_5px_rgba(0,0,0,0.4)]">
-              <Lock className="size-3.5 text-sealed-foreground/70" />
-            </span>
-            <span className="font-serif text-sm italic text-muted-foreground">
-              {t.journey.legendLocked}
-            </span>
-          </div>
-        </motion.div>
-
-        {/* Animated reveal progress meter */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="mt-8"
-        >
-          <div className="mb-2 flex items-center justify-between">
-            <span className="font-sans text-[10px] font-bold tracking-chip text-muted-foreground md:text-xs">
-              {t.journey.progressLabel}
-            </span>
-            <span className="font-serif text-sm font-black text-brass">
-              {unlockedCount} / {total}
-            </span>
-          </div>
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-[oklch(0.24_0.025_70)] shadow-[inset_0_1px_3px_rgba(0,0,0,0.5)]">
-            <motion.div
-              initial={{ width: 0 }}
-              whileInView={{ width: `${(unlockedCount / total) * 100}%` }}
-              viewport={{ once: true }}
-              transition={{ duration: 1.1, delay: 0.3, ease: "easeOut" }}
-              className="h-full rounded-full bg-brass"
-            />
-          </div>
-        </motion.div>
-
         {/* Status + countdown + CTA */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
