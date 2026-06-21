@@ -340,11 +340,21 @@ export function LeaderboardView({
                       </span>
                     )}
                   </button>
-                  <div className="flex shrink-0 items-center gap-1.5">
+                  <div className="flex shrink-0 items-center gap-2.5">
                     {done && <Flag className="size-3.5 text-brass" aria-label={lb.finished} />}
-                    <span className="font-serif text-base font-black text-brass">{entry.progress}</span>
-                    <span className="font-sans text-[10px] font-bold tracking-chip text-muted-foreground/70">
+                    <span className="inline-flex items-baseline gap-1 font-sans text-[10px] font-bold tracking-chip text-muted-foreground/70">
+                      <span className="font-serif text-sm font-black text-muted-foreground">
+                        {entry.progress}
+                      </span>
                       /{total}
+                    </span>
+                    <span className="flex flex-col items-end leading-none">
+                      <span className="font-serif text-base font-black text-brass">
+                        {entry.score}
+                      </span>
+                      <span className="font-sans text-[9px] font-bold tracking-chip text-muted-foreground/70">
+                        {lb.points}
+                      </span>
                     </span>
                   </div>
                 </li>
@@ -475,6 +485,12 @@ function PortEntryRow({
           {lb.reachedLabel} {reachedText}
         </p>
       </div>
+      <span className="flex shrink-0 flex-col items-end leading-none">
+        <span className="font-serif text-lg font-black text-brass">{entry.score}</span>
+        <span className="font-sans text-[9px] font-bold tracking-chip text-muted-foreground/70">
+          {lb.points}
+        </span>
+      </span>
     </li>
   )
 }

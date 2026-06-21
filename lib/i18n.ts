@@ -234,7 +234,7 @@ const el = {
     items: [
       {
         q: "Τι είναι το Ταξίδι του Πυθέα;",
-        a: "Ένα κυνήγι θησαυρού στην Καλαμάτα. Ακολουθείς τα ίχνη του Πυθέα του Μεσσήνιου, λύ��ε��ς γρίφους σε γωνιές της πόλης και ψάχνεις τον θησαυρό που έκρυψε πριν χαθεί.",
+        a: "Ένα κυνήγι θησαυρού στην Καλαμάτα. Ακολουθείς τα ίχνη του Πυθέα του Μεσσήνιου, λύ����ε��ς γρίφους σε γωνιές της πόλης και ψάχνεις τον θησαυρό που έκρυψε πριν χαθεί.",
       },
       {
         q: "Πότε ξεκινά;",
@@ -337,6 +337,10 @@ const el = {
       const sti = keepsNu ? "στην" : "στη"
       return `Ο Πυθέας σε οδήγησε ${sti} ${country}.\nΗ νέα σελίδα χαράχτηκε στο ημερολόγιό σου.`
     },
+    finishedLabel: "ΤΕΡΜΑΤΙΣΕΣ ΤΟ ΤΑΞΙΔΙ",
+    finishedTitle: "Έφτασες στον προορισμό",
+    finishedBody: (country: string) =>
+      `Ολοκλήρωσες το ταξίδι του Πυθέα${country ? ` στη ${country}` : ""}.\nΟι πόντοι του τελευταίου σημαδιού καταγράφηκαν στην κατάταξη.`,
     alreadyLabel: "ΤΟ ΕΧΕΙΣ ΗΔΗ",
     alreadyTitle: "Αυτό το σημάδι είναι ήδη ανοιχτό",
     alreadyBody: "Εσύ ή η ομάδα σου έχετε ήδη ξεκλειδώσει αυτή τη σελίδα.",
@@ -393,6 +397,7 @@ const el = {
     legendReached: "Φτασμένο λιμάνι",
     legendSealed: "Κρυμμένο μπροστά",
     finished: "Τερμάτισε",
+    points: "πόντοι",
   },
   controls: {
     openAria: "Άνοιγμα πίνακα δοκιμών",
@@ -788,6 +793,10 @@ const en: Dictionary = {
     unlockedTitle: (n: string) => `Page No. ${n} revealed`,
     unlockedBody: (country: string) =>
       `Pytheas led you to ${country}.\nThe new page has been written into your journal.`,
+    finishedLabel: "JOURNEY COMPLETE",
+    finishedTitle: "You reached the destination",
+    finishedBody: (country: string) =>
+      `You completed the voyage of Pytheas${country ? ` in ${country}` : ""}.\nThe final mark's points have been locked into the standings.`,
     alreadyLabel: "ALREADY YOURS",
     alreadyTitle: "This mark is already open",
     alreadyBody: "You or your team have already unlocked this page.",
@@ -844,6 +853,7 @@ const en: Dictionary = {
     legendReached: "Reached port",
     legendSealed: "Hidden ahead",
     finished: "Finished",
+    points: "pts",
   },
   controls: {
     openAria: "Open test panel",

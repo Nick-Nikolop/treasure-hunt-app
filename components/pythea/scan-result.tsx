@@ -30,6 +30,17 @@ export function ScanResult({ result }: { result: UnlockResult }) {
           showLeaderboard: true,
         }
       }
+      case "finished": {
+        const country = locale === "en" ? result.countryEn : result.country
+        return {
+          tone: "brass" as const,
+          icon: <Trophy className="size-9 text-brass" aria-hidden />,
+          label: s.finishedLabel,
+          title: s.finishedTitle,
+          body: s.finishedBody(country),
+          showLeaderboard: true,
+        }
+      }
       case "already": {
         const country = locale === "en" ? result.countryEn : result.country
         return {
