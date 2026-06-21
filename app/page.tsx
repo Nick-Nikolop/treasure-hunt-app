@@ -43,6 +43,9 @@ export default async function Page() {
       <main className="relative">
         <Hero />
         <Story />
+        {/* The crew welcome / join panel sits above the "Ι. Ο ΘΡΥΛΟΣ" legend so
+            signed-in explorers see their journal CTA before the lead map. */}
+        <Register />
         <Journey
           unlockedCount={publicCount}
           total={TOTAL_CLUES}
@@ -50,7 +53,6 @@ export default async function Page() {
         />
         <Treasure />
         <HowItWorks />
-        <Register />
         <Faq />
       </main>
       <FloatingCta />
