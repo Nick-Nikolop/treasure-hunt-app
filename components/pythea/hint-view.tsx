@@ -51,23 +51,23 @@ export function HintView({ hint }: { hint: HintViewData }) {
         </h1>
       </div>
 
-      <div className="mx-auto mt-6 max-w-prose whitespace-pre-line text-pretty font-serif text-base leading-relaxed text-foreground/90 md:text-lg">
+      <div className="mx-auto mt-6 max-w-prose whitespace-pre-line text-balance text-center font-serif text-base leading-relaxed text-foreground/90 md:text-lg">
         {hint.body}
       </div>
 
-      <div className="mt-9 flex flex-col items-stretch gap-3 sm:flex-row sm:justify-center">
+      <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:justify-center">
         <Link
           href="/journal"
-          className="inline-flex items-center justify-center gap-2 rounded-sm bg-brass px-5 py-3 font-sans text-xs font-bold tracking-chip text-primary-foreground transition-opacity hover:opacity-90"
+          className="inline-flex flex-1 items-center justify-center gap-2 rounded-sm bg-brass px-5 py-3.5 text-center font-sans text-xs font-bold leading-tight tracking-chip text-primary-foreground transition-opacity hover:opacity-90 sm:basis-0"
         >
-          <BookOpen className="size-4" />
+          <BookOpen className="size-4 shrink-0" />
           {h.openJournal}
         </Link>
         <Link
           href="/"
-          className="inline-flex items-center justify-center gap-2 rounded-sm border border-border bg-background px-5 py-3 font-sans text-xs font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass"
+          className="inline-flex flex-1 items-center justify-center gap-2 rounded-sm border border-border bg-background px-5 py-3.5 text-center font-sans text-xs font-bold leading-tight tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass sm:basis-0"
         >
-          <Compass className="size-4" />
+          <Compass className="size-4 shrink-0" />
           {h.backHome}
         </Link>
       </div>
