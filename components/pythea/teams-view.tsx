@@ -4,7 +4,6 @@ import { useState, useTransition } from "react"
 import { motion } from "framer-motion"
 import {
   Anchor,
-  ArrowLeft,
   Compass,
   Crown,
   LogOut,
@@ -14,7 +13,6 @@ import {
   UserPlus,
   Users,
 } from "lucide-react"
-import { SettingsMenu } from "@/components/pythea/settings-controls"
 import { useI18n } from "@/components/pythea/language-provider"
 import { InviteDialog } from "@/components/pythea/invite-dialog"
 import { ConfirmDialog } from "@/components/pythea/confirm-dialog"
@@ -41,23 +39,7 @@ export function TeamsView({ crew, maxSize }: Props) {
   const { t } = useI18n()
 
   return (
-    <main className="relative mx-auto w-full max-w-3xl flex-1 px-5 pb-24 pt-8 md:px-8">
-      {/* Top row: home + toggles */}
-      <div className="flex items-center justify-between gap-3 py-2">
-        <a
-          href="/"
-          className="group flex items-center gap-2.5 text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-1" />
-          <span className="font-sans text-[11px] font-bold tracking-chip">
-            {t.teams.back}
-          </span>
-        </a>
-        <div className="flex items-center gap-2.5">
-          <SettingsMenu />
-        </div>
-      </div>
-
+    <main className="relative mx-auto w-full max-w-3xl flex-1 px-5 pb-24 pt-28 md:px-8 md:pt-32">
       {crew ? (
         <CrewPanel crew={crew} maxSize={maxSize} displayName={displayName} />
       ) : (

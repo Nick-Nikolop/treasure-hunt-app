@@ -2,9 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { motion } from "framer-motion"
-import Link from "next/link"
-import { ArrowLeft, Feather, Trophy, Users, User as UserIcon, MapPin, Flag, X } from "lucide-react"
-import { SettingsMenu } from "@/components/pythea/settings-controls"
+import { Trophy, Users, User as UserIcon, MapPin, Flag, X } from "lucide-react"
 import { ModalShell } from "@/components/pythea/modal-shell"
 import { useI18n } from "@/components/pythea/language-provider"
 import { STOP_XY, ROUTE_D, TAIL_D, TREASURE_XY, MAP_VIEWBOX } from "@/lib/voyage-map"
@@ -80,28 +78,6 @@ export function LeaderboardView({
 
   return (
     <>
-      {/* Fixed topbar: home affordance, eyebrow, language / theme toggles. */}
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
-        <nav className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-5 py-4 md:px-8">
-          <Link
-            href="/journal"
-            className="group flex items-center gap-2.5 text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-1" />
-            <span className="font-sans text-[11px] font-bold tracking-chip">{lb.home}</span>
-          </Link>
-          <div className="hidden items-center gap-2.5 md:flex">
-            <Feather className="size-4 text-brass" />
-            <span className="font-sans text-[11px] font-bold tracking-chip text-brass">
-              {lb.eyebrow}
-            </span>
-          </div>
-          <div className="flex items-center gap-2.5 md:gap-3">
-            <SettingsMenu />
-          </div>
-        </nav>
-      </header>
-
       <main className="mx-auto w-full max-w-3xl flex-1 px-5 pb-24 pt-28 md:px-8 md:pt-32">
         <header className="text-center">
           <p className="font-sans text-[11px] font-bold tracking-chip text-brass">{lb.eyebrow}</p>

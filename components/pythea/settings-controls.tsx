@@ -2,41 +2,9 @@
 
 import { useEffect, useState } from "react"
 import { useTheme } from "next-themes"
-import { Moon, Sun, Globe, Settings } from "lucide-react"
+import { Moon, Sun, Globe } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import type { Locale } from "@/lib/i18n"
-
-/**
- * Standalone gear dropdown wrapping the theme + language controls. Used on
- * pages that have no account menu (leaderboard, teams) so settings always live
- * inside a dropdown rather than as loose header buttons.
- */
-export function SettingsMenu({ className = "" }: { className?: string }) {
-  const { t } = useI18n()
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        aria-label={t.auth.settings}
-        className={`inline-flex size-10 shrink-0 items-center justify-center rounded-sm border border-border text-muted-foreground outline-none transition-colors hover:border-brass hover:text-brass focus-visible:border-brass data-[state=open]:border-brass ${className}`}
-      >
-        <Settings className="size-[18px]" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-60">
-        <DropdownMenuLabel className="flex items-center gap-2 py-1 font-sans text-[10px] font-bold uppercase tracking-chip text-muted-foreground">
-          <Settings className="size-3.5" />
-          {t.auth.settings}
-        </DropdownMenuLabel>
-        <SettingsControls tone="menu" />
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
-}
 
 /**
  * Theme + language pickers rendered as compact segmented controls. Shared by

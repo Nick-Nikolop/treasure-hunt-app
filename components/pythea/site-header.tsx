@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Compass, Menu, X } from "lucide-react"
+import Link from "next/link"
+import { Compass, Menu, Trophy, X } from "lucide-react"
 import { AuthNav, type SessionUser } from "@/components/pythea/auth-nav"
 import { useI18n } from "@/components/pythea/language-provider"
 import { useSession } from "@/lib/auth-client"
@@ -18,7 +19,17 @@ function greekCaps(s: string) {
     .normalize("NFC")
 }
 
-export function SiteHeader({ initialUser = null }: { initialUser?: SessionUser | null }) {
+export function SiteHeader({
+  initialUser = null,
+  progress = null,
+}: {
+  initialUser?: SessionUser | null
+  /**
+   * When supplied (e.g. on the journal), the header shows a live progress chip
+   * and a leaderboard shortcut alongside the account menu.
+   */
+  progress?: { unlocked: number; total: number } | null
+}) {
   const { t } = useI18n()
   const { data: session, isPending } = useSession()
   const [scrolled, setScrolled] = useState(false)
@@ -77,6 +88,24 @@ export function SiteHeader({ initialUser = null }: { initialUser?: SessionUser |
         </div>
 
         <div className="hidden items-center gap-3 md:flex">
+          {progress && (
+            <>
+              <span className="inline-flex shrink-0 items-center gap-1.5 rounded-sm border border-border bg-card/60 px-2.5 py-1.5 font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
+                <span className="font-serif text-sm font-black text-brass">
+                  {progress.unlocked}
+                </span>
+                <span className="text-muted-foreground/70">/ {progress.total}</span>
+                <span>{t.journal.progress}</span>
+              </span>
+              <Link
+                href="/leaderboard"
+                aria-label={t.scan.viewLeaderboard}
+                className="inline-flex shrink-0 items-center justify-center rounded-sm border border-border bg-card/60 p-2 text-muted-foreground transition-colors hover:border-brass hover:text-brass"
+              >
+                <Trophy className="size-4" />
+              </Link>
+            </>
+          )}
           <AuthNav initialUser={initialUser} />
           {!loggedIn && (
             <a
@@ -89,6 +118,14 @@ export function SiteHeader({ initialUser = null }: { initialUser?: SessionUser |
         </div>
 
         <div className="flex items-center gap-2 md:hidden">
+          {progress && (
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-sm border border-border bg-card/60 px-2 py-1.5 font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
+              <span className="font-serif text-sm font-black text-brass">
+                {progress.unlocked}
+              </span>
+              <span className="text-muted-foreground/70">/ {progress.total}</span>
+            </span>
+          )}
           <button
             type="button"
             aria-label={t.nav.openMenu}
@@ -120,6 +157,16 @@ export function SiteHeader({ initialUser = null }: { initialUser?: SessionUser |
             {greekCaps(item.label)}
           </a>
         ))}
+              {progress && (
+                <Link
+                  href="/leaderboard"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-2.5 rounded-sm px-2 py-3 font-sans text-sm font-semibold tracking-chip text-muted-foreground hover:bg-card hover:text-foreground"
+                >
+                  <Trophy className="size-4 text-brass" />
+                  {greekCaps(t.scan.viewLeaderboard)}
+                </Link>
+              )}
               {!loggedIn && (
                 <a
                   href="/#register"

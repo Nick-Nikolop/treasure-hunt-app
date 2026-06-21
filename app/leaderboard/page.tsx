@@ -6,6 +6,7 @@ import { getMyCrew } from "@/app/teams/actions"
 import { getLeaderboard, TOTAL_CLUES } from "@/lib/hunt"
 import { CLUES } from "@/lib/clues"
 import { Atmosphere } from "@/components/pythea/atmosphere"
+import { SiteHeader } from "@/components/pythea/site-header"
 import { SiteFooter } from "@/components/pythea/site-footer"
 import { LeaderboardView } from "@/components/pythea/leaderboard-view"
 
@@ -21,6 +22,14 @@ export const metadata: Metadata = {
 export default async function LeaderboardPage() {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) redirect("/sign-in?redirect=/leaderboard")
+
+  // Server-resolved user for a flash-free header on first paint.
+  const initialUser = {
+    firstName: (session.user as { firstName?: string | null }).firstName ?? null,
+    name: session.user.name ?? null,
+    email: session.user.email,
+    role: (session.user as { role?: string | null }).role ?? null,
+  }
 
   const [entries, myCrew] = await Promise.all([getLeaderboard(), getMyCrew()])
 
@@ -50,6 +59,7 @@ export default async function LeaderboardPage() {
   return (
     <>
       <Atmosphere />
+      <SiteHeader initialUser={initialUser} />
       <div className="flex min-h-screen flex-col">
         <LeaderboardView
           entries={safeEntries}

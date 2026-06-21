@@ -3,7 +3,7 @@ import { cookies, headers } from "next/headers"
 import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
 import { Atmosphere } from "@/components/pythea/atmosphere"
-import { JournalTopbar } from "@/components/pythea/journal-topbar"
+import { SiteHeader } from "@/components/pythea/site-header"
 import { PoreiaView } from "@/components/pythea/poreia-view"
 import { SiteFooter } from "@/components/pythea/site-footer"
 import { ClueControls } from "@/components/pythea/clue-controls"
@@ -55,10 +55,9 @@ export default async function PoreiaPage() {
   return (
     <>
       <Atmosphere />
-      <JournalTopbar
-        unlockedCount={state.unlockedCount}
-        total={state.total}
+      <SiteHeader
         initialUser={initialUser}
+        progress={{ unlocked: state.unlockedCount, total: state.total }}
       />
       <div className="flex min-h-screen flex-col">
         <PoreiaView
