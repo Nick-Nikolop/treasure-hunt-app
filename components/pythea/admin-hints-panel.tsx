@@ -1,8 +1,21 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useEffect, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { Lightbulb, Plus, Copy, Check, Pencil, Trash2, RefreshCw, ExternalLink, Flag } from "lucide-react"
+import QRCodeLib from "qrcode"
+import {
+  Lightbulb,
+  Plus,
+  Copy,
+  Check,
+  Pencil,
+  Trash2,
+  RefreshCw,
+  ExternalLink,
+  Flag,
+  QrCode,
+  Download,
+} from "lucide-react"
 import { ModalShell } from "@/components/pythea/modal-shell"
 import { ConfirmDialog } from "@/components/pythea/confirm-dialog"
 import {
@@ -286,6 +299,7 @@ function HintCard({
   onDelete: () => void
 }) {
   const [copied, setCopied] = useState(false)
+  const [qrOpen, setQrOpen] = useState(false)
   const lead = hint.leadOrder !== null ? leadOptions.find((o) => o.order === hint.leadOrder) : null
 
   async function copy() {
@@ -332,12 +346,117 @@ function HintCard({
             <span className="hidden sm:inline">Open</span>
           </a>
           <HintBtn onClick={copy} disabled={pending} title="Copy link" icon={copied ? Check : Copy} label={copied ? "Copied" : "Copy"} />
+          <HintBtn onClick={() => setQrOpen(true)} disabled={pending} title="Show QR code" icon={QrCode} label="QR" />
           <HintBtn onClick={onEdit} disabled={pending} title="Edit hint" icon={Pencil} label="Edit" />
           <HintBtn onClick={onRegenerate} disabled={pending} title="Regenerate link" icon={RefreshCw} label="New link" />
           <HintBtn onClick={onDelete} disabled={pending} title="Delete hint" danger icon={Trash2} label="Delete" />
         </div>
       </div>
+
+      <HintQrModal open={qrOpen} onClose={() => setQrOpen(false)} hint={hint} />
     </li>
+  )
+}
+
+/**
+ * QR preview for a hint link, mirroring the QR-tab modal: the code is generated
+ * client-side from the live link, so it always matches the current token.
+ */
+function HintQrModal({
+  open,
+  onClose,
+  hint,
+}: {
+  open: boolean
+  onClose: () => void
+  hint: HintRow
+}) {
+  const [dataUrl, setDataUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!open) return
+    let active = true
+    setDataUrl(null)
+    QRCodeLib.toDataURL(hint.link, {
+      width: 1024,
+      margin: 2,
+      errorCorrectionLevel: "M",
+      color: { dark: "#1a1a1a", light: "#ffffff" },
+    })
+      .then((url) => {
+        if (active) setDataUrl(url)
+      })
+      .catch(() => {
+        if (active) setDataUrl(null)
+      })
+    return () => {
+      active = false
+    }
+  }, [open, hint.link])
+
+  function download() {
+    if (!dataUrl) return
+    const slug = hint.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "hint"
+    const a = document.createElement("a")
+    a.href = dataUrl
+    a.download = `pythea-hint-${slug}.png`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+  }
+
+  return (
+    <ModalShell open={open} onClose={onClose} labelledBy="hint-qr-title">
+      <h2 id="hint-qr-title" className="font-serif text-2xl font-black text-foreground">
+        Hint QR code
+      </h2>
+      <p className="mt-1 font-sans text-sm text-muted-foreground">
+        Share or print this code. Scanning it opens the hint &ldquo;{hint.title}&rdquo; for any
+        signed-in explorer.
+      </p>
+
+      <div className="mt-6 flex justify-center">
+        <div className="w-full max-w-[15rem] rounded-md border border-border bg-white p-3">
+          {dataUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={dataUrl || "/placeholder.svg"}
+              alt={`QR code for hint ${hint.title}`}
+              width={256}
+              height={256}
+              className="aspect-square w-full"
+            />
+          ) : (
+            <div className="flex aspect-square w-full items-center justify-center" aria-hidden>
+              <span className="size-8 animate-pulse rounded-full border border-muted-foreground/40" />
+            </div>
+          )}
+        </div>
+      </div>
+
+      <p className="mt-4 break-all text-center font-mono text-[11px] text-muted-foreground">
+        {hint.link}
+      </p>
+
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row-reverse">
+        <button
+          type="button"
+          onClick={download}
+          disabled={!dataUrl}
+          className="inline-flex flex-1 items-center justify-center gap-2 rounded-sm bg-brass px-5 py-3 font-sans text-sm font-bold tracking-chip text-background transition-transform hover:-translate-y-0.5 disabled:opacity-50"
+        >
+          <Download className="size-4" />
+          Download PNG
+        </button>
+        <button
+          type="button"
+          onClick={onClose}
+          className="inline-flex flex-1 items-center justify-center rounded-sm border border-border px-5 py-3 font-sans text-sm font-bold tracking-chip text-foreground transition-colors hover:border-brass"
+        >
+          Close
+        </button>
+      </div>
+    </ModalShell>
   )
 }
 
