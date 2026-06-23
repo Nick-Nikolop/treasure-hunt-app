@@ -227,43 +227,43 @@ export function AdminDashboard({
         </div>
       )}
 
-      {/* Tabs + search */}
-      <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex max-w-full overflow-x-auto rounded-sm border border-border p-1 sm:inline-flex">
-          <TabButton active={tab === "users"} onClick={() => setTab("users")} icon={Users}>
-            Users
-          </TabButton>
-          <TabButton active={tab === "teams"} onClick={() => setTab("teams")} icon={Crown}>
-            Teams
-          </TabButton>
-          <TabButton active={tab === "qr"} onClick={() => setTab("qr")} icon={QrCode}>
-            QR codes
-          </TabButton>
-          <TabButton active={tab === "hints"} onClick={() => setTab("hints")} icon={Lightbulb}>
-            Hints
-          </TabButton>
-          <TabButton active={tab === "leads"} onClick={() => setTab("leads")} icon={ScrollText}>
-            Leads
-          </TabButton>
-          <TabButton active={tab === "scoring"} onClick={() => setTab("scoring")} icon={Trophy}>
-            Scoring
-          </TabButton>
-          <TabButton active={tab === "activity"} onClick={() => setTab("activity")} icon={History}>
-            Activity
-          </TabButton>
-        </div>
-        {(tab === "users" || tab === "teams") && (
-          <div className="relative w-full sm:max-w-xs">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={tab === "users" ? "Search users..." : "Search teams..."}
-              className="w-full rounded-sm border border-border bg-background py-2.5 pl-9 pr-3 font-sans text-sm text-foreground outline-none transition-colors focus:border-brass"
-            />
-          </div>
-        )}
+      {/* Tab bar */}
+      <div className="mt-6 flex max-w-full overflow-x-auto rounded-sm border border-border p-1 sm:inline-flex">
+        <TabButton active={tab === "users"} onClick={() => setTab("users")} icon={Users}>
+          Users
+        </TabButton>
+        <TabButton active={tab === "teams"} onClick={() => setTab("teams")} icon={Crown}>
+          Teams
+        </TabButton>
+        <TabButton active={tab === "qr"} onClick={() => setTab("qr")} icon={QrCode}>
+          QR codes
+        </TabButton>
+        <TabButton active={tab === "hints"} onClick={() => setTab("hints")} icon={Lightbulb}>
+          Hints
+        </TabButton>
+        <TabButton active={tab === "leads"} onClick={() => setTab("leads")} icon={ScrollText}>
+          Leads
+        </TabButton>
+        <TabButton active={tab === "scoring"} onClick={() => setTab("scoring")} icon={Trophy}>
+          Scoring
+        </TabButton>
+        <TabButton active={tab === "activity"} onClick={() => setTab("activity")} icon={History}>
+          Activity
+        </TabButton>
       </div>
+
+      {/* Search row, sits below the tab bar for the Users/Teams tabs */}
+      {(tab === "users" || tab === "teams") && (
+        <div className="relative mt-4 w-full sm:max-w-xs">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={tab === "users" ? "Search users..." : "Search teams..."}
+            className="w-full rounded-sm border border-border bg-background py-2.5 pl-9 pr-3 font-sans text-sm text-foreground outline-none transition-colors focus:border-brass"
+          />
+        </div>
+      )}
 
       {/* Content */}
       <div className="mt-5">
