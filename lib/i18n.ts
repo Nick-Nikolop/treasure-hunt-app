@@ -354,7 +354,7 @@ const el = {
     outOfOrderLabel: "ΟΧΙ ΑΚΟΜΑ",
     outOfOrderTitle: "Δεν είναι η σειρά αυτού του σημαδιού",
     outOfOrderBody: (nextLead: number) =>
-      `Πρέπει πρώτα να βρεις το σημάδι Νο. ${String(nextLead).padStart(2, "0")}. Ακολούθησε τα σημάδια με τη σειρά.`,
+      `Πρέπει πρώτα να βρεις το σημάδι Ν��. ${String(nextLead).padStart(2, "0")}. Ακολούθησε τα σημάδια με τη σειρά.`,
     invalidLabel: "ΑΓΝΩΣΤΟ ΣΗΜΑΔΙ",
     invalidTitle: "Αυτός ο κωδικός δεν αναγνωρίζεται",
     invalidBody:
@@ -471,6 +471,10 @@ const el = {
     themeLight: "Φωτεινό",
     themeDark: "Σκοτεινό",
     language: "Γλώσσα",
+    performance: "Απόδοση",
+    liteModeLabel: "Ελαφριά λειτουργία",
+    liteOnLabel: "Ναι",
+    liteOffLabel: "Όχι",
     // change password
     changePassword: "Αλλαγή κωδικού",
     changePasswordTitle: "Αλλαγή κωδικού",
@@ -494,7 +498,7 @@ const el = {
     verifyTitle: "Έλεγξε το email σου",
     verifySubtitle: (email: string) =>
       `Στείλαμε έναν σύνδεσμο επιβεβαίωσης στο ${email}. Πάτησέ τον για να ενεργοποιήσεις τον λογαριασμό σου και να συνδεθείς.`,
-    verifyHint: "Δεν το βλέπεις; Έλεγξε τα ανεπιθύμητα ή ζήτησε νέο σύνδεσμο.",
+    verifyHint: "Δεν το βλέπεις; Έλεγξε τα ανε��ιθύμητα ή ζήτησε νέο σύνδεσμο.",
     verifyResendCta: "Στείλε ξανά τον σύνδεσμο",
     verifyResending: "Γίνεται αποστολή...",
     verifyResent: "Έστειλα νέο σύνδεσμο επιβεβαίωσης.",
@@ -964,6 +968,10 @@ const en: Dictionary = {
     themeLight: "Light",
     themeDark: "Dark",
     language: "Language",
+    performance: "Performance",
+    liteModeLabel: "Lite mode",
+    liteOnLabel: "On",
+    liteOffLabel: "Off",
     // change password
     changePassword: "Change password",
     changePasswordTitle: "Change password",

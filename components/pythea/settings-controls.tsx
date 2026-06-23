@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react"
 import { useTheme } from "next-themes"
-import { Moon, Sun, Globe } from "lucide-react"
+import { Moon, Sun, Globe, Zap } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
+import { useLiteMode } from "@/components/pythea/lite-mode-provider"
 import type { Locale } from "@/lib/i18n"
 
 /**
@@ -19,6 +20,7 @@ export function SettingsControls({ tone = "menu" }: { tone?: "menu" | "sheet" })
   const { t } = useI18n()
   const { locale, setLocale } = useI18n()
   const { resolvedTheme, setTheme } = useTheme()
+  const { lite, setLite } = useLiteMode()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => setMounted(true), [])
@@ -67,6 +69,27 @@ export function SettingsControls({ tone = "menu" }: { tone?: "menu" | "sheet" })
             active={mounted && locale === "en"}
             onClick={() => setLocale("en" as Locale)}
             label="English"
+          />
+        </div>
+      </div>
+
+      {/* Performance / lite mode */}
+      <div className="flex flex-col gap-1.5">
+        <span className={labelClass}>
+          <Zap className="mr-1 inline size-3 align-[-1px]" />
+          {t.auth.performance}
+        </span>
+        <div className="grid grid-cols-2 gap-1 rounded-sm border border-border bg-card/60 p-1">
+          <SegmentButton
+            active={mounted && !lite}
+            onClick={() => setLite(false)}
+            label={t.auth.liteOffLabel}
+          />
+          <SegmentButton
+            active={mounted && lite}
+            onClick={() => setLite(true)}
+            icon={<Zap className="size-3.5" />}
+            label={t.auth.liteOnLabel}
           />
         </div>
       </div>
