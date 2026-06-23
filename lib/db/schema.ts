@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, integer } from "drizzle-orm/pg-core"
+import { pgTable, text, timestamp, boolean, integer, jsonb, index } from "drizzle-orm/pg-core"
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -148,3 +148,42 @@ export const leadContent = pgTable("lead_content", {
   bodyEn: text("bodyEn"),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 })
+
+// Append-only audit log of everything that happens in the hunt: lead solves,
+// the team lifecycle (create/join/leave/disband/rename), admin actions, and
+// auth events (signup/login). Actor and target identities are SNAPSHOTTED as
+// plain text (no FKs) so a log entry stays meaningful even after the user or
+// team it references is deleted. `metadata` carries event-specific extras.
+export const activityLog = pgTable(
+  "activity_log",
+  {
+    id: text("id").primaryKey(),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    // Coarse grouping for filtering: "lead" | "team" | "admin" | "auth".
+    category: text("category").notNull(),
+    // Specific dotted event name, e.g. "lead.solved", "team.created".
+    action: text("action").notNull(),
+    // Who performed it (null for system/time-based events).
+    actorId: text("actorId"),
+    actorName: text("actorName"),
+    actorRole: text("actorRole"),
+    // The user this event is about, if any (may equal the actor).
+    targetUserId: text("targetUserId"),
+    targetUserName: text("targetUserName"),
+    // The team this event is about, if any.
+    teamId: text("teamId"),
+    teamName: text("teamName"),
+    // The lead this event is about, if any (1..TOTAL_CLUES).
+    leadOrder: integer("leadOrder"),
+    // Human-readable one-line description, composed at write time.
+    summary: text("summary").notNull(),
+    // Structured event-specific extras (old/new values, source, etc.).
+    metadata: jsonb("metadata").$type<Record<string, unknown>>(),
+  },
+  (t) => ({
+    createdAtIdx: index("activity_log_createdAt_idx").on(t.createdAt),
+    categoryIdx: index("activity_log_category_idx").on(t.category),
+    targetUserIdx: index("activity_log_targetUser_idx").on(t.targetUserId),
+    teamIdx: index("activity_log_team_idx").on(t.teamId),
+  }),
+)

@@ -8,6 +8,7 @@ import { headers } from "next/headers"
 import { revalidatePath } from "next/cache"
 import { randomUUID } from "node:crypto"
 import { MAX_CREW_SIZE, generateInviteCode, type Crew } from "@/lib/teams"
+import { logActivity, resolveUserSnapshot } from "@/lib/activity"
 
 async function getUserId() {
   const session = await auth.api.getSession({ headers: await headers() })
@@ -117,6 +118,20 @@ export async function createCrew(name: string): Promise<ActionResult> {
     role: "owner",
   })
 
+  const actor = await resolveUserSnapshot(userId)
+  await logActivity({
+    category: "team",
+    action: "team.created",
+    actorId: userId,
+    actorName: actor.name,
+    actorRole: actor.role,
+    targetUserId: userId,
+    targetUserName: actor.name,
+    teamId,
+    teamName: trimmed,
+    summary: `${actor.name} created the team "${trimmed}"`,
+  })
+
   revalidatePath("/teams")
   return { ok: true }
 }
@@ -162,6 +177,21 @@ export async function joinCrewByCode(code: string): Promise<ActionResult> {
     role: "member",
   })
 
+  const actor = await resolveUserSnapshot(userId)
+  await logActivity({
+    category: "team",
+    action: "team.joined",
+    actorId: userId,
+    actorName: actor.name,
+    actorRole: actor.role,
+    targetUserId: userId,
+    targetUserName: actor.name,
+    teamId: t.id,
+    teamName: t.name,
+    summary: `${actor.name} joined the team "${t.name}"`,
+    metadata: { via: "invite_code" },
+  })
+
   revalidatePath("/teams")
   return { ok: true }
 }
@@ -181,9 +211,24 @@ export async function leaveCrew(): Promise<ActionResult> {
   const teamId = membership[0].teamId
   const rows = await db.select().from(team).where(eq(team.id, teamId)).limit(1)
   const t = rows[0]
+  const actor = await resolveUserSnapshot(userId)
+  const teamName = t?.name ?? null
 
   // Remove this member first.
   await db.delete(teamMember).where(eq(teamMember.userId, userId))
+
+  await logActivity({
+    category: "team",
+    action: "team.left",
+    actorId: userId,
+    actorName: actor.name,
+    actorRole: actor.role,
+    targetUserId: userId,
+    targetUserName: actor.name,
+    teamId,
+    teamName,
+    summary: `${actor.name} left the team "${teamName ?? "?"}"`,
+  })
 
   if (t && t.ownerId === userId) {
     // Find the next-oldest remaining member to inherit the crew.
@@ -197,6 +242,17 @@ export async function leaveCrew(): Promise<ActionResult> {
     if (remaining.length === 0) {
       // Last one out: delete the empty crew.
       await db.delete(team).where(eq(team.id, teamId))
+      await logActivity({
+        category: "team",
+        action: "team.disbanded",
+        actorId: userId,
+        actorName: actor.name,
+        actorRole: actor.role,
+        teamId,
+        teamName,
+        summary: `Team "${teamName ?? "?"}" was disbanded (last member left)`,
+        metadata: { reason: "last_member_left" },
+      })
     } else {
       const heir = remaining[0]
       await db.update(team).set({ ownerId: heir.userId }).where(eq(team.id, teamId))
@@ -204,6 +260,20 @@ export async function leaveCrew(): Promise<ActionResult> {
         .update(teamMember)
         .set({ role: "owner" })
         .where(eq(teamMember.userId, heir.userId))
+      const heirSnap = await resolveUserSnapshot(heir.userId)
+      await logActivity({
+        category: "team",
+        action: "team.ownership_transferred",
+        actorId: userId,
+        actorName: actor.name,
+        actorRole: actor.role,
+        targetUserId: heir.userId,
+        targetUserName: heirSnap.name,
+        teamId,
+        teamName,
+        summary: `Ownership of "${teamName ?? "?"}" transferred to ${heirSnap.name}`,
+        metadata: { reason: "owner_left" },
+      })
     }
   }
 
@@ -234,6 +304,21 @@ export async function removeMember(targetUserId: string): Promise<ActionResult> 
     .delete(teamMember)
     .where(and(eq(teamMember.userId, targetUserId), eq(teamMember.teamId, teamId)))
 
+  const actor = await resolveUserSnapshot(userId)
+  const target = await resolveUserSnapshot(targetUserId)
+  await logActivity({
+    category: "team",
+    action: "team.member_removed",
+    actorId: userId,
+    actorName: actor.name,
+    actorRole: actor.role,
+    targetUserId,
+    targetUserName: target.name,
+    teamId,
+    teamName: rows[0]?.name ?? null,
+    summary: `${actor.name} removed ${target.name} from "${rows[0]?.name ?? "?"}"`,
+  })
+
   revalidatePath("/teams")
   return { ok: true }
 }
@@ -258,7 +343,22 @@ export async function renameCrew(name: string): Promise<ActionResult> {
     return { ok: false, error: "not_owner" }
   }
 
+  const oldName = rows[0].name
   await db.update(team).set({ name: trimmed }).where(eq(team.id, teamId))
+
+  const actor = await resolveUserSnapshot(userId)
+  await logActivity({
+    category: "team",
+    action: "team.renamed",
+    actorId: userId,
+    actorName: actor.name,
+    actorRole: actor.role,
+    teamId,
+    teamName: trimmed,
+    summary: `${actor.name} renamed team "${oldName}" to "${trimmed}"`,
+    metadata: { oldName, newName: trimmed },
+  })
+
   revalidatePath("/teams")
   return { ok: true }
 }
@@ -282,6 +382,19 @@ export async function regenerateInvite(): Promise<ActionResult> {
 
   const code = await uniqueInviteCode()
   await db.update(team).set({ inviteCode: code }).where(eq(team.id, teamId))
+
+  const actor = await resolveUserSnapshot(userId)
+  await logActivity({
+    category: "team",
+    action: "team.invite_regenerated",
+    actorId: userId,
+    actorName: actor.name,
+    actorRole: actor.role,
+    teamId,
+    teamName: rows[0]?.name ?? null,
+    summary: `${actor.name} regenerated the invite code for "${rows[0]?.name ?? "?"}"`,
+  })
+
   revalidatePath("/teams")
   return { ok: true }
 }

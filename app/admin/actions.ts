@@ -3,7 +3,15 @@
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { account, leadContent, leadUnlock, session, team, teamMember, user } from "@/lib/db/schema"
-import { requireAdmin, isBootstrapEmail, superadminCount } from "@/lib/admin"
+import { requireAdmin, isBootstrapEmail, superadminCount, type AdminUser } from "@/lib/admin"
+import {
+  logActivity,
+  resolveUserSnapshot,
+  actorLabel,
+  listActivity,
+  type ActivityCategory,
+  type ActivityPage,
+} from "@/lib/activity"
 import { MAX_CREW_SIZE, generateInviteCode } from "@/lib/teams"
 import {
   setProgressForUsers,
@@ -41,6 +49,37 @@ import { revalidatePath } from "next/cache"
 import { randomUUID } from "node:crypto"
 
 export type ActionResult = { ok: true } | { ok: false; error: string }
+
+/** Build the actor fields for an activity log entry from the acting admin. */
+function adminActor(admin: AdminUser) {
+  return {
+    actorId: admin.id,
+    actorName: actorLabel(admin),
+    actorRole: admin.role,
+  }
+}
+
+/**
+ * Read a filtered, paginated page of the activity log for the admin dashboard.
+ * Superadmin only. `before` is an ISO timestamp cursor for "load more".
+ */
+export async function getActivityLog(input: {
+  category?: ActivityCategory | null
+  userId?: string | null
+  teamId?: string | null
+  search?: string | null
+  before?: string | null
+}): Promise<ActivityPage> {
+  await requireAdmin()
+  return listActivity({
+    category: input.category ?? null,
+    userId: input.userId ?? null,
+    teamId: input.teamId ?? null,
+    search: input.search ?? null,
+    before: input.before ? new Date(input.before) : null,
+    limit: 50,
+  })
+}
 
 export type AdminUserRow = {
   id: string
@@ -213,7 +252,7 @@ export async function adminSaveLead(input: {
   body: string
   bodyEn: string
 }): Promise<ActionResult> {
-  await requireAdmin()
+  const admin = await requireAdmin()
 
   const order = Math.floor(input.leadOrder)
   if (!Number.isFinite(order) || order < 1 || order > TOTAL_CLUES) {
@@ -248,6 +287,15 @@ export async function adminSaveLead(input: {
       },
     })
 
+  const clue = CLUES.find((c) => c.order === order)
+  await logActivity({
+    category: "admin",
+    action: "admin.lead_edited",
+    ...adminActor(admin),
+    leadOrder: order,
+    summary: `${adminActor(admin).actorName} edited the copy for lead No. ${String(order).padStart(2, "0")}${clue ? ` (${clue.country})` : ""}`,
+  })
+
   revalidatePath("/admin")
   revalidatePath("/journal")
   return { ok: true }
@@ -262,7 +310,7 @@ export async function adminSaveScoring(input: {
   config: ScoreConfig
   difficulties: { leadOrder: number; difficulty: Difficulty }[]
 }): Promise<ActionResult> {
-  await requireAdmin()
+  const admin = await requireAdmin()
 
   const c = input.config
   const nums = [
@@ -286,6 +334,14 @@ export async function adminSaveScoring(input: {
   await setScoreConfig(c)
   await setLeadDifficulties(input.difficulties)
 
+  await logActivity({
+    category: "admin",
+    action: "admin.scoring_updated",
+    ...adminActor(admin),
+    summary: `${adminActor(admin).actorName} updated scoring settings and lead difficulties`,
+    metadata: { config: c },
+  })
+
   // Standings are derived live, but revalidate both surfaces so the new numbers
   // show immediately.
   revalidatePath("/admin")
@@ -300,13 +356,20 @@ export async function adminDeleteUser(targetUserId: string): Promise<ActionResul
 
   // Protect the founding superadmin from deletion.
   const rows = await db
-    .select({ email: user.email, role: user.role })
+    .select({
+      email: user.email,
+      role: user.role,
+      name: user.name,
+      firstName: user.firstName,
+      lastName: user.lastName,
+    })
     .from(user)
     .where(eq(user.id, targetUserId))
     .limit(1)
   const target = rows[0]
   if (!target) return { ok: false, error: "not_found" }
   if (isBootstrapEmail(target.email)) return { ok: false, error: "protected" }
+  const targetName = actorLabel(target)
 
   // If they owned a team, hand it off (or disband) before removing them.
   await handleOwnerDeparture(targetUserId)
@@ -317,6 +380,16 @@ export async function adminDeleteUser(targetUserId: string): Promise<ActionResul
   await db.delete(session).where(eq(session.userId, targetUserId))
   await db.delete(account).where(eq(account.userId, targetUserId))
   await db.delete(user).where(eq(user.id, targetUserId))
+
+  await logActivity({
+    category: "admin",
+    action: "admin.user_deleted",
+    ...adminActor(admin),
+    targetUserId,
+    targetUserName: targetName,
+    summary: `${adminActor(admin).actorName} permanently deleted the account of ${targetName} (${target.email})`,
+    metadata: { email: target.email, role: target.role },
+  })
 
   revalidatePath("/admin")
   return { ok: true }
@@ -330,7 +403,13 @@ export async function adminSetRole(
   const admin = await requireAdmin()
 
   const rows = await db
-    .select({ email: user.email, role: user.role })
+    .select({
+      email: user.email,
+      role: user.role,
+      name: user.name,
+      firstName: user.firstName,
+      lastName: user.lastName,
+    })
     .from(user)
     .where(eq(user.id, targetUserId))
     .limit(1)
@@ -349,6 +428,21 @@ export async function adminSetRole(
   }
 
   await db.update(user).set({ role }).where(eq(user.id, targetUserId))
+
+  const targetName = actorLabel(target)
+  await logActivity({
+    category: "admin",
+    action: role === "superadmin" ? "admin.role_granted" : "admin.role_revoked",
+    ...adminActor(admin),
+    targetUserId,
+    targetUserName: targetName,
+    summary:
+      role === "superadmin"
+        ? `${adminActor(admin).actorName} promoted ${targetName} to superadmin`
+        : `${adminActor(admin).actorName} revoked superadmin from ${targetName}`,
+    metadata: { from: target.role, to: role },
+  })
+
   revalidatePath("/admin")
   return { ok: true }
 }
@@ -358,14 +452,20 @@ export async function adminSetPassword(
   targetUserId: string,
   newPassword: string,
 ): Promise<ActionResult> {
-  await requireAdmin()
+  const admin = await requireAdmin()
 
   if (typeof newPassword !== "string" || newPassword.length < 8) {
     return { ok: false, error: "too_short" }
   }
 
   const exists = await db
-    .select({ id: user.id })
+    .select({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      firstName: user.firstName,
+      lastName: user.lastName,
+    })
     .from(user)
     .where(eq(user.id, targetUserId))
     .limit(1)
@@ -399,13 +499,23 @@ export async function adminSetPassword(
   // Invalidate existing sessions so the old password can't keep a session alive.
   await db.delete(session).where(eq(session.userId, targetUserId))
 
+  const targetName = actorLabel(exists[0])
+  await logActivity({
+    category: "admin",
+    action: "admin.password_reset",
+    ...adminActor(admin),
+    targetUserId,
+    targetUserName: targetName,
+    summary: `${adminActor(admin).actorName} reset the password for ${targetName} (${exists[0].email})`,
+  })
+
   revalidatePath("/admin")
   return { ok: true }
 }
 
 /** Remove a user from whatever team they're in (kick). Handles ownership. */
 export async function adminKickFromTeam(targetUserId: string): Promise<ActionResult> {
-  await requireAdmin()
+  const admin = await requireAdmin()
 
   const membership = await db
     .select()
@@ -414,8 +524,27 @@ export async function adminKickFromTeam(targetUserId: string): Promise<ActionRes
     .limit(1)
   if (membership.length === 0) return { ok: false, error: "not_in_team" }
 
+  const kickedTeamId = membership[0].teamId
+  const teamRows = await db
+    .select({ name: team.name })
+    .from(team)
+    .where(eq(team.id, kickedTeamId))
+    .limit(1)
+  const target = await resolveUserSnapshot(targetUserId)
+
   await handleOwnerDeparture(targetUserId)
   await db.delete(teamMember).where(eq(teamMember.userId, targetUserId))
+
+  await logActivity({
+    category: "admin",
+    action: "admin.member_kicked",
+    ...adminActor(admin),
+    targetUserId,
+    targetUserName: target.name,
+    teamId: kickedTeamId,
+    teamName: teamRows[0]?.name ?? null,
+    summary: `${adminActor(admin).actorName} kicked ${target.name} from "${teamRows[0]?.name ?? "?"}"`,
+  })
 
   revalidatePath("/admin")
   return { ok: true }
@@ -430,7 +559,7 @@ export async function adminAssignToTeam(
   targetUserId: string,
   teamId: string,
 ): Promise<ActionResult> {
-  await requireAdmin()
+  const admin = await requireAdmin()
 
   // Target must exist.
   const targetRows = await db
@@ -441,7 +570,11 @@ export async function adminAssignToTeam(
   if (targetRows.length === 0) return { ok: false, error: "not_found" }
 
   // Destination team must exist.
-  const teamRows = await db.select({ id: team.id }).from(team).where(eq(team.id, teamId)).limit(1)
+  const teamRows = await db
+    .select({ id: team.id, name: team.name })
+    .from(team)
+    .where(eq(team.id, teamId))
+    .limit(1)
   if (teamRows.length === 0) return { ok: false, error: "not_found" }
 
   // No-op if they're already on that team.
@@ -451,6 +584,7 @@ export async function adminAssignToTeam(
     .where(eq(teamMember.userId, targetUserId))
     .limit(1)
   if (current[0]?.teamId === teamId) return { ok: false, error: "already_in_team" }
+  const cameFromTeam = current[0]?.teamId ?? null
 
   // Respect the crew size cap on the destination.
   const destMembers = await db
@@ -470,19 +604,52 @@ export async function adminAssignToTeam(
     role: "member",
   })
 
+  const target = await resolveUserSnapshot(targetUserId)
+  await logActivity({
+    category: "admin",
+    action: cameFromTeam ? "admin.member_moved" : "admin.member_assigned",
+    ...adminActor(admin),
+    targetUserId,
+    targetUserName: target.name,
+    teamId,
+    teamName: teamRows[0].name,
+    summary: cameFromTeam
+      ? `${adminActor(admin).actorName} moved ${target.name} to team "${teamRows[0].name}"`
+      : `${adminActor(admin).actorName} assigned ${target.name} to team "${teamRows[0].name}"`,
+    metadata: { fromTeamId: cameFromTeam },
+  })
+
   revalidatePath("/admin")
   return { ok: true }
 }
 
 /** Disband a team entirely: remove all members and delete the team. */
 export async function adminDisbandTeam(teamId: string): Promise<ActionResult> {
-  await requireAdmin()
+  const admin = await requireAdmin()
 
-  const rows = await db.select({ id: team.id }).from(team).where(eq(team.id, teamId)).limit(1)
+  const rows = await db
+    .select({ id: team.id, name: team.name })
+    .from(team)
+    .where(eq(team.id, teamId))
+    .limit(1)
   if (rows.length === 0) return { ok: false, error: "not_found" }
+
+  const memberCount = (
+    await db.select({ id: teamMember.id }).from(teamMember).where(eq(teamMember.teamId, teamId))
+  ).length
 
   await db.delete(teamMember).where(eq(teamMember.teamId, teamId))
   await db.delete(team).where(eq(team.id, teamId))
+
+  await logActivity({
+    category: "admin",
+    action: "admin.team_disbanded",
+    ...adminActor(admin),
+    teamId,
+    teamName: rows[0].name,
+    summary: `${adminActor(admin).actorName} disbanded team "${rows[0].name}" (${memberCount} member(s) removed)`,
+    metadata: { memberCount },
+  })
 
   revalidatePath("/admin")
   return { ok: true }
@@ -490,16 +657,32 @@ export async function adminDisbandTeam(teamId: string): Promise<ActionResult> {
 
 /** Rename any team. */
 export async function adminRenameTeam(teamId: string, name: string): Promise<ActionResult> {
-  await requireAdmin()
+  const admin = await requireAdmin()
 
   const trimmed = name.trim()
   if (trimmed.length < 2) return { ok: false, error: "too_short" }
   if (trimmed.length > 40) return { ok: false, error: "too_long" }
 
-  const rows = await db.select({ id: team.id }).from(team).where(eq(team.id, teamId)).limit(1)
+  const rows = await db
+    .select({ id: team.id, name: team.name })
+    .from(team)
+    .where(eq(team.id, teamId))
+    .limit(1)
   if (rows.length === 0) return { ok: false, error: "not_found" }
 
+  const oldName = rows[0].name
   await db.update(team).set({ name: trimmed }).where(eq(team.id, teamId))
+
+  await logActivity({
+    category: "admin",
+    action: "admin.team_renamed",
+    ...adminActor(admin),
+    teamId,
+    teamName: trimmed,
+    summary: `${adminActor(admin).actorName} renamed team "${oldName}" to "${trimmed}"`,
+    metadata: { oldName, newName: trimmed },
+  })
+
   revalidatePath("/admin")
   return { ok: true }
 }
@@ -518,12 +701,22 @@ export async function adminCreateTeam(name: string): Promise<ActionResult> {
 
   const admin = await requireAdmin()
   const code = await uniqueInviteCode()
+  const newTeamId = randomUUID()
 
   await db.insert(team).values({
-    id: randomUUID(),
+    id: newTeamId,
     name: trimmed,
     ownerId: admin.id,
     inviteCode: code,
+  })
+
+  await logActivity({
+    category: "admin",
+    action: "admin.team_created",
+    ...adminActor(admin),
+    teamId: newTeamId,
+    teamName: trimmed,
+    summary: `${adminActor(admin).actorName} created an empty team "${trimmed}"`,
   })
 
   revalidatePath("/admin")
@@ -553,19 +746,42 @@ export async function adminSetUserProgress(
   targetUserId: string,
   targetLead: number,
 ): Promise<ActionResult> {
-  await requireAdmin()
+  const admin = await requireAdmin()
 
   if (!Number.isFinite(targetLead) || targetLead < 0 || targetLead > TOTAL_CLUES) {
     return { ok: false, error: "bad_value" }
   }
   const exists = await db
-    .select({ id: user.id })
+    .select({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+    })
     .from(user)
     .where(eq(user.id, targetUserId))
     .limit(1)
   if (exists.length === 0) return { ok: false, error: "not_found" }
 
-  await setProgressForUsers([targetUserId], Math.floor(targetLead))
+  const lead = Math.floor(targetLead)
+  await setProgressForUsers([targetUserId], lead)
+
+  const targetName = actorLabel(exists[0])
+  await logActivity({
+    category: "admin",
+    action: lead === 0 ? "admin.progress_reset" : "admin.progress_set",
+    ...adminActor(admin),
+    targetUserId,
+    targetUserName: targetName,
+    leadOrder: lead || null,
+    summary:
+      lead === 0
+        ? `${adminActor(admin).actorName} reset ${targetName}'s progress to the start`
+        : `${adminActor(admin).actorName} set ${targetName}'s progress to lead No. ${String(lead).padStart(2, "0")}`,
+    metadata: { lead },
+  })
+
   revalidatePath("/admin")
   return { ok: true }
 }
@@ -579,7 +795,7 @@ export async function adminSetTeamProgress(
   teamId: string,
   targetLead: number,
 ): Promise<ActionResult> {
-  await requireAdmin()
+  const admin = await requireAdmin()
 
   if (!Number.isFinite(targetLead) || targetLead < 0 || targetLead > TOTAL_CLUES) {
     return { ok: false, error: "bad_value" }
@@ -590,10 +806,32 @@ export async function adminSetTeamProgress(
     .where(eq(teamMember.teamId, teamId))
   if (memberRows.length === 0) return { ok: false, error: "empty_team" }
 
+  const teamRows = await db
+    .select({ name: team.name })
+    .from(team)
+    .where(eq(team.id, teamId))
+    .limit(1)
+  const lead = Math.floor(targetLead)
   await setProgressForUsers(
     memberRows.map((m) => m.userId),
-    Math.floor(targetLead),
+    lead,
   )
+
+  const teamName = teamRows[0]?.name ?? "?"
+  await logActivity({
+    category: "admin",
+    action: lead === 0 ? "admin.team_progress_reset" : "admin.team_progress_set",
+    ...adminActor(admin),
+    teamId,
+    teamName: teamRows[0]?.name ?? null,
+    leadOrder: lead || null,
+    summary:
+      lead === 0
+        ? `${adminActor(admin).actorName} reset team "${teamName}" to the start`
+        : `${adminActor(admin).actorName} set team "${teamName}" to lead No. ${String(lead).padStart(2, "0")}`,
+    metadata: { lead, memberCount: memberRows.length },
+  })
+
   revalidatePath("/admin")
   return { ok: true }
 }

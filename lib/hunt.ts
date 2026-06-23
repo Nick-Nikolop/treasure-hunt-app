@@ -22,6 +22,7 @@ import {
   type Difficulty,
 } from "@/lib/clues"
 import { getScoreConfig, getLeadDifficulties } from "@/lib/scoring"
+import { logActivity, resolveUserSnapshot } from "@/lib/activity"
 import { and, eq, gt, inArray } from "drizzle-orm"
 import { randomUUID } from "node:crypto"
 
@@ -220,6 +221,45 @@ async function insertFinishRows(userIds: string[], at: Date): Promise<void> {
 }
 
 /**
+ * Record a lead solve / finish in the activity log. The scanner is the actor;
+ * a scan advances the whole crew, so we tag the scanner's team for context.
+ */
+async function logLeadSolved(
+  userId: string,
+  leadOrder: number,
+  country: string,
+  countryEn: string,
+  finished: boolean,
+): Promise<void> {
+  const snap = await resolveUserSnapshot(userId)
+  const tm = await db
+    .select({ teamId: teamMember.teamId, teamName: team.name })
+    .from(teamMember)
+    .leftJoin(team, eq(team.id, teamMember.teamId))
+    .where(eq(teamMember.userId, userId))
+    .limit(1)
+  const teamId = tm[0]?.teamId ?? null
+  const teamName = tm[0]?.teamName ?? null
+  const padded = String(leadOrder).padStart(2, "0")
+  await logActivity({
+    category: "lead",
+    action: finished ? "lead.finished" : "lead.solved",
+    actorId: userId,
+    actorName: snap.name,
+    actorRole: snap.role,
+    targetUserId: userId,
+    targetUserName: snap.name,
+    teamId,
+    teamName,
+    leadOrder: finished ? null : leadOrder,
+    summary: finished
+      ? `${snap.name} scanned the finishing QR (${country})`
+      : `${snap.name} solved lead No. ${padded} (${country})`,
+    metadata: { source: "qr", country, countryEn, crewScan: true },
+  })
+}
+
+/**
  * Attempt to unlock a lead from a scanned QR token, for `userId` and their
  * whole crew. Enforces strict order against the crew's furthest progress.
  */
@@ -251,6 +291,7 @@ export async function unlockByToken(userId: string, token: string): Promise<Unlo
       }
     }
     await insertFinishRows(crew, new Date(now))
+    await logLeadSolved(userId, FINISH_ORDER, last.country, last.countryEn, true)
     return { status: "finished", country: last.country, countryEn: last.countryEn }
   }
 
@@ -271,6 +312,7 @@ export async function unlockByToken(userId: string, token: string): Promise<Unlo
   }
 
   await ensureUpTo(crew, leadOrder, "qr", new Date(now))
+  await logLeadSolved(userId, leadOrder, clue.country, clue.countryEn, false)
   return { status: "unlocked", leadOrder, country: clue.country, countryEn: clue.countryEn }
 }
 
