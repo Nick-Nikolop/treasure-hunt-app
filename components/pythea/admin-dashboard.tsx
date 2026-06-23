@@ -27,11 +27,13 @@ import {
   Lightbulb,
   Trophy,
   Save,
+  ScrollText,
 } from "lucide-react"
 import { ModalShell } from "@/components/pythea/modal-shell"
 import { ConfirmDialog } from "@/components/pythea/confirm-dialog"
 import { AdminPasswordDialog } from "@/components/pythea/admin-password-dialog"
 import { AdminHintsPanel } from "@/components/pythea/admin-hints-panel"
+import { AdminLeadsPanel } from "@/components/pythea/admin-leads-panel"
 import { MAX_CREW_SIZE } from "@/lib/teams"
 import {
   adminDeleteUser,
@@ -54,7 +56,7 @@ import {
 } from "@/app/admin/actions"
 import type { Difficulty, ScoreConfig } from "@/lib/clues"
 
-type Tab = "users" | "teams" | "qr" | "hints" | "scoring"
+type Tab = "users" | "teams" | "qr" | "hints" | "scoring" | "leads"
 
 type Confirm = {
   title: string
@@ -203,11 +205,14 @@ export function AdminDashboard({
           <TabButton active={tab === "hints"} onClick={() => setTab("hints")} icon={Lightbulb}>
             Hints
           </TabButton>
+          <TabButton active={tab === "leads"} onClick={() => setTab("leads")} icon={ScrollText}>
+            Leads
+          </TabButton>
           <TabButton active={tab === "scoring"} onClick={() => setTab("scoring")} icon={Trophy}>
             Scoring
           </TabButton>
         </div>
-        {tab !== "qr" && tab !== "hints" && tab !== "scoring" && (
+        {tab !== "qr" && tab !== "hints" && tab !== "scoring" && tab !== "leads" && (
           <div className="relative w-full sm:max-w-xs">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <input
@@ -354,6 +359,8 @@ export function AdminDashboard({
           />
         ) : tab === "hints" ? (
           <AdminHintsPanel hints={data.hints} leadOptions={data.leadOptions} />
+        ) : tab === "leads" ? (
+          <AdminLeadsPanel leads={data.leads} />
         ) : (
           <ScoringPanel
             config={data.scoreConfig}

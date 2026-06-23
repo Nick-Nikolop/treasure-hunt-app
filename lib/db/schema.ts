@@ -133,3 +133,18 @@ export const leadDifficulty = pgTable("lead_difficulty", {
   difficulty: text("difficulty").notNull().default("easy"),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 })
+
+// Admin-authored overrides for a lead's editable copy. One row per lead order;
+// any NULL/empty field falls back to the hardcoded default in lib/clues.ts.
+// `body`/`bodyEn` are raw text where paragraphs are separated by a blank line;
+// they are split back into the journal's paragraph array at render time so the
+// journal formatting stays identical. Country name and stamp icon are NOT
+// editable and always come from the defaults.
+export const leadContent = pgTable("lead_content", {
+  leadOrder: integer("leadOrder").primaryKey(),
+  subtitle: text("subtitle"),
+  subtitleEn: text("subtitleEn"),
+  body: text("body"),
+  bodyEn: text("bodyEn"),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+})

@@ -9,6 +9,7 @@ import { SiteFooter } from "@/components/pythea/site-footer"
 import { ClueControls } from "@/components/pythea/clue-controls"
 import { buildClueState, isOverrideAuthorized, PREVIEW_COOKIE } from "@/lib/clues"
 import { getCrewUserIds, getCrewEffectiveProgress, getUserScore } from "@/lib/hunt"
+import { applyLeadContent } from "@/lib/lead-content"
 
 // Recompute against the live server clock, the player's stored progress, and
 // the per-browser testing cookie.
@@ -52,10 +53,14 @@ export default async function PoreiaPage() {
 
   const state = buildClueState(unlockedCount, now)
 
+  // Merge any admin-edited subtitle/body over the defaults for the unlocked
+  // leads (locked leads carry no content, so there is nothing to override).
+  const unlocked = await applyLeadContent(state.unlocked)
+
   // The player's live score (always 0 before they're ranked) and the lead they
   // are currently at (the furthest clue they've unlocked) for the topbar.
   const score = await getUserScore(session.user.id, now)
-  const currentClue = state.unlocked[state.unlocked.length - 1] ?? null
+  const currentClue = unlocked[unlocked.length - 1] ?? null
   const current = currentClue
     ? { order: currentClue.order, country: currentClue.country, countryEn: currentClue.countryEn }
     : null
@@ -69,7 +74,7 @@ export default async function PoreiaPage() {
       />
       <div className="flex min-h-screen flex-col">
         <PoreiaView
-          unlocked={state.unlocked}
+          unlocked={unlocked}
           locked={state.locked}
           unlockedCount={state.unlockedCount}
           total={state.total}

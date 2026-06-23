@@ -2,7 +2,7 @@
 
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
-import { account, leadUnlock, session, team, teamMember, user } from "@/lib/db/schema"
+import { account, leadContent, leadUnlock, session, team, teamMember, user } from "@/lib/db/schema"
 import { requireAdmin, isBootstrapEmail, superadminCount } from "@/lib/admin"
 import { MAX_CREW_SIZE, generateInviteCode } from "@/lib/teams"
 import {
@@ -26,6 +26,7 @@ import {
   setScoreConfig,
   setLeadDifficulties,
 } from "@/lib/scoring"
+import { getEditableLeads, type EditableLead } from "@/lib/lead-content"
 import {
   TOTAL_CLUES,
   FINISH_ORDER,
@@ -89,6 +90,8 @@ export type AdminData = {
   scoreConfig: ScoreConfig
   /** Difficulty per lead order (1..TOTAL_CLUES). */
   leadDifficulties: { order: number; difficulty: Difficulty }[]
+  /** Editable lead copy (subtitle + body, per language) with defaults merged. */
+  leads: EditableLead[]
 }
 
 /** Load every user and team for the dashboard. Superadmin only. */
@@ -193,7 +196,61 @@ export async function getAdminData(): Promise<AdminData> {
       order: c.order,
       difficulty: difficultyMap.get(c.order) ?? "easy",
     })),
+    leads: await getEditableLeads(),
   }
+}
+
+/**
+ * Save the editable copy for a single lead. Stores the subtitle and body in
+ * both languages; the journal merges these over the hardcoded defaults on its
+ * next render. Country name and stamp icon are not editable. Passing an empty
+ * field clears that override so the lead reverts to its default text.
+ */
+export async function adminSaveLead(input: {
+  leadOrder: number
+  subtitle: string
+  subtitleEn: string
+  body: string
+  bodyEn: string
+}): Promise<ActionResult> {
+  await requireAdmin()
+
+  const order = Math.floor(input.leadOrder)
+  if (!Number.isFinite(order) || order < 1 || order > TOTAL_CLUES) {
+    return { ok: false, error: "bad_value" }
+  }
+
+  // Normalize: empty/whitespace becomes NULL so the lead falls back to default.
+  const norm = (v: string) => {
+    const t = (v ?? "").trim()
+    return t.length > 0 ? t : null
+  }
+  const row = {
+    leadOrder: order,
+    subtitle: norm(input.subtitle),
+    subtitleEn: norm(input.subtitleEn),
+    body: norm(input.body),
+    bodyEn: norm(input.bodyEn),
+    updatedAt: new Date(),
+  }
+
+  await db
+    .insert(leadContent)
+    .values(row)
+    .onConflictDoUpdate({
+      target: leadContent.leadOrder,
+      set: {
+        subtitle: row.subtitle,
+        subtitleEn: row.subtitleEn,
+        body: row.body,
+        bodyEn: row.bodyEn,
+        updatedAt: row.updatedAt,
+      },
+    })
+
+  revalidatePath("/admin")
+  revalidatePath("/journal")
+  return { ok: true }
 }
 
 /**
