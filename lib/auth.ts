@@ -34,6 +34,37 @@ export const auth = betterAuth({
   database: new Pool({ connectionString: process.env.DATABASE_URL }),
   emailAndPassword: {
     enabled: true,
+    // Block sign-in until the account's email has been verified. Better Auth
+    // automatically fires sendVerificationEmail on sign-up (and on a blocked
+    // sign-in) so the user always has a fresh link to click.
+    requireEmailVerification: true,
+  },
+  emailVerification: {
+    // Clicking the link signs the user in and lands them home.
+    autoSignInAfterVerification: true,
+    sendOnSignUp: true,
+    // Better Auth builds `url` (a one-time verify link to /api/auth/verify-email).
+    // We relay it to the Google Apps Script web app, which logs the request to
+    // the "Registration Logs" sheet and sends the actual email via MailApp.
+    sendVerificationEmail: async ({ user, url }) => {
+      const webhook = process.env.APPS_SCRIPT_WEBHOOK_URL
+      const secret = process.env.APPS_SCRIPT_SECRET
+      if (!webhook || !secret) {
+        console.log("[v0] Skipping verification email: webhook env vars not set")
+        return
+      }
+      try {
+        const res = await fetch(webhook, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ secret, email: user.email, link: url }),
+        })
+        const text = await res.text()
+        console.log("[v0] Verification webhook responded:", res.status, text)
+      } catch (err) {
+        console.log("[v0] Verification webhook failed:", (err as Error).message)
+      }
+    },
   },
   databaseHooks: {
     // Log every new account and every login. These run after the row is

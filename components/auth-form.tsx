@@ -4,7 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
-import { Compass, Eye, EyeOff, ArrowLeft, Loader2 } from "lucide-react"
+import { Compass, Eye, EyeOff, ArrowLeft, Loader2, MailCheck, CheckCircle2 } from "lucide-react"
 import { authClient } from "@/lib/auth-client"
 import { useI18n } from "@/components/pythea/language-provider"
 
@@ -25,14 +25,35 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  // Once true, we swap the form for a "check your email" screen. Set after a
+  // successful sign-up, or after a sign-in blocked because email isn't verified.
+  const [awaitingVerification, setAwaitingVerification] = useState(false)
+  const [resending, setResending] = useState(false)
+  const [resent, setResent] = useState(false)
 
   // Map Better Auth error codes/messages onto localized copy.
   function localizeError(code?: string, message?: string) {
     const c = (code ?? "").toUpperCase()
     if (c.includes("EXIST") || /exist/i.test(message ?? "")) return a.errEmailTaken
+    if (c.includes("NOT_VERIFIED") || /not verified|verify/i.test(message ?? ""))
+      return a.errEmailNotVerified
     if (c.includes("INVALID") || c.includes("CREDENTIAL") || c.includes("PASSWORD"))
       return a.errInvalidCredentials
     return message || a.errGeneric
+  }
+
+  // True when a Better Auth error means the email still needs verifying.
+  function isUnverified(code?: string, message?: string) {
+    const c = (code ?? "").toUpperCase()
+    return c.includes("NOT_VERIFIED") || /not verified|verify your email/i.test(message ?? "")
+  }
+
+  async function resendVerification() {
+    setResending(true)
+    setResent(false)
+    await authClient.sendVerificationEmail({ email: email.trim(), callbackURL: "/" })
+    setResending(false)
+    setResent(true)
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -74,6 +95,10 @@ export function AuthForm({ mode }: { mode: Mode }) {
         setError(localizeError(error.code, error.message))
         return
       }
+      // Account created, but sign-in is gated on email verification. Show the
+      // "check your email" screen instead of redirecting.
+      setAwaitingVerification(true)
+      return
     } else {
       setLoading(true)
       const { error } = await authClient.signIn.email({
@@ -82,6 +107,12 @@ export function AuthForm({ mode }: { mode: Mode }) {
       })
       setLoading(false)
       if (error) {
+        // A correct password on an unverified account lands here: guide them to
+        // the verify screen (Better Auth also re-sends the link automatically).
+        if (isUnverified(error.code, error.message)) {
+          setAwaitingVerification(true)
+          return
+        }
         setError(localizeError(error.code, error.message))
         return
       }
@@ -134,6 +165,49 @@ export function AuthForm({ mode }: { mode: Mode }) {
             </span>
           </div>
 
+          {awaitingVerification ? (
+            <div className="relative">
+              <div className="mb-5 flex size-12 items-center justify-center rounded-full bg-brass/15">
+                <MailCheck className="size-6 text-brass" />
+              </div>
+              <h1 className="text-balance font-serif text-3xl font-black leading-tight text-foreground md:text-4xl">
+                {a.verifyTitle}
+              </h1>
+              <p className="mt-3 text-pretty font-serif leading-relaxed text-muted-foreground">
+                {a.verifySubtitle(email.trim())}
+              </p>
+              <p className="mt-2 font-serif text-sm leading-relaxed text-muted-foreground/80">
+                {a.verifyHint}
+              </p>
+
+              {resent && (
+                <p className="mt-5 inline-flex items-center gap-2 rounded-sm border border-brass/40 bg-brass/10 px-3 py-2 font-serif text-sm text-brass">
+                  <CheckCircle2 className="size-4" />
+                  {a.verifyResent}
+                </p>
+              )}
+
+              <button
+                type="button"
+                onClick={resendVerification}
+                disabled={resending}
+                className="mt-6 inline-flex items-center justify-center gap-2 rounded-sm border border-border px-5 py-3 font-sans text-sm font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {resending && <Loader2 className="size-4 animate-spin" />}
+                {resending ? a.verifyResending : a.verifyResendCta}
+              </button>
+
+              <p className="mt-6 text-center font-serif text-sm text-muted-foreground">
+                <Link
+                  href="/sign-in"
+                  className="font-bold text-brass underline-offset-4 hover:underline"
+                >
+                  {a.goToSignIn}
+                </Link>
+              </p>
+            </div>
+          ) : (
+          <>
           <span className="font-sans text-[11px] font-bold tracking-chip text-brass">
             {isSignUp ? a.signUpEyebrow : a.signInEyebrow}
           </span>
@@ -284,6 +358,8 @@ export function AuthForm({ mode }: { mode: Mode }) {
               {isSignUp ? a.goToSignIn : a.goToSignUp}
             </Link>
           </p>
+          </>
+          )}
         </div>
       </motion.div>
     </main>

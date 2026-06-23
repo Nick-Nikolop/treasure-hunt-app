@@ -148,7 +148,7 @@ const el = {
     welcomeBadge: "ΜΕΛΟΣ ΤΗΣ ΟΜΑΔΑΣ",
     welcomeTitle: (name: string) => `Καλώς ήρθες, ${name}.`,
     welcomeBody:
-      "Η θέση σου στην ομάδα είναι κρατημένη. Άνοιξε το ημερολόγιο και διάβασε τα σημάδια που έχουν αποκαλυφθεί ως τώρα.",
+      "Η θέση σου στην ομάδα είναι κρατημένη. Άνοιξε το ημερολόγιο και διάβασε τα σημάδια που ��χουν αποκαλυφθεί ως τώρα.",
     welcomeCta: "ΑΝΟΙΞΕ ΤΟ ΗΜΕΡΟΛΟΓΙΟ",
     welcomeTeams: "Οι ομάδες ανοίγουν σε λίγο καιρό. Θα ειδοποιηθείς πρώτος.",
   },
@@ -353,7 +353,7 @@ const el = {
     invalidLabel: "ΑΓΝΩΣΤΟ ΣΗΜΑΔΙ",
     invalidTitle: "Αυτός ο κωδικός δεν αναγνωρίζεται",
     invalidBody:
-      "Ο κωδικός QR δεν είναι έγκυρος. Σιγουρέψου ότι σάρωσες ένα από τα επίσημα σημάδια του κυνηγιού.",
+      "Ο κωδικός QR δεν είναι έγκυρος. Σιγουρέψου ότι σάρωσες ��να από τα επίσημα σημάδια του κυνηγιού.",
     openJournal: "ΑΝΟΙΞΕ ΤΟ ΗΜΕΡΟΛΟΓΙΟ",
     viewLeaderboard: "ΚΑΤΑΤΑΞΗ",
   },
@@ -485,6 +485,16 @@ const el = {
     errEmailTaken: "Υπάρχει ήδη λογαριασμός με αυτό το email.",
     errInvalidCredentials: "Λάθος email ή κωδικός.",
     errGeneric: "Κάτι πήγε στραβά. Δοκίμασε ξανά.",
+    // email verification
+    verifyTitle: "Έλεγξε το email σου",
+    verifySubtitle: (email: string) =>
+      `Στείλαμε έναν σύνδεσμο επιβεβαίωσης στο ${email}. Πάτησέ τον για να ενεργοποιήσεις τον λογαριασμό σου και να συνδεθείς.`,
+    verifyHint: "Δεν το βλέπεις; Έλεγξε τα ανεπιθύμητα ή ζήτησε νέο σύνδεσμο.",
+    verifyResendCta: "Στείλε ξανά τον σύνδεσμο",
+    verifyResending: "Γίνεται αποστολή...",
+    verifyResent: "Έστειλα νέο σύνδεσμο επιβεβαίωσης.",
+    errEmailNotVerified:
+      "Ο λογαριασμός σου δεν έχει επιβεβαιωθεί ακόμα. Έλεγξε το email σου για τον σύνδεσμο.",
   },
 }
 
@@ -943,6 +953,16 @@ const en: Dictionary = {
     errEmailTaken: "An account with this email already exists.",
     errInvalidCredentials: "Wrong email or password.",
     errGeneric: "Something went wrong. Please try again.",
+    // email verification
+    verifyTitle: "Check your email",
+    verifySubtitle: (email: string) =>
+      `We sent a verification link to ${email}. Click it to activate your account and sign in.`,
+    verifyHint: "Don't see it? Check your spam folder or request a new link.",
+    verifyResendCta: "Resend the link",
+    verifyResending: "Sending...",
+    verifyResent: "Sent a new verification link.",
+    errEmailNotVerified:
+      "Your account isn't verified yet. Check your email for the link.",
   },
 }
 
