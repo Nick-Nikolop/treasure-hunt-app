@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth"
 import { Pool } from "pg"
+import { logActivity } from "@/lib/activity"
 
 // Resolve the base URL across production, Vercel previews, and the v0 preview iframe.
 const baseURL =
@@ -33,6 +34,65 @@ export const auth = betterAuth({
   database: new Pool({ connectionString: process.env.DATABASE_URL }),
   emailAndPassword: {
     enabled: true,
+  },
+  databaseHooks: {
+    // Log every new account and every login. These run after the row is
+    // written, so a failure here must never block auth: swallow errors.
+    user: {
+      create: {
+        after: async (createdUser) => {
+          try {
+            const u = createdUser as {
+              id: string
+              name?: string | null
+              email?: string | null
+              firstName?: string | null
+              lastName?: string | null
+            }
+            const name =
+              [u.firstName, u.lastName].filter(Boolean).join(" ").trim() ||
+              u.name ||
+              u.email ||
+              "Someone"
+            await logActivity({
+              category: "auth",
+              action: "auth.signup",
+              actorId: u.id,
+              actorName: name,
+              targetUserId: u.id,
+              targetUserName: name,
+              summary: `${name} created an account${u.email ? ` (${u.email})` : ""}`,
+            })
+          } catch {
+            // Never let logging break sign-up.
+          }
+        },
+      },
+    },
+    session: {
+      create: {
+        after: async (createdSession) => {
+          try {
+            const s = createdSession as { userId: string }
+            // Resolve the user's display name lazily to avoid a stale snapshot.
+            const { resolveUserSnapshot } = await import("@/lib/activity")
+            const snap = await resolveUserSnapshot(s.userId)
+            await logActivity({
+              category: "auth",
+              action: "auth.login",
+              actorId: s.userId,
+              actorName: snap.name,
+              actorRole: snap.role,
+              targetUserId: s.userId,
+              targetUserName: snap.name,
+              summary: `${snap.name} signed in`,
+            })
+          } catch {
+            // Never let logging break sign-in.
+          }
+        },
+      },
+    },
   },
   user: {
     additionalFields: {

@@ -131,6 +131,8 @@ export type AdminData = {
   leadDifficulties: { order: number; difficulty: Difficulty }[]
   /** Editable lead copy (subtitle + body, per language) with defaults merged. */
   leads: EditableLead[]
+  /** First page of the audit log (newest first), unfiltered. */
+  activity: ActivityPage
 }
 
 /** Load every user and team for the dashboard. Superadmin only. */
@@ -236,6 +238,7 @@ export async function getAdminData(): Promise<AdminData> {
       difficulty: difficultyMap.get(c.order) ?? "easy",
     })),
     leads: await getEditableLeads(),
+    activity: await listActivity({ limit: 50 }),
   }
 }
 

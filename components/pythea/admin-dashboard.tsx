@@ -28,12 +28,15 @@ import {
   Trophy,
   Save,
   ScrollText,
+  History,
+  Activity,
 } from "lucide-react"
 import { ModalShell } from "@/components/pythea/modal-shell"
 import { ConfirmDialog } from "@/components/pythea/confirm-dialog"
 import { AdminPasswordDialog } from "@/components/pythea/admin-password-dialog"
 import { AdminHintsPanel } from "@/components/pythea/admin-hints-panel"
 import { AdminLeadsPanel } from "@/components/pythea/admin-leads-panel"
+import { AdminActivityPanel } from "@/components/pythea/admin-activity-panel"
 import { MAX_CREW_SIZE } from "@/lib/teams"
 import {
   adminDeleteUser,
@@ -49,14 +52,18 @@ import {
   adminResetTeamProgress,
   adminRegenerateToken,
   adminSaveScoring,
+  getActivityLog,
   type AdminData,
   type AdminUserRow,
   type AdminTeamRow,
   type ActionResult,
 } from "@/app/admin/actions"
 import type { Difficulty, ScoreConfig } from "@/lib/clues"
+import type { ActivityPage } from "@/lib/activity"
 
-type Tab = "users" | "teams" | "qr" | "hints" | "scoring" | "leads"
+type Tab = "users" | "teams" | "qr" | "hints" | "scoring" | "leads" | "activity"
+
+type ActivityFilter = { kind: "user" | "team"; id: string; label: string } | null
 
 type Confirm = {
   title: string
@@ -99,6 +106,36 @@ export function AdminDashboard({
     | null
   >(null)
   const [progressValue, setProgressValue] = useState(0)
+  // Activity log: server-seeded first page, plus optional per-entity drill-down.
+  // `activityKey` forces the panel to remount (reset its internal list) whenever
+  // the seed changes.
+  const [activityFilter, setActivityFilter] = useState<ActivityFilter>(null)
+  const [activitySeed, setActivitySeed] = useState<ActivityPage>(data.activity)
+  const [activityKey, setActivityKey] = useState(0)
+
+  // Open the Activity tab focused on a single user or team.
+  function openActivity(filter: NonNullable<ActivityFilter>) {
+    startTransition(async () => {
+      const page = await getActivityLog({
+        userId: filter.kind === "user" ? filter.id : null,
+        teamId: filter.kind === "team" ? filter.id : null,
+      })
+      setActivityFilter(filter)
+      setActivitySeed(page)
+      setActivityKey((k) => k + 1)
+      setTab("activity")
+    })
+  }
+
+  // Drop the drill-down and reload the full, unfiltered log.
+  function clearActivityFilter() {
+    startTransition(async () => {
+      const page = await getActivityLog({})
+      setActivityFilter(null)
+      setActivitySeed(page)
+      setActivityKey((k) => k + 1)
+    })
+  }
 
   const errorText: Record<string, string> = {
     cannot_delete_self: "You can't delete your own account here.",
@@ -211,8 +248,11 @@ export function AdminDashboard({
           <TabButton active={tab === "scoring"} onClick={() => setTab("scoring")} icon={Trophy}>
             Scoring
           </TabButton>
+          <TabButton active={tab === "activity"} onClick={() => setTab("activity")} icon={History}>
+            Activity
+          </TabButton>
         </div>
-        {tab !== "qr" && tab !== "hints" && tab !== "scoring" && tab !== "leads" && (
+        {(tab === "users" || tab === "teams") && (
           <div className="relative w-full sm:max-w-xs">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <input
@@ -256,6 +296,11 @@ export function AdminDashboard({
                   setAssignValue("")
                 }}
                 onResetPassword={() => setPwTarget({ id: u.id, email: u.email })}
+                onViewActivity={() => {
+                  const label =
+                    [u.firstName, u.lastName].filter(Boolean).join(" ") || u.name || u.email
+                  openActivity({ kind: "user", id: u.id, label })
+                }}
                 onToggleRole={() =>
                   runAction(
                     () => adminSetRole(u.id, u.role === "superadmin" ? "user" : "superadmin"),
@@ -312,6 +357,7 @@ export function AdminDashboard({
                   setProgressTarget({ kind: "team", id: tm.id, label: tm.name, current: tm.progress })
                   setProgressValue(tm.progress)
                 }}
+                onViewActivity={() => openActivity({ kind: "team", id: tm.id, label: tm.name })}
                 onResetProgress={() =>
                   setConfirm({
                     title: "Reset team progress",
@@ -361,6 +407,13 @@ export function AdminDashboard({
           <AdminHintsPanel hints={data.hints} leadOptions={data.leadOptions} />
         ) : tab === "leads" ? (
           <AdminLeadsPanel leads={data.leads} />
+        ) : tab === "activity" ? (
+          <AdminActivityPanel
+            key={activityKey}
+            initialPage={activitySeed}
+            lockedFilter={activityFilter}
+            onClearFilter={clearActivityFilter}
+          />
         ) : (
           <ScoringPanel
             config={data.scoreConfig}
@@ -747,6 +800,7 @@ function UserCard({
   onResetProgress,
   onAssign,
   onResetPassword,
+  onViewActivity,
   onToggleRole,
   onKick,
   onDelete,
@@ -760,6 +814,7 @@ function UserCard({
   onResetProgress: () => void
   onAssign: () => void
   onResetPassword: () => void
+  onViewActivity: () => void
   onToggleRole: () => void
   onKick: () => void
   onDelete: () => void
@@ -829,6 +884,13 @@ function UserCard({
           label="Password"
         />
         <IconBtn
+          onClick={onViewActivity}
+          disabled={pending}
+          title="View this user's activity log"
+          icon={Activity}
+          label="Activity"
+        />
+        <IconBtn
           onClick={onAssign}
           disabled={pending || !hasTeams}
           title={hasTeams ? (u.teamId ? "Move to another team" : "Assign to a team") : "No teams exist yet"}
@@ -858,6 +920,7 @@ function TeamCard({
   onRename,
   onSetProgress,
   onResetProgress,
+  onViewActivity,
   onDisband,
   onKick,
 }: {
@@ -867,6 +930,7 @@ function TeamCard({
   onRename: () => void
   onSetProgress: () => void
   onResetProgress: () => void
+  onViewActivity: () => void
   onDisband: () => void
   onKick: (userId: string, email: string) => void
 }) {
@@ -897,6 +961,13 @@ function TeamCard({
             label="Reset"
           />
           <IconBtn onClick={onRename} disabled={pending} title="Rename team" icon={Pencil} label="Rename" />
+          <IconBtn
+            onClick={onViewActivity}
+            disabled={pending}
+            title="View this team's activity log"
+            icon={Activity}
+            label="Activity"
+          />
           <IconBtn
             onClick={onDisband}
             disabled={pending}
