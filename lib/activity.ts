@@ -12,7 +12,7 @@
 
 import { db } from "@/lib/db"
 import { activityLog, user } from "@/lib/db/schema"
-import { and, desc, eq, ilike, lt, or, type SQL } from "drizzle-orm"
+import { and, desc, eq, ilike, inArray, lt, or, type SQL } from "drizzle-orm"
 import { randomUUID } from "node:crypto"
 
 export type ActivityCategory = "lead" | "team" | "admin" | "auth"
@@ -159,16 +159,39 @@ export async function listActivity(filters: ActivityFilters = {}): Promise<Activ
   }
   if (filters.teamId) conds.push(eq(activityLog.teamId, filters.teamId))
   if (filters.search?.trim()) {
-    const q = `%${filters.search.trim()}%`
-    conds.push(
-      or(
-        ilike(activityLog.actorName, q),
-        ilike(activityLog.targetUserName, q),
-        ilike(activityLog.teamName, q),
-        ilike(activityLog.summary, q),
-        ilike(activityLog.action, q),
-      ) as SQL,
-    )
+    const term = filters.search.trim()
+    const q = `%${term}%`
+
+    // Emails (and current names) aren't snapshotted into the log, so resolve the
+    // search term against the user table and match the resulting ids against the
+    // event's actor/target. This makes "search by email" work, and also catches
+    // users whose current name differs from the label stored at write time.
+    const matchedUsers = await db
+      .select({ id: user.id })
+      .from(user)
+      .where(
+        or(
+          ilike(user.email, q),
+          ilike(user.name, q),
+          ilike(user.firstName, q),
+          ilike(user.lastName, q),
+        ),
+      )
+      .limit(500)
+    const matchedIds = matchedUsers.map((u) => u.id)
+
+    const searchClauses: SQL[] = [
+      ilike(activityLog.actorName, q),
+      ilike(activityLog.targetUserName, q),
+      ilike(activityLog.teamName, q),
+      ilike(activityLog.summary, q),
+      ilike(activityLog.action, q),
+    ]
+    if (matchedIds.length) {
+      searchClauses.push(inArray(activityLog.actorId, matchedIds))
+      searchClauses.push(inArray(activityLog.targetUserId, matchedIds))
+    }
+    conds.push(or(...searchClauses) as SQL)
   }
   if (filters.before) conds.push(lt(activityLog.createdAt, filters.before))
 

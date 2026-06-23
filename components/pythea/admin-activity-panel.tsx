@@ -170,7 +170,7 @@ export function AdminActivityPanel({
           <input
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search the log..."
+            placeholder="Search by name, email, team..."
             className="w-full rounded-sm border border-border bg-background py-2.5 pl-9 pr-3 font-sans text-sm text-foreground outline-none transition-colors focus:border-brass"
           />
         </div>
