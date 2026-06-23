@@ -1,14 +1,21 @@
 "use client"
 
 import { motion, useScroll, useSpring } from "framer-motion"
+import { useLiteMode } from "@/components/pythea/lite-mode-provider"
 
 export function Atmosphere() {
+  const { lite } = useLiteMode()
   const { scrollYProgress } = useScroll()
   const progress = useSpring(scrollYProgress, {
     stiffness: 120,
     damping: 30,
     restDelta: 0.001,
   })
+
+  // In lite mode, drop the always-running scroll spring and the fixed
+  // full-screen grain / vignette / scanline layers. Those overlays composite on
+  // every frame and are the most expensive ambient effects on weak GPUs.
+  if (lite) return null
 
   return (
     <>

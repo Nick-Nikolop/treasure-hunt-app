@@ -11,11 +11,13 @@ import {
   Feather,
   Hand,
   Keyboard,
+  Zap,
 } from "lucide-react"
 import type { Clue, LockedClue } from "@/lib/clues"
 import { STOP_XY, ROUTE_D, TAIL_D } from "@/lib/voyage-map"
 import { Countdown } from "@/components/pythea/countdown"
 import { useI18n } from "@/components/pythea/language-provider"
+import { useLiteMode } from "@/components/pythea/lite-mode-provider"
 import { JournalCover } from "@/components/pythea/journal-cover"
 import { useIsMobile } from "@/hooks/use-mobile"
 
@@ -72,6 +74,7 @@ export function PoreiaView({
   next,
 }: Props) {
   const { t } = useI18n()
+  const { lite, toggle: toggleLite } = useLiteMode()
   const isMobile = useIsMobile()
   const router = useRouter()
   const refresh = useCallback(() => {
@@ -134,6 +137,12 @@ export function PoreiaView({
     (next: number) => {
       if (flip) return
       if (next < 0 || next > pages.length - 1 || next === index) return
+      // Lite mode: jump straight to the target page with no 3D leaf / slide
+      // animation. This is the single biggest source of jank on old phones.
+      if (lite) {
+        setIndex(next)
+        return
+      }
       setFlip({ dir: next > index ? 1 : -1, from: index, to: next })
       // Only nudge the book back into view when it has actually scrolled out of
       // a comfortable reading position. Firing a smooth scroll on every flip
@@ -150,7 +159,7 @@ export function PoreiaView({
         }
       }
     },
-    [index, pages.length, flip, isMobile],
+    [index, pages.length, flip, isMobile, lite],
   )
 
   const endFlip = useCallback(() => {
@@ -237,7 +246,7 @@ export function PoreiaView({
 
       {/* Title strip */}
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
+        initial={lite ? false : { opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         className="mb-3 flex items-center gap-2.5 md:gap-4"
@@ -254,7 +263,7 @@ export function PoreiaView({
 
       {/* Lead: what this page is */}
       <motion.p
-        initial={{ opacity: 0, y: 12 }}
+        initial={lite ? false : { opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.1 }}
         className="mb-7 max-w-xl text-pretty font-serif text-base italic leading-relaxed text-muted-foreground md:mb-9 md:text-lg"
@@ -279,7 +288,7 @@ export function PoreiaView({
               blur on mobile avoids an expensive composite during the slide. */}
           <div
             className={`pointer-events-none absolute -inset-x-6 -bottom-6 top-8 -z-30 rounded-[40%] bg-black/45 ${
-              isMobile ? "blur-lg" : "blur-2xl"
+              lite ? "blur-md" : isMobile ? "blur-lg" : "blur-2xl"
             }`}
           />
 
@@ -499,6 +508,44 @@ export function PoreiaView({
         <span className="inline-flex items-center gap-2 font-sans text-[11px] tracking-chip text-muted-foreground">
           <Keyboard className="size-3.5 text-brass/70" />
           {t.journal.hintKeys}
+        </span>
+      </div>
+
+      {/* Lite mode toggle: lets players on older phones drop the heavy page
+          flips and ambient effects for a smoother read. */}
+      <div className="mt-6 flex flex-col items-center justify-center gap-2 text-center">
+        <button
+          type="button"
+          role="switch"
+          aria-checked={lite}
+          aria-label={t.journal.liteAria}
+          onClick={toggleLite}
+          className={`inline-flex items-center gap-2.5 rounded-sm border px-3.5 py-2 font-sans text-[11px] font-bold tracking-chip transition-colors ${
+            lite
+              ? "border-brass bg-brass/10 text-brass"
+              : "border-border bg-card/60 text-muted-foreground hover:border-brass/60 hover:text-foreground"
+          }`}
+        >
+          <Zap className={`size-3.5 ${lite ? "text-brass" : "text-brass/70"}`} />
+          {t.journal.liteMode}
+          <span
+            aria-hidden
+            className={`relative inline-flex h-4 w-7 shrink-0 items-center rounded-full transition-colors ${
+              lite ? "bg-brass" : "bg-border"
+            }`}
+          >
+            <span
+              className={`absolute size-3 rounded-full bg-background transition-transform ${
+                lite ? "translate-x-3.5" : "translate-x-0.5"
+              }`}
+            />
+          </span>
+          <span className="font-sans text-[10px] font-bold tracking-chip">
+            {lite ? t.journal.liteOn : t.journal.liteOff}
+          </span>
+        </button>
+        <span className="max-w-xs text-pretty font-sans text-[11px] leading-relaxed tracking-chip text-muted-foreground/70">
+          {t.journal.liteHint}
         </span>
       </div>
     </main>
@@ -928,6 +975,7 @@ function MapPageBody({
   allDone: boolean
 }) {
   const { t, locale } = useI18n()
+  const { lite } = useLiteMode()
   // Fraction of the route inked so far: stop k sits at (k-1)/(total-1).
   const frac = total > 1 ? (stops.length - 1) / (total - 1) : 1
 
@@ -991,7 +1039,7 @@ function MapPageBody({
             stroke="oklch(0.45 0.1 40)"
             strokeWidth="2.4"
             strokeLinecap="round"
-            initial={{ pathLength: 0 }}
+            initial={lite ? false : { pathLength: 0 }}
             animate={{ pathLength: frac }}
             transition={{ duration: 1.8, ease: "easeInOut", delay: 0.35 }}
           />
@@ -1014,7 +1062,7 @@ function MapPageBody({
             stroke="oklch(0.45 0.1 40)"
             strokeWidth="2.4"
             strokeLinecap="round"
-            initial={{ pathLength: 0 }}
+            initial={lite ? false : { pathLength: 0 }}
             animate={{ pathLength: 1 }}
             transition={{ duration: 0.9, ease: "easeInOut", delay: 2.1 }}
           />
@@ -1060,7 +1108,7 @@ function MapPageBody({
           return (
             <motion.g
               key={s.order}
-              initial={{ opacity: 0, scale: 0.6 }}
+              initial={lite ? false : { opacity: 0, scale: 0.6 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.45, delay: 0.45 + i * 0.18, ease: "easeOut" }}
               style={{ transformOrigin: `${x}px ${y}px` }}
