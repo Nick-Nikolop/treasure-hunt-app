@@ -495,6 +495,26 @@ const el = {
     verifyResent: "Έστειλα νέο σύνδεσμο επιβεβαίωσης.",
     errEmailNotVerified:
       "Ο λογαριασμός σου δεν έχει επιβεβαιωθεί ακόμα. Έλεγξε το email σου για τον σύνδεσμο.",
+    // forgot password (request a reset link)
+    forgotPasswordCta: "Ξέχασες τον κωδικό σου;",
+    forgotTitle: "Επαναφορά κωδικού",
+    forgotSubtitle: "Δώσε το email σου και θα σου στείλουμε έναν σύνδεσμο για να ορίσεις νέο κωδικό.",
+    forgotSendCta: "Στείλε τον σύνδεσμο",
+    forgotSending: "Γίνεται αποστολή...",
+    forgotSentTitle: "Έλεγξε το email σου",
+    forgotSentSubtitle: (email: string) =>
+      `Αν υπάρχει λογαριασμός με το ${email}, θα λάβεις έναν σύνδεσμο για επαναφορά κωδικού. Πάτησέ τον για να ορίσεις νέο κωδικό.`,
+    backToSignIn: "Πίσω στη σύνδεση",
+    // reset password (set a new one from the link)
+    resetTitle: "Όρισε νέο κωδικό",
+    resetSubtitle: "Διάλεξε έναν νέο κωδικό για τον λογαριασμό σου.",
+    resetCta: "Αποθήκευση νέου κωδικού",
+    resetSaving: "Γίνεται αποθήκευση...",
+    resetSuccessTitle: "Ο κωδικός άλλαξε",
+    resetSuccessSubtitle: "Μπορείς τώρα να συνδεθείς με τον νέο σου κωδικό.",
+    resetInvalidTitle: "Μη έγκυρος σύνδεσμος",
+    resetInvalidSubtitle:
+      "Αυτός ο σύνδεσμος επαναφοράς δεν είναι έγκυρος ή έχει λήξει. Ζήτησε έναν νέο.",
   },
 }
 
@@ -963,6 +983,26 @@ const en: Dictionary = {
     verifyResent: "Sent a new verification link.",
     errEmailNotVerified:
       "Your account isn't verified yet. Check your email for the link.",
+    // forgot password (request a reset link)
+    forgotPasswordCta: "Forgot your password?",
+    forgotTitle: "Reset your password",
+    forgotSubtitle: "Enter your email and we'll send you a link to set a new password.",
+    forgotSendCta: "Send the link",
+    forgotSending: "Sending...",
+    forgotSentTitle: "Check your email",
+    forgotSentSubtitle: (email: string) =>
+      `If an account exists for ${email}, you'll get a password reset link. Click it to set a new password.`,
+    backToSignIn: "Back to sign in",
+    // reset password (set a new one from the link)
+    resetTitle: "Set a new password",
+    resetSubtitle: "Choose a new password for your account.",
+    resetCta: "Save new password",
+    resetSaving: "Saving...",
+    resetSuccessTitle: "Password updated",
+    resetSuccessSubtitle: "You can now sign in with your new password.",
+    resetInvalidTitle: "Invalid link",
+    resetInvalidSubtitle:
+      "This reset link is invalid or has expired. Please request a new one.",
   },
 }
 

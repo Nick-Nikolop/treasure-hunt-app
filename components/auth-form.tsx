@@ -30,6 +30,10 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const [awaitingVerification, setAwaitingVerification] = useState(false)
   const [resending, setResending] = useState(false)
   const [resent, setResent] = useState(false)
+  // Forgot-password sub-flow on the sign-in screen: enter email -> we send a
+  // reset link -> show a "check your email" confirmation.
+  const [forgotMode, setForgotMode] = useState(false)
+  const [forgotSent, setForgotSent] = useState(false)
 
   // Map Better Auth error codes/messages onto localized copy.
   function localizeError(code?: string, message?: string) {
@@ -54,6 +58,24 @@ export function AuthForm({ mode }: { mode: Mode }) {
     await authClient.sendVerificationEmail({ email: email.trim(), callbackURL: "/" })
     setResending(false)
     setResent(true)
+  }
+
+  // Ask Better Auth to email a reset link. We always show the same confirmation
+  // afterwards (even on error) so we never reveal whether an email is registered.
+  async function requestReset(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    if (!email.trim()) {
+      setError(a.errRequired)
+      return
+    }
+    setLoading(true)
+    await authClient.requestPasswordReset({
+      email: email.trim(),
+      redirectTo: "/reset-password",
+    })
+    setLoading(false)
+    setForgotSent(true)
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -206,6 +228,89 @@ export function AuthForm({ mode }: { mode: Mode }) {
                 </Link>
               </p>
             </div>
+          ) : forgotSent ? (
+            <div className="relative">
+              <div className="mb-5 flex size-12 items-center justify-center rounded-full bg-brass/15">
+                <MailCheck className="size-6 text-brass" />
+              </div>
+              <h1 className="text-balance font-serif text-3xl font-black leading-tight text-foreground md:text-4xl">
+                {a.forgotSentTitle}
+              </h1>
+              <p className="mt-3 text-pretty font-serif leading-relaxed text-muted-foreground">
+                {a.forgotSentSubtitle(email.trim())}
+              </p>
+              <p className="mt-2 font-serif text-sm leading-relaxed text-muted-foreground/80">
+                {a.verifyHint}
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setForgotMode(false)
+                  setForgotSent(false)
+                }}
+                className="mt-6 inline-flex items-center gap-2 font-sans text-sm font-bold tracking-chip text-brass transition-colors hover:text-brass/80"
+              >
+                <ArrowLeft className="size-4" />
+                {a.backToSignIn}
+              </button>
+            </div>
+          ) : forgotMode ? (
+            <div className="relative">
+              <span className="font-sans text-[11px] font-bold tracking-chip text-brass">
+                {a.signInEyebrow}
+              </span>
+              <h1 className="mt-2 text-balance font-serif text-3xl font-black leading-tight text-foreground md:text-4xl">
+                {a.forgotTitle}
+              </h1>
+              <p className="mt-2 text-pretty font-serif leading-relaxed text-muted-foreground">
+                {a.forgotSubtitle}
+              </p>
+              <form onSubmit={requestReset} className="mt-7 flex flex-col gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="forgot-email" className={labelClass}>
+                    {a.emailLabel}
+                  </label>
+                  <input
+                    id="forgot-email"
+                    name="email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder={a.emailPlaceholder}
+                    className={inputClass}
+                  />
+                </div>
+                {error && (
+                  <p
+                    role="alert"
+                    className="rounded-sm border border-destructive/40 bg-destructive/10 px-3 py-2 font-serif text-sm text-destructive"
+                  >
+                    {error}
+                  </p>
+                )}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="mt-1 inline-flex items-center justify-center gap-2 rounded-sm bg-brass px-6 py-3.5 font-sans text-sm font-bold tracking-chip text-primary-foreground transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
+                >
+                  {loading && <Loader2 className="size-4 animate-spin" />}
+                  {loading ? a.forgotSending : a.forgotSendCta}
+                </button>
+              </form>
+              <button
+                type="button"
+                onClick={() => {
+                  setForgotMode(false)
+                  setError(null)
+                }}
+                className="mt-6 inline-flex items-center gap-2 font-sans text-sm font-bold tracking-chip text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <ArrowLeft className="size-4" />
+                {a.backToSignIn}
+              </button>
+            </div>
           ) : (
           <>
           <span className="font-sans text-[11px] font-bold tracking-chip text-brass">
@@ -318,6 +423,18 @@ export function AuthForm({ mode }: { mode: Mode }) {
                   {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                 </button>
               </div>
+              {!isSignUp && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setForgotMode(true)
+                    setError(null)
+                  }}
+                  className="self-end font-sans text-[11px] font-bold tracking-chip text-muted-foreground transition-colors hover:text-brass"
+                >
+                  {a.forgotPasswordCta}
+                </button>
+              )}
             </div>
 
             {error && (

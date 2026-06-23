@@ -2,6 +2,30 @@ import { betterAuth } from "better-auth"
 import { Pool } from "pg"
 import { logActivity } from "@/lib/activity"
 
+// Relay a transactional email to the Google Apps Script web app. The script
+// routes by `type` ("registration" -> Registration Logs sheet, "password_reset"
+// -> Password Change sheet), logs the row, and sends the email via MailApp.
+// Failures are logged but never thrown, so they can't break auth flows.
+async function sendWebhookEmail(type: "registration" | "password_reset", email: string, link: string) {
+  const webhook = process.env.APPS_SCRIPT_WEBHOOK_URL
+  const secret = process.env.APPS_SCRIPT_SECRET
+  if (!webhook || !secret) {
+    console.log(`[v0] Skipping ${type} email: webhook env vars not set`)
+    return
+  }
+  try {
+    const res = await fetch(webhook, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ secret, type, email, link }),
+    })
+    const text = await res.text()
+    console.log(`[v0] ${type} webhook responded:`, res.status, text)
+  } catch (err) {
+    console.log(`[v0] ${type} webhook failed:`, (err as Error).message)
+  }
+}
+
 // Resolve the base URL across production, Vercel previews, and the v0 preview iframe.
 const baseURL =
   process.env.BETTER_AUTH_URL ||
@@ -38,32 +62,21 @@ export const auth = betterAuth({
     // automatically fires sendVerificationEmail on sign-up (and on a blocked
     // sign-in) so the user always has a fresh link to click.
     requireEmailVerification: true,
+    // Forgot-password flow. Better Auth builds `url`, a one-time link that
+    // validates the token then redirects to /reset-password?token=... We relay
+    // it to the Apps Script webhook (Password Change sheet).
+    sendResetPassword: async ({ user, url }) => {
+      await sendWebhookEmail("password_reset", user.email, url)
+    },
   },
   emailVerification: {
     // Clicking the link signs the user in and lands them home.
     autoSignInAfterVerification: true,
     sendOnSignUp: true,
-    // Better Auth builds `url` (a one-time verify link to /api/auth/verify-email).
-    // We relay it to the Google Apps Script web app, which logs the request to
-    // the "Registration Logs" sheet and sends the actual email via MailApp.
+    // Better Auth builds `url` (a one-time verify link). We relay it to the
+    // Apps Script webhook, which logs to "Registration Logs" and emails it.
     sendVerificationEmail: async ({ user, url }) => {
-      const webhook = process.env.APPS_SCRIPT_WEBHOOK_URL
-      const secret = process.env.APPS_SCRIPT_SECRET
-      if (!webhook || !secret) {
-        console.log("[v0] Skipping verification email: webhook env vars not set")
-        return
-      }
-      try {
-        const res = await fetch(webhook, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ secret, email: user.email, link: url }),
-        })
-        const text = await res.text()
-        console.log("[v0] Verification webhook responded:", res.status, text)
-      } catch (err) {
-        console.log("[v0] Verification webhook failed:", (err as Error).message)
-      }
+      await sendWebhookEmail("registration", user.email, url)
     },
   },
   databaseHooks: {
