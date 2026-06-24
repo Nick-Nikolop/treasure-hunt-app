@@ -79,12 +79,36 @@ export function SiteFooter() {
           </nav>
         </div>
 
-        <div className="flex flex-col items-center gap-2 border-t border-border/60 py-6 text-center md:flex-row md:justify-between md:text-left">
-          <p className="font-sans text-[11px] tracking-chip text-muted-foreground">
-            {`© ${year} · ${t.footer.rights}`}
-          </p>
-          <p className="font-sans text-[11px] tracking-chip text-muted-foreground">
-            36°57′ · 22°06′
+        <div className="flex flex-col gap-4 border-t border-border/60 py-6">
+          <div className="flex flex-col items-center gap-2 text-center md:flex-row md:justify-between md:text-left">
+            <p className="font-sans text-[11px] tracking-chip text-muted-foreground">
+              {`© ${year} `}
+              <a
+                href={t.footer.siteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-foreground/80 transition-colors hover:text-brass"
+              >
+                {t.footer.owner}
+              </a>
+              {` · ${t.footer.rights}`}
+            </p>
+            <div className="flex items-center gap-4">
+              <a
+                href={t.footer.siteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-sans text-[11px] tracking-chip text-muted-foreground transition-colors hover:text-brass"
+              >
+                {t.footer.siteLabel}
+              </a>
+              <span className="font-sans text-[11px] tracking-chip text-muted-foreground">
+                36°57′ · 22°06′
+              </span>
+            </div>
+          </div>
+          <p className="max-w-3xl text-pretty font-sans text-[10px] leading-relaxed tracking-chip text-muted-foreground/70">
+            {t.footer.legal}
           </p>
         </div>
 

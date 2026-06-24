@@ -148,7 +148,7 @@ const el = {
     welcomeBadge: "ΜΕΛΟΣ ΤΗΣ ΟΜΑΔΑΣ",
     welcomeTitle: (name: string) => `Καλώς ήρθες, ${name}.`,
     welcomeBody:
-      "Η θέση σου στην ομάδα είναι κρατημένη. Άνοιξε το ημερολόγιο και διάβασε τα σημάδια που έχουν αποκαλυφθεί ως τώρα.",
+      "Η θέση σου στην ομάδα είναι κρατημένη. Άνοιξε το ημερολόγιο και διάβασε τα σημάδια που ��χουν αποκαλυφθεί ως τώρα.",
     welcomeCta: "ΑΝΟΙΞΕ ΤΟ ΗΜΕΡΟΛΟΓΙΟ",
     welcomeTeams: "Οι ομάδες ανοίγουν σε λίγο καιρό. Θα ειδοποιηθείς πρώτος.",
   },
@@ -274,6 +274,11 @@ const el = {
     linkSignUp: "Δημιουργία λογαριασμού",
     linkSignIn: "Σύνδεση",
     rights: "Με κάθε επιφύλαξη.",
+    owner: "The Hunt",
+    legal:
+      "Όλο το περιεχόμενο, τα σήματα, οι γρίφοι και το υλικό του παιχνιδιού ανήκουν στο The Hunt και προστατεύονται από τη νομοθεσία περί πνευματικής ιδιοκτησίας. Απαγορεύεται η αναπαραγωγή, η διανομή ή η δημόσια χρήση χωρίς γραπτή άδεια.",
+    siteLabel: "thehunt.gr",
+    siteUrl: "https://www.thehunt.gr/",
     wordmark: "ΠΥΘΕΑΣ",
   },
   countdown: {
@@ -777,6 +782,11 @@ const en: Dictionary = {
     linkSignUp: "Create account",
     linkSignIn: "Sign in",
     rights: "All rights reserved.",
+    owner: "The Hunt",
+    legal:
+      "All content, trademarks, clues and game materials belong to The Hunt and are protected by copyright law. Reproduction, distribution or public use without written permission is prohibited.",
+    siteLabel: "thehunt.gr",
+    siteUrl: "https://www.thehunt.gr/",
     wordmark: "PYTHEAS",
   },
   countdown: {
