@@ -275,8 +275,6 @@ const el = {
     linkSignIn: "Σύνδεση",
     rights: "Με κάθε επιφύλαξη.",
     owner: "The Hunt",
-    legal:
-      "Όλο το περιεχόμενο, τα σήματα, οι γρίφοι και το υλικό του παιχνιδιού ανήκουν στο The Hunt και προστατεύονται από τη νομοθεσία περί πνευματικής ιδιοκτησίας. Απαγορεύεται η αναπαραγωγή, η διανομή ή η δημόσια χρήση χωρίς γραπτή άδεια.",
     siteLabel: "thehunt.gr",
     siteUrl: "https://www.thehunt.gr/",
     wordmark: "ΠΥΘΕΑΣ",
@@ -420,7 +418,7 @@ const el = {
     closeOne: "ΚΛΕΙΣΕ ΕΝΑ",
     openAll: "ΑΝΟΙΞΕ ΟΛΑ",
     realTime: "ΠΡΑΓΜΑΤΙΚΟΣ ΧΡΟΝΟΣ",
-    note: "Ορατό μόνο σε εσένα, για δοκιμές. Δεν εμφανίζεται στους παίκτες στη δημοσιευμένη σελίδα.",
+    note: "Ορατό μόνο σε εσένα, για δοκιμές. Δεν εμφανίζεται στους παίκτες στη δημοσιευμ��νη σελίδα.",
   },
   lang: {
     toggleToEn: "Switch to English",
@@ -783,8 +781,6 @@ const en: Dictionary = {
     linkSignIn: "Sign in",
     rights: "All rights reserved.",
     owner: "The Hunt",
-    legal:
-      "All content, trademarks, clues and game materials belong to The Hunt and are protected by copyright law. Reproduction, distribution or public use without written permission is prohibited.",
     siteLabel: "thehunt.gr",
     siteUrl: "https://www.thehunt.gr/",
     wordmark: "PYTHEAS",

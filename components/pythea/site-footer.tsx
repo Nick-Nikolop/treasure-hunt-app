@@ -107,9 +107,6 @@ export function SiteFooter() {
               </span>
             </div>
           </div>
-          <p className="max-w-3xl text-pretty font-sans text-[10px] leading-relaxed tracking-chip text-muted-foreground/70">
-            {t.footer.legal}
-          </p>
         </div>
 
         {/* Giant clipped wordmark, clipped by the footer's bottom edge */}
