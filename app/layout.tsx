@@ -22,27 +22,40 @@ const alegreyaSans = Alegreya_Sans({
   variable: '--font-alegreya-sans',
   display: 'swap',
 })
+const SITE_TITLE = 'Το Ταξίδι του Πυθέα του Μεσσήνιου'
+const SITE_DESCRIPTION =
+  'Κυνήγι θησαυρού στην Καλαμάτα. Ακολούθησε τα ίχνη ενός πολυταξιδεμένου εξερευνητή και μάθε να κοιτάς την πόλη σαν να την ανακαλύπτεις για πρώτη φορά.'
+
 export const metadata: Metadata = {
-  title: 'Το Ταξίδι του Πυθέα του Μεσσήνιου',
-  description:
-    'Κυνήγι θησαυρού στην Καλαμάτα. Ακολούθησε τα ίχνη ενός πολυταξιδεμένου εξερευνητή και μάθε να κοιτάς την πόλη σαν να την ανακαλύπτεις για πρώτη φορά.',
+  title: SITE_TITLE,
+  description: SITE_DESCRIPTION,
   generator: 'v0.app',
   icons: {
     icon: [
+      { url: '/compass-icon.png', type: 'image/png' },
+    ],
+    shortcut: '/compass-icon.png',
+    apple: '/compass-icon.png',
+  },
+  openGraph: {
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    type: 'website',
+    locale: 'el_GR',
+    images: [
       {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
+        url: '/compass-icon.png',
+        width: 1024,
+        height: 1024,
+        alt: 'Πυθέας - πυξίδα',
       },
     ],
-    apple: '/apple-icon.png',
+  },
+  twitter: {
+    card: 'summary',
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    images: ['/compass-icon.png'],
   },
 }
 
