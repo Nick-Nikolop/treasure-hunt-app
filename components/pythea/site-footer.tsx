@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Compass } from "lucide-react"
+import Image from "next/image"
 import { useI18n } from "@/components/pythea/language-provider"
 
 export function SiteFooter() {
@@ -27,7 +27,7 @@ export function SiteFooter() {
           {/* Brand + motto */}
           <div>
             <div className="flex items-center gap-3">
-              <Compass className="size-5 text-brass" />
+              <Image src="/compass-icon.png" alt="" width={24} height={24} className="size-6" />
               <p className="font-serif text-lg font-extrabold leading-none text-foreground">
                 {t.footer.title}
               </p>

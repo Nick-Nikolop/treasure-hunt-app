@@ -1,6 +1,6 @@
 "use client"
 
-import { Compass } from "lucide-react"
+import Image from "next/image"
 import { useI18n } from "@/components/pythea/language-provider"
 
 /**
@@ -67,7 +67,13 @@ export function JournalCover({
       {/* wax seal medallion housing the compass */}
       <div className="relative flex size-20 items-center justify-center rounded-full wax-seal md:size-24">
         <div className="absolute inset-[6px] rounded-full border border-[oklch(0.7_0.12_40)]/40" />
-        <Compass className="size-9 animate-compass-sway text-[oklch(0.86_0.1_72)] md:size-11" />
+        <Image
+          src="/compass-icon.png"
+          alt=""
+          width={44}
+          height={44}
+          className="size-9 animate-compass-sway md:size-11"
+        />
       </div>
 
       <p className="mt-7 font-sans text-[11px] font-bold tracking-chip text-brass/80">

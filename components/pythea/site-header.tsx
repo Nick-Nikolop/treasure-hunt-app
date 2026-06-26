@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
-import { Compass, Menu, Trophy, X } from "lucide-react"
+import Image from "next/image"
+import { Menu, Trophy, X } from "lucide-react"
 import { AuthNav, type SessionUser } from "@/components/pythea/auth-nav"
 import { useI18n } from "@/components/pythea/language-provider"
 import { useSession } from "@/lib/auth-client"
@@ -78,7 +79,14 @@ export function SiteHeader({
     >
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 md:px-8">
         <a href="/" className="group flex items-center gap-3">
-          <Compass className="size-6 text-brass transition-transform duration-700 group-hover:rotate-180" />
+          <Image
+            src="/compass-icon.png"
+            alt=""
+            width={28}
+            height={28}
+            className="size-7 transition-transform duration-700 group-hover:rotate-180"
+            priority
+          />
           <span className="font-serif text-base font-extrabold leading-none tracking-tight text-foreground md:text-lg">
             {t.nav.brand}
             <span className="block font-sans text-[10px] font-medium tracking-chip text-muted-foreground">

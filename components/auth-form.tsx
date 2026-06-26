@@ -2,9 +2,10 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
-import { Compass, Eye, EyeOff, ArrowLeft, Loader2, MailCheck, CheckCircle2 } from "lucide-react"
+import { Eye, EyeOff, ArrowLeft, Loader2, MailCheck, CheckCircle2 } from "lucide-react"
 import { authClient } from "@/lib/auth-client"
 import { useI18n } from "@/components/pythea/language-provider"
 
@@ -178,7 +179,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
 
           {/* Brand mark */}
           <div className="relative mb-7 flex items-center gap-3">
-            <Compass className="size-7 text-brass" />
+            <Image src="/compass-icon.png" alt="" width={32} height={32} className="size-8" />
             <span className="font-serif text-base font-extrabold leading-none tracking-tight text-foreground">
               {a.brand}
               <span className="block font-sans text-[10px] font-medium tracking-chip text-muted-foreground">
