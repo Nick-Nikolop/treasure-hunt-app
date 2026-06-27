@@ -22,6 +22,7 @@ import {
   type Difficulty,
 } from "@/lib/clues"
 import { getScoreConfig, getLeadDifficulties } from "@/lib/scoring"
+import { getSolveCooldownSeconds } from "@/lib/hunt-config"
 import { logActivity, resolveUserSnapshot } from "@/lib/activity"
 import { and, eq, gt, inArray } from "drizzle-orm"
 import { randomUUID } from "node:crypto"
@@ -185,7 +186,48 @@ export type UnlockResult =
   | { status: "already"; leadOrder: number; country: string; countryEn: string }
   | { status: "out_of_order"; required: number; current: number; leadOrder: number }
   | { status: "finished"; country: string; countryEn: string }
+  // The scan is valid and in order, but the crew solved their previous lead too
+  // recently. `availableAtMs` is the epoch ms the next solve becomes possible.
+  | { status: "cooldown"; leadOrder: number; availableAtMs: number; cooldownSeconds: number }
   | { status: "invalid" }
+
+/**
+ * The most recent moment ANY crew member unlocked a lead (epoch ms), or null if
+ * the crew holds no stored leads yet. Used to enforce the solve cooldown.
+ */
+async function crewLastUnlockMs(userIds: string[]): Promise<number | null> {
+  if (userIds.length === 0) return null
+  const rows = await db
+    .select({ unlockedAt: leadUnlock.unlockedAt })
+    .from(leadUnlock)
+    .where(inArray(leadUnlock.userId, userIds))
+  let best: number | null = null
+  for (const r of rows) {
+    const t = r.unlockedAt.getTime()
+    if (best === null || t > best) best = t
+  }
+  return best
+}
+
+/**
+ * Returns a `cooldown` result if the crew's previous solve was too recent to
+ * allow opening `leadOrder` now, or null if the solve is allowed. The first
+ * ever solve (no stored leads) is always allowed, and a cooldown of 0 disables
+ * the gate.
+ */
+async function checkSolveCooldown(
+  userIds: string[],
+  leadOrder: number,
+  nowMs: number,
+): Promise<Extract<UnlockResult, { status: "cooldown" }> | null> {
+  const cooldownSeconds = await getSolveCooldownSeconds()
+  if (cooldownSeconds <= 0) return null
+  const lastMs = await crewLastUnlockMs(userIds)
+  if (lastMs === null) return null
+  const availableAtMs = lastMs + cooldownSeconds * 1000
+  if (nowMs >= availableAtMs) return null
+  return { status: "cooldown", leadOrder, availableAtMs, cooldownSeconds }
+}
 
 /** Whether any member of the crew has scanned the finishing QR. */
 async function crewHasFinished(userIds: string[]): Promise<boolean> {
@@ -290,6 +332,8 @@ export async function unlockByToken(userId: string, token: string): Promise<Unlo
         countryEn: last.countryEn,
       }
     }
+    const finishCooldown = await checkSolveCooldown(crew, FINISH_ORDER, now)
+    if (finishCooldown) return finishCooldown
     await insertFinishRows(crew, new Date(now))
     await logLeadSolved(userId, FINISH_ORDER, last.country, last.countryEn, true)
     return { status: "finished", country: last.country, countryEn: last.countryEn }
@@ -310,6 +354,10 @@ export async function unlockByToken(userId: string, token: string): Promise<Unlo
   if (current !== leadOrder - 1) {
     return { status: "out_of_order", required: leadOrder - 1, current, leadOrder }
   }
+
+  // Anti-cheat: block solves that come too soon after the previous one.
+  const cooldown = await checkSolveCooldown(crew, leadOrder, now)
+  if (cooldown) return cooldown
 
   await ensureUpTo(crew, leadOrder, "qr", new Date(now))
   await logLeadSolved(userId, leadOrder, clue.country, clue.countryEn, false)

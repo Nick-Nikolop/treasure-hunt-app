@@ -417,12 +417,13 @@ export function AdminDashboard({
         ) : (
           <ScoringPanel
             config={data.scoreConfig}
+            solveCooldownSeconds={data.solveCooldownSeconds}
             leadDifficulties={data.leadDifficulties}
             leadOptions={data.leadOptions}
             pending={pending}
-            onSave={(config, difficulties) =>
+            onSave={(config, difficulties, solveCooldownSeconds) =>
               runAction(
-                () => adminSaveScoring({ config, difficulties }),
+                () => adminSaveScoring({ config, difficulties, solveCooldownSeconds }),
                 "Scoring saved. All standings have been recalculated.",
               )
             }
@@ -1047,20 +1048,30 @@ const DIFFICULTIES: { value: Difficulty; label: string }[] = [
  */
 function ScoringPanel({
   config,
+  solveCooldownSeconds,
   leadDifficulties,
   leadOptions,
   pending,
   onSave,
 }: {
   config: ScoreConfig
+  solveCooldownSeconds: number
   leadDifficulties: { order: number; difficulty: Difficulty }[]
   leadOptions: AdminData["leadOptions"]
   pending: boolean
-  onSave: (config: ScoreConfig, difficulties: { leadOrder: number; difficulty: Difficulty }[]) => void
+  onSave: (
+    config: ScoreConfig,
+    difficulties: { leadOrder: number; difficulty: Difficulty }[],
+    solveCooldownSeconds: number,
+  ) => void
 }) {
   const [draft, setDraft] = useState<ScoreConfig>(config)
   const [diffs, setDiffs] = useState<Map<number, Difficulty>>(
     () => new Map(leadDifficulties.map((d) => [d.order, d.difficulty])),
+  )
+  // Cooldown is stored in seconds but edited in minutes for convenience.
+  const [cooldownMin, setCooldownMin] = useState<number>(() =>
+    Math.round((solveCooldownSeconds / 60) * 100) / 100,
   )
 
   // Re-sync local state if fresh server data arrives (e.g. after a save).
@@ -1070,6 +1081,9 @@ function ScoringPanel({
   useEffect(() => {
     setDiffs(new Map(leadDifficulties.map((d) => [d.order, d.difficulty])))
   }, [leadDifficulties])
+  useEffect(() => {
+    setCooldownMin(Math.round((solveCooldownSeconds / 60) * 100) / 100)
+  }, [solveCooldownSeconds])
 
   const countryByOrder = useMemo(
     () => new Map(leadOptions.map((l) => [l.order, l])),
@@ -1093,7 +1107,8 @@ function ScoringPanel({
       leadOrder: l.order,
       difficulty: diffs.get(l.order) ?? "easy",
     }))
-    onSave(draft, difficulties)
+    const cooldownSeconds = Math.max(0, Math.round((Number(cooldownMin) || 0) * 60))
+    onSave(draft, difficulties, cooldownSeconds)
   }
 
   return (
@@ -1187,6 +1202,28 @@ function ScoringPanel({
             )
           })}
         </ul>
+      </div>
+
+      {/* Anti-cheat solve cooldown */}
+      <div className="rounded-sm border border-border bg-card/40 p-4">
+        <h3 className="font-sans text-[11px] font-bold uppercase tracking-chip text-muted-foreground">
+          Solve cooldown
+        </h3>
+        <p className="mt-1.5 font-sans text-[13px] leading-relaxed text-muted-foreground">
+          Minimum time that must pass between a crew&rsquo;s two consecutive QR solves. If players
+          scan the next lead too soon, they see a countdown and the solve is refused until the
+          cooldown elapses. Set to 0 to disable.
+        </p>
+        <div className="mt-3 max-w-[12rem]">
+          <NumberField
+            label="Minutes"
+            value={cooldownMin}
+            onChange={(v) => setCooldownMin(Math.max(0, Number(v) || 0))}
+          />
+          <p className="mt-1.5 font-mono text-[11px] text-muted-foreground">
+            {Math.max(0, Math.round((Number(cooldownMin) || 0) * 60))} seconds
+          </p>
+        </div>
       </div>
 
       <div className="flex justify-end">

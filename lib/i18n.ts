@@ -148,7 +148,7 @@ const el = {
     welcomeBadge: "ΜΕΛΟΣ ΤΗΣ ΟΜΑΔΑΣ",
     welcomeTitle: (name: string) => `Καλώς ήρθες, ${name}.`,
     welcomeBody:
-      "Η θέση σου στην ομάδα είναι κρατημένη. Άνοιξε το ημερολόγιο και διάβασε τα σημάδια που έχουν αποκαλυφθεί ως τώρα.",
+      "Η θέση σου στην ομάδα είναι κρατημένη. Άνοιξε το ημερολόγιο και διάβασε τα σημάδια που ��χουν αποκαλυφθεί ως τώρα.",
     welcomeCta: "ΑΝΟΙΞΕ ΤΟ ΗΜΕΡΟΛΟΓΙΟ",
     welcomeTeams: "Οι ομάδες ανοίγουν σε λίγο καιρό. Θα ειδοποιηθείς πρώτος.",
   },
@@ -362,6 +362,12 @@ const el = {
     invalidTitle: "Αυτός ο κωδικός δεν αναγνωρίζεται",
     invalidBody:
       "Ο κωδικός QR δεν είναι έγκυρος. Σιγουρέψου ότι σάρωσες ένα από τα επίσημα σημάδια του κυνηγιού.",
+    cooldownLabel: "ΠΟΛΥ ΓΡΗΓΟΡΑ",
+    cooldownTitle: "Δεν γίνεται τόσο γρήγορα",
+    cooldownBody:
+      "Είναι αδύνατον να βρεις τη λύση και να φτάσεις εδώ τόσο γρήγορα. Θα μπορέσεις να ξεκλειδώσεις το επόμενο σημάδι σε:",
+    cooldownReady: "Πέρασε η αναμονή. Πάτησε «Δοκίμασε ξανά» για να ξεκλειδώσεις το σημάδι.",
+    cooldownRetry: "ΔΟΚΙΜΑΣΕ ΞΑΝΑ",
     openJournal: "ΑΝΟΙΞΕ ΤΟ ΗΜΕΡΟΛΟΓΙΟ",
     viewLeaderboard: "ΚΑΤΑΤΑΞΗ",
   },
@@ -862,6 +868,12 @@ const en: Dictionary = {
     invalidTitle: "This code is not recognised",
     invalidBody:
       "The QR code is not valid. Make sure you scanned one of the official marks of the hunt.",
+    cooldownLabel: "TOO FAST",
+    cooldownTitle: "Not so fast",
+    cooldownBody:
+      "It is impossible to find the solution and reach here this quickly. You will be able to unlock the next mark in:",
+    cooldownReady: "The wait is over. Press \"Try again\" to unlock the mark.",
+    cooldownRetry: "TRY AGAIN",
     openJournal: "OPEN THE JOURNAL",
     viewLeaderboard: "LEADERBOARD",
   },

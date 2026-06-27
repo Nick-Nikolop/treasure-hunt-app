@@ -122,6 +122,9 @@ export const scoreConfig = pgTable("score_config", {
   restPoints: integer("restPoints").notNull().default(30),
   mediumBonus: integer("mediumBonus").notNull().default(50),
   hardBonus: integer("hardBonus").notNull().default(150),
+  // Minimum seconds that must pass between a crew's consecutive QR solves. An
+  // anti-cheat gate so leads can't be scanned suspiciously fast back-to-back.
+  solveCooldownSeconds: integer("solveCooldownSeconds").notNull().default(900),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 })
 

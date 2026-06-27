@@ -34,6 +34,7 @@ import {
   setScoreConfig,
   setLeadDifficulties,
 } from "@/lib/scoring"
+import { getSolveCooldownSeconds, setSolveCooldownSeconds } from "@/lib/hunt-config"
 import { getEditableLeads, type EditableLead } from "@/lib/lead-content"
 import {
   TOTAL_CLUES,
@@ -127,6 +128,8 @@ export type AdminData = {
   leadOptions: { order: number; country: string; countryEn: string }[]
   /** Global scoring tiers (placement points + difficulty bonuses). */
   scoreConfig: ScoreConfig
+  /** Anti-cheat cooldown (seconds) enforced between consecutive QR solves. */
+  solveCooldownSeconds: number
   /** Difficulty per lead order (1..TOTAL_CLUES). */
   leadDifficulties: { order: number; difficulty: Difficulty }[]
   /** Editable lead copy (subtitle + body, per language) with defaults merged. */
@@ -233,6 +236,7 @@ export async function getAdminData(): Promise<AdminData> {
       countryEn: c.countryEn,
     })),
     scoreConfig: await getScoreConfig(),
+    solveCooldownSeconds: await getSolveCooldownSeconds(),
     leadDifficulties: CLUES.map((c) => ({
       order: c.order,
       difficulty: difficultyMap.get(c.order) ?? "easy",
@@ -312,6 +316,8 @@ export async function adminSaveLead(input: {
 export async function adminSaveScoring(input: {
   config: ScoreConfig
   difficulties: { leadOrder: number; difficulty: Difficulty }[]
+  /** Anti-cheat cooldown between consecutive QR solves, in seconds. */
+  solveCooldownSeconds?: number
 }): Promise<ActionResult> {
   const admin = await requireAdmin()
 
@@ -333,16 +339,23 @@ export async function adminSaveScoring(input: {
   ) {
     return { ok: false, error: "bad_value" }
   }
+  const cooldown = input.solveCooldownSeconds
+  if (cooldown !== undefined && (!Number.isFinite(cooldown) || cooldown < 0)) {
+    return { ok: false, error: "bad_value" }
+  }
 
   await setScoreConfig(c)
   await setLeadDifficulties(input.difficulties)
+  if (cooldown !== undefined) {
+    await setSolveCooldownSeconds(cooldown)
+  }
 
   await logActivity({
     category: "admin",
     action: "admin.scoring_updated",
     ...adminActor(admin),
     summary: `${adminActor(admin).actorName} updated scoring settings and lead difficulties`,
-    metadata: { config: c },
+    metadata: { config: c, solveCooldownSeconds: cooldown },
   })
 
   // Standings are derived live, but revalidate both surfaces so the new numbers
