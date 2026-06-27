@@ -46,6 +46,7 @@ import {
   type CampaignStats,
 } from "@/lib/campaigns"
 import { getEditableLeads, type EditableLead } from "@/lib/lead-content"
+import { getAnalyticsSnapshot, type AnalyticsSnapshot } from "@/lib/analytics"
 import {
   TOTAL_CLUES,
   FINISH_ORDER,
@@ -148,6 +149,8 @@ export type AdminData = {
   leads: EditableLead[]
   /** First page of the audit log (newest first), unfiltered. */
   activity: ActivityPage
+  /** Behavioural analytics snapshot (default 14-day window) for the Analytics tab. */
+  analytics: AnalyticsSnapshot
 }
 
 /** Load every user and team for the dashboard. Superadmin only. */
@@ -256,6 +259,7 @@ export async function getAdminData(): Promise<AdminData> {
     })),
     leads: await getEditableLeads(),
     activity: await listActivity({ limit: 50 }),
+    analytics: await getAnalyticsSnapshot(14),
   }
 }
 
@@ -1005,6 +1009,18 @@ export async function adminRegenerateCampaignToken(id: string): Promise<ActionRe
 export async function adminGetCampaignStats(id: string): Promise<CampaignStats> {
   await requireAdmin()
   return getCampaignStats(id)
+}
+
+/**
+ * Behavioural analytics snapshot for the Analytics tab: headline counters, the
+ * per-day timeline, top events/pages, device + browser splits, the auth funnel
+ * (with login/registration timing) and the scan-outcome breakdown. Superadmin
+ * only. `days` is the lookback window.
+ */
+export async function adminGetAnalytics(days = 14): Promise<AnalyticsSnapshot> {
+  await requireAdmin()
+  const clamped = Math.min(Math.max(Math.round(days), 1), 90)
+  return getAnalyticsSnapshot(clamped)
 }
 
 /**

@@ -1,9 +1,12 @@
 "use client"
 
 import Link from "next/link"
+import { useEffect } from "react"
 import { motion } from "framer-motion"
 import { Lightbulb, BookOpen, Flag, Compass } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
+import { track } from "@/lib/analytics-client"
+import { EV } from "@/lib/analytics-events"
 
 export type HintViewData = {
   title: string
@@ -21,6 +24,11 @@ export type HintViewData = {
 export function HintView({ hint }: { hint: HintViewData }) {
   const { t, locale } = useI18n()
   const h = t.hint
+
+  useEffect(() => {
+    track(EV.hintOpen, { leadOrder: hint.leadOrder }, { category: "hint" })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const country = locale === "en" ? hint.countryEn : hint.country
   const leadTag =

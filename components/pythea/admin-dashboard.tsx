@@ -31,6 +31,7 @@ import {
   History,
   Link2,
   Activity,
+  BarChart3,
 } from "lucide-react"
 import { ModalShell } from "@/components/pythea/modal-shell"
 import { ConfirmDialog } from "@/components/pythea/confirm-dialog"
@@ -39,6 +40,7 @@ import { AdminHintsPanel } from "@/components/pythea/admin-hints-panel"
 import { AdminCampaignsPanel } from "@/components/pythea/admin-campaigns-panel"
 import { AdminLeadsPanel } from "@/components/pythea/admin-leads-panel"
 import { AdminActivityPanel } from "@/components/pythea/admin-activity-panel"
+import { AdminAnalyticsPanel } from "@/components/pythea/admin-analytics-panel"
 import { MAX_CREW_SIZE } from "@/lib/teams"
 import {
   adminDeleteUser,
@@ -63,7 +65,16 @@ import {
 import type { Difficulty, ScoreConfig } from "@/lib/clues"
 import type { ActivityPage } from "@/lib/activity"
 
-type Tab = "users" | "teams" | "qr" | "hints" | "campaigns" | "scoring" | "leads" | "activity"
+type Tab =
+  | "users"
+  | "teams"
+  | "qr"
+  | "hints"
+  | "campaigns"
+  | "scoring"
+  | "leads"
+  | "activity"
+  | "analytics"
 
 type ActivityFilter = { kind: "user" | "team"; id: string; label: string } | null
 
@@ -255,6 +266,9 @@ export function AdminDashboard({
         <TabButton active={tab === "activity"} onClick={() => setTab("activity")} icon={History}>
           Activity
         </TabButton>
+        <TabButton active={tab === "analytics"} onClick={() => setTab("analytics")} icon={BarChart3}>
+          Analytics
+        </TabButton>
       </div>
 
       {/* Search row, sits below the tab bar for the Users/Teams tabs */}
@@ -421,6 +435,8 @@ export function AdminDashboard({
             lockedFilter={activityFilter}
             onClearFilter={clearActivityFilter}
           />
+        ) : tab === "analytics" ? (
+          <AdminAnalyticsPanel initial={data.analytics} />
         ) : (
           <ScoringPanel
             config={data.scoreConfig}

@@ -20,6 +20,8 @@ import { useI18n } from "@/components/pythea/language-provider"
 import { useLiteMode } from "@/components/pythea/lite-mode-provider"
 import { JournalCover } from "@/components/pythea/journal-cover"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { track } from "@/lib/analytics-client"
+import { EV } from "@/lib/analytics-events"
 
 /** Maps each country to its real vintage stamp image in /public/stamps. */
 const STAMP_SRC: Record<string, string> = {
@@ -130,6 +132,25 @@ export function PoreiaView({
   useEffect(() => {
     setIndex((i) => Math.min(i, pages.length - 1))
   }, [pages.length])
+
+  // Analytics: one journal-open per mount, then a lead-view whenever the book
+  // settles on a revealed clue page. Guard against re-firing for the same lead.
+  const lastTrackedLead = useRef<number | null>(null)
+  useEffect(() => {
+    track(EV.journalOpen, undefined, { category: "hunt" })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  useEffect(() => {
+    if (flip) return
+    const page = pages[index]
+    if (page?.kind === "clue") {
+      const order = page.clue.order
+      if (lastTrackedLead.current !== order) {
+        lastTrackedLead.current = order
+        track(EV.journalLeadView, { leadOrder: order }, { category: "hunt" })
+      }
+    }
+  }, [index, flip, pages])
 
   const bookRef = useRef<HTMLDivElement>(null)
 

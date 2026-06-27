@@ -24,6 +24,8 @@ import {
   removeMember,
 } from "@/app/teams/actions"
 import type { Crew } from "@/lib/teams"
+import { track } from "@/lib/analytics-client"
+import { EV } from "@/lib/analytics-events"
 
 type Props = {
   crew: Crew | null
@@ -69,6 +71,7 @@ function EmptyPanel() {
     startTransition(async () => {
       const res = await createCrew(name)
       if (!res.ok) setError(errText(res.error))
+      else track(EV.teamCreate, undefined, { category: "team" })
       // On success the action revalidates /teams and the server re-renders.
     })
   }
@@ -79,6 +82,7 @@ function EmptyPanel() {
     startTransition(async () => {
       const res = await joinCrewByCode(code)
       if (!res.ok) setError(errText(res.error))
+      else track(EV.teamJoin, undefined, { category: "team" })
     })
   }
 
@@ -198,6 +202,7 @@ function CrewPanel({
   function handleLeave() {
     startTransition(async () => {
       await leaveCrew()
+      track(EV.teamLeave, undefined, { category: "team" })
       setLeaveOpen(false)
     })
   }

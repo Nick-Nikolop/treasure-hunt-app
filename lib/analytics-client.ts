@@ -81,6 +81,20 @@ export function getSessionId(): string {
   return getSession().id
 }
 
+/**
+ * The campaign token that brought this device in, if any (set by /c/<token> as
+ * the readable `cmp_src` cookie). Lets conversions be attributed to a source.
+ */
+function getCampaignSource(): string | undefined {
+  if (!isBrowser()) return undefined
+  try {
+    const m = document.cookie.match(/(?:^|;\s*)cmp_src=([^;]+)/)
+    return m ? decodeURIComponent(m[1]) : undefined
+  } catch {
+    return undefined
+  }
+}
+
 /** Coarse device class from the UA / touch heuristics. */
 function detectDevice(): string {
   if (!isBrowser()) return "unknown"
@@ -171,6 +185,11 @@ export function track(
 ) {
   if (!isBrowser()) return
   bindLifecycleListeners()
+  // Auto-attribute to the campaign that brought this device in, when present,
+  // so any event (sign-up, first solve, ...) can be credited to its source.
+  const source = getCampaignSource()
+  const enrichedProps =
+    source !== undefined ? { ...(props ?? {}), campaignSource: source } : props
   queue.push({
     name,
     category: opts?.category,
@@ -182,7 +201,7 @@ export function track(
     os: detectOS(),
     sessionId: getSessionId(),
     anonId: getAnonId(),
-    props,
+    props: enrichedProps,
   })
   if (queue.length >= MAX_QUEUE) flush(false)
   else scheduleFlush()

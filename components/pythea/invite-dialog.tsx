@@ -6,6 +6,8 @@ import { Check, Copy, Link2, RefreshCw } from "lucide-react"
 import { ModalShell } from "@/components/pythea/modal-shell"
 import { useI18n } from "@/components/pythea/language-provider"
 import { regenerateInvite } from "@/app/teams/actions"
+import { track } from "@/lib/analytics-client"
+import { EV } from "@/lib/analytics-events"
 
 /**
  * Invite dialog: shows the shareable join link, a QR code for it, and a
@@ -60,6 +62,7 @@ export function InviteDialog({
     if (!link) return
     try {
       await navigator.clipboard.writeText(link)
+      track(EV.inviteCopy, undefined, { category: "team" })
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {

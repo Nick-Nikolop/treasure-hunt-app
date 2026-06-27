@@ -18,6 +18,21 @@ export function ScanResult({ result }: { result: UnlockResult }) {
   const { t, locale } = useI18n()
   const s = t.scan
 
+  // Record the outcome of every scan exactly once. The server already decided
+  // the status; we log it (plus the lead order when present) for the funnel.
+  useEffect(() => {
+    const leadOrder = "leadOrder" in result ? result.leadOrder : undefined
+    track(EV.scanResult, { status: result.status, leadOrder }, { category: "hunt" })
+    if (result.status === "unlocked") {
+      track(EV.leadUnlocked, { leadOrder, source: "qr" }, { category: "hunt" })
+    } else if (result.status === "finished") {
+      track(EV.huntFinished, undefined, { category: "hunt" })
+    } else if (result.status === "cooldown") {
+      track(EV.cooldownShown, { leadOrder }, { category: "hunt" })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // The cooldown card ticks down live, so it gets its own stateful renderer.
   if (result.status === "cooldown") {
     return <CooldownCard availableAtMs={result.availableAtMs} />
@@ -190,7 +205,10 @@ function CooldownCard({ availableAtMs }: { availableAtMs: number }) {
         {ready ? (
           <button
             type="button"
-            onClick={() => window.location.reload()}
+            onClick={() => {
+              track(EV.cooldownRetry, undefined, { category: "hunt" })
+              window.location.reload()
+            }}
             className="inline-flex items-center justify-center gap-2 rounded-sm bg-brass px-5 py-3 font-sans text-xs font-bold tracking-chip text-primary-foreground transition-opacity hover:opacity-90"
           >
             <RotateCw className="size-4" />

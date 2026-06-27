@@ -1,10 +1,12 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { motion } from "framer-motion"
 import { Trophy, Users, User as UserIcon, MapPin, Flag, X } from "lucide-react"
 import { ModalShell } from "@/components/pythea/modal-shell"
 import { useI18n } from "@/components/pythea/language-provider"
+import { track } from "@/lib/analytics-client"
+import { EV } from "@/lib/analytics-events"
 import { STOP_XY, ROUTE_D, TAIL_D, TREASURE_XY, MAP_VIEWBOX } from "@/lib/voyage-map"
 import type { LeaderboardEntry } from "@/lib/hunt"
 
@@ -36,6 +38,11 @@ export function LeaderboardView({
 }: Props) {
   const { t, locale } = useI18n()
   const lb = t.leaderboard
+
+  useEffect(() => {
+    track(EV.leaderboardView, { entrants: entries.length }, { category: "leaderboard" })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Group every entry by the port (lead order) it currently sits on.
   const byPort = useMemo(() => {
