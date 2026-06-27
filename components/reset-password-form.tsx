@@ -8,6 +8,8 @@ import { motion } from "framer-motion"
 import { Eye, EyeOff, ArrowLeft, Loader2, CheckCircle2, AlertTriangle } from "lucide-react"
 import { authClient } from "@/lib/auth-client"
 import { useI18n } from "@/components/pythea/language-provider"
+import { track } from "@/lib/analytics-client"
+import { EV } from "@/lib/analytics-events"
 
 export function ResetPasswordForm() {
   const router = useRouter()
@@ -43,9 +45,11 @@ export function ResetPasswordForm() {
     const { error } = await authClient.resetPassword({ newPassword: password, token: token! })
     setLoading(false)
     if (error) {
+      track(EV.loginError, { reason: "reset_failed" }, { category: "auth" })
       setError(error.message || a.errGeneric)
       return
     }
+    track(EV.resetComplete, undefined, { category: "auth" })
     setDone(true)
   }
 

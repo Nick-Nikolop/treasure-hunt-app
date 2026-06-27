@@ -223,3 +223,42 @@ export const campaignVisit = pgTable(
     createdAtIdx: index("campaign_visit_createdAt_idx").on(t.createdAt),
   }),
 )
+
+// High-volume behavioural analytics. One row per tracked client event: page
+// views, button/CTA clicks, funnel steps, and timing events (e.g. how long a
+// login took). Unlike `activity_log` (a curated audit trail of business
+// events), this captures anonymous + signed-in front-end behaviour.
+//
+//  - `name`      dotted event name, e.g. "page.view", "auth.login.submit".
+//  - `category`  coarse bucket for filtering ("page" | "auth" | "hunt" | ...).
+//  - `userId`    signed-in user (resolved server-side from the session), or null.
+//  - `anonId`    client-minted anonymous id (localStorage) so anonymous sessions
+//                can be stitched together without identifying anyone.
+//  - `sessionId` per browsing-session id (resets when the tab session ends).
+//  - `durationMs` optional timing payload (time-on-page, form fill duration).
+//  - `props`     event-specific structured extras.
+export const analyticsEvent = pgTable(
+  "analytics_event",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    category: text("category").notNull().default("general"),
+    userId: text("userId"),
+    anonId: text("anonId"),
+    sessionId: text("sessionId"),
+    path: text("path"),
+    referrer: text("referrer"),
+    device: text("device"),
+    browser: text("browser"),
+    os: text("os"),
+    durationMs: integer("durationMs"),
+    props: jsonb("props").$type<Record<string, unknown>>(),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (t) => ({
+    nameIdx: index("analytics_event_name_idx").on(t.name),
+    createdAtIdx: index("analytics_event_createdAt_idx").on(t.createdAt),
+    categoryIdx: index("analytics_event_category_idx").on(t.category),
+    userIdIdx: index("analytics_event_userId_idx").on(t.userId),
+  }),
+)

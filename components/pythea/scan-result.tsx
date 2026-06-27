@@ -6,6 +6,8 @@ import { motion } from "framer-motion"
 import { BadgeCheck, Info, Lock, XCircle, BookOpen, Trophy, Hourglass, RotateCw } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
 import type { UnlockResult } from "@/lib/hunt"
+import { track } from "@/lib/analytics-client"
+import { EV } from "@/lib/analytics-events"
 
 /**
  * The outcome card shown after scanning a QR code at /q/[token]. The unlock

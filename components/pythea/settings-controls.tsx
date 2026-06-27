@@ -6,6 +6,8 @@ import { Moon, Sun, Globe, Zap } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
 import { useLiteMode } from "@/components/pythea/lite-mode-provider"
 import type { Locale } from "@/lib/i18n"
+import { track } from "@/lib/analytics-client"
+import { EV } from "@/lib/analytics-events"
 
 /**
  * Theme + language pickers rendered as compact segmented controls. Shared by
@@ -40,13 +42,19 @@ export function SettingsControls({ tone = "menu" }: { tone?: "menu" | "sheet" })
         <div className="grid grid-cols-2 gap-1 rounded-sm border border-border bg-card/60 p-1">
           <SegmentButton
             active={!isDark}
-            onClick={() => setTheme("light")}
+            onClick={() => {
+              setTheme("light")
+              track(EV.themeToggle, { theme: "light", tone }, { category: "settings" })
+            }}
             icon={<Sun className="size-3.5" />}
             label={t.auth.themeLight}
           />
           <SegmentButton
             active={isDark}
-            onClick={() => setTheme("dark")}
+            onClick={() => {
+              setTheme("dark")
+              track(EV.themeToggle, { theme: "dark", tone }, { category: "settings" })
+            }}
             icon={<Moon className="size-3.5" />}
             label={t.auth.themeDark}
           />
@@ -62,12 +70,18 @@ export function SettingsControls({ tone = "menu" }: { tone?: "menu" | "sheet" })
         <div className="grid grid-cols-2 gap-1 rounded-sm border border-border bg-card/60 p-1">
           <SegmentButton
             active={mounted && locale === "el"}
-            onClick={() => setLocale("el" as Locale)}
+            onClick={() => {
+              setLocale("el" as Locale)
+              track(EV.langToggle, { locale: "el", tone }, { category: "settings" })
+            }}
             label="Ελληνικά"
           />
           <SegmentButton
             active={mounted && locale === "en"}
-            onClick={() => setLocale("en" as Locale)}
+            onClick={() => {
+              setLocale("en" as Locale)
+              track(EV.langToggle, { locale: "en", tone }, { category: "settings" })
+            }}
             label="English"
           />
         </div>
@@ -82,12 +96,18 @@ export function SettingsControls({ tone = "menu" }: { tone?: "menu" | "sheet" })
         <div className="grid grid-cols-2 gap-1 rounded-sm border border-border bg-card/60 p-1">
           <SegmentButton
             active={mounted && !lite}
-            onClick={() => setLite(false)}
+            onClick={() => {
+              setLite(false)
+              track(EV.liteToggle, { lite: false, tone }, { category: "settings" })
+            }}
             label={t.auth.liteOffLabel}
           />
           <SegmentButton
             active={mounted && lite}
-            onClick={() => setLite(true)}
+            onClick={() => {
+              setLite(true)
+              track(EV.liteToggle, { lite: true, tone }, { category: "settings" })
+            }}
             icon={<Zap className="size-3.5" />}
             label={t.auth.liteOnLabel}
           />

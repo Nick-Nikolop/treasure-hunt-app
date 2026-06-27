@@ -6,6 +6,8 @@ import { useState } from "react"
 import { ChevronDown, KeyRound, LogOut, Settings, Shield, User, Users } from "lucide-react"
 import { authClient, useSession } from "@/lib/auth-client"
 import { useI18n } from "@/components/pythea/language-provider"
+import { track, flush } from "@/lib/analytics-client"
+import { EV } from "@/lib/analytics-events"
 import { ChangePasswordDialog } from "@/components/pythea/change-password-dialog"
 import { SettingsControls } from "@/components/pythea/settings-controls"
 import {
@@ -62,6 +64,8 @@ export function AuthNav({
 
   async function handleSignOut() {
     setSigningOut(true)
+    track(EV.logout, undefined, { category: "auth" })
+    flush()
     await authClient.signOut()
     setSigningOut(false)
     onNavigate?.()

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -8,6 +8,8 @@ import { motion } from "framer-motion"
 import { Eye, EyeOff, ArrowLeft, Loader2, MailCheck, CheckCircle2 } from "lucide-react"
 import { authClient } from "@/lib/auth-client"
 import { useI18n } from "@/components/pythea/language-provider"
+import { track, trackTiming } from "@/lib/analytics-client"
+import { EV } from "@/lib/analytics-events"
 
 type Mode = "sign-in" | "sign-up"
 
@@ -36,6 +38,38 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const [forgotMode, setForgotMode] = useState(false)
   const [forgotSent, setForgotSent] = useState(false)
 
+  // Analytics timing: when the form mounted, and when the user first touched a
+  // field. We measure "form fill time" from first interaction to success.
+  const mountedAt = useRef<number>(Date.now())
+  const startedAt = useRef<number | null>(null)
+  const trackingMode = isSignUp ? "sign_up" : "sign_in"
+
+  // Record the funnel entry once per mode change.
+  useEffect(() => {
+    track(EV.authView, { mode: trackingMode }, { category: "auth" })
+  }, [trackingMode])
+
+  // The "check your email" screen appearing means we're waiting on verification.
+  useEffect(() => {
+    if (awaitingVerification) {
+      track(EV.verifyOpen, { mode: trackingMode }, { category: "auth" })
+    }
+  }, [awaitingVerification, trackingMode])
+
+  // Mark the first field interaction (drives the timing measurement) and emit a
+  // single field-focus event so we can see drop-off before submit.
+  function markStart() {
+    if (startedAt.current == null) {
+      startedAt.current = Date.now()
+      track(EV.authFieldFocus, { mode: trackingMode }, { category: "auth" })
+    }
+  }
+
+  /** Milliseconds from first interaction (or mount) to now. */
+  function fillDuration() {
+    return Date.now() - (startedAt.current ?? mountedAt.current)
+  }
+
   // Map Better Auth error codes/messages onto localized copy.
   function localizeError(code?: string, message?: string) {
     const c = (code ?? "").toUpperCase()
@@ -59,6 +93,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
     await authClient.sendVerificationEmail({ email: email.trim(), callbackURL: "/" })
     setResending(false)
     setResent(true)
+    track(EV.verifyResent, { mode: trackingMode }, { category: "auth" })
   }
 
   // Ask Better Auth to email a reset link. We always show the same confirmation
@@ -77,6 +112,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
     })
     setLoading(false)
     setForgotSent(true)
+    track(EV.resetRequest, undefined, { category: "auth" })
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -104,6 +140,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
       }
 
       setLoading(true)
+      track(EV.registerSubmit, undefined, { category: "auth" })
       const fullName = [firstName.trim(), lastName.trim()].filter(Boolean).join(" ")
       const { error } = await authClient.signUp.email({
         email: email.trim(),
@@ -115,15 +152,18 @@ export function AuthForm({ mode }: { mode: Mode }) {
       })
       setLoading(false)
       if (error) {
+        track(EV.registerError, { reason: error.code ?? "unknown" }, { category: "auth" })
         setError(localizeError(error.code, error.message))
         return
       }
       // Account created, but sign-in is gated on email verification. Show the
       // "check your email" screen instead of redirecting.
+      trackTiming(EV.registerSuccess, fillDuration(), undefined, "auth")
       setAwaitingVerification(true)
       return
     } else {
       setLoading(true)
+      track(EV.loginSubmit, undefined, { category: "auth" })
       const { error } = await authClient.signIn.email({
         email: email.trim(),
         password,
@@ -133,12 +173,15 @@ export function AuthForm({ mode }: { mode: Mode }) {
         // A correct password on an unverified account lands here: guide them to
         // the verify screen (Better Auth also re-sends the link automatically).
         if (isUnverified(error.code, error.message)) {
+          track(EV.loginError, { reason: "unverified" }, { category: "auth" })
           setAwaitingVerification(true)
           return
         }
+        track(EV.loginError, { reason: error.code ?? "unknown" }, { category: "auth" })
         setError(localizeError(error.code, error.message))
         return
       }
+      trackTiming(EV.loginSuccess, fillDuration(), undefined, "auth")
     }
 
     // Honor a ?redirect= target (e.g. an invite link), but only allow internal
@@ -324,7 +367,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
             {isSignUp ? a.signUpSubtitle : a.signInSubtitle}
           </p>
 
-          <form onSubmit={handleSubmit} className="mt-7 flex flex-col gap-4">
+          <form onSubmit={handleSubmit} onFocusCapture={markStart} className="mt-7 flex flex-col gap-4">
             {isSignUp && (
               <>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

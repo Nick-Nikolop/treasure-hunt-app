@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import { ThemeProvider } from '@/components/theme-provider'
 import { LanguageProvider } from '@/components/pythea/language-provider'
 import { LiteModeProvider } from '@/components/pythea/lite-mode-provider'
+import { AnalyticsProvider } from '@/components/pythea/analytics-provider'
 import { DEFAULT_LOCALE, isLocale, LANG_COOKIE } from '@/lib/i18n'
 import './globals.css'
 
@@ -87,6 +88,7 @@ export default async function RootLayout({
           <LanguageProvider initialLocale={locale}>
             <LiteModeProvider>{children}</LiteModeProvider>
           </LanguageProvider>
+          <AnalyticsProvider />
         </ThemeProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
