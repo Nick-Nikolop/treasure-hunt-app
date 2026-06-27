@@ -190,3 +190,36 @@ export const activityLog = pgTable(
     teamIdx: index("activity_log_team_idx").on(t.teamId),
   }),
 )
+
+// Trackable marketing links. Each physical thing we print (flyer, poster,
+// t-shirt, sticker batch, ...) gets one of these. Its token resolves at
+// /c/<token>, which logs the visit and 302-redirects to the landing page.
+// `name` is what we call the campaign; `label` is an optional free note
+// (e.g. "Handed out at the square", "T-shirts").
+export const campaignLink = pgTable("campaign_link", {
+  id: text("id").primaryKey(),
+  token: text("token").notNull().unique(),
+  name: text("name").notNull(),
+  label: text("label"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+})
+
+// One row per visit to a campaign link. `visitorId` is an anonymous cookie id
+// so repeat visits from the same device can be collapsed into a single unique
+// visitor; `isUnique` is set true the first time a visitorId is seen for a link.
+export const campaignVisit = pgTable(
+  "campaign_visit",
+  {
+    id: text("id").primaryKey(),
+    linkId: text("linkId").notNull(),
+    visitorId: text("visitorId"),
+    isUnique: boolean("isUnique").notNull().default(false),
+    userAgent: text("userAgent"),
+    referrer: text("referrer"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (t) => ({
+    linkIdIdx: index("campaign_visit_linkId_idx").on(t.linkId),
+    createdAtIdx: index("campaign_visit_createdAt_idx").on(t.createdAt),
+  }),
+)

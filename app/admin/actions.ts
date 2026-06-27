@@ -35,6 +35,16 @@ import {
   setLeadDifficulties,
 } from "@/lib/scoring"
 import { getSolveCooldownSeconds, setSolveCooldownSeconds } from "@/lib/hunt-config"
+import {
+  listCampaigns,
+  createCampaign,
+  updateCampaign,
+  deleteCampaign,
+  regenerateCampaignToken,
+  getCampaignStats,
+  type CampaignRow,
+  type CampaignStats,
+} from "@/lib/campaigns"
 import { getEditableLeads, type EditableLead } from "@/lib/lead-content"
 import {
   TOTAL_CLUES,
@@ -124,6 +134,8 @@ export type AdminData = {
   tokens: ClueTokenRow[]
   /** Admin-authored hints, newest first. */
   hints: HintRow[]
+  /** Trackable marketing links with visit summaries, newest first. */
+  campaigns: CampaignRow[]
   /** Lead options (order + country names) for the hint association dropdown. */
   leadOptions: { order: number; country: string; countryEn: string }[]
   /** Global scoring tiers (placement points + difficulty bonuses). */
@@ -230,6 +242,7 @@ export async function getAdminData(): Promise<AdminData> {
     totalLeads: TOTAL_CLUES,
     tokens: await getClueTokens(),
     hints: await listHints(),
+    campaigns: await listCampaigns(),
     leadOptions: CLUES.map((c) => ({
       order: c.order,
       country: c.country,
@@ -929,6 +942,69 @@ export async function adminRegenerateHintToken(id: string): Promise<ActionResult
   await regenerateHintToken(id)
   revalidatePath("/admin")
   return { ok: true }
+}
+
+// ── Campaign links (trackable marketing redirects) ─────────────────────────
+
+/** Create a trackable campaign link. Returns ok with a fresh token + link. */
+export async function adminCreateCampaign(input: {
+  name: string
+  label: string | null
+}): Promise<ActionResult> {
+  const admin = await requireAdmin()
+  const name = input.name?.trim() ?? ""
+  const label = input.label?.trim() ? input.label.trim() : null
+  if (name.length < 2) return { ok: false, error: "too_short" }
+  if (name.length > 120) return { ok: false, error: "too_long" }
+
+  const created = await createCampaign({ name, label })
+  await logActivity({
+    category: "admin",
+    action: "admin.campaign_created",
+    ...adminActor(admin),
+    summary: `${adminActor(admin).actorName} created campaign link "${name}"`,
+    metadata: { token: created.token },
+  })
+  revalidatePath("/admin")
+  return { ok: true }
+}
+
+/** Update a campaign link's name / label. */
+export async function adminUpdateCampaign(
+  id: string,
+  input: { name: string; label: string | null },
+): Promise<ActionResult> {
+  await requireAdmin()
+  const name = input.name?.trim() ?? ""
+  const label = input.label?.trim() ? input.label.trim() : null
+  if (name.length < 2) return { ok: false, error: "too_short" }
+  if (name.length > 120) return { ok: false, error: "too_long" }
+
+  await updateCampaign(id, { name, label })
+  revalidatePath("/admin")
+  return { ok: true }
+}
+
+/** Delete a campaign link and all of its recorded visits. */
+export async function adminDeleteCampaign(id: string): Promise<ActionResult> {
+  await requireAdmin()
+  await deleteCampaign(id)
+  revalidatePath("/admin")
+  return { ok: true }
+}
+
+/** Issue a fresh token for a campaign link, invalidating the old one. */
+export async function adminRegenerateCampaignToken(id: string): Promise<ActionResult> {
+  await requireAdmin()
+  await regenerateCampaignToken(id)
+  revalidatePath("/admin")
+  return { ok: true }
+}
+
+/** Read the detailed visit stats (14-day series + recent visits) for a link. */
+export async function adminGetCampaignStats(id: string): Promise<CampaignStats> {
+  await requireAdmin()
+  return getCampaignStats(id)
 }
 
 /**

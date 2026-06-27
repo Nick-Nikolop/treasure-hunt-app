@@ -29,12 +29,14 @@ import {
   Save,
   ScrollText,
   History,
+  Link2,
   Activity,
 } from "lucide-react"
 import { ModalShell } from "@/components/pythea/modal-shell"
 import { ConfirmDialog } from "@/components/pythea/confirm-dialog"
 import { AdminPasswordDialog } from "@/components/pythea/admin-password-dialog"
 import { AdminHintsPanel } from "@/components/pythea/admin-hints-panel"
+import { AdminCampaignsPanel } from "@/components/pythea/admin-campaigns-panel"
 import { AdminLeadsPanel } from "@/components/pythea/admin-leads-panel"
 import { AdminActivityPanel } from "@/components/pythea/admin-activity-panel"
 import { MAX_CREW_SIZE } from "@/lib/teams"
@@ -61,7 +63,7 @@ import {
 import type { Difficulty, ScoreConfig } from "@/lib/clues"
 import type { ActivityPage } from "@/lib/activity"
 
-type Tab = "users" | "teams" | "qr" | "hints" | "scoring" | "leads" | "activity"
+type Tab = "users" | "teams" | "qr" | "hints" | "campaigns" | "scoring" | "leads" | "activity"
 
 type ActivityFilter = { kind: "user" | "team"; id: string; label: string } | null
 
@@ -241,6 +243,9 @@ export function AdminDashboard({
         <TabButton active={tab === "hints"} onClick={() => setTab("hints")} icon={Lightbulb}>
           Hints
         </TabButton>
+        <TabButton active={tab === "campaigns"} onClick={() => setTab("campaigns")} icon={Link2}>
+          Campaigns
+        </TabButton>
         <TabButton active={tab === "leads"} onClick={() => setTab("leads")} icon={ScrollText}>
           Leads
         </TabButton>
@@ -405,6 +410,8 @@ export function AdminDashboard({
           />
         ) : tab === "hints" ? (
           <AdminHintsPanel hints={data.hints} leadOptions={data.leadOptions} />
+        ) : tab === "campaigns" ? (
+          <AdminCampaignsPanel campaigns={data.campaigns} />
         ) : tab === "leads" ? (
           <AdminLeadsPanel leads={data.leads} />
         ) : tab === "activity" ? (
