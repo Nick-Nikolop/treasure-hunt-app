@@ -31,13 +31,10 @@ export const metadata: Metadata = {
   title: SITE_TITLE,
   description: SITE_DESCRIPTION,
   generator: 'v0.app',
-  icons: {
-    icon: [
-      { url: '/compass-icon.png', type: 'image/png' },
-    ],
-    shortcut: '/compass-icon.png',
-    apple: '/compass-icon.png',
-  },
+  // Favicon + apple touch icon are provided by the file-based conventions
+  // app/icon.png and app/apple-icon.png (lightweight, properly sized crops of
+  // the compass logo). Do not re-add an `icons` field here, it would override
+  // those files and point back at the heavy 1024px source image.
   openGraph: {
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
