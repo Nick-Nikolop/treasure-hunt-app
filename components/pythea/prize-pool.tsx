@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { motion, useInView, useScroll, useTransform, animate } from "framer-motion"
-import { Crown, Medal, Award, Coins, Info, Users, Timer, PartyPopper, Trophy } from "lucide-react"
+import { Crown, Medal, Award, Coins, Info, Users, Timer, PartyPopper } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
 import { cn } from "@/lib/utils"
 
@@ -52,8 +52,6 @@ export function PrizePool() {
     offset: ["start end", "end start"],
   })
   const glowScale = useTransform(scrollYProgress, [0, 0.5, 1], [0.8, 1, 1.15])
-
-  const total = p.poolValue
 
   return (
     <section
@@ -119,68 +117,6 @@ export function PrizePool() {
             {p.intro}
           </motion.p>
         </div>
-
-        {/* Prize pool total + split bar */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.8, delay: 0.15 }}
-          className="mx-auto mt-8 max-w-2xl rounded-2xl border border-brass/30 bg-card/50 p-5 backdrop-blur-sm md:mt-12 md:p-6"
-        >
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2.5">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-full border border-brass/50 text-brass md:size-10">
-                <Trophy className="size-4 md:size-5" strokeWidth={1.75} />
-              </span>
-              <span className="font-sans text-xs font-bold uppercase tracking-chip text-muted-foreground">
-                {p.poolLabel}
-              </span>
-            </div>
-            <span className="font-serif text-3xl font-black leading-none text-brass md:text-4xl">
-              {p.currency}
-              <CountUp to={total} duration={1.8} />
-            </span>
-          </div>
-
-          {/* Segmented split bar: each tier's share of the pool */}
-          <div className="mt-5 flex h-3 w-full gap-1 overflow-hidden rounded-full">
-            {p.tiers.map((tier, i) => {
-              const m = META[i]
-              return (
-                <motion.span
-                  key={tier.place}
-                  aria-hidden
-                  className="h-full rounded-full"
-                  style={{ backgroundColor: m.ring }}
-                  initial={{ width: 0 }}
-                  whileInView={{ width: `${(tier.amount / total) * 100}%` }}
-                  viewport={{ once: true, margin: "0px 0px -40px 0px" }}
-                  transition={{ duration: 1, delay: 0.35 + i * 0.12, ease: [0.16, 1, 0.3, 1] }}
-                />
-              )
-            })}
-          </div>
-          <div className="mt-2.5 flex items-center justify-between">
-            <span className="font-sans text-[11px] font-bold uppercase tracking-chip text-muted-foreground">
-              {p.splitLabel}
-            </span>
-            <div className="flex items-center gap-3">
-              {p.tiers.map((tier, i) => (
-                <span key={tier.place} className="flex items-center gap-1.5">
-                  <span
-                    aria-hidden
-                    className="size-2 rounded-full"
-                    style={{ backgroundColor: META[i].ring }}
-                  />
-                  <span className="font-sans text-[11px] font-semibold text-muted-foreground">
-                    {tier.share}
-                  </span>
-                </span>
-              ))}
-            </div>
-          </div>
-        </motion.div>
 
         {/* Podium */}
         <div className="mt-6 flex flex-col items-stretch justify-center gap-3 md:mt-14 md:flex-row md:items-end md:gap-5">
