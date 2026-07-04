@@ -12,7 +12,10 @@ import { cn } from "@/lib/utils"
  */
 function CountUp({ to, duration = 1.6, delay = 0 }: { to: number; duration?: number; delay?: number }) {
   const ref = useRef<HTMLSpanElement>(null)
-  const inView = useInView(ref, { once: true, margin: "-60px" })
+  // Only inset the trigger area vertically. A uniform negative margin also
+  // shrinks the left/right edges, which on mobile can leave the amount (sitting
+  // near the right edge of its row) permanently "out of view" so it never counts.
+  const inView = useInView(ref, { once: true, margin: "0px 0px -40px 0px" })
   const [value, setValue] = useState(0)
 
   useEffect(() => {
@@ -51,7 +54,7 @@ export function PrizePool() {
     <section
       id="prize"
       ref={ref}
-      className="relative scroll-mt-20 overflow-hidden border-y border-border py-28 md:scroll-mt-28 md:py-40"
+      className="relative scroll-mt-20 overflow-hidden border-y border-border py-16 md:scroll-mt-28 md:py-40"
     >
       {/* Brass glow + drifting coins backdrop */}
       <motion.div
@@ -95,7 +98,7 @@ export function PrizePool() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-80px" }}
             transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-            className="mt-6 text-balance font-serif text-3xl font-black leading-[1.05] text-foreground md:text-5xl lg:text-6xl"
+            className="mt-4 text-balance font-serif text-2xl font-black leading-[1.08] text-foreground md:mt-6 md:text-5xl lg:text-6xl"
           >
             {p.titlePre}{" "}
             <span className="italic text-brass">{p.titleEm}</span>
@@ -106,14 +109,14 @@ export function PrizePool() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-60px" }}
             transition={{ duration: 0.9, delay: 0.12 }}
-            className="mx-auto mt-6 max-w-xl text-pretty font-serif text-lg leading-relaxed text-muted-foreground md:text-xl"
+            className="mx-auto mt-4 max-w-xl text-pretty font-serif text-base leading-relaxed text-muted-foreground md:mt-6 md:text-xl"
           >
             {p.intro}
           </motion.p>
         </div>
 
         {/* Podium */}
-        <div className="mt-14 flex flex-col items-stretch justify-center gap-5 md:flex-row md:items-end">
+        <div className="mt-8 flex flex-col items-stretch justify-center gap-3 md:mt-14 md:flex-row md:items-end md:gap-5">
           {p.tiers.map((tier, i) => {
             const m = META[i]
             const Icon = m.Icon
@@ -125,11 +128,11 @@ export function PrizePool() {
                 viewport={{ once: true, margin: "-80px" }}
                 transition={{ duration: 0.8, delay: i * 0.16, ease: [0.16, 1, 0.3, 1] }}
                 className={cn(
-                  "relative flex flex-col items-center overflow-hidden rounded-xl border bg-card/60 px-6 text-center backdrop-blur-sm md:w-64",
+                  "relative flex flex-row items-center gap-4 overflow-hidden rounded-xl border bg-card/60 px-5 py-4 text-left backdrop-blur-sm md:w-64 md:flex-col md:gap-0 md:px-6 md:text-center",
                   m.order,
                   m.tall
-                    ? "border-brass/50 py-12 shadow-[0_0_60px_-12px_var(--brass)] md:py-16"
-                    : "border-border py-10 md:py-12",
+                    ? "border-brass/50 shadow-[0_0_40px_-14px_var(--brass)] md:py-16 md:shadow-[0_0_60px_-12px_var(--brass)]"
+                    : "border-border md:py-12",
                 )}
               >
                 {/* Shimmer sweep, winner only */}
@@ -154,31 +157,33 @@ export function PrizePool() {
 
                 {/* Rank medallion */}
                 <span
-                  className="flex size-14 items-center justify-center rounded-full border"
+                  className="flex size-11 shrink-0 items-center justify-center rounded-full border md:size-14"
                   style={{ borderColor: m.ring, color: m.ring }}
                 >
-                  <Icon className="size-7" strokeWidth={1.75} />
+                  <Icon className="size-6 md:size-7" strokeWidth={1.75} />
                 </span>
 
-                <span className="mt-5 font-sans text-xs font-bold tracking-chip text-muted-foreground">
-                  {tier.place}
-                </span>
+                {/* Place + tag: fills the row on mobile, stacks on desktop */}
+                <div className="flex flex-1 flex-col md:flex-none md:items-center">
+                  <span className="font-sans text-xs font-bold tracking-chip text-muted-foreground md:mt-5">
+                    {tier.place}
+                  </span>
+                  <span
+                    className="mt-1 font-sans text-[11px] font-bold uppercase tracking-chip md:order-last md:mt-4"
+                    style={{ color: m.ring }}
+                  >
+                    {tier.tag}
+                  </span>
+                </div>
 
                 <span
                   className={cn(
-                    "mt-3 font-serif font-black leading-none text-foreground",
-                    m.tall ? "text-5xl md:text-6xl" : "text-4xl md:text-5xl",
+                    "shrink-0 font-serif font-black leading-none text-foreground md:mt-3",
+                    m.tall ? "text-3xl md:text-6xl" : "text-3xl md:text-5xl",
                   )}
                 >
                   {p.currency}
                   <CountUp to={tier.amount} delay={0.3 + i * 0.16} />
-                </span>
-
-                <span
-                  className="mt-4 font-sans text-[11px] font-bold uppercase tracking-chip"
-                  style={{ color: m.ring }}
-                >
-                  {tier.tag}
                 </span>
               </motion.div>
             )
@@ -191,7 +196,7 @@ export function PrizePool() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="mx-auto mt-12 flex max-w-md items-center justify-center gap-2.5 rounded-full border border-border bg-card/40 px-5 py-3 text-center"
+          className="mx-auto mt-8 flex max-w-md items-center justify-center gap-2.5 rounded-full border border-border bg-card/40 px-5 py-3 text-center md:mt-12"
         >
           <Info className="size-4 shrink-0 text-brass" aria-hidden />
           <p className="font-sans text-sm leading-snug text-muted-foreground">{p.disclaimer}</p>
