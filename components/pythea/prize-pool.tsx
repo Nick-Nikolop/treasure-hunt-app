@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { motion, useInView, useScroll, useTransform, animate } from "framer-motion"
-import { Crown, Medal, Award, Coins, Info } from "lucide-react"
+import { Crown, Medal, Award, Coins, Info, Users, Timer, PartyPopper, Trophy } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
 import { cn } from "@/lib/utils"
 
@@ -35,10 +35,13 @@ function CountUp({ to, duration = 1.6, delay = 0 }: { to: number; duration?: num
 // Per-tier visual treatment. The array order matches the copy (1st, 2nd, 3rd);
 // on desktop the podium reorders to 2nd | 1st | 3rd with the winner tallest.
 const META = [
-  { Icon: Crown, ring: "var(--brass)", order: "md:order-2", tall: true },
-  { Icon: Medal, ring: "#c9ccd3", order: "md:order-1", tall: false },
-  { Icon: Award, ring: "#c08457", order: "md:order-3", tall: false },
+  { Icon: Crown, ring: "var(--brass)", order: "md:order-2", tall: true, rank: 1 },
+  { Icon: Medal, ring: "#c9ccd3", order: "md:order-1", tall: false, rank: 2 },
+  { Icon: Award, ring: "#c08457", order: "md:order-3", tall: false, rank: 3 },
 ] as const
+
+// Icons for the "how it works" facts row, matched to the copy order.
+const FACT_ICONS = [Users, Timer, PartyPopper] as const
 
 export function PrizePool() {
   const { t } = useI18n()
@@ -49,6 +52,8 @@ export function PrizePool() {
     offset: ["start end", "end start"],
   })
   const glowScale = useTransform(scrollYProgress, [0, 0.5, 1], [0.8, 1, 1.15])
+
+  const total = p.poolValue
 
   return (
     <section
@@ -115,8 +120,70 @@ export function PrizePool() {
           </motion.p>
         </div>
 
+        {/* Prize pool total + split bar */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.8, delay: 0.15 }}
+          className="mx-auto mt-8 max-w-2xl rounded-2xl border border-brass/30 bg-card/50 p-5 backdrop-blur-sm md:mt-12 md:p-6"
+        >
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2.5">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-full border border-brass/50 text-brass md:size-10">
+                <Trophy className="size-4 md:size-5" strokeWidth={1.75} />
+              </span>
+              <span className="font-sans text-xs font-bold uppercase tracking-chip text-muted-foreground">
+                {p.poolLabel}
+              </span>
+            </div>
+            <span className="font-serif text-3xl font-black leading-none text-brass md:text-4xl">
+              {p.currency}
+              <CountUp to={total} duration={1.8} />
+            </span>
+          </div>
+
+          {/* Segmented split bar: each tier's share of the pool */}
+          <div className="mt-5 flex h-3 w-full gap-1 overflow-hidden rounded-full">
+            {p.tiers.map((tier, i) => {
+              const m = META[i]
+              return (
+                <motion.span
+                  key={tier.place}
+                  aria-hidden
+                  className="h-full rounded-full"
+                  style={{ backgroundColor: m.ring }}
+                  initial={{ width: 0 }}
+                  whileInView={{ width: `${(tier.amount / total) * 100}%` }}
+                  viewport={{ once: true, margin: "0px 0px -40px 0px" }}
+                  transition={{ duration: 1, delay: 0.35 + i * 0.12, ease: [0.16, 1, 0.3, 1] }}
+                />
+              )
+            })}
+          </div>
+          <div className="mt-2.5 flex items-center justify-between">
+            <span className="font-sans text-[11px] font-bold uppercase tracking-chip text-muted-foreground">
+              {p.splitLabel}
+            </span>
+            <div className="flex items-center gap-3">
+              {p.tiers.map((tier, i) => (
+                <span key={tier.place} className="flex items-center gap-1.5">
+                  <span
+                    aria-hidden
+                    className="size-2 rounded-full"
+                    style={{ backgroundColor: META[i].ring }}
+                  />
+                  <span className="font-sans text-[11px] font-semibold text-muted-foreground">
+                    {tier.share}
+                  </span>
+                </span>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+
         {/* Podium */}
-        <div className="mt-8 flex flex-col items-stretch justify-center gap-3 md:mt-14 md:flex-row md:items-end md:gap-5">
+        <div className="mt-6 flex flex-col items-stretch justify-center gap-3 md:mt-14 md:flex-row md:items-end md:gap-5">
           {p.tiers.map((tier, i) => {
             const m = META[i]
             const Icon = m.Icon
@@ -128,11 +195,11 @@ export function PrizePool() {
                 viewport={{ once: true, margin: "-80px" }}
                 transition={{ duration: 0.8, delay: i * 0.16, ease: [0.16, 1, 0.3, 1] }}
                 className={cn(
-                  "relative flex flex-row items-center gap-4 overflow-hidden rounded-xl border bg-card/60 px-5 py-4 text-left backdrop-blur-sm md:w-64 md:flex-col md:gap-0 md:px-6 md:text-center",
+                  "relative flex flex-row items-start gap-4 overflow-hidden rounded-xl border bg-card/60 px-5 py-4 text-left backdrop-blur-sm md:w-64 md:flex-col md:items-center md:gap-0 md:px-6 md:text-center",
                   m.order,
                   m.tall
-                    ? "border-brass/50 shadow-[0_0_40px_-14px_var(--brass)] md:py-16 md:shadow-[0_0_60px_-12px_var(--brass)]"
-                    : "border-border md:py-12",
+                    ? "border-brass/50 shadow-[0_0_40px_-14px_var(--brass)] md:py-10 md:shadow-[0_0_60px_-12px_var(--brass)]"
+                    : "border-border md:py-8",
                 )}
               >
                 {/* Shimmer sweep, winner only */}
@@ -155,6 +222,14 @@ export function PrizePool() {
                   />
                 )}
 
+                {/* Rank number, corner on desktop */}
+                <span
+                  className="absolute right-3 top-3 hidden font-serif text-4xl font-black leading-none text-foreground/5 md:block"
+                  aria-hidden
+                >
+                  {m.rank}
+                </span>
+
                 {/* Rank medallion */}
                 <span
                   className="flex size-11 shrink-0 items-center justify-center rounded-full border md:size-14"
@@ -163,27 +238,63 @@ export function PrizePool() {
                   <Icon className="size-6 md:size-7" strokeWidth={1.75} />
                 </span>
 
-                {/* Place + tag: fills the row on mobile, stacks on desktop */}
+                {/* Place + tag + blurb: fills the row on mobile, stacks on desktop */}
                 <div className="flex flex-1 flex-col md:flex-none md:items-center">
-                  <span className="font-sans text-xs font-bold tracking-chip text-muted-foreground md:mt-5">
-                    {tier.place}
-                  </span>
-                  <span
-                    className="mt-1 font-sans text-[11px] font-bold uppercase tracking-chip md:order-last md:mt-4"
-                    style={{ color: m.ring }}
-                  >
-                    {tier.tag}
-                  </span>
-                </div>
+                  <div className="flex items-center gap-2 md:mt-4 md:flex-col md:gap-1.5">
+                    <span className="font-sans text-xs font-bold tracking-chip text-muted-foreground">
+                      {tier.place}
+                    </span>
+                    <span
+                      className="rounded-full border px-2 py-0.5 font-sans text-[10px] font-bold uppercase tracking-chip"
+                      style={{ color: m.ring, borderColor: m.ring }}
+                    >
+                      {tier.tag}
+                    </span>
+                  </div>
 
-                <span
-                  className={cn(
-                    "shrink-0 font-serif font-black leading-none text-foreground md:mt-3",
-                    m.tall ? "text-3xl md:text-6xl" : "text-3xl md:text-5xl",
-                  )}
-                >
-                  {p.currency}
-                  <CountUp to={tier.amount} delay={0.3 + i * 0.16} />
+                  {/* Amount: inline on mobile row, block on desktop */}
+                  <span
+                    className={cn(
+                      "mt-1.5 font-serif font-black leading-none text-foreground md:mt-4",
+                      m.tall ? "text-3xl md:text-5xl" : "text-3xl md:text-4xl",
+                    )}
+                  >
+                    {p.currency}
+                    <CountUp to={tier.amount} delay={0.3 + i * 0.16} />
+                  </span>
+
+                  <p className="mt-2 text-pretty font-sans text-xs leading-relaxed text-muted-foreground md:mt-3 md:max-w-[13rem]">
+                    {tier.blurb}
+                  </p>
+                </div>
+              </motion.div>
+            )
+          })}
+        </div>
+
+        {/* How it works facts */}
+        <div className="mx-auto mt-6 grid max-w-2xl grid-cols-3 gap-3 md:mt-10">
+          {p.facts.map((fact, i) => {
+            const FactIcon = FACT_ICONS[i]
+            return (
+              <motion.div
+                key={fact.label}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "0px 0px -40px 0px" }}
+                transition={{ duration: 0.6, delay: i * 0.1 }}
+                className="flex flex-col items-center gap-1.5 rounded-xl border border-border bg-card/40 px-2 py-4 text-center md:flex-row md:gap-3 md:px-4 md:text-left"
+              >
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-brass/40 text-brass md:size-10">
+                  <FactIcon className="size-4 md:size-5" strokeWidth={1.75} />
+                </span>
+                <span className="flex flex-col">
+                  <span className="font-sans text-[10px] font-bold uppercase tracking-chip text-muted-foreground md:text-[11px]">
+                    {fact.label}
+                  </span>
+                  <span className="font-serif text-sm font-bold leading-tight text-foreground md:text-base">
+                    {fact.value}
+                  </span>
                 </span>
               </motion.div>
             )
@@ -196,7 +307,7 @@ export function PrizePool() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="mx-auto mt-8 flex max-w-md items-center justify-center gap-2.5 rounded-full border border-border bg-card/40 px-5 py-3 text-center md:mt-12"
+          className="mx-auto mt-6 flex max-w-md items-center justify-center gap-2.5 rounded-full border border-border bg-card/40 px-5 py-3 text-center md:mt-10"
         >
           <Info className="size-4 shrink-0 text-brass" aria-hidden />
           <p className="font-sans text-sm leading-snug text-muted-foreground">{p.disclaimer}</p>

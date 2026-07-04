@@ -92,12 +92,39 @@ const el = {
     titleEm: "500 ευρώ.",
     intro:
       "Οι τρεις ομάδες που θα φτάσουν πρώτες στο τέλος του ταξιδιού μοιράζονται το έπαθλο.",
+    poolLabel: "Συνολικό έπαθλο",
+    poolValue: 500,
+    splitLabel: "Πώς μοιράζεται",
     tiers: [
-      { place: "1η ΘΕΣΗ", amount: 300, tag: "Χρυσός" },
-      { place: "2η ΘΕΣΗ", amount: 150, tag: "Ασήμι" },
-      { place: "3η ΘΕΣΗ", amount: 50, tag: "Χαλκός" },
+      {
+        place: "1η ΘΕΣΗ",
+        amount: 300,
+        tag: "Χρυσός",
+        share: "60%",
+        blurb:
+          "Η ομάδα που θα λύσει πρώτη όλους τους γρίφους και θα φτάσει στον τελικό προορισμό.",
+      },
+      {
+        place: "2η ΘΕΣΗ",
+        amount: 150,
+        tag: "Ασήμι",
+        share: "30%",
+        blurb: "Η δεύτερη ομάδα που θα ολοκληρώσει ολόκληρη τη διαδρομή.",
+      },
+      {
+        place: "3η ΘΕΣΗ",
+        amount: 50,
+        tag: "Χαλκός",
+        share: "10%",
+        blurb: "Η τρίτη ομάδα που θα ανέβει στο βάθρο των νικητών.",
+      },
     ],
     currency: "€",
+    facts: [
+      { label: "Βάθρο", value: "3 ομάδες" },
+      { label: "Κατάταξη", value: "Χρόνος ολοκλήρωσης" },
+      { label: "Απονομή", value: "Στο τελικό πάρτι" },
+    ],
     disclaimer:
       "Το έπαθλο αφορά ολόκληρη την ομάδα, όχι κάθε άτομο ξεχωριστά.",
   },
@@ -151,7 +178,7 @@ const el = {
       },
       {
         title: "Ομάδες σε λίγο καιρό",
-        text: "Σύντομα θα μπορείς να φτιάξεις ή να μπεις σε ομάδα ως και 8 ατόμων.",
+        text: "Σύντομα θα μπορείς να φτιάξεις ή να μπεις σε ομάδα ως ��αι 8 ατόμων.",
       },
       {
         title: "Πρώτος στα νέα",
@@ -626,12 +653,38 @@ const en: Dictionary = {
     titleEm: "500 euros.",
     intro:
       "The three teams that reach the end of the journey first share the prize.",
+    poolLabel: "Total prize pool",
+    poolValue: 500,
+    splitLabel: "How it splits",
     tiers: [
-      { place: "1ST PLACE", amount: 300, tag: "Gold" },
-      { place: "2ND PLACE", amount: 150, tag: "Silver" },
-      { place: "3RD PLACE", amount: 50, tag: "Bronze" },
+      {
+        place: "1ST PLACE",
+        amount: 300,
+        tag: "Gold",
+        share: "60%",
+        blurb: "The team that solves every clue first and reaches the final destination.",
+      },
+      {
+        place: "2ND PLACE",
+        amount: 150,
+        tag: "Silver",
+        share: "30%",
+        blurb: "The second team to complete the entire route.",
+      },
+      {
+        place: "3RD PLACE",
+        amount: 50,
+        tag: "Bronze",
+        share: "10%",
+        blurb: "The third team to reach the winners' podium.",
+      },
     ],
     currency: "€",
+    facts: [
+      { label: "Podium", value: "3 teams" },
+      { label: "Ranking", value: "Completion time" },
+      { label: "Awarded", value: "At the final party" },
+    ],
     disclaimer: "The prize is for the whole team, not per person.",
   },
   how: {
