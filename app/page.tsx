@@ -4,6 +4,7 @@ import { Hero } from "@/components/pythea/hero"
 import { Story } from "@/components/pythea/story"
 import { Journey } from "@/components/pythea/journey"
 import { Treasure } from "@/components/pythea/treasure"
+import { PrizePool } from "@/components/pythea/prize-pool"
 import { HowItWorks } from "@/components/pythea/how-it-works"
 import { Register } from "@/components/pythea/register"
 import { Faq } from "@/components/pythea/faq"
@@ -53,6 +54,7 @@ export default async function Page() {
         />
         <Story />
         <Treasure />
+        <PrizePool />
         <HowItWorks />
         <Faq />
       </main>

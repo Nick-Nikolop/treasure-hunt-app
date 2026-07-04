@@ -37,8 +37,8 @@ const el = {
     titleName: "Πυθέα",
     titleBottom: ["του", "Μεσσήνιου"],
     subtitle:
-      "Ένα κυνήγι θησαυρού στην Καλαμάτα. Ακολούθησε τα ίχνη ενός πολυταξιδεμένου εξερευνητή και μάθε να βλέπεις την πόλη σαν να την ανακαλύπτεις για πρώτη φορά.",
-    ctaStart: "ΞΕΚΙΝΑ ΤΗΝ ΑΝΑΖΗΤΗΣΗ",
+      "Ένα κυνήγι θησαυρού στην Καλαμάτα. Ακολούθησε τα ίχνη ενός πολυταξιδεμένου εξερευνητή και ανακάλυψε ξανά την Καλαμάτα.",
+    ctaStart: "ΜΠΕΣ ΣΤΟ ΚΥΝΗΓΙ",
     ctaStory: "Η ΙΣΤΟΡΙΑ ΤΟΥ ΠΥΘΕΑ",
     scroll: "ΚΥΛΗΣΕ",
   },
@@ -85,6 +85,21 @@ const el = {
     titlePre: "Ο Πυθέας δεν έκρυψε χρυσάφι. Έκρυψε έναν",
     titleEm: "τρόπο να βλέπεις.",
     body: "Κάθε ομάδα που ακολουθεί τα ίχνη του πλησιάζει σε αυτό που ο ίδιος θεωρούσε αληθινό θησαυρό: την ικανότητα να ανακαλύπτεις το άγνωστο μέσα στο γνώριμο.",
+  },
+  prize: {
+    section: "ΤΟ ΕΠΑΘΛΟ",
+    titlePre: "Χρηματικό έπαθλο",
+    titleEm: "500 ευρώ.",
+    intro:
+      "Οι τρεις ομάδες που θα φτάσουν πρώτες στο τέλος του ταξιδιού μοιράζονται το έπαθλο.",
+    tiers: [
+      { place: "1η ΘΕΣΗ", amount: 300, tag: "Χρυσός" },
+      { place: "2η ΘΕΣΗ", amount: 150, tag: "Ασήμι" },
+      { place: "3η ΘΕΣΗ", amount: 50, tag: "Χαλκός" },
+    ],
+    currency: "€",
+    disclaimer:
+      "Το έπαθλο αφορά ολόκληρη την ομάδα, όχι κάθε άτομο ξεχωριστά.",
   },
   how: {
     section: "IV. ΠΩΣ ΠΑΙΖΕΤΑΙ",
@@ -557,8 +572,8 @@ const en: Dictionary = {
     titleName: "Pytheas",
     titleBottom: ["the", "Messenian"],
     subtitle:
-      "A treasure hunt through Kalamata. Follow the trail of a well-travelled explorer and learn to see the city as if you were discovering it for the first time.",
-    ctaStart: "BEGIN THE SEARCH",
+      "A treasure hunt through Kalamata. Follow the trail of a well-travelled explorer and rediscover Kalamata.",
+    ctaStart: "ENTER THE HUNT",
     ctaStory: "THE STORY OF PYTHEAS",
     scroll: "SCROLL",
   },
@@ -604,6 +619,20 @@ const en: Dictionary = {
     titlePre: "Pytheas did not hide gold. He hid a",
     titleEm: "way of seeing.",
     body: "Every team that follows his trail draws closer to what he considered the true treasure: the ability to discover the unknown within the familiar.",
+  },
+  prize: {
+    section: "THE PRIZE",
+    titlePre: "A prize pool of",
+    titleEm: "500 euros.",
+    intro:
+      "The three teams that reach the end of the journey first share the prize.",
+    tiers: [
+      { place: "1ST PLACE", amount: 300, tag: "Gold" },
+      { place: "2ND PLACE", amount: 150, tag: "Silver" },
+      { place: "3RD PLACE", amount: 50, tag: "Bronze" },
+    ],
+    currency: "€",
+    disclaimer: "The prize is for the whole team, not per person.",
   },
   how: {
     section: "IV. HOW TO PLAY",
