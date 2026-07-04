@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Alegreya, Alegreya_Sans } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { cookies } from 'next/headers'
@@ -6,7 +6,8 @@ import { ThemeProvider } from '@/components/theme-provider'
 import { LanguageProvider } from '@/components/pythea/language-provider'
 import { LiteModeProvider } from '@/components/pythea/lite-mode-provider'
 import { AnalyticsProvider } from '@/components/pythea/analytics-provider'
-import { DEFAULT_LOCALE, isLocale, LANG_COOKIE } from '@/lib/i18n'
+import { DEFAULT_LOCALE, isLocale, LANG_COOKIE, type Locale } from '@/lib/i18n'
+import { SITE, SITE_URL, KEYWORDS, BRAND, BRAND_NAME_EN } from '@/lib/seo'
 import './globals.css'
 
 const alegreya = Alegreya({
@@ -23,38 +24,88 @@ const alegreyaSans = Alegreya_Sans({
   variable: '--font-alegreya-sans',
   display: 'swap',
 })
-const SITE_TITLE = 'Το Ταξίδι του Πυθέα του Μεσσήνιου'
-const SITE_DESCRIPTION =
-  'Κυνήγι θησαυρού στην Καλαμάτα. Ακολούθησε τα ίχνη ενός πολυταξιδεμένου εξερευνητή και μάθε να κοιτάς την πόλη σαν να την ανακαλύπτεις για πρώτη φορά.'
+async function resolveLocale(): Promise<Locale> {
+  const store = await cookies()
+  const cookieLang = store.get(LANG_COOKIE)?.value
+  return isLocale(cookieLang) ? cookieLang : DEFAULT_LOCALE
+}
 
-export const metadata: Metadata = {
-  title: SITE_TITLE,
-  description: SITE_DESCRIPTION,
-  generator: 'v0.app',
-  // Favicon + apple touch icon are provided by the file-based conventions
-  // app/icon.png and app/apple-icon.png (lightweight, properly sized crops of
-  // the compass logo). Do not re-add an `icons` field here, it would override
-  // those files and point back at the heavy 1024px source image.
-  openGraph: {
-    title: SITE_TITLE,
-    description: SITE_DESCRIPTION,
-    type: 'website',
-    locale: 'el_GR',
-    images: [
-      {
-        url: '/compass-icon.png',
-        width: 1024,
-        height: 1024,
-        alt: 'Πυθέας - πυξίδα',
+// Localized, per-request metadata. Greek is the default; the language is chosen
+// via cookie and served from the SAME URL, so the canonical is the bare origin
+// and the two languages are declared through Open Graph locale alternates.
+// The Open Graph + Twitter images are supplied automatically by the file-based
+// conventions app/opengraph-image.tsx and app/twitter-image.tsx.
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await resolveLocale()
+  const s = SITE[locale]
+  const isEl = locale === 'el'
+
+  return {
+    metadataBase: new URL(SITE_URL),
+    title: {
+      default: s.title,
+      template: s.titleTemplate,
+    },
+    description: s.description,
+    applicationName: BRAND_NAME_EN,
+    generator: 'v0.app',
+    keywords: KEYWORDS,
+    authors: [{ name: 'Pythea' }],
+    creator: 'Pythea',
+    publisher: 'Pythea',
+    category: isEl ? 'Εκδηλώσεις' : 'Events',
+    referrer: 'origin-when-cross-origin',
+    alternates: {
+      canonical: '/',
+      languages: {
+        'el-GR': '/',
+        en: '/',
+        'x-default': '/',
       },
-    ],
-  },
-  twitter: {
-    card: 'summary',
-    title: SITE_TITLE,
-    description: SITE_DESCRIPTION,
-    images: ['/compass-icon.png'],
-  },
+    },
+    // Favicon + apple touch icon are provided by the file-based conventions
+    // app/icon.png and app/apple-icon.png (lightweight, properly sized crops of
+    // the compass logo). Do not re-add an `icons` field here, it would override
+    // those files and point back at the heavy 1024px source image.
+    openGraph: {
+      title: s.title,
+      description: s.description,
+      siteName: s.title,
+      type: 'website',
+      url: '/',
+      locale: isEl ? 'el_GR' : 'en_US',
+      alternateLocale: isEl ? ['en_US'] : ['el_GR'],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: s.title,
+      description: s.description,
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+        'max-video-preview': -1,
+      },
+    },
+    formatDetection: {
+      telephone: false,
+      address: false,
+      email: false,
+    },
+  }
+}
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: dark)', color: BRAND.background },
+    { media: '(prefers-color-scheme: light)', color: BRAND.cream },
+  ],
+  colorScheme: 'dark light',
 }
 
 export default async function RootLayout({

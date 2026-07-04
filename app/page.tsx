@@ -10,9 +10,11 @@ import { Register } from "@/components/pythea/register"
 import { Faq } from "@/components/pythea/faq"
 import { FloatingCta } from "@/components/pythea/floating-cta"
 import { SiteFooter } from "@/components/pythea/site-footer"
-import { headers } from "next/headers"
+import { cookies, headers } from "next/headers"
 import { auth } from "@/lib/auth"
 import { isLeadOneOpen, START_MS, TOTAL_CLUES } from "@/lib/clues"
+import { DEFAULT_LOCALE, isLocale, LANG_COOKIE, getDictionary } from "@/lib/i18n"
+import { homeJsonLd } from "@/lib/seo"
 
 // Recompute against the live clock on each request (for the countdown state).
 export const dynamic = "force-dynamic"
@@ -37,8 +39,21 @@ export default async function Page() {
   const publicCount = lead1Open ? 1 : 0
   const countdownToMs = lead1Open ? null : START_MS
 
+  // Structured data (JSON-LD) for the home page, localized to the saved
+  // language and built from the SAME FAQ copy that renders on the page so the
+  // FAQ rich results stay valid.
+  const cookieStore = await cookies()
+  const cookieLang = cookieStore.get(LANG_COOKIE)?.value
+  const locale = isLocale(cookieLang) ? cookieLang : DEFAULT_LOCALE
+  const jsonLd = homeJsonLd(locale, getDictionary(locale).faq.items)
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        // JSON-LD is trusted, server-generated content.
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Atmosphere />
       <SiteHeader initialUser={initialUser} />
       <main className="relative">
