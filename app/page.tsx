@@ -10,6 +10,8 @@ import { Register } from "@/components/pythea/register"
 import { Faq } from "@/components/pythea/faq"
 import { FloatingCta } from "@/components/pythea/floating-cta"
 import { SiteFooter } from "@/components/pythea/site-footer"
+import { TeaserLanding } from "@/components/pythea/teaser-landing"
+import { getPhaseContext } from "@/lib/phase-guard"
 import { cookies, headers } from "next/headers"
 import { auth } from "@/lib/auth"
 import { isLeadOneOpen, START_MS, TOTAL_CLUES } from "@/lib/clues"
@@ -20,6 +22,14 @@ import { homeJsonLd } from "@/lib/seo"
 export const dynamic = "force-dynamic"
 
 export default async function Page() {
+  // Phase 1 seals the whole site behind the teaser for everyone except
+  // superadmins. Resolve this first so we can short-circuit before doing the
+  // rest of the home-page work.
+  const phaseCtx = await getPhaseContext()
+  if (phaseCtx.siteLocked) {
+    return <TeaserLanding targetMs={phaseCtx.settings.phase2UnlockMs} />
+  }
+
   // Resolve the session on the server so the header renders the correct
   // signed-in/out state on the first paint (no logged-out flash).
   const session = await auth.api.getSession({ headers: await headers() })

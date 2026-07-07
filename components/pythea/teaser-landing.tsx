@@ -35,6 +35,7 @@ export function TeaserLanding({ targetMs }: { targetMs: number }) {
   const [email, setEmail] = useState("")
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
+  const [year, setYear] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -76,6 +77,16 @@ export function TeaserLanding({ targetMs }: { targetMs: number }) {
       setError(t.auth.errPasswordShort)
       return
     }
+    let yearOfBirth: number | undefined
+    if (year.trim()) {
+      const parsed = Number(year)
+      const current = new Date().getFullYear()
+      if (!Number.isInteger(parsed) || parsed < 1900 || parsed > current) {
+        setError(t.auth.errYearInvalid)
+        return
+      }
+      yearOfBirth = parsed
+    }
     setLoading(true)
     const fullName = [firstName.trim(), lastName.trim()].filter(Boolean).join(" ")
     const { error: signUpError } = await authClient.signUp.email({
@@ -84,6 +95,7 @@ export function TeaserLanding({ targetMs }: { targetMs: number }) {
       name: fullName,
       firstName: firstName.trim(),
       lastName: lastName.trim() || undefined,
+      yearOfBirth,
     })
     setLoading(false)
     if (signUpError) {
@@ -342,6 +354,25 @@ export function TeaserLanding({ targetMs }: { targetMs: number }) {
                       onChange={(e) => setLastName(e.target.value)}
                       placeholder={t.auth.lastNamePlaceholder}
                       className={inputClass}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label htmlFor="teaser-year" className={labelClass}>
+                      {t.auth.yearLabel}{" "}
+                      <span className="font-normal text-muted-foreground/60">
+                        ({t.auth.optional})
+                      </span>
+                    </label>
+                    <input
+                      id="teaser-year"
+                      type="number"
+                      inputMode="numeric"
+                      value={year}
+                      onChange={(e) => setYear(e.target.value)}
+                      placeholder={t.auth.yearPlaceholder}
+                      className={inputClass}
+                      min={1900}
+                      max={new Date().getFullYear()}
                     />
                   </div>
                   <div className="flex flex-col gap-1">
