@@ -376,7 +376,7 @@ const el = {
     mapUnknown: "Άγνωστη στάση",
     mapTreasure: "Ο ΘΗΣΑΥΡΟΣ",
     postmark: "ΚΑΛΑΜΑΤΑ",
-    finalStampsLabel: "ΟΛΑ ΤΑ ΓΡΑΜΜΑΤΟΣΗΜΑ ΤΟΥ Τ����ΞΙΔΙΟΥ",
+    finalStampsLabel: "ΟΛΑ ΤΑ ΓΡΑΜΜΑΤΟΣΗΜΑ ΤΟΥ ΤΑΞΙΔΙΟΥ",
   },
   scan: {
     unlockedLabel: "ΝΕΟ ΣΗΜΑΔΙ ΞΕΚΛΕΙΔΩΘΗΚΕ",
