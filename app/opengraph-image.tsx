@@ -136,7 +136,7 @@ export default async function Image() {
 
         {/* Bottom badges */}
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          {["ΚΥΝΗΓΙ ΘΗΣΑΥΡΟΥ", "ΚΑΛΑΜΑΤΑ", "ΚΑΛΟΚΑΙΡΙ 2026", "ΕΠΑΘΛΟ 500€"].map((b) => (
+          {["ΚΥΝΗΓΙ ΘΗΣΑΥΡΟΥ", "ΚΑΛΑΜΑΤΑ", "ΚΑΛΟΚΑΙΡΙ 2026"].map((b) => (
             <div
               key={b}
               style={{

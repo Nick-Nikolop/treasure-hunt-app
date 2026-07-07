@@ -60,17 +60,17 @@ export const SITE = {
     title: "Το Ταξίδι του Πυθέα του Μεσσήνιου",
     titleTemplate: "%s · Πυθέας ο Μεσσήνιος",
     description:
-      "Κυνήγι θησαυρού στην Καλαμάτα. Ακολούθησε τα ίχνη του πολυταξιδεμένου Πυθέα, λύσε γρίφους σε όλη την πόλη και ανακάλυψε ξανά την Καλαμάτα. Ομάδες ως 8 άτομα, έπαθλο 500€. Καλοκαίρι 2026.",
+      "Κυνήγι θησαυρού στην Καλαμάτα. Ακολούθησε τα ίχνη του πολυταξιδεμένου Πυθέα, λύσε γρίφους σε όλη την πόλη και ανακάλυψε ξανά την Καλαμάτα. Ομάδες ως 8 άτομα. Καλοκαίρι 2026.",
     shortDescription:
-      "Κυνήγι θησαυρού στην Καλαμάτα, καλοκαίρι 2026. Γρίφοι, ομάδες και έπαθλο 500€.",
+      "Κυνήγι θησαυρού στην Καλαμάτα, καλοκαίρι 2026. Γρίφοι και ομάδες σε όλη την πόλη.",
   },
   en: {
     title: "The Journey of Pytheas the Messenian",
     titleTemplate: "%s · Pytheas of Messenia",
     description:
-      "A treasure hunt through Kalamata, Greece. Follow the trail of Pytheas the seasoned explorer, solve clues across the city and rediscover Kalamata. Teams of up to 8, a 500€ prize pool. Summer 2026.",
+      "A treasure hunt through Kalamata, Greece. Follow the trail of Pytheas the seasoned explorer, solve clues across the city and rediscover Kalamata. Teams of up to 8. Summer 2026.",
     shortDescription:
-      "A treasure hunt through Kalamata, summer 2026. Clues, teams and a 500€ prize pool.",
+      "A treasure hunt through Kalamata, summer 2026. Clues and teams across the city.",
   },
 } as const
 
