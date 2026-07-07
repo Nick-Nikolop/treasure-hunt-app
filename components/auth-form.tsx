@@ -25,6 +25,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const [year, setYear] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -126,6 +127,10 @@ export function AuthForm({ mode }: { mode: Mode }) {
       }
       if (password.length < 8) {
         setError(a.errPasswordShort)
+        return
+      }
+      if (password !== confirmPassword) {
+        setError(a.errPasswordMismatch)
         return
       }
       let yearOfBirth: number | undefined
@@ -480,6 +485,26 @@ export function AuthForm({ mode }: { mode: Mode }) {
                 </button>
               )}
             </div>
+
+            {isSignUp && (
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="confirmPassword" className={labelClass}>
+                  {a.confirmPasswordLabel}
+                </label>
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  minLength={8}
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder={a.confirmPasswordPlaceholder}
+                  className={inputClass}
+                />
+              </div>
+            )}
 
             {error && (
               <p

@@ -47,6 +47,7 @@ export function TeaserLanding({ targetMs }: { targetMs: number }) {
   const [lastName, setLastName] = useState("")
   const [year, setYear] = useState("")
   const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -85,6 +86,10 @@ export function TeaserLanding({ targetMs }: { targetMs: number }) {
     }
     if (password.length < 8) {
       setError(t.auth.errPasswordShort)
+      return
+    }
+    if (password !== confirmPassword) {
+      setError(t.auth.errPasswordMismatch)
       return
     }
     let yearOfBirth: number | undefined
@@ -440,6 +445,21 @@ export function TeaserLanding({ targetMs }: { targetMs: number }) {
                             )}
                           </button>
                         </div>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label htmlFor="teaser-pass-confirm" className={labelClass}>
+                          {t.auth.confirmPasswordLabel}
+                        </label>
+                        <input
+                          id="teaser-pass-confirm"
+                          type={showPassword ? "text" : "password"}
+                          autoComplete="new-password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          placeholder={t.auth.confirmPasswordPlaceholder}
+                          className={inputClass}
+                          required
+                        />
                       </div>
                       {error && (
                         <p className="font-sans text-xs font-semibold text-destructive">{error}</p>
