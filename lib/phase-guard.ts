@@ -21,6 +21,16 @@ export type PhaseContext = {
   siteLocked: boolean
 }
 
+/**
+ * The effective phase as the PUBLIC (and crawlers) see it — no superadmin
+ * bypass. Used by share metadata + OG images, where what matters is what an
+ * unauthenticated visitor / social scraper would be shown.
+ */
+export async function getPublicPhase(nowMs = Date.now()): Promise<Phase> {
+  const settings = await getPhaseSettings()
+  return computeEffectivePhase(settings, nowMs)
+}
+
 export async function getPhaseContext(): Promise<PhaseContext> {
   const nowMs = Date.now()
   const [admin, settings] = await Promise.all([getAdminUser(), getPhaseSettings()])

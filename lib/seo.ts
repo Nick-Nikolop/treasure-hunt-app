@@ -74,6 +74,27 @@ export const SITE = {
   },
 } as const
 
+/**
+ * Phase 1 (teaser) SEO copy. While the site is sealed we must NOT reveal in a
+ * shared link that this is a treasure hunt, nor that teams are involved — the
+ * preview stays mysterious and only hints that "something is coming to
+ * Kalamata". From Phase 2 onward the full SITE copy is used instead.
+ */
+export const TEASER = {
+  el: {
+    title: "Ανακάλυψε το μυστικό.",
+    description:
+      "Κάτι ετοιμάζεται στην Καλαμάτα. Άφησε το email σου και θα είσαι από τους πρώτους που θα μάθουν. Καλοκαίρι 2026.",
+    shortDescription: "Κάτι ετοιμάζεται στην Καλαμάτα. Καλοκαίρι 2026.",
+  },
+  en: {
+    title: "Discover the secret.",
+    description:
+      "Something is being prepared in Kalamata. Leave your email and be among the first to know. Summer 2026.",
+    shortDescription: "Something is being prepared in Kalamata. Summer 2026.",
+  },
+} as const
+
 /** Keyword sets, merged for the metadata `keywords` field. */
 export const KEYWORDS: string[] = [
   // Greek — high intent, local

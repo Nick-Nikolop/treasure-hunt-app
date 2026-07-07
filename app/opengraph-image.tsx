@@ -1,12 +1,15 @@
 import { ImageResponse } from "next/og"
 import { readFile } from "node:fs/promises"
 import { join } from "node:path"
-import { BRAND, SITE } from "@/lib/seo"
+import { BRAND, SITE, TEASER } from "@/lib/seo"
+import { getPublicPhase } from "@/lib/phase-guard"
 
 // Node runtime so we can read the local compass + font assets from disk.
 export const runtime = "nodejs"
 
-export const alt = "Το Ταξίδι του Πυθέα του Μεσσήνιου — Κυνήγι θησαυρού στην Καλαμάτα"
+// Neutral alt text (brand only) so the image never leaks "treasure hunt" while
+// the site is sealed; the visible card content is phase-aware below.
+export const alt = "Το Ταξίδι του Πυθέα του Μεσσήνιου"
 export const size = { width: 1200, height: 630 }
 export const contentType = "image/png"
 
@@ -33,12 +36,20 @@ async function loadCompass(): Promise<string | null> {
 }
 
 export default async function Image() {
-  const [bold, regular, compass] = await Promise.all([
+  const [bold, regular, compass, publicPhase] = await Promise.all([
     loadFont("alegreya-800.woff"),
     loadFont("alegreya-400.woff"),
     loadCompass(),
+    getPublicPhase(),
   ])
-  const s = SITE.el
+
+  // While sealed (Phase 1) the card must not reveal the treasure hunt or that
+  // teams are involved: use the mysterious teaser tagline + neutral badges.
+  const isTeaser = publicPhase === 1
+  const tagline = isTeaser ? TEASER.el.shortDescription : SITE.el.shortDescription
+  const badges = isTeaser
+    ? ["ΚΑΛΑΜΑΤΑ", "ΚΑΛΟΚΑΙΡΙ 2026", "ΣΥΝΤΟΜΑ"]
+    : ["ΚΥΝΗΓΙ ΘΗΣΑΥΡΟΥ", "ΚΑΛΑΜΑΤΑ", "ΚΑΛΟΚΑΙΡΙ 2026"]
 
   const fonts = [
     bold && { name: "Alegreya", data: bold, weight: 800 as const, style: "normal" as const },
@@ -130,13 +141,13 @@ export default async function Image() {
               fontWeight: 400,
             }}
           >
-            {s.shortDescription}
+            {tagline}
           </div>
         </div>
 
         {/* Bottom badges */}
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          {["ΚΥΝΗΓΙ ΘΗΣΑΥΡΟΥ", "ΚΑΛΑΜΑΤΑ", "ΚΑΛΟΚΑΙΡΙ 2026"].map((b) => (
+          {badges.map((b) => (
             <div
               key={b}
               style={{

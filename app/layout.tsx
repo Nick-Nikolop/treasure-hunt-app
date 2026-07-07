@@ -7,9 +7,9 @@ import { LanguageProvider } from '@/components/pythea/language-provider'
 import { LiteModeProvider } from '@/components/pythea/lite-mode-provider'
 import { PhaseProvider } from '@/components/pythea/phase-provider'
 import { AnalyticsProvider } from '@/components/pythea/analytics-provider'
-import { getPhaseContext } from '@/lib/phase-guard'
+import { getPhaseContext, getPublicPhase } from '@/lib/phase-guard'
 import { DEFAULT_LOCALE, isLocale, LANG_COOKIE, type Locale } from '@/lib/i18n'
-import { SITE, SITE_URL, KEYWORDS, BRAND, BRAND_NAME_EN } from '@/lib/seo'
+import { SITE, TEASER, SITE_URL, KEYWORDS, BRAND, BRAND_NAME_EN } from '@/lib/seo'
 import './globals.css'
 
 const alegreya = Alegreya({
@@ -38,17 +38,25 @@ async function resolveLocale(): Promise<Locale> {
 // The Open Graph + Twitter images are supplied automatically by the file-based
 // conventions app/opengraph-image.tsx and app/twitter-image.tsx.
 export async function generateMetadata(): Promise<Metadata> {
-  const locale = await resolveLocale()
-  const s = SITE[locale]
+  const [locale, publicPhase] = await Promise.all([resolveLocale(), getPublicPhase()])
   const isEl = locale === 'el'
+  const site = SITE[locale]
+
+  // While the site is sealed (Phase 1) a shared link must stay mysterious: use
+  // the teaser copy that never mentions a treasure hunt or teams. The page
+  // <title> template still uses the real brand template so tab titles read
+  // naturally; only the sharable title/description are swapped.
+  const isTeaser = publicPhase === 1
+  const shareTitle = isTeaser ? TEASER[locale].title : site.title
+  const shareDescription = isTeaser ? TEASER[locale].description : site.description
 
   return {
     metadataBase: new URL(SITE_URL),
     title: {
-      default: s.title,
-      template: s.titleTemplate,
+      default: shareTitle,
+      template: site.titleTemplate,
     },
-    description: s.description,
+    description: shareDescription,
     applicationName: BRAND_NAME_EN,
     generator: 'v0.app',
     keywords: KEYWORDS,
@@ -70,9 +78,9 @@ export async function generateMetadata(): Promise<Metadata> {
     // the compass logo). Do not re-add an `icons` field here, it would override
     // those files and point back at the heavy 1024px source image.
     openGraph: {
-      title: s.title,
-      description: s.description,
-      siteName: s.title,
+      title: shareTitle,
+      description: shareDescription,
+      siteName: shareTitle,
       type: 'website',
       url: '/',
       locale: isEl ? 'el_GR' : 'en_US',
@@ -80,8 +88,8 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     twitter: {
       card: 'summary_large_image',
-      title: s.title,
-      description: s.description,
+      title: shareTitle,
+      description: shareDescription,
     },
     robots: {
       index: true,
