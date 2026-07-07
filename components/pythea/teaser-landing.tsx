@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
@@ -301,13 +300,15 @@ export function TeaserLanding({ targetMs }: { targetMs: number }) {
                           {p.existingBody}
                         </p>
                       </div>
-                      <Link
-                        href={`/sign-in?redirect=/`}
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-sm bg-brass px-6 py-3.5 font-sans text-sm font-bold tracking-chip text-primary-foreground transition-transform hover:-translate-y-0.5"
-                      >
-                        {p.signInCta}
-                        <ArrowRight className="size-4" />
-                      </Link>
+                      {/* Countdown reminder so it's clear when sign-in unlocks. */}
+                      <div className="w-full rounded-sm border border-brass/25 bg-brass/5 px-4 py-3">
+                        <p className="font-sans text-[11px] font-bold tracking-chip text-brass/80">
+                          {p.countdownLabel}
+                        </p>
+                        <div className="mt-2">
+                          <Countdown targetMs={targetMs} tone="dark" />
+                        </div>
+                      </div>
                       <BackButton label={p.back} onClick={() => setStep("email")} />
                     </div>
                   )}

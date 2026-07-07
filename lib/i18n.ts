@@ -591,7 +591,8 @@ const el = {
     errGeneric: "Κάτι πήγε στραβά. Δοκίμασε ξανά.",
     // Existing account (or superadmin) branch
     existingTitle: "Έχεις ήδη λογαριασμό.",
-    existingBody: "Συνδέσου για να συνεχίσεις από εκεί που έμεινες.",
+    existingBody:
+      "Η θέση σου είναι εξασφαλισμένη. Θα μπορέσεις να συνδεθείς και να συνεχίσεις μόλις λήξει η αντίστροφη μέτρηση.",
     signInCta: "ΣΥΝΔΕΣΗ",
     // New email branch: choose create now vs notify later
     newTitle: "Ένα ακόμη βήμα.",
@@ -1178,7 +1179,8 @@ const en: Dictionary = {
     errGeneric: "Something went wrong. Please try again.",
     // Existing account (or superadmin) branch
     existingTitle: "You already have an account.",
-    existingBody: "Sign in to pick up where you left off.",
+    existingBody:
+      "Your spot is secured. You'll be able to sign in and pick up where you left off once the countdown ends.",
     signInCta: "SIGN IN",
     // New email branch: choose create now vs notify later
     newTitle: "One more step.",
