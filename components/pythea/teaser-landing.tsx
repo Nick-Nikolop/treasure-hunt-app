@@ -300,15 +300,6 @@ export function TeaserLanding({ targetMs }: { targetMs: number }) {
                           {p.existingBody}
                         </p>
                       </div>
-                      {/* Countdown reminder so it's clear when sign-in unlocks. */}
-                      <div className="w-full rounded-sm border border-brass/25 bg-brass/5 px-4 py-3">
-                        <p className="font-sans text-[11px] font-bold tracking-chip text-brass/80">
-                          {p.countdownLabel}
-                        </p>
-                        <div className="mt-2">
-                          <Countdown targetMs={targetMs} tone="dark" />
-                        </div>
-                      </div>
                       <BackButton label={p.back} onClick={() => setStep("email")} />
                     </div>
                   )}
