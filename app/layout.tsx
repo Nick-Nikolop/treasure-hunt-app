@@ -5,7 +5,9 @@ import { cookies } from 'next/headers'
 import { ThemeProvider } from '@/components/theme-provider'
 import { LanguageProvider } from '@/components/pythea/language-provider'
 import { LiteModeProvider } from '@/components/pythea/lite-mode-provider'
+import { PhaseProvider } from '@/components/pythea/phase-provider'
 import { AnalyticsProvider } from '@/components/pythea/analytics-provider'
+import { getPhaseContext } from '@/lib/phase-guard'
 import { DEFAULT_LOCALE, isLocale, LANG_COOKIE, type Locale } from '@/lib/i18n'
 import { SITE, SITE_URL, KEYWORDS, BRAND, BRAND_NAME_EN } from '@/lib/seo'
 import './globals.css'
@@ -119,6 +121,18 @@ export default async function RootLayout({
   const cookieLang = store.get(LANG_COOKIE)?.value
   const locale = isLocale(cookieLang) ? cookieLang : DEFAULT_LOCALE
 
+  // Resolve the phased-rollout context once per request so every page shares
+  // the same effective phase and open tabs can auto-advance at each boundary.
+  const phaseCtx = await getPhaseContext()
+  const phaseValue = {
+    phase: phaseCtx.phase,
+    isSuperadmin: phaseCtx.isSuperadmin,
+    journalLocked: phaseCtx.journalLocked,
+    override: phaseCtx.settings.override,
+    phase2UnlockMs: phaseCtx.settings.phase2UnlockMs,
+    journalUnlockMs: phaseCtx.settings.journalUnlockMs,
+  }
+
   return (
     <html
       lang={locale}
@@ -134,7 +148,9 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <LanguageProvider initialLocale={locale}>
-            <LiteModeProvider>{children}</LiteModeProvider>
+            <LiteModeProvider>
+              <PhaseProvider value={phaseValue}>{children}</PhaseProvider>
+            </LiteModeProvider>
           </LanguageProvider>
           <AnalyticsProvider />
         </ThemeProvider>

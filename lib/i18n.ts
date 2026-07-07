@@ -376,7 +376,7 @@ const el = {
     mapUnknown: "Άγνωστη στάση",
     mapTreasure: "Ο ΘΗΣΑΥΡΟΣ",
     postmark: "ΚΑΛΑΜΑΤΑ",
-    finalStampsLabel: "ΟΛΑ ΤΑ ΓΡΑΜΜΑΤΟΣΗΜΑ ΤΟΥ ΤΑΞΙΔΙΟΥ",
+    finalStampsLabel: "ΟΛΑ ΤΑ ΓΡΑΜΜΑΤΟΣΗΜΑ ΤΟΥ Τ��ΞΙΔΙΟΥ",
   },
   scan: {
     unlockedLabel: "ΝΕΟ ΣΗΜΑΔΙ ΞΕΚΛΕΙΔΩΘΗΚΕ",
@@ -575,6 +575,47 @@ const el = {
     resetInvalidTitle: "Μη έγκυρος σύνδεσμος",
     resetInvalidSubtitle:
       "Αυτός ο σύνδεσμος επαναφοράς δεν είναι έγκυρος ή έχει λήξει. Ζήτησε έναν νέο.",
+  },
+  phase: {
+    // Phase 1 teaser landing
+    teaserEyebrow: "ΚΑΛΟΚΑΙΡΙ 2026 · ΚΑΛΑΜΑΤΑ",
+    teaserTitle: "Ανακάλυψε το μυστικό.",
+    teaserSubtitle:
+      "Κάτι ετοιμάζεται στην Καλαμάτα. Άφησε το email σου και θα είσαι από τους πρώτους που θα μπουν στο κυνήγι.",
+    countdownLabel: "Η ΠΥΛΗ ΑΝΟΙΓΕΙ ΣΕ",
+    openNow: "Η πύλη άνοιξε. Μπαίνεις...",
+    emailPlaceholder: "Το email σου",
+    submit: "ΚΡΑΤΑ ΤΗ ΘΕΣΗ ΜΟΥ",
+    submitting: "Γίνεται...",
+    errEmail: "Δώσε ένα έγκυρο email.",
+    errGeneric: "Κάτι πήγε στραβά. Δοκίμασε ξανά.",
+    // Existing account (or superadmin) branch
+    existingTitle: "Έχεις ήδη λογαριασμό.",
+    existingBody: "Συνδέσου για να συνεχίσεις από εκεί που έμεινες.",
+    signInCta: "ΣΥΝΔΕΣΗ",
+    // New email branch: choose create now vs notify later
+    newTitle: "Ένα ακόμη βήμα.",
+    newBody:
+      "Φτιάξε τον λογαριασμό σου τώρα για να κρατήσεις τη θέση σου, ή άσε μας να σε ειδοποιήσουμε μόλις ανοίξει η πύλη.",
+    createNowCta: "ΔΗΜΙΟΥΡΓΙΑ ΛΟΓΑΡΙΑΣΜΟΥ",
+    notifyLaterCta: "ΕΙΔΟΠΟΙΗΣΕ ΜΕ",
+    back: "Πίσω",
+    // Inline account creation (reuses auth labels for the fields)
+    createTitle: "Φτιάξε τον λογαριασμό σου",
+    createCta: "ΔΗΜΙΟΥΡΓΙΑ",
+    createdTitle: "Ο λογαριασμός σου είναι έτοιμος.",
+    createdBody:
+      "Σου στείλαμε ένα email επιβεβαίωσης. Η πύλη ανοίγει σύντομα και θα είσαι έτοιμος.",
+    // Notify-later confirmation
+    waitlistTitle: "Είσαι στη λίστα.",
+    waitlistBody: "Θα σου στείλουμε email μόλις ανοίξει η πύλη.",
+    // Phase 2 locked modal (journal + leaderboard)
+    lockedEyebrow: "ΚΛΕΙΔΩΜΕΝΟ",
+    lockedJournalTitle: "Το ημερολόγιο ανοίγει σύντομα.",
+    lockedLeaderboardTitle: "Η κατάταξη ανοίγει σύντομα.",
+    lockedBody: "Αυτό το κομμάτι ξεκλειδώνει στην επόμενη φάση του κυνηγιού.",
+    lockedCountdownLabel: "ΞΕΚΛΕΙΔΩΝΕΙ ΣΕ",
+    lockedClose: "ΚΛΕΙΣΙΜΟ",
   },
 }
 
@@ -1121,6 +1162,47 @@ const en: Dictionary = {
     resetInvalidTitle: "Invalid link",
     resetInvalidSubtitle:
       "This reset link is invalid or has expired. Please request a new one.",
+  },
+  phase: {
+    // Phase 1 teaser landing
+    teaserEyebrow: "SUMMER 2026 · KALAMATA",
+    teaserTitle: "Discover the secret.",
+    teaserSubtitle:
+      "Something is being prepared in Kalamata. Leave your email and be among the first to enter the hunt.",
+    countdownLabel: "THE GATE OPENS IN",
+    openNow: "The gate is open. Entering...",
+    emailPlaceholder: "Your email",
+    submit: "SAVE MY SPOT",
+    submitting: "Working...",
+    errEmail: "Enter a valid email.",
+    errGeneric: "Something went wrong. Please try again.",
+    // Existing account (or superadmin) branch
+    existingTitle: "You already have an account.",
+    existingBody: "Sign in to pick up where you left off.",
+    signInCta: "SIGN IN",
+    // New email branch: choose create now vs notify later
+    newTitle: "One more step.",
+    newBody:
+      "Create your account now to reserve your spot, or let us notify you the moment the gate opens.",
+    createNowCta: "CREATE ACCOUNT",
+    notifyLaterCta: "NOTIFY ME",
+    back: "Back",
+    // Inline account creation (reuses auth labels for the fields)
+    createTitle: "Create your account",
+    createCta: "CREATE",
+    createdTitle: "Your account is ready.",
+    createdBody:
+      "We sent you a verification email. The gate opens soon and you will be ready.",
+    // Notify-later confirmation
+    waitlistTitle: "You're on the list.",
+    waitlistBody: "We'll email you the moment the gate opens.",
+    // Phase 2 locked modal (journal + leaderboard)
+    lockedEyebrow: "LOCKED",
+    lockedJournalTitle: "The journal opens soon.",
+    lockedLeaderboardTitle: "The leaderboard opens soon.",
+    lockedBody: "This part unlocks in the next phase of the hunt.",
+    lockedCountdownLabel: "UNLOCKS IN",
+    lockedClose: "CLOSE",
   },
 }
 

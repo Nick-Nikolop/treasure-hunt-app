@@ -125,7 +125,25 @@ export const scoreConfig = pgTable("score_config", {
   // Minimum seconds that must pass between a crew's consecutive QR solves. An
   // anti-cheat gate so leads can't be scanned suspiciously fast back-to-back.
   solveCooldownSeconds: integer("solveCooldownSeconds").notNull().default(900),
+  // ── Phased rollout control (all live on this single settings row) ──────────
+  // "auto" (follow the two countdowns) or a forced phase "1" | "2" | "3".
+  phaseOverride: text("phaseOverride").notNull().default("auto"),
+  // When phase 1 → 2 auto-advances (site opens). NULL falls back to the code
+  // default in lib/phase.ts.
+  phase2UnlockAt: timestamp("phase2UnlockAt"),
+  // When phase 2 → 3 auto-advances (journal + leaderboard open). NULL falls
+  // back to the code default in lib/phase.ts.
+  journalUnlockAt: timestamp("journalUnlockAt"),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+})
+
+// Notify-later waitlist. In phase 1, a brand-new visitor can drop just their
+// email (instead of creating an account) so we can email them when the next
+// phase unlocks. Email only, deduped by the UNIQUE constraint.
+export const phaseLead = pgTable("phase_lead", {
+  id: text("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
 })
 
 // Per-lead difficulty set by admins. One row per lead order; missing rows mean
