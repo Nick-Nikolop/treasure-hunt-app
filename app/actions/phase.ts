@@ -2,13 +2,14 @@
 
 import { db } from "@/lib/db"
 import { user } from "@/lib/db/schema"
+import { isBootstrapEmail } from "@/lib/admin"
 import { addPhaseLead } from "@/lib/hunt-config"
 import { eq, sql } from "drizzle-orm"
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export type PhaseEmailResult =
-  | { ok: true; kind: "existing" | "new" }
+  | { ok: true; kind: "existing" | "new"; isAdmin: boolean }
   | { ok: false; error: "email" }
 
 /**
@@ -22,12 +23,17 @@ export async function checkPhaseEmail(rawEmail: string): Promise<PhaseEmailResul
   if (!EMAIL_RE.test(email)) return { ok: false, error: "email" }
 
   const rows = await db
-    .select({ id: user.id })
+    .select({ id: user.id, role: user.role })
     .from(user)
     .where(eq(sql`lower(${user.email})`, email))
     .limit(1)
 
-  return { ok: true, kind: rows.length > 0 ? "existing" : "new" }
+  if (rows.length === 0) return { ok: true, kind: "new", isAdmin: false }
+
+  // Only superadmins can actually sign in during Phase 1. The founding
+  // bootstrap email counts even before its role has been persisted.
+  const isAdmin = rows[0].role === "superadmin" || isBootstrapEmail(email)
+  return { ok: true, kind: "existing", isAdmin }
 }
 
 /** Add a brand-new visitor's email to the notify-later waitlist. */

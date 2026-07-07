@@ -23,7 +23,7 @@ import { useI18n } from "@/components/pythea/language-provider"
 import { authClient } from "@/lib/auth-client"
 import { checkPhaseEmail, joinPhaseWaitlist } from "@/app/actions/phase"
 
-type Step = "email" | "existing" | "choice" | "create" | "created" | "waitlisted"
+type Step = "email" | "existing" | "adminLogin" | "choice" | "create" | "created" | "waitlisted"
 
 /** Greek-aware uppercase: caps then strips combining accents (kept diaeresis). */
 function greekCaps(s: string) {
@@ -62,7 +62,35 @@ export function TeaserLanding({ targetMs }: { targetMs: number }) {
       setError(p.errEmail)
       return
     }
-    setStep(res.kind === "existing" ? "existing" : "choice")
+    if (res.kind === "existing") {
+      // Only superadmins can actually sign in while the site is sealed.
+      setStep(res.isAdmin ? "adminLogin" : "existing")
+      return
+    }
+    setStep("choice")
+  }
+
+  async function adminSignIn(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    if (!password) {
+      setError(t.auth.errRequired)
+      return
+    }
+    setLoading(true)
+    const { error: signInError } = await authClient.signIn.email({
+      email: email.trim(),
+      password,
+    })
+    setLoading(false)
+    if (signInError) {
+      setError(t.auth.errInvalidCredentials)
+      return
+    }
+    // Superadmins bypass the Phase-1 gate, so a full reload drops them into the
+    // real site instead of the teaser.
+    router.refresh()
+    window.location.href = "/"
   }
 
   async function notifyLater() {
@@ -307,6 +335,66 @@ export function TeaserLanding({ targetMs }: { targetMs: number }) {
                       </div>
                       <BackButton label={p.back} onClick={() => setStep("email")} />
                     </div>
+                  )}
+
+                  {/* ── Step: superadmin → real sign-in (bypasses the gate) ─ */}
+                  {step === "adminLogin" && (
+                    <form onSubmit={adminSignIn} className="relative flex flex-col gap-4">
+                      <div className="flex flex-col items-center gap-3 text-center">
+                        <span className="flex size-12 items-center justify-center rounded-full border border-brass/50 text-brass">
+                          <LogIn className="size-5" />
+                        </span>
+                        <div>
+                          <h2 className="font-serif text-xl font-black text-foreground">
+                            {p.adminLoginTitle}
+                          </h2>
+                          <p className="mt-1.5 font-serif text-sm leading-relaxed text-muted-foreground">
+                            {p.adminLoginBody}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label htmlFor="teaser-admin-pass" className={labelClass}>
+                          {t.auth.passwordLabel}
+                        </label>
+                        <input
+                          id="teaser-admin-pass"
+                          type={showPassword ? "text" : "password"}
+                          autoComplete="current-password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder={t.auth.passwordPlaceholder}
+                          className={inputClass}
+                          required
+                          autoFocus
+                        />
+                      </div>
+                      {error && (
+                        <p className="font-sans text-xs font-semibold text-destructive">{error}</p>
+                      )}
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-sm bg-brass px-6 py-3.5 font-sans text-sm font-bold tracking-chip text-primary-foreground transition-transform hover:-translate-y-0.5 disabled:opacity-50"
+                      >
+                        {loading ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          <>
+                            {p.signInCta}
+                            <ArrowRight className="size-4" />
+                          </>
+                        )}
+                      </button>
+                      <BackButton
+                        label={p.back}
+                        onClick={() => {
+                          setPassword("")
+                          setError(null)
+                          setStep("email")
+                        }}
+                      />
+                    </form>
                   )}
 
                   {/* ── Step: new email → choose path ───────────────────── */}
