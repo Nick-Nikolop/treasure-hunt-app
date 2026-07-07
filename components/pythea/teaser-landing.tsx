@@ -201,10 +201,22 @@ export function TeaserLanding({ targetMs }: { targetMs: number }) {
               {p.teaserEyebrow}
             </span>
             <h1
-              className="mt-4 text-balance font-serif text-5xl font-black uppercase leading-[0.95] tracking-tight text-brass md:text-7xl"
+              className="mt-4 text-balance font-serif text-5xl font-black uppercase leading-[0.95] tracking-tight md:text-7xl"
               style={{ textShadow: "0 2px 24px color-mix(in oklch, var(--background) 80%, transparent)" }}
             >
-              {greekCaps(p.teaserTitle)}
+              {(() => {
+                // First word stays brass, the rest renders white, matching the
+                // launch teaser reference (ΑΝΑΚΑΛΥΨΕ / ΤΟ ΜΥΣΤΙΚΟ).
+                const caps = greekCaps(p.teaserTitle)
+                const gap = caps.indexOf(" ")
+                if (gap === -1) return <span className="text-brass">{caps}</span>
+                return (
+                  <>
+                    <span className="text-brass">{caps.slice(0, gap)}</span>{" "}
+                    <span className="text-foreground">{caps.slice(gap + 1)}</span>
+                  </>
+                )
+              })()}
             </h1>
             <p className="mx-auto mt-5 max-w-md text-pretty font-serif text-lg leading-relaxed text-foreground/80">
               {p.teaserSubtitle}
