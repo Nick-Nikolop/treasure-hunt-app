@@ -376,7 +376,7 @@ const el = {
     mapUnknown: "Άγνωστη στάση",
     mapTreasure: "Ο ΘΗΣΑΥΡΟΣ",
     postmark: "ΚΑΛΑΜΑΤΑ",
-    finalStampsLabel: "ΟΛΑ ΤΑ ΓΡΑΜΜΑΤΟΣΗΜΑ ΤΟΥ ΤΑΞΙΔΙΟΥ",
+    finalStampsLabel: "ΟΛΑ ΤΑ ΓΡΑΜΜΑΤΟΣΗΜΑ ΤΟΥ Τ�� more credΞΙΔΙΟΥ",
   },
   scan: {
     unlockedLabel: "ΝΕΟ ΣΗΜΑΔΙ ΞΕΚΛΕΙΔΩΘΗΚΕ",
@@ -596,6 +596,9 @@ const el = {
     existingBody:
       "Η θέση σου είναι εξασφαλισμένη. Θα μπορέσεις να συνδεθείς και να συνεχίσεις μόλις λήξει η αντίστροφη μέτρηση.",
     signInCta: "ΣΥΝΔΕΣΗ",
+    adminLoginTitle: "Πρόσβαση διαχειριστή",
+    adminLoginBody:
+      "Ο λογαριασμός σου έχει δικαιώματα διαχειριστή. Συνδέσου για να μπεις πριν την επίσημη έναρξη.",
     // New email branch: choose create now vs notify later
     newTitle: "Ένα ακόμη βήμα.",
     newBody:
@@ -1186,6 +1189,9 @@ const en: Dictionary = {
     existingBody:
       "Your spot is secured. You'll be able to sign in and pick up where you left off once the countdown ends.",
     signInCta: "SIGN IN",
+    adminLoginTitle: "Administrator access",
+    adminLoginBody:
+      "Your account has administrator rights. Sign in to enter ahead of the official launch.",
     // New email branch: choose create now vs notify later
     newTitle: "One more step.",
     newBody:
