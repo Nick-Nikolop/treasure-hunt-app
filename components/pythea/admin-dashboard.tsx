@@ -32,6 +32,7 @@ import {
   Link2,
   Activity,
   BarChart3,
+  Layers,
 } from "lucide-react"
 import { ModalShell } from "@/components/pythea/modal-shell"
 import { ConfirmDialog } from "@/components/pythea/confirm-dialog"
@@ -41,6 +42,7 @@ import { AdminCampaignsPanel } from "@/components/pythea/admin-campaigns-panel"
 import { AdminLeadsPanel } from "@/components/pythea/admin-leads-panel"
 import { AdminActivityPanel } from "@/components/pythea/admin-activity-panel"
 import { AdminAnalyticsPanel } from "@/components/pythea/admin-analytics-panel"
+import { AdminPhasePanel } from "@/components/pythea/admin-phase-panel"
 import { MAX_CREW_SIZE } from "@/lib/teams"
 import {
   adminDeleteUser,
@@ -75,6 +77,7 @@ type Tab =
   | "leads"
   | "activity"
   | "analytics"
+  | "phase"
 
 type ActivityFilter = { kind: "user" | "team"; id: string; label: string } | null
 
@@ -269,6 +272,9 @@ export function AdminDashboard({
         <TabButton active={tab === "analytics"} onClick={() => setTab("analytics")} icon={BarChart3}>
           Analytics
         </TabButton>
+        <TabButton active={tab === "phase"} onClick={() => setTab("phase")} icon={Layers}>
+          Phase
+        </TabButton>
       </div>
 
       {/* Search row, sits below the tab bar for the Users/Teams tabs */}
@@ -437,6 +443,8 @@ export function AdminDashboard({
           />
         ) : tab === "analytics" ? (
           <AdminAnalyticsPanel initial={data.analytics} />
+        ) : tab === "phase" ? (
+          <AdminPhasePanel data={data.phase} />
         ) : (
           <ScoringPanel
             config={data.scoreConfig}

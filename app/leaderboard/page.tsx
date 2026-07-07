@@ -9,6 +9,7 @@ import { Atmosphere } from "@/components/pythea/atmosphere"
 import { SiteHeader } from "@/components/pythea/site-header"
 import { SiteFooter } from "@/components/pythea/site-footer"
 import { LeaderboardView } from "@/components/pythea/leaderboard-view"
+import { getPhaseContext } from "@/lib/phase-guard"
 
 // Standings change with every scan, so never cache this page.
 export const dynamic = "force-dynamic"
@@ -20,6 +21,12 @@ export const metadata: Metadata = {
 }
 
 export default async function LeaderboardPage() {
+  // Phase gate: phase 1 seals the site, phase 2 locks the leaderboard.
+  // Superadmins bypass. Locked visitors are bounced home with the modal flag.
+  const phaseCtx = await getPhaseContext()
+  if (phaseCtx.siteLocked) redirect("/")
+  if (phaseCtx.journalLocked) redirect("/?locked=leaderboard")
+
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) redirect("/sign-in?redirect=/leaderboard")
 

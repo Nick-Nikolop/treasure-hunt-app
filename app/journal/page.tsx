@@ -10,6 +10,7 @@ import { ClueControls } from "@/components/pythea/clue-controls"
 import { buildClueState, isOverrideAuthorized, PREVIEW_COOKIE } from "@/lib/clues"
 import { getCrewUserIds, getCrewEffectiveProgress, getUserScore } from "@/lib/hunt"
 import { applyLeadContent } from "@/lib/lead-content"
+import { getPhaseContext } from "@/lib/phase-guard"
 
 // Recompute against the live server clock, the player's stored progress, and
 // the per-browser testing cookie.
@@ -23,6 +24,13 @@ export const metadata: Metadata = {
 }
 
 export default async function PoreiaPage() {
+  // Phase gate: in phase 1 the site is sealed, in phase 2 the journal is
+  // locked. Superadmins bypass both. A locked visitor who reaches this URL
+  // directly is bounced to the home page, flagged so the countdown modal opens.
+  const phaseCtx = await getPhaseContext()
+  if (phaseCtx.siteLocked) redirect("/")
+  if (phaseCtx.journalLocked) redirect("/?locked=journal")
+
   // The journal is gated: only registered, signed-in accounts can view it.
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) redirect("/sign-in?redirect=/journal")

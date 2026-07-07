@@ -34,7 +34,20 @@ import {
   setScoreConfig,
   setLeadDifficulties,
 } from "@/lib/scoring"
-import { getSolveCooldownSeconds, setSolveCooldownSeconds } from "@/lib/hunt-config"
+import {
+  getSolveCooldownSeconds,
+  setSolveCooldownSeconds,
+  getPhaseSettings,
+  setPhaseOverride,
+  setPhaseUnlockTimes,
+  getPhaseLeads,
+} from "@/lib/hunt-config"
+import {
+  computeEffectivePhase,
+  normalizedJournalUnlockMs,
+  type PhaseInput,
+  type PhaseOverride,
+} from "@/lib/phase"
 import {
   listCampaigns,
   createCampaign,
@@ -151,6 +164,17 @@ export type AdminData = {
   activity: ActivityPage
   /** Behavioural analytics snapshot (default 14-day window) for the Analytics tab. */
   analytics: AnalyticsSnapshot
+  /** Phased-rollout control state for the Phase tab. */
+  phase: PhaseAdminData
+}
+
+/** Everything the Phase tab needs to render + edit the rollout gates. */
+export type PhaseAdminData = {
+  settings: PhaseInput
+  /** The effective phase right now, given the settings + server clock. */
+  effectivePhase: 1 | 2 | 3
+  /** The notify-later waitlist captured on the teaser (newest first). */
+  waitlist: { email: string; createdAt: Date }[]
 }
 
 /** Load every user and team for the dashboard. Superadmin only. */
@@ -260,7 +284,67 @@ export async function getAdminData(): Promise<AdminData> {
     leads: await getEditableLeads(),
     activity: await listActivity({ limit: 50 }),
     analytics: await getAnalyticsSnapshot(14),
+    phase: await getPhaseAdminData(),
   }
+}
+
+/** Load the phase settings, the effective phase now, and the waitlist. */
+async function getPhaseAdminData(): Promise<PhaseAdminData> {
+  const settings = await getPhaseSettings()
+  return {
+    settings,
+    effectivePhase: computeEffectivePhase(settings, Date.now()),
+    waitlist: await getPhaseLeads(),
+  }
+}
+
+/**
+ * Save the phased-rollout configuration: the override mode and the two Athens
+ * wall-clock unlock instants (already converted to UTC ms by the client). This
+ * is the single most disruptive admin control, so the UI gates it behind a
+ * double confirmation before calling this.
+ */
+export async function adminSavePhase(input: {
+  override: PhaseOverride
+  phase2UnlockMs: number
+  journalUnlockMs: number
+}): Promise<ActionResult> {
+  const admin = await requireAdmin()
+
+  const overrides: PhaseOverride[] = ["auto", "1", "2", "3"]
+  if (!overrides.includes(input.override)) return { ok: false, error: "bad_value" }
+  if (!Number.isFinite(input.phase2UnlockMs) || !Number.isFinite(input.journalUnlockMs)) {
+    return { ok: false, error: "bad_value" }
+  }
+
+  const before = await getPhaseSettings()
+  await setPhaseOverride(input.override)
+  await setPhaseUnlockTimes({
+    phase2UnlockMs: input.phase2UnlockMs,
+    journalUnlockMs: input.journalUnlockMs,
+  })
+
+  const after: PhaseInput = {
+    override: input.override,
+    phase2UnlockMs: input.phase2UnlockMs,
+    journalUnlockMs: normalizedJournalUnlockMs({
+      override: input.override,
+      phase2UnlockMs: input.phase2UnlockMs,
+      journalUnlockMs: input.journalUnlockMs,
+    }),
+  }
+
+  await logActivity({
+    ...adminActor(admin),
+    category: "admin",
+    action: "phase_update",
+    summary: `Phase settings updated (override ${before.override} → ${after.override})`,
+  })
+
+  // The gate is read on every request, but revalidate the key routes so any
+  // cached shells refresh immediately.
+  revalidatePath("/", "layout")
+  return { ok: true }
 }
 
 /**

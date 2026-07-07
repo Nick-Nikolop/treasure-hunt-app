@@ -11,6 +11,7 @@ import { Faq } from "@/components/pythea/faq"
 import { FloatingCta } from "@/components/pythea/floating-cta"
 import { SiteFooter } from "@/components/pythea/site-footer"
 import { TeaserLanding } from "@/components/pythea/teaser-landing"
+import { LockedRedirectNotice } from "@/components/pythea/locked-redirect-notice"
 import { getPhaseContext } from "@/lib/phase-guard"
 import { cookies, headers } from "next/headers"
 import { auth } from "@/lib/auth"
@@ -66,6 +67,7 @@ export default async function Page() {
       />
       <Atmosphere />
       <SiteHeader initialUser={initialUser} />
+      <LockedRedirectNotice />
       <main className="relative">
         <Hero />
         {/* Welcome / join panel first, then the path (9 countries / 9 leads),

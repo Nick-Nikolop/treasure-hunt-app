@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import Link from "next/link"
 import Image from "next/image"
 import { Menu, Trophy, X } from "lucide-react"
 import { AuthNav, type SessionUser } from "@/components/pythea/auth-nav"
+import { LockedLink } from "@/components/pythea/locked-link"
 import { useI18n } from "@/components/pythea/language-provider"
 import { useSession } from "@/lib/auth-client"
 import { track } from "@/lib/analytics-client"
@@ -56,7 +56,7 @@ export function SiteHeader({
 
   const nav = [
     { label: t.nav.story, href: "/#story" },
-    { label: t.nav.journal, href: "/journal" },
+    { label: t.nav.journal, href: "/journal", lock: "journal" as const },
     { label: t.nav.treasure, href: "/#treasure" },
     { label: t.nav.how, href: "/#how" },
   ]
@@ -98,23 +98,35 @@ export function SiteHeader({
         </a>
 
         <div className="hidden items-center gap-8 md:flex">
-          {nav.map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-            className="group relative font-sans text-xs font-semibold tracking-chip text-muted-foreground transition-colors hover:text-foreground"
-          >
+          {nav.map((item) => {
+            const linkClass =
+              "group relative font-sans text-xs font-semibold tracking-chip text-muted-foreground transition-colors hover:text-foreground"
+            const inner = (
+              <>
                 {greekCaps(item.label)}
-              <span className="absolute -bottom-1 left-0 h-px w-0 bg-brass transition-all duration-300 group-hover:w-full" />
-            </a>
-          ))}
+                <span className="absolute -bottom-1 left-0 h-px w-0 bg-brass transition-all duration-300 group-hover:w-full" />
+              </>
+            )
+            if (item.lock) {
+              return (
+                <LockedLink key={item.href} target={item.lock} href={item.href} className={linkClass}>
+                  {inner}
+                </LockedLink>
+              )
+            }
+            return (
+              <a key={item.href} href={item.href} className={linkClass}>
+                {inner}
+              </a>
+            )
+          })}
         </div>
 
         <div className="hidden items-center gap-3 md:flex">
           {progress && (
-            <Link
+            <LockedLink
+              target="leaderboard"
               href="/leaderboard"
-              aria-label={t.scan.viewLeaderboard}
               className="group inline-flex shrink-0 items-center gap-2"
             >
               {/* Location pill: current lead number + country, with a quiet progress count. */}
@@ -145,7 +157,7 @@ export function SiteHeader({
                   {t.leaderboard.points}
                 </span>
               </span>
-            </Link>
+            </LockedLink>
           )}
           <AuthNav initialUser={initialUser} />
           {!loggedIn && (
@@ -161,9 +173,9 @@ export function SiteHeader({
 
         <div className="flex items-center gap-2 md:hidden">
           {progress && (
-            <Link
+            <LockedLink
+              target="leaderboard"
               href="/leaderboard"
-              aria-label={t.scan.viewLeaderboard}
               className="inline-flex shrink-0 items-center gap-1.5"
             >
               <span className="inline-flex items-baseline gap-0.5 rounded-sm border border-border bg-card/60 px-2 py-1.5 font-sans text-[10px] font-bold tracking-chip text-muted-foreground/70">
@@ -176,7 +188,7 @@ export function SiteHeader({
                 <Trophy className="size-3 text-brass" />
                 <span className="font-serif text-sm font-black text-brass">{progress.score}</span>
               </span>
-            </Link>
+            </LockedLink>
           )}
           <button
             type="button"
@@ -199,25 +211,43 @@ export function SiteHeader({
             className="overflow-hidden border-t border-border/60 bg-background/95 backdrop-blur-md md:hidden"
           >
             <div className="flex flex-col gap-1 px-5 py-4">
-              {nav.map((item) => (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setOpen(false)}
-                  className="rounded-sm px-2 py-3 font-sans text-sm font-semibold tracking-chip text-muted-foreground hover:bg-card hover:text-foreground"
-                >
-            {greekCaps(item.label)}
-          </a>
-        ))}
+              {nav.map((item) => {
+                const mClass =
+                  "rounded-sm px-2 py-3 font-sans text-sm font-semibold tracking-chip text-muted-foreground hover:bg-card hover:text-foreground"
+                if (item.lock) {
+                  return (
+                    <LockedLink
+                      key={item.href}
+                      target={item.lock}
+                      href={item.href}
+                      className={mClass}
+                      onNavigate={() => setOpen(false)}
+                    >
+                      {greekCaps(item.label)}
+                    </LockedLink>
+                  )
+                }
+                return (
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setOpen(false)}
+                    className={mClass}
+                  >
+                    {greekCaps(item.label)}
+                  </a>
+                )
+              })}
               {progress && (
-                <Link
+                <LockedLink
+                  target="leaderboard"
                   href="/leaderboard"
-                  onClick={() => setOpen(false)}
+                  onNavigate={() => setOpen(false)}
                   className="flex items-center gap-2.5 rounded-sm px-2 py-3 font-sans text-sm font-semibold tracking-chip text-muted-foreground hover:bg-card hover:text-foreground"
                 >
                   <Trophy className="size-4 text-brass" />
                   {greekCaps(t.scan.viewLeaderboard)}
-                </Link>
+                </LockedLink>
               )}
               {!loggedIn && (
                 <a
