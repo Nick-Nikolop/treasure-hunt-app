@@ -130,7 +130,7 @@ const el = {
   },
   how: {
     section: "IV. ΠΩΣ ΠΑΙΖΕΤΑΙ",
-    titlePre: "Τέσσερα βήματα για να γίνεις",
+    titlePre: "��έσσερα βήματα για να γίνεις",
     titleEm: "εξερευνητής.",
     steps: [
       {
@@ -253,7 +253,7 @@ const el = {
     joinPageConfirm: "ΜΠΕΣ ΣΤΗΝ ΟΜΑΔΑ",
     joinPageSignIn: "Συνδέσου για να μπεις σε αυτή την ομάδα.",
     joinPageSignInCta: "ΣΥΝΔΕΣΗ",
-    joinPageSignUpCta: "ΔΗΜΙΟΥΡΓΙΑ ΛΟΓΑΡΙΑΣΜΟΥ",
+    joinPageSignUpCta: "ΔΗΜΙΟΥΡΓΙΑ ΛΟΓΑΡΙΑΣ��ΟΥ",
     joinPageInvalid: "Αυτή η πρόσκληση δεν ισχύει πια.",
     joinPageFull: "Αυτή η ομάδα είναι γεμάτη.",
     joinPageBack: "ΠΙΣΩ ΣΤΗΝ ΑΡΧΙΚΗ",
@@ -465,7 +465,7 @@ const el = {
     openNext: "ΑΝΟΙΞΕ ΕΠΟΜΕΝΟ",
     closeOne: "ΚΛΕΙΣΕ ΕΝΑ",
     openAll: "ΑΝΟΙΞΕ ΟΛΑ",
-    realTime: "ΠΡΑΓΜΑΤΙΚΟΣ ΧΡΟΝΟΣ",
+    realTime: "ΠΡΑΓΜΑΤΙ��ΟΣ ΧΡΟΝΟΣ",
     note: "Ορατό μόνο σε εσένα, για δοκιμές. Δεν εμφανίζεται στους παίκτες στη δημοσιευμένη σελίδα.",
   },
   lang: {
@@ -510,6 +510,12 @@ const el = {
     signInLoading: "Γίνεται σύνδεση...",
     noAccount: "Δεν έχεις λογαριασμό;",
     goToSignUp: "Δημιουργία λογαριασμού",
+    // consent (Terms + Privacy). Rendered as: {pre} <link>{link}</link> {post}
+    consentPre: "Έχω διαβάσει και αποδέχομαι τους",
+    consentLink: "Όρους Χρήσης & την Πολιτική Απορρήτου",
+    consentPost: ".",
+    consentRequired: "Πρέπει να αποδεχτείς τους Όρους για να συνεχίσεις.",
+    legalLink: "Όροι & Απόρρητο",
     // account / nav
     account: "Ο ΛΟΓΑΡΙΑΣΜΟΣ ΜΟΥ",
     accountMenu: "Λογαριασμός",
@@ -1104,6 +1110,12 @@ const en: Dictionary = {
     signInLoading: "Signing in...",
     noAccount: "Don't have an account?",
     goToSignUp: "Create account",
+    // consent (Terms + Privacy). Rendered as: {pre} <link>{link}</link> {post}
+    consentPre: "I have read and accept the",
+    consentLink: "Terms of Service & Privacy Policy",
+    consentPost: ".",
+    consentRequired: "You must accept the Terms to continue.",
+    legalLink: "Terms & Privacy",
     // account / nav
     account: "MY ACCOUNT",
     accountMenu: "Account",

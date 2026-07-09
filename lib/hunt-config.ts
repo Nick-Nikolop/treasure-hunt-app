@@ -124,14 +124,21 @@ export async function setPhaseUnlockTimes(input: {
 
 /**
  * Add an email to the notify-later waitlist. Idempotent: a duplicate email is
- * silently ignored. Returns true when a new row was created.
+ * silently ignored. Returns true when a new row was created. `termsVersion`
+ * records the Terms/Privacy revision the visitor consented to; the acceptance
+ * time is stamped here on the server.
  */
-export async function addPhaseLead(rawEmail: string): Promise<boolean> {
+export async function addPhaseLead(rawEmail: string, termsVersion?: string): Promise<boolean> {
   const email = rawEmail.trim().toLowerCase()
   if (!email) return false
   const inserted = await db
     .insert(phaseLead)
-    .values({ id: crypto.randomUUID(), email })
+    .values({
+      id: crypto.randomUUID(),
+      email,
+      termsVersion: termsVersion ?? null,
+      acceptedTermsAt: termsVersion ? new Date() : null,
+    })
     .onConflictDoNothing({ target: phaseLead.email })
     .returning({ id: phaseLead.id })
   return inserted.length > 0

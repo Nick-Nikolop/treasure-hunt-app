@@ -84,6 +84,16 @@ export const auth = betterAuth({
     // written, so a failure here must never block auth: swallow errors.
     user: {
       create: {
+        // Stamp the consent timestamp server-side. If the client sent a
+        // termsVersion (it always does from our forms), record when we saw it
+        // so the acceptance time can't be spoofed from the browser.
+        before: async (newUser) => {
+          const u = newUser as { termsVersion?: string | null }
+          if (u.termsVersion) {
+            return { data: { ...newUser, acceptedTermsAt: new Date() } }
+          }
+          return { data: newUser }
+        },
         after: async (createdUser) => {
           try {
             const u = createdUser as {
@@ -154,6 +164,19 @@ export const auth = betterAuth({
         type: "number",
         required: false,
         input: true,
+      },
+      // The Terms/Privacy revision the user accepted at sign-up. Accepted from
+      // the client; the matching `acceptedTermsAt` timestamp is stamped
+      // server-side in the create.before hook so the client can't forge it.
+      termsVersion: {
+        type: "string",
+        required: false,
+        input: true,
+      },
+      acceptedTermsAt: {
+        type: "date",
+        required: false,
+        input: false,
       },
       // Access level. Read-only from the client (input: false) so users can
       // never set their own role; only the admin actions / DB change it.

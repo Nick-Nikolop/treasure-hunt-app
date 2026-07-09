@@ -8,8 +8,10 @@ import { motion } from "framer-motion"
 import { Eye, EyeOff, ArrowLeft, Loader2, MailCheck, CheckCircle2 } from "lucide-react"
 import { authClient } from "@/lib/auth-client"
 import { useI18n } from "@/components/pythea/language-provider"
+import { ConsentCheckbox } from "@/components/pythea/consent-checkbox"
 import { track, trackTiming } from "@/lib/analytics-client"
 import { EV } from "@/lib/analytics-events"
+import { TERMS_VERSION } from "@/lib/legal"
 
 type Mode = "sign-in" | "sign-up"
 
@@ -29,6 +31,8 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  // Consent to Terms/Privacy, required to create an account.
+  const [agreed, setAgreed] = useState(false)
   // Once true, we swap the form for a "check your email" screen. Set after a
   // successful sign-up, or after a sign-in blocked because email isn't verified.
   const [awaitingVerification, setAwaitingVerification] = useState(false)
@@ -133,6 +137,10 @@ export function AuthForm({ mode }: { mode: Mode }) {
         setError(a.errPasswordMismatch)
         return
       }
+      if (!agreed) {
+        setError(a.consentRequired)
+        return
+      }
       let yearOfBirth: number | undefined
       if (year.trim()) {
         const parsed = Number(year)
@@ -154,6 +162,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
         firstName: firstName.trim(),
         lastName: lastName.trim() || undefined,
         yearOfBirth,
+        termsVersion: TERMS_VERSION,
       })
       setLoading(false)
       if (error) {
@@ -506,6 +515,12 @@ export function AuthForm({ mode }: { mode: Mode }) {
               </div>
             )}
 
+            {isSignUp && (
+              <div className="rounded-sm border border-border/60 bg-background/30 px-3.5 py-3">
+                <ConsentCheckbox id="signup-consent" checked={agreed} onChange={setAgreed} />
+              </div>
+            )}
+
             {error && (
               <p
                 role="alert"
@@ -517,7 +532,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (isSignUp && !agreed)}
               className="mt-1 inline-flex items-center justify-center gap-2 rounded-sm bg-brass px-6 py-3.5 font-sans text-sm font-bold tracking-chip text-primary-foreground transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
             >
               {loading && <Loader2 className="size-4 animate-spin" />}
@@ -542,6 +557,15 @@ export function AuthForm({ mode }: { mode: Mode }) {
               className="font-bold text-brass underline-offset-4 hover:underline"
             >
               {isSignUp ? a.goToSignIn : a.goToSignUp}
+            </Link>
+          </p>
+
+          <p className="mt-4 text-center">
+            <Link
+              href="/terms"
+              className="font-sans text-[11px] font-bold tracking-chip text-muted-foreground/60 underline-offset-4 transition-colors hover:text-brass hover:underline"
+            >
+              {a.legalLink}
             </Link>
           </p>
           </>

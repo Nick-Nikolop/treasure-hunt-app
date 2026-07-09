@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Image from "next/image"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import {
@@ -23,6 +24,8 @@ import { Countdown } from "@/components/pythea/countdown"
 import { useI18n } from "@/components/pythea/language-provider"
 import { authClient } from "@/lib/auth-client"
 import { checkPhaseEmail, joinPhaseWaitlist } from "@/app/actions/phase"
+import { ConsentCheckbox } from "@/components/pythea/consent-checkbox"
+import { TERMS_VERSION } from "@/lib/legal"
 
 type Step = "email" | "existing" | "adminLogin" | "choice" | "create" | "created" | "waitlisted"
 
@@ -52,6 +55,9 @@ export function TeaserLanding({ targetMs }: { targetMs: number }) {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Consent to Terms/Privacy, required before creating an account or joining
+  // the waitlist. Persists across the choice -> create steps.
+  const [agreed, setAgreed] = useState(false)
 
   async function submitEmail(e: React.FormEvent) {
     e.preventDefault()
@@ -96,8 +102,12 @@ export function TeaserLanding({ targetMs }: { targetMs: number }) {
 
   async function notifyLater() {
     setError(null)
+    if (!agreed) {
+      setError(t.auth.consentRequired)
+      return
+    }
     setLoading(true)
-    const res = await joinPhaseWaitlist(email)
+    const res = await joinPhaseWaitlist(email, TERMS_VERSION)
     setLoading(false)
     if (!res.ok) {
       setError(p.errGeneric)
@@ -111,6 +121,10 @@ export function TeaserLanding({ targetMs }: { targetMs: number }) {
     setError(null)
     if (!firstName.trim() || !email.trim()) {
       setError(t.auth.errRequired)
+      return
+    }
+    if (!agreed) {
+      setError(t.auth.consentRequired)
       return
     }
     if (password.length < 8) {
@@ -140,6 +154,7 @@ export function TeaserLanding({ targetMs }: { targetMs: number }) {
       firstName: firstName.trim(),
       lastName: lastName.trim() || undefined,
       yearOfBirth,
+      termsVersion: TERMS_VERSION,
     })
     setLoading(false)
     if (signUpError) {
@@ -412,11 +427,22 @@ export function TeaserLanding({ targetMs }: { targetMs: number }) {
                       {error && (
                         <p className="font-sans text-xs font-semibold text-destructive">{error}</p>
                       )}
+                      <div className="rounded-sm border border-border/60 bg-background/30 px-3.5 py-3">
+                        <ConsentCheckbox id="teaser-consent" checked={agreed} onChange={setAgreed} />
+                      </div>
                       <div className="flex flex-col gap-3">
                         <button
                           type="button"
-                          onClick={() => setStep("create")}
-                          className="inline-flex items-center justify-center gap-2 rounded-sm bg-brass px-6 py-3.5 font-sans text-sm font-bold tracking-chip text-primary-foreground transition-transform hover:-translate-y-0.5"
+                          onClick={() => {
+                            if (!agreed) {
+                              setError(t.auth.consentRequired)
+                              return
+                            }
+                            setError(null)
+                            setStep("create")
+                          }}
+                          disabled={!agreed}
+                          className="inline-flex items-center justify-center gap-2 rounded-sm bg-brass px-6 py-3.5 font-sans text-sm font-bold tracking-chip text-primary-foreground transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
                         >
                           <UserPlus className="size-4" />
                           {p.createNowCta}
@@ -424,8 +450,8 @@ export function TeaserLanding({ targetMs }: { targetMs: number }) {
                         <button
                           type="button"
                           onClick={notifyLater}
-                          disabled={loading}
-                          className="inline-flex items-center justify-center gap-2 rounded-sm border border-border px-6 py-3.5 font-sans text-sm font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass disabled:opacity-50"
+                          disabled={loading || !agreed}
+                          className="inline-flex items-center justify-center gap-2 rounded-sm border border-border px-6 py-3.5 font-sans text-sm font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           {loading ? (
                             <Loader2 className="size-4 animate-spin" />
@@ -619,6 +645,16 @@ export function TeaserLanding({ targetMs }: { targetMs: number }) {
               @thehuntkalamata
             </a>
           </motion.div>
+
+          {/* Legal footer link, available on every phase-1 view. */}
+          <div className="mt-10 flex justify-center">
+            <Link
+              href="/terms"
+              className="font-sans text-[11px] font-bold tracking-chip text-muted-foreground/60 underline-offset-4 transition-colors hover:text-brass hover:underline"
+            >
+              {t.auth.legalLink}
+            </Link>
+          </div>
         </div>
       </div>
     </main>

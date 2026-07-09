@@ -12,6 +12,11 @@ export const user = pgTable("user", {
   yearOfBirth: integer("yearOfBirth"),
   // Access level: "user" (default) or "superadmin". Drives the admin dashboard.
   role: text("role").notNull().default("user"),
+  // Record of consent to the Terms of Service + Privacy Policy captured at
+  // sign-up. `termsVersion` is the document revision (see lib/legal.ts) and
+  // `acceptedTermsAt` is stamped server-side. A basic GDPR proof-of-consent.
+  termsVersion: text("termsVersion"),
+  acceptedTermsAt: timestamp("acceptedTermsAt"),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 })
@@ -189,6 +194,10 @@ export const scoreConfig = pgTable("score_config", {
 export const phaseLead = pgTable("phase_lead", {
   id: text("id").primaryKey(),
   email: text("email").notNull().unique(),
+  // Consent captured when the visitor joined the waitlist: the Terms/Privacy
+  // revision they accepted and when. Stored as proof of the opt-in.
+  termsVersion: text("termsVersion"),
+  acceptedTermsAt: timestamp("acceptedTermsAt"),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
 })
 

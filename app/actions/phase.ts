@@ -4,6 +4,7 @@ import { db } from "@/lib/db"
 import { user } from "@/lib/db/schema"
 import { isBootstrapEmail } from "@/lib/admin"
 import { addPhaseLead } from "@/lib/hunt-config"
+import { TERMS_VERSION } from "@/lib/legal"
 import { eq, sql } from "drizzle-orm"
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -36,10 +37,18 @@ export async function checkPhaseEmail(rawEmail: string): Promise<PhaseEmailResul
   return { ok: true, kind: "existing", isAdmin }
 }
 
-/** Add a brand-new visitor's email to the notify-later waitlist. */
-export async function joinPhaseWaitlist(rawEmail: string): Promise<{ ok: boolean }> {
+/**
+ * Add a brand-new visitor's email to the notify-later waitlist. Consent to the
+ * Terms/Privacy is mandatory: the caller must pass the current TERMS_VERSION,
+ * which is stored alongside the email as proof of the opt-in.
+ */
+export async function joinPhaseWaitlist(
+  rawEmail: string,
+  termsVersion: string,
+): Promise<{ ok: boolean }> {
   const email = rawEmail.trim().toLowerCase()
   if (!EMAIL_RE.test(email)) return { ok: false }
-  await addPhaseLead(email)
+  if (termsVersion !== TERMS_VERSION) return { ok: false }
+  await addPhaseLead(email, termsVersion)
   return { ok: true }
 }
