@@ -52,7 +52,7 @@ const EL: Doc = {
         blocks: [
           {
             k: "p",
-            t: `Πρόκειται για ένα κυνήγι θησαυρού που εκτυλίσσεται στην πόλη της Καλαμάτας (${GEO.regionEn}, Ελλάδα). Οι συμμετέχοντες λύνουν γρίφους, εντοπίζουν σημάδια στον αστικό χώρο και σαρώνουν κωδικούς QR για να προχωρήσουν στη διαδρομή. Το παιχνίδι απευθύνεται σε ομάδες έως οκτώ ατόμων.`,
+            t: "Πρόκειται για ένα κυνήγι θησαυρού που εκτυλίσσεται στην πόλη της Καλαμάτας, Μεσσηνία, Ελλάδα. Οι συμμετέχοντες λύνουν γρίφους, εντοπίζουν σημάδια στον αστικό χώρο και σαρώνουν κωδικούς QR για να προχωρήσουν στη διαδρομή. Το παιχνίδι απευθύνεται σε ομάδες έως οκτώ ατόμων.",
           },
           {
             k: "p",
@@ -90,6 +90,8 @@ const EL: Doc = {
               "Σεβάσου τους πεζούς, την ιδιωτική περιουσία, τα μνημεία και το περιβάλλον.",
               "Μην εισέρχεσαι σε χώρους όπου δεν επιτρέπεται η πρόσβαση και μην θέτεις σε κίνδυνο τον εαυτό σου ή άλλους.",
               "Φρόντισε την ασφάλεια των ανηλίκων της ομάδας σου σε κάθε στιγμή.",
+              "Κανένας γρίφος ή QR δεν απαιτεί είσοδο σε επικίνδυνο, ιδιωτικό ή απαγορευμένο χώρο.",
+              "Αν σε οποιοδήποτε σημείο η συνέχιση της διαδρομής φαίνεται επικίνδυνη, οφείλεις να σταματήσεις και να επικοινωνήσεις με τον διοργανωτή.",
             ],
           },
         ],
@@ -109,8 +111,18 @@ const EL: Doc = {
         ],
       },
       {
+        id: "prizes",
+        title: "6. Βραβεία, κατάταξη και ανάδειξη νικητών",
+        blocks: [
+          {
+            k: "p",
+            t: "Η κατάταξη βασίζεται στην πρόοδο της ομάδας, στις σωστές λύσεις και στις χρονικές σημάνσεις που καταγράφονται από την υπηρεσία. Ο διοργανωτής μπορεί να ελέγξει τα αποτελέσματα πριν την ανακοίνωση των νικητών και να αποκλείσει συμμετοχές που παραβιάζουν τους κανόνες. Σε περίπτωση ισοβαθμίας, ο διοργανωτής μπορεί να εφαρμόσει πρόσθετο κριτήριο ή να ζητήσει επιπλέον διαδικασία επίλυσης. Τυχόν βραβεία δεν ανταλλάσσονται με χρήματα, εκτός αν αναφέρεται ρητά κάτι διαφορετικό.",
+          },
+        ],
+      },
+      {
         id: "ip",
-        title: "6. Πνευματική ιδιοκτησία",
+        title: "7. Πνευματική ιδιοκτησία",
         blocks: [
           {
             k: "p",
@@ -120,7 +132,7 @@ const EL: Doc = {
       },
       {
         id: "disclaimer",
-        title: "7. Αποποίηση & περιορισμός ευθύνης",
+        title: "8. Αποποίηση & περιορισμός ευθύνης",
         blocks: [
           {
             k: "p",
@@ -130,7 +142,7 @@ const EL: Doc = {
       },
       {
         id: "changes",
-        title: "8. Τροποποιήσεις & εφαρμοστέο δίκαιο",
+        title: "9. Τροποποιήσεις & εφαρμοστέο δίκαιο",
         blocks: [
           {
             k: "p",
@@ -149,7 +161,7 @@ const EL: Doc = {
         blocks: [
           {
             k: "p",
-            t: `Υπεύθυνος επεξεργασίας των δεδομένων σου είναι ο διοργανωτής, ${LEGAL_ORG.name}. Για κάθε ζήτημα σχετικό με τα προσωπικά σου δεδομένα, επικοινώνησε στο ${LEGAL_ORG.contactEmail} ή μέσω Instagram (${LEGAL_ORG.instagram}).`,
+            t: `Υπεύθυνος επεξεργασίας των δεδομένων σου είναι ο διοργανωτής του παιχνιδιού «${LEGAL_ORG.name}». Για κάθε ζήτημα σχετικό με τα προσωπικά σου δεδομένα, μπορείς να επικοινωνήσεις στο ${LEGAL_ORG.contactEmail} ή μέσω Instagram (${LEGAL_ORG.instagram}).`,
           },
         ],
       },
@@ -189,7 +201,7 @@ const EL: Doc = {
         blocks: [
           {
             k: "p",
-            t: "Διατηρούμε τα δεδομένα σου όσο διαρκεί ο λογαριασμός και η διοργάνωση, καθώς και για εύλογο διάστημα μετά, εκτός αν ζητήσεις τη διαγραφή τους νωρίτερα. Τα email της λίστας ειδοποιήσεων διατηρούνται μέχρι την έναρξη της διοργάνωσης ή μέχρι να ζητήσεις τη διαγραφή σου.",
+            t: "Τα δεδομένα λογαριασμού και παιχνιδιού διατηρούνται όσο διαρκεί ο λογαριασμός και η διοργάνωση, καθώς και έως 6 μήνες μετά τη λήξη της διοργάνωσης, εκτός αν απαιτείται μεγαλύτερη διατήρηση για λόγους ασφάλειας, νομικής υποχρέωσης ή επίλυσης διαφορών. Τα email της λίστας ειδοποιήσεων διατηρούνται μέχρι την έναρξη της διοργάνωσης ή μέχρι να ζητήσεις τη διαγραφή σου.",
           },
         ],
       },
@@ -232,7 +244,7 @@ const EL: Doc = {
         blocks: [
           {
             k: "p",
-            t: "Λαμβάνουμε εύλογα τεχνικά και οργανωτικά μέτρα: οι κωδικοί αποθηκεύονται κρυπτογραφημένοι (hashed) και η μεταφορά δεδομένων γίνεται μέσω κρυπτογραφημένης σύνδεσης. Η υπηρεσία δεν απευθύνεται σε παιδιά κάτω των 16 χωρίς τη συγκατάθεση γονέα ή κηδεμόνα.",
+            t: "Λαμβάνουμε εύλογα τεχνικά και οργανωτικά μέτρα: οι κωδικοί αποθηκεύονται κρυπτογραφημένοι (hashed) και η μεταφορά δεδομένων γίνεται μέσω κρυπτογραφημένης σύνδεσης. Η υπηρεσία δεν απευθύνεται σε παιδιά κάτω των 15 ετών χωρίς συγκατάθεση γονέα ή κηδεμόνα. Για λόγους ασφάλειας του παιχνιδιού, ανήλικοι συμμετέχουν μόνο με συγκατάθεση και εποπτεία γονέα ή κηδεμόνα.",
           },
         ],
       },
@@ -252,6 +264,10 @@ const EL: Doc = {
               "Προτιμήσεων: γλώσσα και ελαφριά λειτουργία εμφάνισης.",
               "Αναλυτικά: βασικά, first-party συμβάντα χρήσης για τη βελτίωση της εμπειρίας.",
             ],
+          },
+          {
+            k: "p",
+            t: "Τα μη απαραίτητα cookies ή αναλυτικά εργαλεία ενεργοποιούνται μόνο εφόσον έχεις δώσει τη συγκατάθεσή σου, όπου απαιτείται. Μπορείς να ανακαλέσεις ή να αλλάξεις τη συγκατάθεσή σου οποτεδήποτε μέσω των ρυθμίσεων cookies, όταν αυτές είναι διαθέσιμες.",
           },
           {
             k: "p",
@@ -290,7 +306,7 @@ const EN: Doc = {
         blocks: [
           {
             k: "p",
-            t: `This is a treasure hunt that takes place in the city of Kalamata (${GEO.regionEn}, Greece). Participants solve clues, locate marks in the urban space and scan QR codes to advance along the trail. The game is designed for teams of up to eight people.`,
+            t: `This is a treasure hunt that takes place in the city of Kalamata, ${GEO.regionEn}, Greece. Participants solve clues, locate marks in the urban space and scan QR codes to advance along the trail. The game is designed for teams of up to eight people.`,
           },
           {
             k: "p",
@@ -328,6 +344,8 @@ const EN: Doc = {
               "Respect pedestrians, private property, monuments and the environment.",
               "Do not enter restricted areas and do not put yourself or others at risk.",
               "Look after the safety of any minors in your team at all times.",
+              "No clue or QR code requires you to enter a dangerous, private or restricted area.",
+              "If at any point continuing the trail feels dangerous, you must stop and contact the organiser.",
             ],
           },
         ],
@@ -347,8 +365,18 @@ const EN: Doc = {
         ],
       },
       {
+        id: "prizes",
+        title: "6. Prizes, ranking and winner selection",
+        blocks: [
+          {
+            k: "p",
+            t: "The ranking is based on each team's progress, correct solutions and the timestamps recorded by the service. The organiser may review the results before announcing the winners and may disqualify entries that break the rules. In the event of a tie, the organiser may apply an additional criterion or request a further resolution process. Any prizes are not exchangeable for cash, unless expressly stated otherwise.",
+          },
+        ],
+      },
+      {
         id: "ip",
-        title: "6. Intellectual property",
+        title: "7. Intellectual property",
         blocks: [
           {
             k: "p",
@@ -358,7 +386,7 @@ const EN: Doc = {
       },
       {
         id: "disclaimer",
-        title: "7. Disclaimer & limitation of liability",
+        title: "8. Disclaimer & limitation of liability",
         blocks: [
           {
             k: "p",
@@ -368,7 +396,7 @@ const EN: Doc = {
       },
       {
         id: "changes",
-        title: "8. Changes & governing law",
+        title: "9. Changes & governing law",
         blocks: [
           {
             k: "p",
@@ -387,7 +415,7 @@ const EN: Doc = {
         blocks: [
           {
             k: "p",
-            t: `The controller of your data is the organiser, ${LEGAL_ORG.name}. For any matter relating to your personal data, contact ${LEGAL_ORG.contactEmail} or reach us on Instagram (${LEGAL_ORG.instagram}).`,
+            t: `The controller of your data is the organiser of the game "${LEGAL_ORG.name}". For any matter relating to your personal data, you can contact ${LEGAL_ORG.contactEmail} or reach us on Instagram (${LEGAL_ORG.instagram}).`,
           },
         ],
       },
@@ -427,7 +455,7 @@ const EN: Doc = {
         blocks: [
           {
             k: "p",
-            t: "We keep your data for as long as your account and the event last, plus a reasonable period afterwards, unless you ask us to delete it sooner. Notify-list emails are kept until the event launches or until you ask to be removed.",
+            t: "Account and gameplay data are kept for as long as your account and the event last, and for up to 6 months after the event ends, unless longer retention is required for security, a legal obligation or the resolution of disputes. Notify-list emails are kept until the event launches or until you ask to be removed.",
           },
         ],
       },
@@ -470,7 +498,7 @@ const EN: Doc = {
         blocks: [
           {
             k: "p",
-            t: "We take reasonable technical and organisational measures: passwords are stored hashed and data is transferred over an encrypted connection. The service is not directed at children under 16 without the consent of a parent or guardian.",
+            t: "We take reasonable technical and organisational measures: passwords are stored hashed and data is transferred over an encrypted connection. The service is not directed at children under 15 without the consent of a parent or guardian. For the safety of the game, minors take part only with the consent and supervision of a parent or guardian.",
           },
         ],
       },
@@ -490,6 +518,10 @@ const EN: Doc = {
               "Preferences: language and lite display mode.",
               "Analytics: basic, first-party usage events to improve the experience.",
             ],
+          },
+          {
+            k: "p",
+            t: "Non-essential cookies or analytics tools are activated only if you have given your consent, where required. You can withdraw or change your consent at any time through the cookie settings, when these are available.",
           },
           {
             k: "p",
@@ -563,7 +595,7 @@ function Part({ heading, sections }: { heading: string; sections: Section[] }) {
  * document can be read in either language without leaving the page.
  */
 export function LegalDocument() {
-  const { locale, toggle, t } = useI18n()
+  const { locale, toggle } = useI18n()
   const d = locale === "el" ? EL : EN
 
   return (
@@ -603,16 +635,6 @@ export function LegalDocument() {
         <Part heading={d.privacy.heading} sections={d.privacy.sections} />
         <Part heading={d.cookies.heading} sections={d.cookies.sections} />
       </div>
-
-      <footer className="mt-14 border-t border-border pt-6">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 font-sans text-xs font-bold tracking-chip text-muted-foreground transition-colors hover:text-brass"
-        >
-          <ArrowLeft className="size-4" />
-          {t.auth.legalLink}
-        </Link>
-      </footer>
     </main>
   )
 }
