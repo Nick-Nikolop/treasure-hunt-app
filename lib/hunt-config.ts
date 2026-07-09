@@ -157,3 +157,17 @@ export async function getPhaseLeadCount(): Promise<number> {
   const rows = await getPhaseLeads()
   return rows.length
 }
+
+/**
+ * Remove a single email from the notify-later waitlist. Returns true when a row
+ * was actually deleted (false if the email was not on the list).
+ */
+export async function removePhaseLead(rawEmail: string): Promise<boolean> {
+  const email = rawEmail.trim().toLowerCase()
+  if (!email) return false
+  const deleted = await db
+    .delete(phaseLead)
+    .where(eq(phaseLead.email, email))
+    .returning({ id: phaseLead.id })
+  return deleted.length > 0
+}

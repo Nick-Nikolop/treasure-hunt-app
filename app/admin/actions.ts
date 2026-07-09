@@ -40,6 +40,7 @@ import {
   setPhaseOverride,
   setPhaseUnlockTimes,
   getPhaseLeads,
+  removePhaseLead,
 } from "@/lib/hunt-config"
 import {
   computeEffectivePhase,
@@ -352,6 +353,31 @@ export async function adminSavePhase(input: {
   // The gate is read on every request, but revalidate the key routes so any
   // cached shells refresh immediately.
   revalidatePath("/", "layout")
+  return { ok: true }
+}
+
+/**
+ * Remove a single email from the notify-later waitlist. Used when someone asks
+ * to be taken off the list (GDPR erasure) or to clean up bad entries.
+ */
+export async function adminRemovePhaseLead(email: string): Promise<ActionResult> {
+  const admin = await requireAdmin()
+
+  const clean = String(email ?? "").trim().toLowerCase()
+  if (!clean) return { ok: false, error: "bad_value" }
+
+  const removed = await removePhaseLead(clean)
+  if (!removed) return { ok: false, error: "not_found" }
+
+  await logActivity({
+    ...adminActor(admin),
+    category: "admin",
+    action: "waitlist_remove",
+    summary: `${adminActor(admin).actorName} removed ${clean} from the notify-later waitlist`,
+    metadata: { email: clean },
+  })
+
+  revalidatePath("/admin")
   return { ok: true }
 }
 

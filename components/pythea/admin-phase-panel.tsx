@@ -11,9 +11,11 @@ import {
   BookOpen,
   Users2,
   Download,
+  Trash2,
+  Loader2,
 } from "lucide-react"
 import { ModalShell } from "@/components/pythea/modal-shell"
-import { adminSavePhase, type PhaseAdminData } from "@/app/admin/actions"
+import { adminSavePhase, adminRemovePhaseLead, type PhaseAdminData } from "@/app/admin/actions"
 import {
   computeEffectivePhase,
   normalizedJournalUnlockMs,
@@ -122,6 +124,26 @@ export function AdminPhasePanel({ data }: { data: PhaseAdminData }) {
     a.download = "pythea-waitlist.csv"
     a.click()
     URL.revokeObjectURL(url)
+  }
+
+  // Per-row waitlist removal. `confirmEmail` holds the row awaiting a second
+  // click, `removingEmail` the row currently being deleted on the server.
+  const [confirmEmail, setConfirmEmail] = useState<string | null>(null)
+  const [removingEmail, setRemovingEmail] = useState<string | null>(null)
+
+  function removeLead(email: string) {
+    setRemovingEmail(email)
+    startTransition(async () => {
+      const res = await adminRemovePhaseLead(email)
+      setConfirmEmail(null)
+      setRemovingEmail(null)
+      if (res.ok) {
+        setBanner({ kind: "ok", text: `Removed ${email} from the waitlist.` })
+        router.refresh()
+      } else {
+        setBanner({ kind: "err", text: `Could not remove ${email}.` })
+      }
+    })
   }
 
   return (
@@ -290,9 +312,45 @@ export function AdminPhasePanel({ data }: { data: PhaseAdminData }) {
                 className="flex items-center justify-between gap-3 px-3 py-2 font-sans text-[13px]"
               >
                 <span className="truncate text-foreground">{w.email}</span>
-                <span className="shrink-0 text-muted-foreground/70">
-                  {fmtAthens(new Date(w.createdAt).getTime())}
-                </span>
+                <div className="flex shrink-0 items-center gap-2">
+                  <span className="text-muted-foreground/70">
+                    {fmtAthens(new Date(w.createdAt).getTime())}
+                  </span>
+                  {confirmEmail === w.email ? (
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => removeLead(w.email)}
+                        disabled={pending}
+                        className="inline-flex items-center gap-1 rounded-sm bg-destructive px-2 py-1 font-sans text-[11px] font-bold tracking-chip text-destructive-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+                      >
+                        {removingEmail === w.email ? (
+                          <Loader2 className="size-3 animate-spin" />
+                        ) : (
+                          <Trash2 className="size-3" />
+                        )}
+                        Confirm
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmEmail(null)}
+                        disabled={pending}
+                        className="rounded-sm border border-border px-2 py-1 font-sans text-[11px] font-bold tracking-chip text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setConfirmEmail(w.email)}
+                      aria-label={`Remove ${w.email} from the waitlist`}
+                      className="inline-flex size-6 items-center justify-center rounded-sm border border-border text-muted-foreground transition-colors hover:border-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  )}
+                </div>
               </li>
             ))}
           </ul>
