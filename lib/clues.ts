@@ -21,6 +21,37 @@ export const START_ISO = "2026-07-01T21:00:00+03:00"
 /** Cookie name used by the per-browser testing override. */
 export const PREVIEW_COOKIE = "pythea_preview"
 
+/** The lucide-react icon names an admin may pick for a lead's clue card. */
+export const LEAD_ICONS = [
+  "Landmark",
+  "Swords",
+  "Home",
+  "Watch",
+  "Lightbulb",
+  "DoorOpen",
+  "Pyramid",
+  "Package",
+  "Snowflake",
+  "MapPin",
+  "Compass",
+  "Anchor",
+  "Ship",
+  "Mountain",
+  "Trees",
+  "Building2",
+  "Castle",
+  "Church",
+  "Star",
+  "Feather",
+] as const
+
+export type LeadIcon = (typeof LEAD_ICONS)[number]
+
+/** Type guard for a valid lead icon name. */
+export function isLeadIcon(value: unknown): value is LeadIcon {
+  return typeof value === "string" && (LEAD_ICONS as readonly string[]).includes(value)
+}
+
 export type Clue = {
   /** Stable identity of the lead. A printed QR binds to this, so it survives
    *  reordering. For the seed leads this is a country slug (e.g. "china"). */
@@ -41,16 +72,7 @@ export type Clue = {
   /** Short subtitle for the stop, in English */
   subtitleEn: string
   /** lucide-react icon name used on the clue card */
-  icon:
-    | "Landmark"
-    | "Swords"
-    | "Home"
-    | "Watch"
-    | "Lightbulb"
-    | "DoorOpen"
-    | "Pyramid"
-    | "Package"
-    | "Snowflake"
+  icon: LeadIcon
   /** Full narrative, split into paragraphs */
   body: string[]
   /** Full narrative in English, split into paragraphs */
@@ -121,7 +143,7 @@ const RAW_CLUES: Omit<Clue, "id" | "stampImageUrl" | "stampAspect">[] = [
     icon: "Watch",
     body: [
       "Από τη Γαλλία, ο δρόμος με έφερε στην Ελβετία. Εκεί όπου τα βουνά στέκουν αγέρωχα και ο χρόνος μοιάζει να μετριέται με μεγαλύτερη ακρίβεια απ’ ό,τι αλλού.",
-      "Η Ελβετία μου δίδαξε ότι κάθε ταξίδι χρειάζεται ρυθμό. Αν βιαστείς, χάνεις τα σημάδια. Αν αργήσεις πολύ, χάνεις τον δρόμο.",
+      "Η Ελβε��ία μου δίδαξε ότι κάθε ταξίδι χρειάζεται ρυθμό. Αν βιαστείς, χάνεις τα σημάδια. Αν αργήσεις πολύ, χάνεις τον δρόμο.",
       "Στην Καλαμάτα, το επόμενο στοιχείο δεν το έκρυψα σε κορυφή βουνού ούτε μέσα σε ρολόι. Το άφησα εκεί όπου μια ελβετική σημαία εμφανίζεται αναπάντεχα κοντά στη θάλασσα, σαν να θυμίζει πως ακόμη και οι Άλπεις μπορούν να καθρεφτιστούν στον Μεσσηνιακό.",
     ],
     bodyEn: [
