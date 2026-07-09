@@ -1,7 +1,6 @@
 "use client"
 
-import { useRef, useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
+import { useEffect, useRef, useState, useTransition } from "react"
 import {
   ScrollText,
   ChevronDown,
@@ -15,6 +14,7 @@ import {
   ImageOff,
   Loader2,
   AlertTriangle,
+  CheckCircle2,
 } from "lucide-react"
 import {
   adminSaveLead,
@@ -23,9 +23,8 @@ import {
   adminReorderLeads,
   adminUploadLeadStamp,
   adminClearLeadStamp,
-  type ActionResult,
 } from "@/app/admin/actions"
-import { LEAD_ICONS, type Difficulty } from "@/lib/clues"
+import { LEAD_ICONS, type Difficulty, type LeadIcon } from "@/lib/clues"
 import type { EditableLead } from "@/lib/lead-content"
 
 const errorText: Record<string, string> = {
@@ -44,44 +43,215 @@ const DIFFICULTIES: Difficulty[] = ["easy", "medium", "hard"]
 // Suggested stamp ratios. 2:3 portrait is the house style for the γραμματόσημα.
 const ASPECTS = ["2:3", "3:2", "1:1"] as const
 
+// The fields that make up a lead's editable copy. Reorder + stamp are handled
+// separately; these are what a per-lead content save writes.
+const CONTENT_FIELDS = [
+  "country",
+  "countryEn",
+  "subtitle",
+  "subtitleEn",
+  "icon",
+  "body",
+  "bodyEn",
+  "difficulty",
+] as const
+
+type Popup = { kind: "ok" | "err"; text: string }
+
+const clone = (arr: EditableLead[]): EditableLead[] => arr.map((l) => ({ ...l }))
+
+function contentDiffers(a: EditableLead, b: EditableLead): boolean {
+  return CONTENT_FIELDS.some((f) => a[f] !== b[f])
+}
+
 /**
  * The Leads tab of the admin dashboard: a full manager for the hunt's stops.
- * Admins can reorder the sequence, add and remove leads, rewrite each lead's
- * copy in both languages, and upload its γραμματόσημο (passport stamp) image.
- * Each lead keeps a stable identity, so its printed QR code keeps working no
- * matter where it sits in the sequence.
+ *
+ * All editing happens LOCALLY — reordering and copy edits mutate an in-memory
+ * working copy and never hit the server on their own. A single "Save all
+ * changes" bar commits everything at once and shows a confirmation popup, so
+ * the admin is never interrupted or bounced out mid-edit. State is owned by
+ * this component (seeded from props once), so a server action's revalidation
+ * never reshuffles the list under the admin's cursor.
+ *
+ * Adding, removing and stamp uploads are their own immediate actions (they
+ * touch files or structure) but they update the local list in place instead of
+ * triggering a full refresh, so the view stays put.
  */
 export function AdminLeadsPanel({ leads }: { leads: EditableLead[] }) {
-  const router = useRouter()
   const [pending, startTransition] = useTransition()
-  const [banner, setBanner] = useState<{ kind: "ok" | "err"; text: string } | null>(null)
+  const [popup, setPopup] = useState<Popup | null>(null)
   const [openId, setOpenId] = useState<string | null>(leads[0]?.id ?? null)
-  const [busyId, setBusyId] = useState<string | null>(null)
 
-  function run(fn: () => Promise<ActionResult>, okText: string, id?: string) {
-    setBusyId(id ?? null)
-    startTransition(async () => {
-      const res = await fn()
-      setBusyId(null)
-      if (res.ok) {
-        setBanner({ kind: "ok", text: okText })
-        router.refresh()
-      } else {
-        setBanner({ kind: "err", text: errorText[res.error] ?? "Something went wrong." })
-      }
+  // Working copy (live edits) + baseline (last-saved snapshot). Seeded from
+  // props once; from here on this component owns the state.
+  const [items, setItems] = useState<EditableLead[]>(() => clone(leads))
+  const [baseline, setBaseline] = useState<EditableLead[]>(() => clone(leads))
+
+  const baseById = new Map(baseline.map((l) => [l.id, l]))
+  const orderDirty = items.map((l) => l.id).join("|") !== baseline.map((l) => l.id).join("|")
+  const dirtyIds = items
+    .filter((it) => {
+      const b = baseById.get(it.id)
+      return b ? contentDiffers(it, b) : false
     })
+    .map((it) => it.id)
+  const anyDirty = orderDirty || dirtyIds.length > 0
+
+  // Auto-dismiss the success popup; keep error popups until acknowledged.
+  useEffect(() => {
+    if (popup?.kind !== "ok") return
+    const t = setTimeout(() => setPopup(null), 3500)
+    return () => clearTimeout(t)
+  }, [popup])
+
+  function patchItem(id: string, patch: Partial<EditableLead>) {
+    setItems((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)))
+  }
+
+  function revertItem(id: string) {
+    const b = baseById.get(id)
+    if (b) setItems((prev) => prev.map((l) => (l.id === id ? { ...b } : l)))
   }
 
   function move(index: number, dir: -1 | 1) {
     const next = index + dir
-    if (next < 0 || next >= leads.length) return
-    const ids = leads.map((l) => l.id)
-    ;[ids[index], ids[next]] = [ids[next], ids[index]]
-    run(() => adminReorderLeads(ids), "Sequence updated.")
+    if (next < 0 || next >= items.length) return
+    setItems((prev) => {
+      const copy = [...prev]
+      ;[copy[index], copy[next]] = [copy[next], copy[index]]
+      return copy
+    })
+  }
+
+  function discardAll() {
+    setItems(clone(baseline))
+  }
+
+  function saveAll() {
+    if (!anyDirty || pending) return
+    startTransition(async () => {
+      // 1. Persist the new order first (positions), if it changed.
+      if (orderDirty) {
+        const res = await adminReorderLeads(items.map((l) => l.id))
+        if (!res.ok) {
+          setPopup({ kind: "err", text: errorText[res.error] ?? "Could not save the new order." })
+          return
+        }
+      }
+
+      // 2. Persist each lead whose copy changed.
+      const failedIds: string[] = []
+      const failedNames: string[] = []
+      for (const it of items) {
+        const b = baseById.get(it.id)
+        if (!b || !contentDiffers(it, b)) continue
+        const res = await adminSaveLead({
+          id: it.id,
+          country: it.country,
+          countryEn: it.countryEn,
+          subtitle: it.subtitle,
+          subtitleEn: it.subtitleEn,
+          icon: it.icon,
+          body: it.body,
+          bodyEn: it.bodyEn,
+          difficulty: it.difficulty,
+        })
+        if (!res.ok) {
+          failedIds.push(it.id)
+          failedNames.push(it.country)
+        }
+      }
+
+      // New baseline mirrors what is now saved. Failed leads keep their old
+      // baseline so they stay flagged as unsaved.
+      setBaseline(
+        items.map((it) => (failedIds.includes(it.id) ? { ...(baseById.get(it.id) as EditableLead) } : { ...it })),
+      )
+
+      if (failedNames.length > 0) {
+        setPopup({
+          kind: "err",
+          text: `Saved your changes, except: ${failedNames.join(", ")}. Please try those again.`,
+        })
+      } else {
+        setPopup({ kind: "ok", text: "All your changes have been saved." })
+      }
+    })
+  }
+
+  function addLead(country: string, countryEn: string, done: () => void) {
+    startTransition(async () => {
+      const res = await adminAddLead({ country, countryEn })
+      if (!res.ok) {
+        setPopup({ kind: "err", text: errorText[res.error] ?? "Could not add that lead." })
+        return
+      }
+      const fresh: EditableLead = {
+        id: res.id,
+        order: items.length + 1,
+        country,
+        countryEn,
+        icon: "Landmark",
+        subtitle: "",
+        subtitleEn: "",
+        body: "",
+        bodyEn: "",
+        stampImageUrl: null,
+        stampAspect: "2:3",
+        difficulty: "easy",
+      }
+      setItems((prev) => [...prev, fresh])
+      setBaseline((prev) => [...prev, { ...fresh }])
+      setOpenId(res.id)
+      done()
+      setPopup({ kind: "ok", text: `Added ${country}. Fill in its copy and stamp, then Save all.` })
+    })
+  }
+
+  function removeLead(id: string, country: string) {
+    startTransition(async () => {
+      const res = await adminRemoveLead(id)
+      if (!res.ok) {
+        setPopup({ kind: "err", text: errorText[res.error] ?? "Could not remove that lead." })
+        return
+      }
+      setItems((prev) => prev.filter((l) => l.id !== id))
+      setBaseline((prev) => prev.filter((l) => l.id !== id))
+      if (openId === id) setOpenId(null)
+      setPopup({ kind: "ok", text: `Removed ${country}.` })
+    })
+  }
+
+  function uploadStamp(id: string, fd: FormData) {
+    startTransition(async () => {
+      const res = await adminUploadLeadStamp(fd)
+      if (!res.ok) {
+        setPopup({ kind: "err", text: errorText[res.error] ?? "Could not upload that stamp." })
+        return
+      }
+      const patch = { stampImageUrl: res.url, stampAspect: res.aspect }
+      setItems((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)))
+      setBaseline((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)))
+      setPopup({ kind: "ok", text: "Stamp updated." })
+    })
+  }
+
+  function clearStamp(id: string) {
+    startTransition(async () => {
+      const res = await adminClearLeadStamp(id)
+      if (!res.ok) {
+        setPopup({ kind: "err", text: errorText[res.error] ?? "Could not clear that stamp." })
+        return
+      }
+      setItems((prev) => prev.map((l) => (l.id === id ? { ...l, stampImageUrl: null } : l)))
+      setBaseline((prev) => prev.map((l) => (l.id === id ? { ...l, stampImageUrl: null } : l)))
+      setPopup({ kind: "ok", text: "Stamp cleared, reverted to the default art." })
+    })
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 pb-24">
       <div className="rounded-sm border border-border bg-card/40 p-4">
         <div className="flex items-center gap-2">
           <ScrollText className="size-4 text-brass" />
@@ -89,8 +259,9 @@ export function AdminLeadsPanel({ leads }: { leads: EditableLead[] }) {
         </div>
         <p className="mt-1 font-sans text-[13px] leading-relaxed text-muted-foreground">
           Manage the hunt&rsquo;s stops: reorder the sequence, add or remove leads, rewrite each
-          one&rsquo;s copy in Greek and English, and upload its γραμματόσημο (stamp). Each lead keeps
-          its own QR code wherever it sits in the order.
+          one&rsquo;s copy in Greek and English, and upload its γραμματόσημο (stamp). Edits stay on
+          this screen until you press <span className="font-bold text-foreground">Save all changes</span>.
+          Each lead keeps its own QR code wherever it sits in the order.
         </p>
         <p className="mt-2 flex items-start gap-2 rounded-sm border border-amber-500/30 bg-amber-500/10 px-3 py-2 font-sans text-[12px] leading-relaxed text-amber-200/90">
           <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
@@ -101,130 +272,179 @@ export function AdminLeadsPanel({ leads }: { leads: EditableLead[] }) {
         </p>
       </div>
 
-      {banner && (
-        <div
-          role="status"
-          className={`rounded-sm border px-4 py-3 font-sans text-sm ${
-            banner.kind === "ok"
-              ? "border-brass/40 bg-brass/10 text-foreground"
-              : "border-destructive/40 bg-destructive/10 text-destructive"
-          }`}
-        >
-          {banner.text}
-        </div>
-      )}
-
       <ul className="flex flex-col gap-2.5">
-        {leads.map((lead, index) => (
+        {items.map((lead, index) => (
           <LeadCard
             key={lead.id}
             lead={lead}
+            base={baseById.get(lead.id)}
+            position={index + 1}
             index={index}
-            count={leads.length}
+            count={items.length}
             open={openId === lead.id}
             pending={pending}
-            busy={busyId === lead.id}
+            dirty={dirtyIds.includes(lead.id)}
             onToggle={() => setOpenId((o) => (o === lead.id ? null : lead.id))}
             onMoveUp={() => move(index, -1)}
             onMoveDown={() => move(index, 1)}
-            onSave={(values) =>
-              run(
-                () => adminSaveLead({ id: lead.id, ...values }),
-                `Lead ${String(lead.order).padStart(2, "0")} saved.`,
-                lead.id,
-              )
-            }
-            onRemove={() =>
-              run(() => adminRemoveLead(lead.id), `Removed ${lead.country}.`, lead.id)
-            }
-            onUpload={(formData) =>
-              run(() => adminUploadLeadStamp(formData), "Stamp updated.", lead.id)
-            }
-            onClearStamp={() =>
-              run(() => adminClearLeadStamp(lead.id), "Stamp cleared.", lead.id)
-            }
+            onChange={(patch) => patchItem(lead.id, patch)}
+            onRevert={() => revertItem(lead.id)}
+            onRemove={() => removeLead(lead.id, lead.country)}
+            onUpload={(fd) => uploadStamp(lead.id, fd)}
+            onClearStamp={() => clearStamp(lead.id)}
           />
         ))}
       </ul>
 
-      <AddLeadForm
-        pending={pending}
-        onAdd={(country, countryEn, done) =>
-          startTransition(async () => {
-            const res = await adminAddLead({ country, countryEn })
-            if (res.ok) {
-              setBanner({ kind: "ok", text: `Added ${country}.` })
-              setOpenId(res.id)
-              done()
-              router.refresh()
-            } else {
-              setBanner({ kind: "err", text: errorText[res.error] ?? "Something went wrong." })
-            }
-          })
-        }
-      />
+      <AddLeadForm pending={pending} onAdd={addLead} />
+
+      {anyDirty && (
+        <SaveBar
+          orderDirty={orderDirty}
+          dirtyCount={dirtyIds.length}
+          pending={pending}
+          onSave={saveAll}
+          onDiscard={discardAll}
+        />
+      )}
+
+      {popup && <PopupDialog popup={popup} onClose={() => setPopup(null)} />}
     </div>
   )
 }
 
-type Draft = {
-  country: string
-  countryEn: string
-  subtitle: string
-  subtitleEn: string
-  icon: string
-  body: string
-  bodyEn: string
-  difficulty: Difficulty
+/** Sticky action bar that commits all local edits in one go. */
+function SaveBar({
+  orderDirty,
+  dirtyCount,
+  pending,
+  onSave,
+  onDiscard,
+}: {
+  orderDirty: boolean
+  dirtyCount: number
+  pending: boolean
+  onSave: () => void
+  onDiscard: () => void
+}) {
+  const parts: string[] = []
+  if (orderDirty) parts.push("new order")
+  if (dirtyCount > 0) parts.push(`${dirtyCount} lead${dirtyCount > 1 ? "s" : ""} edited`)
+
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+      <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3">
+        <p className="min-w-0 font-sans text-[13px] text-muted-foreground">
+          <span className="font-bold text-foreground">Unsaved changes:</span>{" "}
+          <span className="truncate">{parts.join(" · ")}</span>
+        </p>
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={onDiscard}
+            disabled={pending}
+            className="inline-flex items-center gap-1.5 rounded-sm border border-border px-3 py-2 font-sans text-xs font-bold tracking-chip text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+          >
+            <RotateCcw className="size-3.5" />
+            Discard
+          </button>
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={pending}
+            className="inline-flex items-center gap-2 rounded-sm bg-brass px-4 py-2 font-sans text-xs font-bold tracking-chip text-background transition-opacity hover:opacity-90 disabled:opacity-40"
+          >
+            {pending ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
+            Save all changes
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/** Centered confirmation popup. Success auto-dismisses; errors wait for OK. */
+function PopupDialog({ popup, onClose }: { popup: Popup; onClose: () => void }) {
+  const ok = popup.kind === "ok"
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+      <button
+        type="button"
+        aria-label="Close"
+        onClick={onClose}
+        className="absolute inset-0 cursor-default bg-background/70 backdrop-blur-sm"
+      />
+      <div className="relative w-full max-w-sm rounded-sm border border-border bg-card p-5 shadow-2xl">
+        <div className="flex items-start gap-3">
+          {ok ? (
+            <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-brass" />
+          ) : (
+            <AlertTriangle className="mt-0.5 size-5 shrink-0 text-destructive" />
+          )}
+          <div className="min-w-0">
+            <h3 className="font-serif text-base font-black text-foreground">
+              {ok ? "Saved" : "Something went wrong"}
+            </h3>
+            <p className="mt-1 font-sans text-sm leading-relaxed text-muted-foreground">{popup.text}</p>
+          </div>
+        </div>
+        <div className="mt-4 flex justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex items-center gap-1.5 rounded-sm bg-brass px-4 py-2 font-sans text-xs font-bold tracking-chip text-background transition-opacity hover:opacity-90"
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function LeadCard({
   lead,
+  base,
+  position,
   index,
   count,
   open,
   pending,
-  busy,
+  dirty,
   onToggle,
   onMoveUp,
   onMoveDown,
-  onSave,
+  onChange,
+  onRevert,
   onRemove,
   onUpload,
   onClearStamp,
 }: {
   lead: EditableLead
+  base: EditableLead | undefined
+  position: number
   index: number
   count: number
   open: boolean
   pending: boolean
-  busy: boolean
+  dirty: boolean
   onToggle: () => void
   onMoveUp: () => void
   onMoveDown: () => void
-  onSave: (values: Draft) => void
+  onChange: (patch: Partial<EditableLead>) => void
+  onRevert: () => void
   onRemove: () => void
   onUpload: (formData: FormData) => void
   onClearStamp: () => void
 }) {
-  const initial: Draft = {
-    country: lead.country,
-    countryEn: lead.countryEn,
-    subtitle: lead.subtitle,
-    subtitleEn: lead.subtitleEn,
-    icon: lead.icon,
-    body: lead.body,
-    bodyEn: lead.bodyEn,
-    difficulty: lead.difficulty,
-  }
-  const [draft, setDraft] = useState<Draft>(initial)
   const [confirmRemove, setConfirmRemove] = useState(false)
 
-  const dirty = (Object.keys(initial) as (keyof Draft)[]).some((k) => draft[k] !== initial[k])
-  const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft((d) => ({ ...d, [k]: v }))
-
   return (
-    <li className="overflow-hidden rounded-sm border border-border bg-card/40">
+    <li
+      className={`overflow-hidden rounded-sm border bg-card/40 ${
+        dirty ? "border-brass/50" : "border-border"
+      }`}
+    >
       <div className="flex items-center justify-between gap-3 px-3 py-2.5">
         <div className="flex min-w-0 items-center gap-2.5">
           <div className="flex flex-col">
@@ -257,7 +477,7 @@ function LeadCard({
             className="flex min-w-0 flex-col items-start text-left"
           >
             <span className="font-sans text-[10px] font-bold uppercase tracking-chip text-muted-foreground/70">
-              Lead {String(lead.order).padStart(2, "0")}
+              Lead {String(position).padStart(2, "0")}
             </span>
             <span className="truncate font-serif text-base font-black text-foreground">
               {lead.country}
@@ -269,7 +489,11 @@ function LeadCard({
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          {busy && <Loader2 className="size-4 animate-spin text-brass" />}
+          {dirty && (
+            <span className="rounded-sm bg-brass/15 px-2 py-0.5 font-sans text-[10px] font-bold uppercase tracking-chip text-brass">
+              Edited
+            </span>
+          )}
           <button
             type="button"
             onClick={onToggle}
@@ -284,31 +508,26 @@ function LeadCard({
 
       {open && (
         <div className="border-t border-border p-4">
-          <StampEditor
-            lead={lead}
-            pending={pending}
-            onUpload={onUpload}
-            onClear={onClearStamp}
-          />
+          <StampEditor lead={lead} pending={pending} onUpload={onUpload} onClear={onClearStamp} />
 
           <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
             <LangColumn
               heading="Ελληνικά"
-              country={draft.country}
-              subtitle={draft.subtitle}
-              body={draft.body}
-              onCountry={(v) => set("country", v)}
-              onSubtitle={(v) => set("subtitle", v)}
-              onBody={(v) => set("body", v)}
+              country={lead.country}
+              subtitle={lead.subtitle}
+              body={lead.body}
+              onCountry={(v) => onChange({ country: v })}
+              onSubtitle={(v) => onChange({ subtitle: v })}
+              onBody={(v) => onChange({ body: v })}
             />
             <LangColumn
               heading="English"
-              country={draft.countryEn}
-              subtitle={draft.subtitleEn}
-              body={draft.bodyEn}
-              onCountry={(v) => set("countryEn", v)}
-              onSubtitle={(v) => set("subtitleEn", v)}
-              onBody={(v) => set("bodyEn", v)}
+              country={lead.countryEn}
+              subtitle={lead.subtitleEn}
+              body={lead.bodyEn}
+              onCountry={(v) => onChange({ countryEn: v })}
+              onSubtitle={(v) => onChange({ subtitleEn: v })}
+              onBody={(v) => onChange({ bodyEn: v })}
             />
           </div>
 
@@ -318,8 +537,8 @@ function LeadCard({
                 Card icon
               </span>
               <select
-                value={draft.icon}
-                onChange={(e) => set("icon", e.target.value)}
+                value={lead.icon}
+                onChange={(e) => onChange({ icon: e.target.value as LeadIcon })}
                 className="w-full rounded-sm border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none focus:border-brass"
               >
                 {LEAD_ICONS.map((name) => (
@@ -334,8 +553,8 @@ function LeadCard({
                 Difficulty
               </span>
               <select
-                value={draft.difficulty}
-                onChange={(e) => set("difficulty", e.target.value as Difficulty)}
+                value={lead.difficulty}
+                onChange={(e) => onChange({ difficulty: e.target.value as Difficulty })}
                 className="w-full rounded-sm border border-border bg-background px-3 py-2 font-sans text-sm capitalize text-foreground outline-none focus:border-brass"
               >
                 {DIFFICULTIES.map((d) => (
@@ -349,7 +568,7 @@ function LeadCard({
 
           <div className="mt-5 flex items-center justify-between gap-2">
             <div>
-              {index === 0 ? (
+              {position === 1 ? (
                 <span className="font-sans text-[11px] text-muted-foreground/60">
                   Opening lead — can&rsquo;t be removed.
                 </span>
@@ -386,29 +605,25 @@ function LeadCard({
               )}
             </div>
 
-            <div className="flex items-center gap-2">
-              {dirty && (
-                <button
-                  type="button"
-                  onClick={() => setDraft(initial)}
-                  disabled={pending}
-                  className="inline-flex items-center gap-1.5 rounded-sm border border-border px-3 py-2 font-sans text-xs font-bold tracking-chip text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
-                >
-                  <RotateCcw className="size-3.5" />
-                  Revert
-                </button>
-              )}
+            {dirty && (
               <button
                 type="button"
-                onClick={() => onSave(draft)}
-                disabled={pending || !dirty}
-                className="inline-flex items-center gap-2 rounded-sm bg-brass px-4 py-2 font-sans text-xs font-bold tracking-chip text-background transition-opacity hover:opacity-90 disabled:opacity-40"
+                onClick={onRevert}
+                disabled={pending}
+                className="inline-flex items-center gap-1.5 rounded-sm border border-border px-3 py-2 font-sans text-xs font-bold tracking-chip text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
               >
-                <Save className="size-3.5" />
-                Save lead
+                <RotateCcw className="size-3.5" />
+                Revert this lead
               </button>
-            </div>
+            )}
           </div>
+
+          {base && dirty && (
+            <p className="mt-3 font-sans text-[11px] text-muted-foreground/70">
+              Unsaved edits. Use <span className="font-bold text-foreground">Save all changes</span>{" "}
+              at the bottom to commit.
+            </p>
+          )}
         </div>
       )}
     </li>
@@ -416,15 +631,7 @@ function LeadCard({
 }
 
 /** Small stamp preview shown in the collapsed row header. */
-function StampThumb({
-  url,
-  aspect,
-  country,
-}: {
-  url: string | null
-  aspect: string
-  country: string
-}) {
+function StampThumb({ url, aspect, country }: { url: string | null; aspect: string; country: string }) {
   const ratio = aspectToCss(aspect)
   return (
     <div
@@ -507,7 +714,7 @@ function StampEditor({
             </h4>
             <p className="mt-1 font-sans text-[12px] leading-relaxed text-muted-foreground">
               Suggested ratio <span className="font-bold text-foreground">2:3 portrait</span> (e.g.
-              1024×1536). PNG, JPG, WebP or AVIF, up to 5 MB.
+              1024×1536). PNG, JPG, WebP or AVIF, up to 5 MB. Uploads save immediately.
             </p>
           </div>
 
@@ -600,9 +807,7 @@ function LangColumn({
 }) {
   return (
     <div className="flex flex-col gap-3">
-      <h3 className="font-sans text-[11px] font-bold uppercase tracking-chip text-brass">
-        {heading}
-      </h3>
+      <h3 className="font-sans text-[11px] font-bold uppercase tracking-chip text-brass">{heading}</h3>
       <label className="flex flex-col gap-1.5">
         <span className="font-sans text-[11px] font-bold uppercase tracking-chip text-muted-foreground">
           Country

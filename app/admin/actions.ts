@@ -1088,7 +1088,9 @@ const ALLOWED_STAMP_TYPES = ["image/png", "image/jpeg", "image/webp", "image/avi
  * Blob and its public URL saved on the lead. Any previous uploaded stamp is
  * removed. `aspect` is the suggested ratio the admin authored to (e.g. "2:3").
  */
-export async function adminUploadLeadStamp(formData: FormData): Promise<ActionResult> {
+export async function adminUploadLeadStamp(
+  formData: FormData,
+): Promise<{ ok: true; url: string; aspect: string } | { ok: false; error: string }> {
   const admin = await requireAdmin()
 
   const id = String(formData.get("id") ?? "").trim()
@@ -1129,7 +1131,7 @@ export async function adminUploadLeadStamp(formData: FormData): Promise<ActionRe
   })
   revalidatePath("/admin")
   revalidatePath("/journal")
-  return { ok: true }
+  return { ok: true, url: blob.url, aspect }
 }
 
 /** Clear a lead's uploaded stamp, reverting it to the bundled/default art. */
