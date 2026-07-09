@@ -22,8 +22,16 @@ export const START_ISO = "2026-07-01T21:00:00+03:00"
 export const PREVIEW_COOKIE = "pythea_preview"
 
 export type Clue = {
-  /** 1-based order in the hunt */
+  /** Stable identity of the lead. A printed QR binds to this, so it survives
+   *  reordering. For the seed leads this is a country slug (e.g. "china"). */
+  id: string
+  /** 1-based order (position) in the hunt */
   order: number
+  /** The γραμματόσημο (passport stamp) image shown in the journal. Uploaded by
+   *  an admin; when null the UI falls back to the bundled art by country. */
+  stampImageUrl: string | null
+  /** Suggested/authored aspect ratio for the stamp image, e.g. "2:3". */
+  stampAspect: string
   /** The country this stop represents (Greek; also the canonical stamp key) */
   country: string
   /** The country name in English */
@@ -49,7 +57,7 @@ export type Clue = {
   bodyEn: string[]
 }
 
-export const CLUES: Clue[] = [
+const RAW_CLUES: Omit<Clue, "id" | "stampImageUrl" | "stampAspect">[] = [
   {
     order: 1,
     country: "Κίνα",
@@ -216,19 +224,54 @@ export const CLUES: Clue[] = [
   },
 ]
 
+// Per-lead seed identity + bundled stamp art. `id` is the stable QR-binding
+// identity; `stamp` is the vintage image in /public/stamps; `aspect` is the
+// suggested stamp ratio (most are 2:3 portrait; Switzerland's art is 3:2).
+const SEED_META: Record<number, { id: string; stamp: string; aspect: string }> = {
+  1: { id: "china", stamp: "/stamps/china.png", aspect: "2:3" },
+  2: { id: "thailand", stamp: "/stamps/thailand.png", aspect: "2:3" },
+  3: { id: "france", stamp: "/stamps/france.png", aspect: "2:3" },
+  4: { id: "switzerland", stamp: "/stamps/helvetia.png", aspect: "3:2" },
+  5: { id: "serbia", stamp: "/stamps/serbia.png", aspect: "2:3" },
+  6: { id: "spain", stamp: "/stamps/spain.png", aspect: "2:3" },
+  7: { id: "egypt", stamp: "/stamps/egypt.png", aspect: "2:3" },
+  8: { id: "russia", stamp: "/stamps/russia.png", aspect: "2:3" },
+  9: { id: "finland", stamp: "/stamps/finland.png", aspect: "2:3" },
+}
+
+/**
+ * The hardcoded seed leads. At runtime the admin-managed `lead` table (seeded
+ * from this) is the source of truth — read it via lib/leads.ts. This array
+ * remains the fallback/default content and the seed source.
+ */
+export const CLUES: Clue[] = RAW_CLUES.map((c) => ({
+  ...c,
+  id: SEED_META[c.order].id,
+  stampImageUrl: SEED_META[c.order].stamp,
+  stampAspect: SEED_META[c.order].aspect,
+}))
+
+/** Count of seed leads. Runtime total is dynamic — see lib/leads.ts. */
 export const TOTAL_CLUES = CLUES.length
 
 /** The first lead is the only time-gated one. */
 export const FIRST_LEAD_ORDER = 1
 
 /**
- * Virtual lead order for the "finish" scan. The last real lead (TOTAL_CLUES) is
- * only counted as solved once the crew scans the dedicated finishing QR, which
- * stores a row at this order. It never affects displayed progress (which clamps
- * to TOTAL_CLUES) — it exists purely so the final lead can be scored like the
- * others (you earn lead N's points when you "leave" it for the next stop).
+ * Virtual lead order for the "finish" scan. The last real lead is only counted
+ * as solved once the crew scans the dedicated finishing QR, which stores a row
+ * at this order. It never affects displayed progress (which clamps to the live
+ * total) — it exists purely so the final lead can be scored like the others
+ * (you earn a lead's points when you "leave" it for the next stop).
+ *
+ * This is a large STABLE sentinel, independent of the (now dynamic) lead count,
+ * so adding or removing leads never collides with a real position. The legacy
+ * value was TOTAL_CLUES + 1 (= 10); see lib/leads.ts for the one-time backfill.
  */
-export const FINISH_ORDER = TOTAL_CLUES + 1
+export const FINISH_ORDER = 100000
+
+/** The legacy finish sentinel used before the lead count became dynamic. */
+export const LEGACY_FINISH_ORDER = TOTAL_CLUES + 1
 
 // ── Scoring ─────────────────────────────────────────────────────────────────
 
@@ -311,16 +354,21 @@ export function isLeadOneOpen(_nowMs: number): boolean {
  * than the leads they have actually unlocked, and once START passes everyone
  * sees at least lead 1.
  */
-export function effectiveUnlockedCount(progress: number, nowMs: number): number {
-  const fromProgress = clampProgress(progress)
+export function effectiveUnlockedCount(
+  progress: number,
+  nowMs: number,
+  total: number = TOTAL_CLUES,
+): number {
+  const fromProgress = clampProgress(progress, total)
   const fromTime = isLeadOneOpen(nowMs) ? 1 : 0
   return Math.max(fromProgress, fromTime)
 }
 
-/** Clamp any raw progress value to the valid 0..TOTAL_CLUES range. */
-export function clampProgress(value: number): number {
+/** Clamp any raw progress value to the valid 0..total range. Defaults to the
+ *  static seed count; pass the live total from lib/leads.ts when known. */
+export function clampProgress(value: number, total: number = TOTAL_CLUES): number {
   if (!Number.isFinite(value)) return 0
-  return Math.max(0, Math.min(TOTAL_CLUES, Math.floor(value)))
+  return Math.max(0, Math.min(total, Math.floor(value)))
 }
 
 /**
@@ -354,10 +402,15 @@ export type LockedClue = {
  * Computes the public-safe payload for the journey page from a player's
  * effective unlocked count.
  */
-export function buildClueState(unlockedCount: number, nowMs: number) {
-  const count = clampProgress(unlockedCount)
-  const unlocked = CLUES.slice(0, count)
-  const locked: LockedClue[] = CLUES.slice(count).map((c) => ({
+export function buildClueState(
+  unlockedCount: number,
+  nowMs: number,
+  clues: Clue[] = CLUES,
+) {
+  const total = clues.length
+  const count = clampProgress(unlockedCount, total)
+  const unlocked = clues.slice(0, count)
+  const locked: LockedClue[] = clues.slice(count).map((c) => ({
     order: c.order,
     gate: c.order === FIRST_LEAD_ORDER ? "time" : "qr",
     unlockMs: c.order === FIRST_LEAD_ORDER ? START_MS : undefined,
@@ -366,7 +419,7 @@ export function buildClueState(unlockedCount: number, nowMs: number) {
   const next = locked[0] ?? null
   return {
     unlockedCount: count,
-    total: TOTAL_CLUES,
+    total,
     startMs: START_MS,
     next,
     unlocked,

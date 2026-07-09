@@ -88,11 +88,54 @@ export const leadUnlock = pgTable("lead_unlock", {
   source: text("source").notNull().default("qr"),
 })
 
+// The admin-managed leads of the hunt. This is the runtime source of truth for
+// the set of stops, their order, their journal copy, difficulty and stamp
+// image. Seeded once from the hardcoded defaults in lib/clues.ts.
+//
+//  - `id`        STABLE identity. A printed QR code binds to this id, so a lead
+//                keeps its QR no matter how it is reordered. Never changes.
+//  - `position`  1-based slot in the sequence. This is what the progression
+//                engine uses as "leadOrder". Reordering rewrites positions;
+//                identity (`id`) stays put.
+//  - `stampImageUrl` the γραμματόσημο (passport stamp) image shown in the
+//                journal. Uploaded to Blob by an admin; falls back to the
+//                bundled art when null.
+//  - `stampAspect` suggested/authored aspect ratio for the stamp, e.g. "2:3".
+export const lead = pgTable(
+  "lead",
+  {
+    id: text("id").primaryKey(),
+    position: integer("position").notNull(),
+    country: text("country").notNull(),
+    countryEn: text("countryEn").notNull(),
+    subtitle: text("subtitle").notNull().default(""),
+    subtitleEn: text("subtitleEn").notNull().default(""),
+    // lucide icon name used on the clue card (kept for the card + as a
+    // fallback visual). One of the names in lib/clues.ts `Clue["icon"]`.
+    icon: text("icon").notNull().default("Landmark"),
+    // Journal narrative, stored raw with a blank line between paragraphs.
+    body: text("body").notNull().default(""),
+    bodyEn: text("bodyEn").notNull().default(""),
+    stampImageUrl: text("stampImageUrl"),
+    stampAspect: text("stampAspect").notNull().default("2:3"),
+    difficulty: text("difficulty").notNull().default("easy"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  },
+  (t) => ({
+    positionIdx: index("lead_position_idx").on(t.position),
+  }),
+)
+
 // The secret token printed inside each lead's physical QR code. One row per
-// lead that is unlocked by scanning (leads 2..9). Stable so printed codes keep
-// working; regenerating a token invalidates the old printed QR.
+// scannable lead plus the dedicated finishing QR (leadId = "__finish__").
+// Keyed by the STABLE lead id so a printed code keeps unlocking its lead even
+// after the sequence is reordered. Regenerating a token invalidates the old
+// printed QR. `leadOrder` is a legacy surrogate kept only to satisfy the
+// original primary key; the app keys off `leadId`.
 export const clueToken = pgTable("clue_token", {
   leadOrder: integer("leadOrder").primaryKey(),
+  leadId: text("leadId").unique(),
   token: text("token").notNull().unique(),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
 })
@@ -105,6 +148,9 @@ export const hint = pgTable("hint", {
   token: text("token").notNull().unique(),
   title: text("title").notNull(),
   body: text("body").notNull(),
+  // Optional association to a lead by its STABLE id (survives reordering).
+  // `leadOrder` is legacy and no longer written; kept for backward reads.
+  leadId: text("leadId"),
   leadOrder: integer("leadOrder"),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
