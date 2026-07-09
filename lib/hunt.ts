@@ -404,7 +404,7 @@ export async function regenerateToken(leadOrder: number): Promise<string> {
   return regenerateTokenForLead(def.id)
 }
 
-// ── Leaderboard ───────────────────────────────────────────────────────��───
+// ── Leaderboard ─────────────────────────────────────────────────────────────
 
 export type LeaderboardEntry = {
   kind: "team" | "solo"
