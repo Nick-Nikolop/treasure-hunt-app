@@ -23,6 +23,7 @@ import {
   adminReorderLeads,
   adminUploadLeadStamp,
   adminClearLeadStamp,
+  adminResetAllProgress,
 } from "@/app/admin/actions"
 import { LEAD_ICONS, type Difficulty, type LeadIcon } from "@/lib/clues"
 import type { EditableLead } from "@/lib/lead-content"
@@ -56,7 +57,9 @@ const CONTENT_FIELDS = [
   "difficulty",
 ] as const
 
-type Popup = { kind: "ok" | "err"; text: string }
+// "reset-offer" is shown after a structural change (reorder/add/remove) and
+// carries a button to reset every crew back to Lead 1.
+type Popup = { kind: "ok" | "err" | "reset-offer"; text: string }
 
 const clone = (arr: EditableLead[]): EditableLead[] => arr.map((l) => ({ ...l }))
 
@@ -174,6 +177,13 @@ export function AdminLeadsPanel({ leads }: { leads: EditableLead[] }) {
           kind: "err",
           text: `Saved your changes, except: ${failedNames.join(", ")}. Please try those again.`,
         })
+      } else if (orderDirty) {
+        // The sequence changed. Since progress is tracked by position, offer to
+        // reset every crew to Lead 1 so nobody is stranded on a moved lead.
+        setPopup({
+          kind: "reset-offer",
+          text: "The lead order changed. Progress is tracked by position, so crews may now sit on a different lead. Do you want to reset every account back to Lead 1?",
+        })
       } else {
         setPopup({ kind: "ok", text: "All your changes have been saved." })
       }
@@ -219,7 +229,10 @@ export function AdminLeadsPanel({ leads }: { leads: EditableLead[] }) {
       setItems((prev) => prev.filter((l) => l.id !== id))
       setBaseline((prev) => prev.filter((l) => l.id !== id))
       if (openId === id) setOpenId(null)
-      setPopup({ kind: "ok", text: `Removed ${country}.` })
+      setPopup({
+        kind: "reset-offer",
+        text: `Removed ${country}. The remaining leads shifted up a position, so crews may now sit on a different lead. Do you want to reset every account back to Lead 1?`,
+      })
     })
   }
 
@@ -247,6 +260,23 @@ export function AdminLeadsPanel({ leads }: { leads: EditableLead[] }) {
       setItems((prev) => prev.map((l) => (l.id === id ? { ...l, stampImageUrl: null } : l)))
       setBaseline((prev) => prev.map((l) => (l.id === id ? { ...l, stampImageUrl: null } : l)))
       setPopup({ kind: "ok", text: "Stamp cleared, reverted to the default art." })
+    })
+  }
+
+  function resetAllProgress() {
+    startTransition(async () => {
+      const res = await adminResetAllProgress()
+      if (!res.ok) {
+        setPopup({ kind: "err", text: "Could not reset progress. Please try again." })
+        return
+      }
+      setPopup({
+        kind: "ok",
+        text:
+          res.cleared > 0
+            ? `Done. ${res.cleared} crew${res.cleared > 1 ? "s were" : " was"} reset to Lead 1.`
+            : "Done. Everyone is at Lead 1 (no crews had progress to clear).",
+      })
     })
   }
 
@@ -308,7 +338,14 @@ export function AdminLeadsPanel({ leads }: { leads: EditableLead[] }) {
         />
       )}
 
-      {popup && <PopupDialog popup={popup} onClose={() => setPopup(null)} />}
+      {popup && (
+        <PopupDialog
+          popup={popup}
+          pending={pending}
+          onReset={resetAllProgress}
+          onClose={() => setPopup(null)}
+        />
+      )}
     </div>
   )
 }
@@ -363,9 +400,24 @@ function SaveBar({
   )
 }
 
-/** Centered confirmation popup. Success auto-dismisses; errors wait for OK. */
-function PopupDialog({ popup, onClose }: { popup: Popup; onClose: () => void }) {
+/**
+ * Centered popup. Success auto-dismisses; errors wait for OK. A "reset-offer"
+ * (shown after a structural change) adds a button to reset every crew to Lead 1.
+ */
+function PopupDialog({
+  popup,
+  pending,
+  onReset,
+  onClose,
+}: {
+  popup: Popup
+  pending: boolean
+  onReset: () => void
+  onClose: () => void
+}) {
   const ok = popup.kind === "ok"
+  const offer = popup.kind === "reset-offer"
+  const heading = ok ? "Saved" : offer ? "Sequence changed" : "Something went wrong"
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
       <button
@@ -379,23 +431,45 @@ function PopupDialog({ popup, onClose }: { popup: Popup; onClose: () => void }) 
           {ok ? (
             <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-brass" />
           ) : (
-            <AlertTriangle className="mt-0.5 size-5 shrink-0 text-destructive" />
+            <AlertTriangle
+              className={`mt-0.5 size-5 shrink-0 ${offer ? "text-amber-400" : "text-destructive"}`}
+            />
           )}
           <div className="min-w-0">
-            <h3 className="font-serif text-base font-black text-foreground">
-              {ok ? "Saved" : "Something went wrong"}
-            </h3>
+            <h3 className="font-serif text-base font-black text-foreground">{heading}</h3>
             <p className="mt-1 font-sans text-sm leading-relaxed text-muted-foreground">{popup.text}</p>
           </div>
         </div>
-        <div className="mt-4 flex justify-end">
-          <button
-            type="button"
-            onClick={onClose}
-            className="inline-flex items-center gap-1.5 rounded-sm bg-brass px-4 py-2 font-sans text-xs font-bold tracking-chip text-background transition-opacity hover:opacity-90"
-          >
-            OK
-          </button>
+        <div className="mt-4 flex justify-end gap-2">
+          {offer ? (
+            <>
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={pending}
+                className="inline-flex items-center gap-1.5 rounded-sm border border-border px-4 py-2 font-sans text-xs font-bold tracking-chip text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+              >
+                Keep progress
+              </button>
+              <button
+                type="button"
+                onClick={onReset}
+                disabled={pending}
+                className="inline-flex items-center gap-1.5 rounded-sm bg-destructive px-4 py-2 font-sans text-xs font-bold tracking-chip text-destructive-foreground transition-opacity hover:opacity-90 disabled:opacity-40"
+              >
+                {pending ? <Loader2 className="size-3.5 animate-spin" /> : <RotateCcw className="size-3.5" />}
+                Reset all crews to Lead 1
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex items-center gap-1.5 rounded-sm bg-brass px-4 py-2 font-sans text-xs font-bold tracking-chip text-background transition-opacity hover:opacity-90"
+            >
+              OK
+            </button>
+          )}
         </div>
       </div>
     </div>

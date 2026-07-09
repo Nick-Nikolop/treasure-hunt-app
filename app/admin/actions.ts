@@ -966,6 +966,35 @@ export async function adminResetTeamProgress(teamId: string): Promise<ActionResu
   return adminSetTeamProgress(teamId, 0)
 }
 
+/**
+ * Reset EVERY account's progress back to the very start (Lead 1). Wipes all
+ * stored unlock rows in one pass, so no crew holds any QR lead and Lead 1
+ * (time-gated, never stored) becomes everyone's current stop. Intended right
+ * after restructuring the lead sequence, so position-based progress can't leave
+ * anyone stranded on a lead that has moved or been removed.
+ */
+export async function adminResetAllProgress(): Promise<
+  { ok: true; cleared: number } | { ok: false; error: string }
+> {
+  const admin = await requireAdmin()
+
+  // Count affected players for the activity log before clearing.
+  const affected = await db.selectDistinct({ userId: leadUnlock.userId }).from(leadUnlock)
+  await db.delete(leadUnlock)
+
+  await logActivity({
+    category: "admin",
+    action: "admin.all_progress_reset",
+    ...adminActor(admin),
+    summary: `${adminActor(admin).actorName} reset ALL crews back to Lead 1 (${affected.length} affected)`,
+    metadata: { affected: affected.length },
+  })
+
+  revalidatePath("/admin")
+  revalidatePath("/journal")
+  return { ok: true, cleared: affected.length }
+}
+
 /** Issue a fresh QR token for a lead, invalidating the old printed code. */
 export async function adminRegenerateToken(leadOrder: number): Promise<ActionResult> {
   await requireAdmin()
@@ -1221,7 +1250,7 @@ export async function adminRegenerateHintToken(id: string): Promise<ActionResult
   return { ok: true }
 }
 
-// ── Campaign links (trackable marketing redirects) ─────────────────────────
+// ── Campaign links (trackable marketing redirects) ────���────────────────────
 
 /** Create a trackable campaign link. Returns ok with a fresh token + link. */
 export async function adminCreateCampaign(input: {
