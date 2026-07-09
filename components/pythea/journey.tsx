@@ -46,7 +46,7 @@ export function Journey({ unlockedCount, total, countdownToMs }: Props) {
               transition={{ duration: 0.8, delay: 0.1 }}
               className="max-w-2xl text-balance font-serif text-4xl font-black leading-tight text-foreground md:text-6xl"
             >
-              {t.journey.titlePre}{" "}
+              {t.journey.titlePre(total)}{" "}
               <span className="italic text-brass">{t.journey.titleEm}</span>
             </motion.h2>
 
@@ -105,8 +105,8 @@ export function Journey({ unlockedCount, total, countdownToMs }: Props) {
           className="mt-12 grid grid-cols-3 overflow-hidden rounded-sm border border-border bg-card/40"
         >
           {[
-            { value: "9", label: t.journey.statCountries },
-            { value: "9", label: t.journey.statMarks },
+            { value: String(total), label: t.journey.statCountries },
+            { value: String(total), label: t.journey.statMarks },
             { value: "1", label: t.journey.statCity },
           ].map((stat, i) => (
             <div

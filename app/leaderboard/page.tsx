@@ -3,8 +3,8 @@ import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
 import { getMyCrew } from "@/app/teams/actions"
-import { getLeaderboard, TOTAL_CLUES } from "@/lib/hunt"
-import { CLUES } from "@/lib/clues"
+import { getLeaderboard } from "@/lib/hunt"
+import { getLeadDefs } from "@/lib/leads"
 import { Atmosphere } from "@/components/pythea/atmosphere"
 import { SiteHeader } from "@/components/pythea/site-header"
 import { SiteFooter } from "@/components/pythea/site-footer"
@@ -38,7 +38,11 @@ export default async function LeaderboardPage() {
     role: (session.user as { role?: string | null }).role ?? null,
   }
 
-  const [entries, myCrew] = await Promise.all([getLeaderboard(), getMyCrew()])
+  const [entries, myCrew, leadDefs] = await Promise.all([
+    getLeaderboard(),
+    getMyCrew(),
+    getLeadDefs(),
+  ])
 
   // My row is my crew (if I'm in one) or my solo entry, keyed by the same id
   // the leaderboard uses, so the view can highlight it.
@@ -51,7 +55,7 @@ export default async function LeaderboardPage() {
 
   // Only the ports I have personally reached are named for the client; the
   // rest never leave the server, exactly like the journal map.
-  const revealedPorts = CLUES.slice(0, viewerProgress).map((c) => ({
+  const revealedPorts = leadDefs.slice(0, viewerProgress).map((c) => ({
     order: c.order,
     country: c.country,
     countryEn: c.countryEn,
@@ -70,7 +74,7 @@ export default async function LeaderboardPage() {
       <div className="flex min-h-screen flex-col">
         <LeaderboardView
           entries={safeEntries}
-          total={TOTAL_CLUES}
+          total={leadDefs.length}
           myEntryId={myEntryId}
           viewerProgress={viewerProgress}
           revealedPorts={revealedPorts}

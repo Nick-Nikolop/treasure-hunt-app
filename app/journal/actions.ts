@@ -2,7 +2,8 @@
 
 import { cookies } from "next/headers"
 import { revalidatePath } from "next/cache"
-import { TOTAL_CLUES, PREVIEW_COOKIE } from "@/lib/clues"
+import { PREVIEW_COOKIE } from "@/lib/clues"
+import { getTotalLeads } from "@/lib/leads"
 
 /**
  * Force a specific number of clues open for the current browser only.
@@ -10,7 +11,8 @@ import { TOTAL_CLUES, PREVIEW_COOKIE } from "@/lib/clues"
  * gates content, so this is the single source of truth for the override.
  */
 export async function setPreviewCount(count: number) {
-  const clamped = Math.max(0, Math.min(TOTAL_CLUES, Math.floor(count)))
+  const total = await getTotalLeads()
+  const clamped = Math.max(0, Math.min(total, Math.floor(count)))
   const store = await cookies()
   store.set(PREVIEW_COOKIE, String(clamped), {
     path: "/",

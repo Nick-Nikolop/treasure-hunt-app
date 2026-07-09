@@ -55,7 +55,7 @@ const el = {
   },
   journey: {
     section: "ΙΙ. Η ΔΙΑΔΡΟΜΗ",
-    titlePre: "Εννέα χώρες. Εννέα σημάδια.",
+    titlePre: (n: number) => `${n} χώρες. ${n} σημάδια.`,
     titleEm: "Μία πόλη.",
     intro:
       "Άνοιξε το ημερολόγιο του Πυθέα και διάβασε τις καταχωρήσεις του, μία μία. Κάθε σελίδα κουβαλά μια χώρα του ταξιδιού του και ένα σημάδι κρυμμένο σε μια γωνιά της Καλαμάτας. Το πρώτο σημάδι ανοίγει την ημέρα της εκκίνησης. Τα υπόλοιπα τα ξεκλειδώνεις βρίσκοντας τους κωδικούς QR στην πόλη.",
@@ -514,7 +514,7 @@ const el = {
     account: "Ο ΛΟΓΑΡΙΑΣΜΟΣ ΜΟΥ",
     accountMenu: "Λογαριασμός",
     crewNav: "Η ομάδα σου",
-    adminNav: "Διαχείριση",
+    adminNav: "Διαχείρισ��",
     signOut: "Αποσύνδεση",
     greeting: (name: string) => `Καλώς ήρθες, ${name}`,
     signedInAs: "Συνδεδεμένος ως",
@@ -665,7 +665,7 @@ const en: Dictionary = {
   },
   journey: {
     section: "II. THE ROUTE",
-    titlePre: "Nine countries. Nine marks.",
+    titlePre: (n: number) => `${n} countries. ${n} marks.`,
     titleEm: "One city.",
     intro:
   "Open the journal of Pytheas and read his entries, one by one. Each page carries a country from his voyage and a mark hidden in a corner of Kalamata. The first mark opens on launch day. You unlock the rest by finding the QR codes hidden around the city.",

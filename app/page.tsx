@@ -15,7 +15,8 @@ import { LockedRedirectNotice } from "@/components/pythea/locked-redirect-notice
 import { getPhaseContext } from "@/lib/phase-guard"
 import { cookies, headers } from "next/headers"
 import { auth } from "@/lib/auth"
-import { isLeadOneOpen, START_MS, TOTAL_CLUES } from "@/lib/clues"
+import { isLeadOneOpen, START_MS } from "@/lib/clues"
+import { getTotalLeads } from "@/lib/leads"
 import { DEFAULT_LOCALE, isLocale, LANG_COOKIE, getDictionary } from "@/lib/i18n"
 import { homeJsonLd } from "@/lib/seo"
 
@@ -50,6 +51,10 @@ export default async function Page() {
   const publicCount = lead1Open ? 1 : 0
   const countdownToMs = lead1Open ? null : START_MS
 
+  // Live number of leads, so the journey stats and tagline scale with the
+  // sequence an admin has actually configured (not a hardcoded 9).
+  const totalLeads = await getTotalLeads()
+
   // Structured data (JSON-LD) for the home page, localized to the saved
   // language and built from the SAME FAQ copy that renders on the page so the
   // FAQ rich results stay valid.
@@ -76,7 +81,7 @@ export default async function Page() {
         <Register />
         <Journey
           unlockedCount={publicCount}
-          total={TOTAL_CLUES}
+          total={totalLeads}
           countdownToMs={countdownToMs}
         />
         <Story />
