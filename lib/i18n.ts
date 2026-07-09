@@ -130,7 +130,7 @@ const el = {
   },
   how: {
     section: "IV. ΠΩΣ ΠΑΙΖΕΤΑΙ",
-    titlePre: "��έσσερα βήματα για να γίνεις",
+    titlePre: "Τέσσερα βήματα για να γίνεις",
     titleEm: "εξερευνητής.",
     steps: [
       {
@@ -253,7 +253,7 @@ const el = {
     joinPageConfirm: "ΜΠΕΣ ΣΤΗΝ ΟΜΑΔΑ",
     joinPageSignIn: "Συνδέσου για να μπεις σε αυτή την ομάδα.",
     joinPageSignInCta: "ΣΥΝΔΕΣΗ",
-    joinPageSignUpCta: "ΔΗΜΙΟΥΡΓΙΑ ΛΟΓΑΡΙΑΣ��ΟΥ",
+    joinPageSignUpCta: "ΔΗΜΙΟΥΡΓΙΑ ΛΟΓΑΡΙΑΣΜΟΥ",
     joinPageInvalid: "Αυτή η πρόσκληση δεν ισχύει πια.",
     joinPageFull: "Αυτή η ομάδα είναι γεμάτη.",
     joinPageBack: "ΠΙΣΩ ΣΤΗΝ ΑΡΧΙΚΗ",
@@ -465,7 +465,7 @@ const el = {
     openNext: "ΑΝΟΙΞΕ ΕΠΟΜΕΝΟ",
     closeOne: "ΚΛΕΙΣΕ ΕΝΑ",
     openAll: "ΑΝΟΙΞΕ ΟΛΑ",
-    realTime: "ΠΡΑΓΜΑΤΙ��ΟΣ ΧΡΟΝΟΣ",
+    realTime: "ΠΡΑΓΜΑΤΙΚΟΣ ΧΡΟΝΟΣ",
     note: "Ορατό μόνο σε εσένα, για δοκιμές. Δεν εμφανίζεται στους παίκτες στη δημοσιευμένη σελίδα.",
   },
   lang: {
