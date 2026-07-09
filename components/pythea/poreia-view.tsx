@@ -804,11 +804,17 @@ function CluePageBody({ clue }: { clue: Clue }) {
 /** A real vintage stamp, tilted and shadowed as if pasted into the journal. */
 function JournalStamp({ clue }: { clue: Clue }) {
   const { t, locale } = useI18n()
-  const src = STAMP_SRC[clue.country]
+  // An admin-uploaded stamp takes priority; otherwise fall back to the bundled
+  // vintage art keyed by country name.
+  const uploaded = clue.stampImageUrl
+  const src = uploaded ?? STAMP_SRC[clue.country]
   if (!src) return null
   // Deterministic tilt per entry, applied as a static transform so the stamp
   // never spins or re-animates when flipping between pages.
   const rotate = STAMP_ROTATION[(clue.order - 1) % STAMP_ROTATION.length]
+  // Uploaded art can be any ratio, so pin the width and let the authored aspect
+  // set the height. The bundled art keeps its intrinsic height (h-auto).
+  const aspectStyle = uploaded ? { aspectRatio: aspectToCss(clue.stampAspect) } : undefined
   return (
     <div
       className="relative hidden shrink-0 select-none sm:block"
@@ -822,11 +828,21 @@ function JournalStamp({ clue }: { clue: Clue }) {
         loading="eager"
         decoding="sync"
         fetchPriority="high"
-        className="block h-auto w-24 drop-shadow-[0_7px_12px_rgba(40,30,15,0.32)] md:w-28"
+        style={aspectStyle}
+        className={`block w-24 drop-shadow-[0_7px_12px_rgba(40,30,15,0.32)] md:w-28 ${
+          uploaded ? "object-cover" : "h-auto"
+        }`}
       />
       <Postmark />
     </div>
   )
+}
+
+/** Convert a "w:h" ratio string to a CSS aspect-ratio value. */
+function aspectToCss(aspect: string): string {
+  const [w, h] = (aspect ?? "").split(":").map(Number)
+  if (!w || !h) return "2 / 3"
+  return `${w} / ${h}`
 }
 
 /** An ink cancellation mark struck across the stamp's corner, as if the entry

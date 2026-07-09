@@ -322,8 +322,14 @@ export type LeadContentInput = {
   difficulty: Difficulty
 }
 
-/** Create a new lead at the end of the sequence and issue its QR token. */
-export async function createLead(input: LeadContentInput): Promise<LeadDef> {
+/**
+ * Create a new lead at the end of the sequence and issue its QR token. Only the
+ * country names are required; everything else defaults to blank/easy and can be
+ * filled in afterwards via the edit + stamp actions.
+ */
+export async function createLead(
+  input: Pick<LeadContentInput, "country" | "countryEn"> & Partial<LeadContentInput>,
+): Promise<LeadDef> {
   const defs = await getLeadDefs()
   const position = defs.length + 1
   const id = `lead_${randomUUID().replace(/-/g, "").slice(0, 12)}`
@@ -333,14 +339,14 @@ export async function createLead(input: LeadContentInput): Promise<LeadDef> {
     position,
     country: input.country,
     countryEn: input.countryEn,
-    subtitle: input.subtitle,
-    subtitleEn: input.subtitleEn,
-    icon: input.icon,
-    body: input.body,
-    bodyEn: input.bodyEn,
+    subtitle: input.subtitle ?? "",
+    subtitleEn: input.subtitleEn ?? "",
+    icon: input.icon ?? "Landmark",
+    body: input.body ?? "",
+    bodyEn: input.bodyEn ?? "",
     stampImageUrl: null,
     stampAspect: "2:3",
-    difficulty: normalizeDifficulty(input.difficulty),
+    difficulty: normalizeDifficulty(input.difficulty ?? "easy"),
     createdAt: now,
     updatedAt: now,
   })

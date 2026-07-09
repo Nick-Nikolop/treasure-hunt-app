@@ -2,7 +2,7 @@
 
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
-import { account, leadContent, leadUnlock, session, team, teamMember, user } from "@/lib/db/schema"
+import { account, leadUnlock, session, team, teamMember, user } from "@/lib/db/schema"
 import { requireAdmin, isBootstrapEmail, superadminCount, type AdminUser } from "@/lib/admin"
 import {
   logActivity,
@@ -30,7 +30,6 @@ import {
 } from "@/lib/hints"
 import {
   getScoreConfig,
-  getLeadDifficulties,
   setScoreConfig,
   setLeadDifficulties,
 } from "@/lib/scoring"
@@ -59,13 +58,22 @@ import {
   type CampaignStats,
 } from "@/lib/campaigns"
 import { getEditableLeads, type EditableLead } from "@/lib/lead-content"
+import {
+  getLeadDefs,
+  getTotalLeads,
+  createLead,
+  deleteLead,
+  reorderLeads,
+  updateLeadContent,
+  updateLeadStamp,
+} from "@/lib/leads"
+import { put, del } from "@vercel/blob"
 import { getAnalyticsSnapshot, type AnalyticsSnapshot } from "@/lib/analytics"
 import {
-  TOTAL_CLUES,
   FINISH_ORDER,
   effectiveUnlockedCount,
-  CLUES,
   isDifficulty,
+  isLeadIcon,
   type Difficulty,
   type ScoreConfig,
 } from "@/lib/clues"
@@ -217,6 +225,7 @@ export async function getAdminData(): Promise<AdminData> {
   // Per-user stored progress (highest unlocked lead), folded with the lead-1
   // time gate to get each user's effective progress.
   const now = Date.now()
+  const editableLeads = await getEditableLeads()
   const unlocks = await db
     .select({ userId: leadUnlock.userId, leadOrder: leadUnlock.leadOrder })
     .from(leadUnlock)
@@ -224,8 +233,9 @@ export async function getAdminData(): Promise<AdminData> {
   for (const row of unlocks) {
     storedByUser.set(row.userId, Math.max(storedByUser.get(row.userId) ?? 0, row.leadOrder))
   }
+  const liveTotal = editableLeads.length
   const progressOf = (userId: string) =>
-    effectiveUnlockedCount(storedByUser.get(userId) ?? 0, now)
+    effectiveUnlockedCount(storedByUser.get(userId) ?? 0, now, liveTotal)
 
   const teamsWithMembers: AdminTeamRow[] = teams.map((tm) => {
     const memberRows = allMembers.filter((m) => m.teamId === tm.id)
@@ -246,8 +256,6 @@ export async function getAdminData(): Promise<AdminData> {
       })),
     }
   })
-
-  const editableLeads = await getEditableLeads()
 
   return {
     users: users.map((u) => ({
@@ -858,7 +866,8 @@ export async function adminSetUserProgress(
 ): Promise<ActionResult> {
   const admin = await requireAdmin()
 
-  if (!Number.isFinite(targetLead) || targetLead < 0 || targetLead > TOTAL_CLUES) {
+  const total = await getTotalLeads()
+  if (!Number.isFinite(targetLead) || targetLead < 0 || targetLead > total) {
     return { ok: false, error: "bad_value" }
   }
   const exists = await db
@@ -907,7 +916,8 @@ export async function adminSetTeamProgress(
 ): Promise<ActionResult> {
   const admin = await requireAdmin()
 
-  if (!Number.isFinite(targetLead) || targetLead < 0 || targetLead > TOTAL_CLUES) {
+  const total = await getTotalLeads()
+  if (!Number.isFinite(targetLead) || targetLead < 0 || targetLead > total) {
     return { ok: false, error: "bad_value" }
   }
   const memberRows = await db
@@ -960,12 +970,196 @@ export async function adminResetTeamProgress(teamId: string): Promise<ActionResu
 export async function adminRegenerateToken(leadOrder: number): Promise<ActionResult> {
   await requireAdmin()
   const order = Math.floor(leadOrder)
-  const valid = (order >= 2 && order <= TOTAL_CLUES) || order === FINISH_ORDER
+  const total = await getTotalLeads()
+  const valid = (order >= 2 && order <= total) || order === FINISH_ORDER
   if (!Number.isFinite(leadOrder) || !valid) {
     return { ok: false, error: "bad_value" }
   }
   await regenerateToken(order)
   revalidatePath("/admin")
+  return { ok: true }
+}
+
+// ── Leads: add / remove / reorder / stamp (admin) ───────────────────────────
+
+/**
+ * Reorder the whole sequence. `orderedIds` is the full list of lead ids in the
+ * new order (position 1..N). Leads keep their stable ids and QR codes; only
+ * their positions change. Because progression is stored by position, reordering
+ * after players have progress can shift who is "ahead" — the UI warns about it.
+ */
+export async function adminReorderLeads(orderedIds: string[]): Promise<ActionResult> {
+  const admin = await requireAdmin()
+  if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
+    return { ok: false, error: "bad_value" }
+  }
+  const defs = await getLeadDefs()
+  const known = new Set(defs.map((d) => d.id))
+  // Must be a permutation of exactly the current leads.
+  if (orderedIds.length !== defs.length || orderedIds.some((id) => !known.has(id))) {
+    return { ok: false, error: "bad_value" }
+  }
+  if (new Set(orderedIds).size !== orderedIds.length) return { ok: false, error: "bad_value" }
+
+  await reorderLeads(orderedIds)
+  await logActivity({
+    category: "admin",
+    action: "admin.leads_reordered",
+    ...adminActor(admin),
+    summary: `${adminActor(admin).actorName} reordered the leads`,
+    metadata: { orderedIds },
+  })
+  revalidatePath("/admin")
+  revalidatePath("/journal")
+  return { ok: true }
+}
+
+/**
+ * Append a new lead to the end of the sequence. A stable id is generated and a
+ * fresh QR token is created for it automatically. Copy and stamp can be filled
+ * in afterwards via the edit + stamp actions.
+ */
+export async function adminAddLead(input: {
+  country: string
+  countryEn: string
+}): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+  const admin = await requireAdmin()
+  const country = (input.country ?? "").trim()
+  const countryEn = (input.countryEn ?? "").trim()
+  if (country.length < 1 || countryEn.length < 1) return { ok: false, error: "too_short" }
+
+  const created = await createLead({ country, countryEn })
+  await logActivity({
+    category: "admin",
+    action: "admin.lead_added",
+    ...adminActor(admin),
+    leadOrder: created.order,
+    summary: `${adminActor(admin).actorName} added a new lead "${country}" at No. ${String(created.order).padStart(2, "0")}`,
+  })
+  revalidatePath("/admin")
+  revalidatePath("/journal")
+  return { ok: true, id: created.id }
+}
+
+/**
+ * Remove a lead by its stable id. Deletes its QR token, journal content and
+ * difficulty, then compacts the remaining positions. Its stamp image (if any)
+ * is best-effort removed from Blob. Refuses to remove the very first lead so
+ * the time-gated opener always exists.
+ */
+export async function adminRemoveLead(id: string): Promise<ActionResult> {
+  const admin = await requireAdmin()
+  const leadId = (id ?? "").trim()
+  if (!leadId) return { ok: false, error: "bad_value" }
+
+  const defs = await getLeadDefs()
+  const target = defs.find((d) => d.id === leadId)
+  if (!target) return { ok: false, error: "not_found" }
+  if (defs.length <= 1) return { ok: false, error: "last_lead" }
+  if (target.order === 1) return { ok: false, error: "first_lead" }
+
+  // Best-effort blob cleanup for an uploaded stamp.
+  if (target.stampImageUrl && target.stampImageUrl.includes(".public.blob.vercel-storage.com")) {
+    try {
+      await del(target.stampImageUrl)
+    } catch {
+      // Non-fatal: the row is still removed even if the blob lingers.
+    }
+  }
+
+  await deleteLead(leadId)
+  await logActivity({
+    category: "admin",
+    action: "admin.lead_removed",
+    ...adminActor(admin),
+    summary: `${adminActor(admin).actorName} removed lead "${target.country}" (was No. ${String(target.order).padStart(2, "0")})`,
+  })
+  revalidatePath("/admin")
+  revalidatePath("/journal")
+  return { ok: true }
+}
+
+/** Server-enforced cap for an uploaded stamp image (5 MB). */
+const MAX_STAMP_BYTES = 5 * 1024 * 1024
+const ALLOWED_STAMP_TYPES = ["image/png", "image/jpeg", "image/webp", "image/avif"]
+
+/**
+ * Upload a new γραμματόσημο (stamp) image for a lead. The file is stored in
+ * Blob and its public URL saved on the lead. Any previous uploaded stamp is
+ * removed. `aspect` is the suggested ratio the admin authored to (e.g. "2:3").
+ */
+export async function adminUploadLeadStamp(formData: FormData): Promise<ActionResult> {
+  const admin = await requireAdmin()
+
+  const id = String(formData.get("id") ?? "").trim()
+  const aspect = String(formData.get("aspect") ?? "2:3").trim() || "2:3"
+  const file = formData.get("file")
+  if (!id) return { ok: false, error: "bad_value" }
+  if (!(file instanceof File) || file.size === 0) return { ok: false, error: "no_file" }
+  if (file.size > MAX_STAMP_BYTES) return { ok: false, error: "too_large" }
+  if (!ALLOWED_STAMP_TYPES.includes(file.type)) return { ok: false, error: "bad_type" }
+
+  const defs = await getLeadDefs()
+  const target = defs.find((d) => d.id === id)
+  if (!target) return { ok: false, error: "not_found" }
+
+  const ext = file.type.split("/")[1]?.replace("jpeg", "jpg") ?? "png"
+  const blob = await put(`stamps/${id}-${Date.now()}.${ext}`, file, {
+    access: "public",
+    contentType: file.type,
+  })
+
+  // Remove the previous uploaded stamp (bundled defaults are left alone).
+  const prev = target.stampImageUrl
+  if (prev && prev.includes(".public.blob.vercel-storage.com") && prev !== blob.url) {
+    try {
+      await del(prev)
+    } catch {
+      // Non-fatal.
+    }
+  }
+
+  await updateLeadStamp(id, blob.url, aspect)
+  await logActivity({
+    category: "admin",
+    action: "admin.lead_stamp_updated",
+    ...adminActor(admin),
+    leadOrder: target.order,
+    summary: `${adminActor(admin).actorName} updated the stamp for lead "${target.country}"`,
+  })
+  revalidatePath("/admin")
+  revalidatePath("/journal")
+  return { ok: true }
+}
+
+/** Clear a lead's uploaded stamp, reverting it to the bundled/default art. */
+export async function adminClearLeadStamp(id: string): Promise<ActionResult> {
+  const admin = await requireAdmin()
+  const leadId = (id ?? "").trim()
+  if (!leadId) return { ok: false, error: "bad_value" }
+
+  const defs = await getLeadDefs()
+  const target = defs.find((d) => d.id === leadId)
+  if (!target) return { ok: false, error: "not_found" }
+
+  if (target.stampImageUrl && target.stampImageUrl.includes(".public.blob.vercel-storage.com")) {
+    try {
+      await del(target.stampImageUrl)
+    } catch {
+      // Non-fatal.
+    }
+  }
+
+  await updateLeadStamp(leadId, null, target.stampAspect)
+  await logActivity({
+    category: "admin",
+    action: "admin.lead_stamp_cleared",
+    ...adminActor(admin),
+    leadOrder: target.order,
+    summary: `${adminActor(admin).actorName} cleared the stamp for lead "${target.country}"`,
+  })
+  revalidatePath("/admin")
+  revalidatePath("/journal")
   return { ok: true }
 }
 
