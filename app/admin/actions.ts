@@ -1250,7 +1250,7 @@ export async function adminRegenerateHintToken(id: string): Promise<ActionResult
   return { ok: true }
 }
 
-// ── Campaign links (trackable marketing redirects) ────���────────────────────
+// ── Campaign links (trackable marketing redirects) ──────────────────────────
 
 /** Create a trackable campaign link. Returns ok with a fresh token + link. */
 export async function adminCreateCampaign(input: {

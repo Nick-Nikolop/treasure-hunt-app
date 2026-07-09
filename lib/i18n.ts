@@ -514,7 +514,7 @@ const el = {
     account: "Ο ΛΟΓΑΡΙΑΣΜΟΣ ΜΟΥ",
     accountMenu: "Λογαριασμός",
     crewNav: "Η ομάδα σου",
-    adminNav: "Διαχείρισ��",
+    adminNav: "Διαχείριση",
     signOut: "Αποσύνδεση",
     greeting: (name: string) => `Καλώς ήρθες, ${name}`,
     signedInAs: "Συνδεδεμένος ως",
