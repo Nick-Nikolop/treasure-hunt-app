@@ -29,6 +29,9 @@ export default async function HintPage({
   }
 
   const hint = await getHintByToken(token)
+  const leadCountry = hint
+    ? await hintLeadCountry(hint.leadOrder)
+    : { country: null, countryEn: null }
 
   return (
     <>
@@ -40,7 +43,7 @@ export default async function HintPage({
               title: hint.title,
               body: hint.body,
               leadOrder: hint.leadOrder,
-              ...hintLeadCountry(hint.leadOrder),
+              ...leadCountry,
             }}
           />
         ) : (

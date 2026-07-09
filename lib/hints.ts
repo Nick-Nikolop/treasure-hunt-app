@@ -11,8 +11,8 @@
 
 import { db } from "@/lib/db"
 import { hint } from "@/lib/db/schema"
-import { siteUrl } from "@/lib/hunt"
-import { TOTAL_CLUES, CLUES } from "@/lib/clues"
+import { siteUrl } from "@/lib/site-url"
+import { getLeadDefs } from "@/lib/leads"
 import { desc, eq } from "drizzle-orm"
 import { randomUUID } from "node:crypto"
 
@@ -54,20 +54,22 @@ export async function getHintByToken(token: string): Promise<HintRow | null> {
   return rows[0] ? toRow(rows[0]) : null
 }
 
-/** Normalize an optional lead association to a valid order or null. */
-export function normalizeLeadOrder(value: unknown): number | null {
+/** Normalize an optional lead association to a valid position or null. */
+export async function normalizeLeadOrder(value: unknown): Promise<number | null> {
   const n = Number(value)
-  if (!Number.isFinite(n) || n < 1 || n > TOTAL_CLUES) return null
+  if (!Number.isFinite(n) || n < 1) return null
+  const total = (await getLeadDefs()).length
+  if (n > total) return null
   return Math.floor(n)
 }
 
-/** Greek + English country for a lead order, or null when unset/out of range. */
-export function hintLeadCountry(leadOrder: number | null): {
+/** Greek + English country for a lead position, or null when unset/out of range. */
+export async function hintLeadCountry(leadOrder: number | null): Promise<{
   country: string | null
   countryEn: string | null
-} {
+}> {
   if (leadOrder === null) return { country: null, countryEn: null }
-  const clue = CLUES.find((c) => c.order === leadOrder)
+  const clue = (await getLeadDefs()).find((c) => c.order === leadOrder)
   return { country: clue?.country ?? null, countryEn: clue?.countryEn ?? null }
 }
 

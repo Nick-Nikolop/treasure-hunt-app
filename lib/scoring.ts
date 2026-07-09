@@ -7,15 +7,18 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import { db } from "@/lib/db"
-import { scoreConfig, leadDifficulty } from "@/lib/db/schema"
+import { scoreConfig } from "@/lib/db/schema"
 import {
-  TOTAL_CLUES,
   DEFAULT_SCORE_CONFIG,
-  DEFAULT_DIFFICULTY,
   isDifficulty,
   type Difficulty,
   type ScoreConfig,
 } from "@/lib/clues"
+import {
+  getLeadDifficultyMap,
+  getLeadDefs,
+  setLeadDifficultyById,
+} from "@/lib/leads"
 import { eq } from "drizzle-orm"
 
 /** Read the global scoring tiers, falling back to defaults when unset. */
@@ -33,19 +36,12 @@ export async function getScoreConfig(): Promise<ScoreConfig> {
   }
 }
 
-/** A map of leadOrder → difficulty for every lead (1..TOTAL_CLUES). */
+/**
+ * A map of leadOrder (position) → difficulty for every live lead. Difficulty
+ * now lives on the lead row itself, so this just projects the registry.
+ */
 export async function getLeadDifficulties(): Promise<Map<number, Difficulty>> {
-  const rows = await db.select().from(leadDifficulty)
-  const stored = new Map<number, Difficulty>()
-  for (const r of rows) {
-    if (isDifficulty(r.difficulty)) stored.set(r.leadOrder, r.difficulty)
-  }
-  // Fill defaults so callers always get a value for every lead.
-  const out = new Map<number, Difficulty>()
-  for (let order = 1; order <= TOTAL_CLUES; order++) {
-    out.set(order, stored.get(order) ?? DEFAULT_DIFFICULTY)
-  }
-  return out
+  return getLeadDifficultyMap()
 }
 
 /** Clamp a raw number to a non-negative integer (points can't be negative). */
@@ -73,18 +69,19 @@ export async function setScoreConfig(input: ScoreConfig): Promise<void> {
     })
 }
 
-/** Upsert the difficulty for a batch of leads. Invalid orders are ignored. */
+/**
+ * Upsert the difficulty for a batch of leads, addressed by CURRENT position.
+ * Difficulty is stored on the lead row; positions are resolved to stable ids
+ * first. Invalid positions / values are ignored.
+ */
 export async function setLeadDifficulties(
   entries: { leadOrder: number; difficulty: Difficulty }[],
 ): Promise<void> {
+  const defs = await getLeadDefs()
+  const idByPos = new Map(defs.map((d) => [d.order, d.id]))
   for (const e of entries) {
-    if (e.leadOrder < 1 || e.leadOrder > TOTAL_CLUES || !isDifficulty(e.difficulty)) continue
-    await db
-      .insert(leadDifficulty)
-      .values({ leadOrder: e.leadOrder, difficulty: e.difficulty, updatedAt: new Date() })
-      .onConflictDoUpdate({
-        target: leadDifficulty.leadOrder,
-        set: { difficulty: e.difficulty, updatedAt: new Date() },
-      })
+    const id = idByPos.get(e.leadOrder)
+    if (!id || !isDifficulty(e.difficulty)) continue
+    await setLeadDifficultyById(id, e.difficulty)
   }
 }

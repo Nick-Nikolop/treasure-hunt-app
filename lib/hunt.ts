@@ -11,43 +11,31 @@
 import { db } from "@/lib/db"
 import { clueToken, leadUnlock, teamMember, team, user } from "@/lib/db/schema"
 import {
-  TOTAL_CLUES,
   FINISH_ORDER,
   clampProgress,
   effectiveUnlockedCount,
   isLeadOneOpen,
   START_MS,
-  CLUES,
   pointsForPlacement,
   type Difficulty,
 } from "@/lib/clues"
-import { getScoreConfig, getLeadDifficulties } from "@/lib/scoring"
+import {
+  getLeadDefs,
+  getTotalLeads,
+  listTokens,
+  regenerateTokenForLead,
+  FINISH_LEAD_ID,
+} from "@/lib/leads"
+import { getScoreConfig } from "@/lib/scoring"
 import { getSolveCooldownSeconds } from "@/lib/hunt-config"
 import { logActivity, resolveUserSnapshot } from "@/lib/activity"
 import { and, eq, gt, inArray } from "drizzle-orm"
 import { randomUUID } from "node:crypto"
 
-/** A fresh, URL-safe random token for a printed QR code. */
-function freshToken(): string {
-  return randomUUID().replace(/-/g, "").slice(0, 18)
-}
-
-/** Absolute base URL of the site, mirroring lib/auth.ts's cascade. */
-export function siteUrl(): string {
-  return (
-    process.env.BETTER_AUTH_URL ||
-    (process.env.VERCEL_PROJECT_PRODUCTION_URL
-      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-      : process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : process.env.V0_RUNTIME_URL || "http://localhost:3000")
-  ).replace(/\/$/, "")
-}
-
-/** The scan URL a QR code should encode for a given token. */
-export function huntLinkFor(token: string): string {
-  return `${siteUrl()}/q/${token}`
-}
+// URL helpers now live in lib/site-url.ts (to avoid an import cycle with the
+// lead registry). Re-exported here for the modules that import them from
+// "@/lib/hunt".
+export { siteUrl, huntLinkFor } from "@/lib/site-url"
 
 // ── Progress reads ────────────────────────────────────────────────────────
 
@@ -66,7 +54,7 @@ export async function getEffectiveProgress(
   nowMs: number = Date.now(),
 ): Promise<number> {
   const stored = await getStoredProgress(userId)
-  return effectiveUnlockedCount(stored, nowMs)
+  return effectiveUnlockedCount(stored, nowMs, await getTotalLeads())
 }
 
 /** All userIds on the same team as `userId`, including the user themselves. */
@@ -118,7 +106,7 @@ export async function getCrewEffectiveProgress(
     .from(leadUnlock)
     .where(inArray(leadUnlock.userId, userIds))
   const storedMax = rows.reduce((max, r) => Math.max(max, r.leadOrder), 0)
-  return effectiveUnlockedCount(storedMax, nowMs)
+  return effectiveUnlockedCount(storedMax, nowMs, await getTotalLeads())
 }
 
 // ── Progress writes ─────────────────────────────────────────────────────────
@@ -134,7 +122,7 @@ async function ensureUpTo(
   source: string,
   at: Date,
 ): Promise<void> {
-  const target = clampProgress(targetLead)
+  const target = clampProgress(targetLead, await getTotalLeads())
   if (target < 2 || userIds.length === 0) return
 
   // Which (user, lead) rows already exist, so we only insert the gaps.
@@ -176,7 +164,7 @@ export async function setProgressForUsers(
   targetLead: number,
   source = "admin",
 ): Promise<void> {
-  const target = clampProgress(targetLead)
+  const target = clampProgress(targetLead, await getTotalLeads())
   await trimAbove(userIds, target)
   await ensureUpTo(userIds, target, source, new Date())
 }
@@ -306,28 +294,35 @@ async function logLeadSolved(
  * whole crew. Enforces strict order against the crew's furthest progress.
  */
 export async function unlockByToken(userId: string, token: string): Promise<UnlockResult> {
+  // Resolve the token to the STABLE lead id it was bound to. Progression is
+  // then evaluated against that lead's CURRENT position, so a printed QR keeps
+  // working no matter where the lead now sits in the sequence.
   const tokenRows = await db
-    .select({ leadOrder: clueToken.leadOrder })
+    .select({ leadId: clueToken.leadId })
     .from(clueToken)
     .where(eq(clueToken.token, token))
     .limit(1)
-  const leadOrder = tokenRows[0]?.leadOrder
-  if (!leadOrder) return { status: "invalid" }
+  const leadId = tokenRows[0]?.leadId
+  if (!leadId) return { status: "invalid" }
+
+  const defs = await getLeadDefs()
+  const total = defs.length
 
   // The finishing QR marks the final lead as solved. It carries no real clue
   // and never raises displayed progress; it only lets the last lead be scored.
-  if (leadOrder === FINISH_ORDER) {
+  if (leadId === FINISH_LEAD_ID) {
     const crew = await getCrewUserIds(userId)
     const now = Date.now()
     const current = await getCrewEffectiveProgress(crew, now)
-    const last = CLUES[CLUES.length - 1]
-    if (current < TOTAL_CLUES) {
-      return { status: "out_of_order", required: TOTAL_CLUES, current, leadOrder: FINISH_ORDER }
+    const last = defs[defs.length - 1]
+    if (!last) return { status: "invalid" }
+    if (current < total) {
+      return { status: "out_of_order", required: total, current, leadOrder: FINISH_ORDER }
     }
     if (await crewHasFinished(crew)) {
       return {
         status: "already",
-        leadOrder: TOTAL_CLUES,
+        leadOrder: total,
         country: last.country,
         countryEn: last.countryEn,
       }
@@ -339,8 +334,9 @@ export async function unlockByToken(userId: string, token: string): Promise<Unlo
     return { status: "finished", country: last.country, countryEn: last.countryEn }
   }
 
-  const clue = CLUES.find((c) => c.order === leadOrder)
+  const clue = defs.find((c) => c.id === leadId)
   if (!clue) return { status: "invalid" }
+  const leadOrder = clue.order
 
   const crew = await getCrewUserIds(userId)
   const now = Date.now()
@@ -366,47 +362,49 @@ export async function unlockByToken(userId: string, token: string): Promise<Unlo
 
 // ── Tokens (admin) ──────────────────────────────────────────────────────────
 
-export type ClueTokenRow = { leadOrder: number; token: string; link: string }
+export type ClueTokenRow = {
+  leadOrder: number
+  leadId: string
+  country: string
+  token: string
+  link: string
+  isFinish: boolean
+}
 
 /**
  * Make sure a stable token exists for every scannable lead (2..TOTAL_CLUES) and
  * for the finishing QR (FINISH_ORDER). Idempotent: existing tokens (and their
  * printed QR codes) are left untouched; only missing ones are created.
  */
-async function ensureTokens(): Promise<void> {
-  const existing = await db.select({ leadOrder: clueToken.leadOrder }).from(clueToken)
-  const have = new Set(existing.map((r) => r.leadOrder))
-  const orders = [...Array.from({ length: TOTAL_CLUES - 1 }, (_, i) => i + 2), FINISH_ORDER]
-  const values = orders
-    .filter((order) => !have.has(order))
-    .map((order) => ({ leadOrder: order, token: freshToken() }))
-  if (values.length > 0) {
-    await db.insert(clueToken).values(values).onConflictDoNothing()
-  }
-}
-
-/** All QR tokens with their absolute scan links, ordered by lead. */
+/**
+ * All QR tokens with their absolute scan links, ordered by position (finish
+ * last). Delegates to the lead registry, which keys tokens by stable leadId.
+ */
 export async function getClueTokens(): Promise<ClueTokenRow[]> {
-  await ensureTokens()
-  const rows = await db
-    .select({ leadOrder: clueToken.leadOrder, token: clueToken.token })
-    .from(clueToken)
-  return rows
-    .sort((a, b) => a.leadOrder - b.leadOrder)
-    .map((r) => ({ ...r, link: huntLinkFor(r.token) }))
+  const rows = await listTokens()
+  return rows.map((r) => ({
+    leadOrder: r.leadOrder,
+    leadId: r.leadId,
+    country: r.country,
+    token: r.token,
+    link: r.link,
+    isFinish: r.isFinish,
+  }))
 }
 
-/** Replace a lead's token with a fresh one. Invalidates any printed QR. */
+/**
+ * Replace a lead's token with a fresh one, addressed by its CURRENT position
+ * (the finish QR uses FINISH_ORDER). Resolves to the stable leadId first so the
+ * right lead's token is rotated. Invalidates any printed QR for that lead.
+ */
 export async function regenerateToken(leadOrder: number): Promise<string> {
-  const fresh = freshToken()
-  await db
-    .insert(clueToken)
-    .values({ leadOrder, token: fresh })
-    .onConflictDoUpdate({ target: clueToken.leadOrder, set: { token: fresh } })
-  return fresh
+  if (leadOrder === FINISH_ORDER) return regenerateTokenForLead(FINISH_LEAD_ID)
+  const def = (await getLeadDefs()).find((d) => d.order === leadOrder)
+  if (!def) throw new Error(`No lead at position ${leadOrder}`)
+  return regenerateTokenForLead(def.id)
 }
 
-// ── Leaderboard ───────────────────────────────────────────────────────────
+// ── Leaderboard ───────────────────────────────────────────────────────��───
 
 export type LeaderboardEntry = {
   kind: "team" | "solo"
@@ -428,11 +426,6 @@ function displayName(u: { firstName: string | null; name: string; email: string 
   return u.firstName?.trim() || u.name?.trim() || u.email.split("@")[0]
 }
 
-function countryFor(progress: number): { country: string | null; countryEn: string | null } {
-  const clue = CLUES.find((c) => c.order === progress)
-  return { country: clue?.country ?? null, countryEn: clue?.countryEn ?? null }
-}
-
 /**
  * Build the full leaderboard: every team and every team-less user, ranked by
  * total score (highest first), then furthest lead, then who got there first.
@@ -445,7 +438,7 @@ function countryFor(progress: number): { country: string | null; countryEn: stri
  * always recomputed live from the current settings.
  */
 export async function getLeaderboard(nowMs: number = Date.now()): Promise<LeaderboardEntry[]> {
-  const [users, members, teams, unlocks, config, difficulties] = await Promise.all([
+  const [users, members, teams, unlocks, config, leadDefs] = await Promise.all([
     db
       .select({ id: user.id, name: user.name, firstName: user.firstName, email: user.email })
       .from(user),
@@ -457,9 +450,14 @@ export async function getLeaderboard(nowMs: number = Date.now()): Promise<Leader
       .select({ userId: leadUnlock.userId, leadOrder: leadUnlock.leadOrder, unlockedAt: leadUnlock.unlockedAt })
       .from(leadUnlock),
     getScoreConfig(),
-    getLeadDifficulties(),
+    getLeadDefs(),
   ])
 
+  const total = leadDefs.length
+  const difficultyByPos = new Map(leadDefs.map((d) => [d.order, d.difficulty]))
+  const countryByPos = new Map(leadDefs.map((d) => [d.order, { country: d.country, countryEn: d.countryEn }]))
+  const countryFor = (progress: number) =>
+    countryByPos.get(progress) ?? { country: null, countryEn: null }
   const lead1Open = isLeadOneOpen(nowMs)
   const userById = new Map(users.map((u) => [u.id, u]))
 
@@ -473,8 +471,8 @@ export async function getLeaderboard(nowMs: number = Date.now()): Promise<Leader
   function userProgress(userId: string): { progress: number; reachedAt: number | null } {
     const rows = byUser.get(userId) ?? []
     // Ignore the virtual finishing order when computing displayed progress.
-    const storedMax = rows.reduce((m, r) => (r.order <= TOTAL_CLUES ? Math.max(m, r.order) : m), 0)
-    const progress = effectiveUnlockedCount(storedMax, nowMs)
+    const storedMax = rows.reduce((m, r) => (r.order <= total ? Math.max(m, r.order) : m), 0)
+    const progress = effectiveUnlockedCount(storedMax, nowMs, total)
     if (progress === 0) return { progress: 0, reachedAt: null }
     if (progress === 1) return { progress: 1, reachedAt: lead1Open ? START_MS : null }
     const at = rows.find((r) => r.order === storedMax)?.at ?? null
@@ -540,8 +538,8 @@ export async function getLeaderboard(nowMs: number = Date.now()): Promise<Leader
 
   // Score each lead: rank everyone who completed it (reached the next stop) by
   // completion time, then award placement points + the lead's difficulty bonus.
-  for (let lead = 1; lead <= TOTAL_CLUES; lead++) {
-    const difficulty: Difficulty = difficulties.get(lead) ?? "easy"
+  for (let lead = 1; lead <= total; lead++) {
+    const difficulty: Difficulty = difficultyByPos.get(lead) ?? "easy"
     const finishers = entities
       .map((e) => ({ e, at: crewReachedAt(e.memberIds, lead + 1) }))
       .filter((x): x is { e: (typeof entities)[number]; at: number } => x.at !== null)
@@ -567,4 +565,6 @@ export async function getLeaderboard(nowMs: number = Date.now()): Promise<Leader
   return entries
 }
 
-export { TOTAL_CLUES }
+// Back-compat re-export of the STATIC seed count. Prefer getTotalLeads() for
+// the live count; this is only kept for legacy importers.
+export { TOTAL_CLUES } from "@/lib/clues"

@@ -1,112 +1,69 @@
 // ─────────────────────────────────────────────────────────────────────────
-//  Admin-editable lead copy.
+//  Lead copy helpers (registry-backed).
 //
-//  The canonical leads (country, stamp icon, default subtitle/body) live in
-//  lib/clues.ts. Admins can override the *subtitle* and *body* text per lead
-//  and per language from the control room; those overrides are stored in the
-//  `lead_content` table and merged over the defaults here.
-//
-//  Body text is stored raw, with a blank line between paragraphs. It is split
-//  back into the journal's paragraph array (string[]) so the journal renders
-//  exactly as before, just with the admin's words.
+//  Leads (country, icon, subtitle, body, stamp, difficulty) now live in the
+//  `lead` table and are read through lib/leads.ts. This module is a thin
+//  compatibility layer over that registry:
+//   - `applyLeadContent` resolves a set of positional clue stubs to the live
+//     lead content (used by the journal).
+//   - `getEditableLeads` / `EditableLead` shape the admin editor rows.
+//   - paragraph helpers are re-exported from the registry.
 // ─────────────────────────────────────────────────────────────────────────
 
 import "server-only"
-import { db } from "@/lib/db"
-import { leadContent } from "@/lib/db/schema"
-import { CLUES, type Clue } from "@/lib/clues"
+import type { Clue } from "@/lib/clues"
+import { getLeadDefs, splitParagraphs, joinParagraphs } from "@/lib/leads"
 
-export type LeadOverride = {
-  leadOrder: number
-  subtitle: string | null
-  subtitleEn: string | null
-  body: string | null
-  bodyEn: string | null
-}
+export { splitParagraphs, joinParagraphs }
 
 /**
- * Split a raw text block into journal paragraphs. Paragraphs are separated by
- * one or more blank lines; any single newlines inside a paragraph collapse to
- * a space so the journal's <p> blocks read cleanly.
- */
-export function splitParagraphs(raw: string): string[] {
-  return raw
-    .replace(/\r\n/g, "\n")
-    .split(/\n{2,}/)
-    .map((p) => p.replace(/\n+/g, " ").trim())
-    .filter((p) => p.length > 0)
-}
-
-/** Join a paragraph array back into editable raw text (blank line between). */
-export function joinParagraphs(paragraphs: string[]): string {
-  return paragraphs.join("\n\n")
-}
-
-/** Treat whitespace-only overrides as "not set" so they fall back to defaults. */
-function clean(value: string | null): string | null {
-  if (value === null) return null
-  const trimmed = value.trim()
-  return trimmed.length > 0 ? trimmed : null
-}
-
-/** Fetch all stored overrides, keyed by lead order. */
-export async function getLeadOverrides(): Promise<Map<number, LeadOverride>> {
-  const rows = await db.select().from(leadContent)
-  const map = new Map<number, LeadOverride>()
-  for (const r of rows) {
-    map.set(r.leadOrder, {
-      leadOrder: r.leadOrder,
-      subtitle: clean(r.subtitle),
-      subtitleEn: clean(r.subtitleEn),
-      body: clean(r.body),
-      bodyEn: clean(r.bodyEn),
-    })
-  }
-  return map
-}
-
-/**
- * Merge stored overrides over a set of default clues. Only subtitle and body
- * (in each language) can be overridden; country and icon always come from the
- * defaults. Returns new Clue objects, leaving the originals untouched.
+ * Resolve a set of clue stubs (as produced by buildClueState, which only
+ * carries positions/order) to the live lead content from the registry. Matches
+ * by position so the journal renders the admin's current copy + stamp.
  */
 export async function applyLeadContent(clues: Clue[]): Promise<Clue[]> {
   if (clues.length === 0) return clues
-  const overrides = await getLeadOverrides()
+  const defs = await getLeadDefs()
+  const byPos = new Map(defs.map((d) => [d.order, d]))
   return clues.map((clue) => {
-    const o = overrides.get(clue.order)
-    if (!o) return clue
+    const d = byPos.get(clue.order)
+    if (!d) return clue
     return {
       ...clue,
-      subtitle: o.subtitle ?? clue.subtitle,
-      subtitleEn: o.subtitleEn ?? clue.subtitleEn,
-      body: o.body ? splitParagraphs(o.body) : clue.body,
-      bodyEn: o.bodyEn ? splitParagraphs(o.bodyEn) : clue.bodyEn,
+      id: d.id,
+      country: d.country,
+      countryEn: d.countryEn,
+      subtitle: d.subtitle,
+      subtitleEn: d.subtitleEn,
+      icon: d.icon,
+      body: d.body,
+      bodyEn: d.bodyEn,
+      stampImageUrl: d.stampImageUrl,
+      stampAspect: d.stampAspect,
     }
   })
 }
 
 /**
- * The current effective copy for every lead, as editable raw text. Used to
- * prefill the admin editor: shows the override where present, otherwise the
- * hardcoded default. Country/countryEn are read-only context.
+ * The current editable copy for every lead, as raw text, for the admin editor.
+ * Includes the stable id, position, stamp image + aspect, and difficulty.
  */
 export async function getEditableLeads() {
-  const overrides = await getLeadOverrides()
-  return CLUES.map((clue) => {
-    const o = overrides.get(clue.order)
-    return {
-      order: clue.order,
-      country: clue.country,
-      countryEn: clue.countryEn,
-      subtitle: o?.subtitle ?? clue.subtitle,
-      subtitleEn: o?.subtitleEn ?? clue.subtitleEn,
-      body: o?.body ?? joinParagraphs(clue.body),
-      bodyEn: o?.bodyEn ?? joinParagraphs(clue.bodyEn),
-      /** Whether this lead currently differs from the hardcoded default. */
-      customized: Boolean(o && (o.subtitle || o.subtitleEn || o.body || o.bodyEn)),
-    }
-  })
+  const defs = await getLeadDefs()
+  return defs.map((d) => ({
+    id: d.id,
+    order: d.order,
+    country: d.country,
+    countryEn: d.countryEn,
+    icon: d.icon,
+    subtitle: d.subtitle,
+    subtitleEn: d.subtitleEn,
+    body: joinParagraphs(d.body),
+    bodyEn: joinParagraphs(d.bodyEn),
+    stampImageUrl: d.stampImageUrl,
+    stampAspect: d.stampAspect,
+    difficulty: d.difficulty,
+  }))
 }
 
 export type EditableLead = Awaited<ReturnType<typeof getEditableLeads>>[number]

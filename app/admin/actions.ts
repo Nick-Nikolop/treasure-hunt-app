@@ -247,7 +247,7 @@ export async function getAdminData(): Promise<AdminData> {
     }
   })
 
-  const difficultyMap = await getLeadDifficulties()
+  const editableLeads = await getEditableLeads()
 
   return {
     users: users.map((u) => ({
@@ -266,22 +266,22 @@ export async function getAdminData(): Promise<AdminData> {
     })),
     teams: teamsWithMembers,
     superadminCount: await superadminCount(),
-    totalLeads: TOTAL_CLUES,
+    totalLeads: editableLeads.length,
     tokens: await getClueTokens(),
     hints: await listHints(),
     campaigns: await listCampaigns(),
-    leadOptions: CLUES.map((c) => ({
+    leadOptions: editableLeads.map((c) => ({
       order: c.order,
       country: c.country,
       countryEn: c.countryEn,
     })),
     scoreConfig: await getScoreConfig(),
     solveCooldownSeconds: await getSolveCooldownSeconds(),
-    leadDifficulties: CLUES.map((c) => ({
+    leadDifficulties: editableLeads.map((c) => ({
       order: c.order,
-      difficulty: difficultyMap.get(c.order) ?? "easy",
+      difficulty: c.difficulty,
     })),
-    leads: await getEditableLeads(),
+    leads: editableLeads,
     activity: await listActivity({ limit: 50 }),
     analytics: await getAnalyticsSnapshot(14),
     phase: await getPhaseAdminData(),
@@ -348,60 +348,53 @@ export async function adminSavePhase(input: {
 }
 
 /**
- * Save the editable copy for a single lead. Stores the subtitle and body in
- * both languages; the journal merges these over the hardcoded defaults on its
- * next render. Country name and stamp icon are not editable. Passing an empty
- * field clears that override so the lead reverts to its default text.
+ * Save the editable content for a single lead, addressed by its stable id.
+ * Country, subtitle, body (both languages), the stamp icon and the difficulty
+ * are all editable; the stamp image and the lead's position are managed by
+ * their own actions. The journal reflects the change on its next render.
  */
 export async function adminSaveLead(input: {
-  leadOrder: number
+  id: string
+  country: string
+  countryEn: string
   subtitle: string
   subtitleEn: string
+  icon: string
   body: string
   bodyEn: string
+  difficulty: Difficulty
 }): Promise<ActionResult> {
   const admin = await requireAdmin()
 
-  const order = Math.floor(input.leadOrder)
-  if (!Number.isFinite(order) || order < 1 || order > TOTAL_CLUES) {
-    return { ok: false, error: "bad_value" }
-  }
+  const id = (input.id ?? "").trim()
+  if (!id) return { ok: false, error: "bad_value" }
 
-  // Normalize: empty/whitespace becomes NULL so the lead falls back to default.
-  const norm = (v: string) => {
-    const t = (v ?? "").trim()
-    return t.length > 0 ? t : null
-  }
-  const row = {
-    leadOrder: order,
-    subtitle: norm(input.subtitle),
-    subtitleEn: norm(input.subtitleEn),
-    body: norm(input.body),
-    bodyEn: norm(input.bodyEn),
-    updatedAt: new Date(),
-  }
+  const country = (input.country ?? "").trim()
+  const countryEn = (input.countryEn ?? "").trim()
+  if (country.length < 1 || countryEn.length < 1) return { ok: false, error: "too_short" }
+  if (!isDifficulty(input.difficulty)) return { ok: false, error: "bad_value" }
+  const icon = isLeadIcon(input.icon) ? input.icon : "Landmark"
 
-  await db
-    .insert(leadContent)
-    .values(row)
-    .onConflictDoUpdate({
-      target: leadContent.leadOrder,
-      set: {
-        subtitle: row.subtitle,
-        subtitleEn: row.subtitleEn,
-        body: row.body,
-        bodyEn: row.bodyEn,
-        updatedAt: row.updatedAt,
-      },
-    })
+  const existing = (await getLeadDefs()).find((l) => l.id === id)
+  if (!existing) return { ok: false, error: "not_found" }
 
-  const clue = CLUES.find((c) => c.order === order)
+  await updateLeadContent(id, {
+    country,
+    countryEn,
+    subtitle: (input.subtitle ?? "").trim(),
+    subtitleEn: (input.subtitleEn ?? "").trim(),
+    icon,
+    body: input.body ?? "",
+    bodyEn: input.bodyEn ?? "",
+    difficulty: input.difficulty,
+  })
+
   await logActivity({
     category: "admin",
     action: "admin.lead_edited",
     ...adminActor(admin),
-    leadOrder: order,
-    summary: `${adminActor(admin).actorName} edited the copy for lead No. ${String(order).padStart(2, "0")}${clue ? ` (${clue.country})` : ""}`,
+    leadOrder: existing.order,
+    summary: `${adminActor(admin).actorName} edited lead No. ${String(existing.order).padStart(2, "0")} (${country})`,
   })
 
   revalidatePath("/admin")
@@ -994,7 +987,7 @@ export async function adminCreateHint(input: {
   if (title.length > 120) return { ok: false, error: "too_long" }
   if (body.length < 1) return { ok: false, error: "too_short" }
 
-  await createHint({ title, body, leadOrder: normalizeLeadOrder(input.leadOrder) })
+  await createHint({ title, body, leadOrder: await normalizeLeadOrder(input.leadOrder) })
   revalidatePath("/admin")
   return { ok: true }
 }
@@ -1011,7 +1004,7 @@ export async function adminUpdateHint(
   if (title.length > 120) return { ok: false, error: "too_long" }
   if (body.length < 1) return { ok: false, error: "too_short" }
 
-  await updateHint(id, { title, body, leadOrder: normalizeLeadOrder(input.leadOrder) })
+  await updateHint(id, { title, body, leadOrder: await normalizeLeadOrder(input.leadOrder) })
   revalidatePath("/admin")
   return { ok: true }
 }

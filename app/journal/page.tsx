@@ -9,7 +9,7 @@ import { SiteFooter } from "@/components/pythea/site-footer"
 import { ClueControls } from "@/components/pythea/clue-controls"
 import { buildClueState, isOverrideAuthorized, PREVIEW_COOKIE } from "@/lib/clues"
 import { getCrewUserIds, getCrewEffectiveProgress, getUserScore } from "@/lib/hunt"
-import { applyLeadContent } from "@/lib/lead-content"
+import { getLeadDefs } from "@/lib/leads"
 import { getPhaseContext } from "@/lib/phase-guard"
 
 // Recompute against the live server clock, the player's stored progress, and
@@ -59,11 +59,14 @@ export default async function PoreiaPage() {
   const overrideActive = showControls && cookieVal !== undefined
   const unlockedCount = overrideActive ? Number(cookieVal) : realCount
 
-  const state = buildClueState(unlockedCount, now)
+  // Build the clue state from the LIVE, admin-managed lead list so the journal
+  // reflects the current sequence, copy, and stamps.
+  const leadDefs = await getLeadDefs()
+  const state = buildClueState(unlockedCount, now, leadDefs)
 
-  // Merge any admin-edited subtitle/body over the defaults for the unlocked
-  // leads (locked leads carry no content, so there is nothing to override).
-  const unlocked = await applyLeadContent(state.unlocked)
+  // The unlocked slice already carries full live content (country, body,
+  // stamp), so it is used directly.
+  const unlocked = state.unlocked
 
   // The player's live score (always 0 before they're ranked) and the lead they
   // are currently at (the furthest clue they've unlocked) for the topbar.
