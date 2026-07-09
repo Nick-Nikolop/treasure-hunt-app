@@ -617,9 +617,6 @@ export function TeaserLanding({ targetMs }: { targetMs: number }) {
             >
               <Instagram className="size-4" />
               @thehuntkalamata
-              <span className="font-sans text-[10px] font-bold tracking-chip text-muted-foreground transition-colors group-hover:text-brass">
-                {p.followCta}
-              </span>
             </a>
           </motion.div>
         </div>
