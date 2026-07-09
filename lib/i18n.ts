@@ -281,7 +281,7 @@ const el = {
       },
       {
         q: "Πότε ξεκινά;",
-        a: "Το καλοκαίρι του 2026. Μέχρι τότε, οι σελίδες του ημερολογίου ξεκλειδώνουν σταδιακά και αποκαλύπτουν τα σημάδια, ένα ένα.",
+        a: "Το καλοκαίρι του 2026. Μέχρι τότε, οι σελίδες του ημερολογίου ξεκ��ειδώνουν σταδιακά και αποκαλύπτουν τα σημάδια, ένα ένα.",
       },
       {
         q: "Πόσα άτομα έχει μια ομάδα;",
@@ -514,7 +514,7 @@ const el = {
     account: "Ο ΛΟΓΑΡΙΑΣΜΟΣ ΜΟΥ",
     accountMenu: "Λογαριασμός",
     crewNav: "Η ομάδα σου",
-    adminNav: "Διαχείριση",
+    adminNav: "Δι��χείριση",
     signOut: "Αποσύνδεση",
     greeting: (name: string) => `Καλώς ήρθες, ${name}`,
     signedInAs: "Συνδεδεμένος ως",
@@ -585,6 +585,8 @@ const el = {
     teaserSubtitle:
       "Κάτι ετοιμάζεται στην Καλαμάτα. Άφησε το email σου και θα είσαι από τους πρώτους που θα μπουν στο κυνήγι.",
     countdownLabel: "Η ΠΥΛΗ ΑΝΟΙΓΕΙ ΣΕ",
+    followPrompt: "Μείνε συντονισμένος στο Instagram",
+    followCta: "ΑΚΟΛΟΥΘΗΣΕ ΜΑΣ",
     openNow: "Η πύλη άνοιξε. Μπαίνεις...",
     emailPlaceholder: "Το email σου",
     submit: "ΚΡΑΤΑ ΤΗ ΘΕΣΗ ΜΟΥ",
@@ -1178,6 +1180,8 @@ const en: Dictionary = {
     teaserSubtitle:
       "Something is being prepared in Kalamata. Leave your email and be among the first to enter the hunt.",
     countdownLabel: "THE GATE OPENS IN",
+    followPrompt: "Stay in the loop on Instagram",
+    followCta: "FOLLOW US",
     openNow: "The gate is open. Entering...",
     emailPlaceholder: "Your email",
     submit: "SAVE MY SPOT",

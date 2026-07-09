@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   Eye,
   EyeOff,
+  Instagram,
   Loader2,
   LogIn,
   Mail,
@@ -596,6 +597,30 @@ export function TeaserLanding({ targetMs }: { targetMs: number }) {
               {p.countdownLabel}
             </span>
             <Countdown targetMs={targetMs} size="lg" tone="dark" onDone={() => router.refresh()} />
+          </motion.div>
+
+          {/* Instagram promo, so followers keep up with the reveal. */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9, delay: 0.45, ease: [0.16, 1, 0.3, 1] }}
+            className="mt-12 flex flex-col items-center gap-3"
+          >
+            <span className="font-sans text-[11px] font-bold tracking-chip text-muted-foreground/70">
+              {p.followPrompt}
+            </span>
+            <a
+              href="https://www.instagram.com/thehuntkalamata"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group inline-flex items-center gap-2.5 rounded-sm border border-border bg-background/40 px-5 py-2.5 font-sans text-sm font-bold tracking-chip text-foreground backdrop-blur-sm transition-colors hover:border-brass hover:text-brass"
+            >
+              <Instagram className="size-4" />
+              @thehuntkalamata
+              <span className="font-sans text-[10px] font-bold tracking-chip text-muted-foreground transition-colors group-hover:text-brass">
+                {p.followCta}
+              </span>
+            </a>
           </motion.div>
         </div>
       </div>
