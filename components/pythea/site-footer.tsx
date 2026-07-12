@@ -19,11 +19,15 @@ export function SiteFooter() {
     { href: "/sign-up", label: t.footer.linkSignUp },
     { href: "/sign-in", label: t.footer.linkSignIn },
   ]
+  const legalLinks = [
+    { href: "/terms", label: t.footer.linkTerms },
+    { href: "/terms#cookies", label: t.footer.linkCookies },
+  ]
 
   return (
     <footer className="relative overflow-hidden border-t border-border bg-card/40">
       <div className="mx-auto max-w-7xl px-5 pt-14">
-        <div className="grid gap-10 pb-12 md:grid-cols-[1.4fr_1fr_1fr] md:gap-6">
+        <div className="grid gap-10 pb-12 md:grid-cols-[1.4fr_1fr_1fr_1fr] md:gap-6">
           {/* Brand + motto */}
           <div>
             <div className="flex items-center gap-3">
@@ -66,6 +70,25 @@ export function SiteFooter() {
             </h3>
             <ul className="mt-4 flex flex-col gap-2.5">
               {accountLinks.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="font-serif text-base text-foreground/80 transition-colors hover:text-brass"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          {/* Legal */}
+          <nav aria-label={t.footer.colLegal}>
+            <h3 className="font-sans text-[11px] font-bold tracking-chip text-muted-foreground">
+              {t.footer.colLegal}
+            </h3>
+            <ul className="mt-4 flex flex-col gap-2.5">
+              {legalLinks.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}

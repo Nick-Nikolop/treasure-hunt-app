@@ -335,3 +335,33 @@ export const analyticsEvent = pgTable(
     userIdIdx: index("analytics_event_userId_idx").on(t.userId),
   }),
 )
+
+// Cookie/consent decisions. One row per decision a visitor makes in the cookie
+// banner, so we keep an auditable GDPR record of who consented to what and when.
+//
+//  - `decision`  "accepted" (all), "rejected" (necessary only), or "necessary".
+//  - `analytics` whether the visitor allowed non-essential analytics cookies.
+//  - `anonId`    client-minted anonymous id (localStorage), lets us tie repeat
+//                decisions from the same device together without identifying it.
+//  - `userId`    signed-in user resolved server-side from the session, or null.
+//  - `policyVersion` the cookie-policy revision shown at decision time.
+export const cookieConsent = pgTable(
+  "cookie_consent",
+  {
+    id: text("id").primaryKey(),
+    anonId: text("anonId"),
+    userId: text("userId"),
+    decision: text("decision").notNull(),
+    analytics: boolean("analytics").notNull().default(false),
+    policyVersion: text("policyVersion"),
+    locale: text("locale"),
+    path: text("path"),
+    userAgent: text("userAgent"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (t) => ({
+    anonIdIdx: index("cookie_consent_anonId_idx").on(t.anonId),
+    userIdIdx: index("cookie_consent_userId_idx").on(t.userId),
+    createdAtIdx: index("cookie_consent_createdAt_idx").on(t.createdAt),
+  }),
+)
