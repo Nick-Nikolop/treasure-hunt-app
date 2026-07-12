@@ -281,7 +281,7 @@ const el = {
       },
       {
         q: "Πότε ξεκινά;",
-        a: "Το καλοκαίρι του 2026. Μέχρι τότε, οι σελίδες του ημερολογίου ξεκλειδώνουν σταδιακά και αποκαλύπτουν τα σημάδια, ένα ένα.",
+        a: "Στις 30 Ιουλίου. Μέχρι τότε, οι σελίδες του ημερολογίου ξεκλειδώνουν σταδιακά και αποκαλύπτουν τα σημάδια, ένα ένα.",
       },
       {
         q: "Πόσα άτομα έχει μια ομάδα;",
@@ -887,7 +887,7 @@ const en: Dictionary = {
       },
       {
         q: "When does it start?",
-        a: "In the summer of 2026. Until then, the pages of the journal unlock gradually, revealing the marks one by one.",
+        a: "On 30 July. Until then, the pages of the journal unlock gradually, revealing the marks one by one.",
       },
       {
         q: "How many people are on a team?",
