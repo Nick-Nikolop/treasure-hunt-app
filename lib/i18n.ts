@@ -89,7 +89,7 @@ const el = {
   party: {
     section: "ΜΕΤΑ ΤΟ ΚΥΝΗΓΙ",
     badge: "ΠΕΡΙΣΣΟΤΕΡΑ ΣΥΝΤΟΜΑ",
-    titlePre: "Όταν πέσει το τελευταίο σημάδι,",
+    titlePre: "Και όταν το κυνήγι τελειώσει,",
     titleEm: "στήνουμε πάρτι.",
     body: "Το ταξίδι δεν τελειώνει σε μια γωνιά της πόλης. Μόλις ολοκληρωθεί το κυνήγι, όλες οι ομάδες συναντιούνται για να το γιορτάσουν μαζί. Περισσότερες λεπτομέρειες έρχονται σύντομα.",
   },
@@ -301,6 +301,10 @@ const el = {
       {
         q: "Πώς ξεκλειδώνουν τα σημάδια;",
         a: "Ένα ένα, με τη σειρά. Έχεις τον πρώτο γρίφο, τον λύνεις και πας στο σημείο της πόλης. Εκεί σκανάρεις τον κωδικό QR και ξεκλειδώνεις τον επόμενο γρίφο. Έτσι προχωράς μέχρι το τέλος της διαδρομής.",
+      },
+      {
+        q: "Υπάρχει έπαθλο;",
+        a: "Ναι. Οι τρεις πρώτες ομάδες μοιράζονται χρηματικό έπαθλο 500 ευρώ: 300 ευρώ στην πρώτη, 150 στη δεύτερη και 50 στην τρίτη. Η κατάταξη βγαίνει από τον χρόνο ολοκλήρωσης και η απονομή γίνεται στο τελικό πάρτι.",
       },
       {
         q: "Τι κερδίζει η πρώτη ομάδα;",
@@ -722,7 +726,7 @@ const en: Dictionary = {
   party: {
     section: "AFTER THE HUNT",
     badge: "MORE SOON",
-    titlePre: "When the last mark falls,",
+    titlePre: "And when the hunt is over,",
     titleEm: "we throw a party.",
     body: "The journey doesn't end in a corner of the city. Once the hunt is over, every team gathers to celebrate it together. More details are coming soon.",
   },
@@ -925,6 +929,10 @@ const en: Dictionary = {
       {
         q: "How do the marks unlock?",
         a: "One by one, in order. You get the first clue, solve it and head to the spot in the city. There you scan the QR code and unlock the next clue. That is how you move all the way to the end of the trail.",
+      },
+      {
+        q: "Is there a prize?",
+        a: "Yes. The top three teams share a prize pool of 500 euros: 300 for first place, 150 for second and 50 for third. The ranking is based on completion time, and prizes are awarded at the final party.",
       },
       {
         q: "What does the first team win?",
