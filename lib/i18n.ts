@@ -86,6 +86,13 @@ const el = {
     titleEm: "τρόπο να βλέπεις.",
     body: "Κάθε ομάδα που ακολουθεί τα ίχνη του πλησιάζει σε αυτό που ο ίδιος θεωρούσε αληθινό θησαυρό: την ικανότητα να ανακαλύπτεις το άγνωστο μέσα στο γνώριμο.",
   },
+  party: {
+    section: "ΜΕΤΑ ΤΟ ΚΥΝΗΓΙ",
+    badge: "ΠΕΡΙΣΣΟΤΕΡΑ ΣΥΝΤΟΜΑ",
+    titlePre: "Όταν πέσει το τελευταίο σημάδι,",
+    titleEm: "στήνουμε πάρτι.",
+    body: "Το ταξίδι δεν τελειώνει σε μια γωνιά της πόλης. Μόλις ολοκληρωθεί το κυνήγι, όλες οι ομάδες συναντιούνται για να το γιορτάσουν μαζί. Περισσότερες λεπτομέρειες έρχονται σύντομα.",
+  },
   prize: {
     section: "ΤΟ ΕΠΑΘΛΟ",
     titlePre: "Χρηματικό έπαθλο",
@@ -700,6 +707,13 @@ const en: Dictionary = {
     titlePre: "Pytheas did not hide gold. He hid a",
     titleEm: "way of seeing.",
     body: "Every team that follows his trail draws closer to what he considered the true treasure: the ability to discover the unknown within the familiar.",
+  },
+  party: {
+    section: "AFTER THE HUNT",
+    badge: "MORE SOON",
+    titlePre: "When the last mark falls,",
+    titleEm: "we throw a party.",
+    body: "The journey doesn't end in a corner of the city. Once the hunt is over, every team gathers to celebrate it together. More details are coming soon.",
   },
   prize: {
     section: "THE PRIZE",

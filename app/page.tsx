@@ -8,6 +8,7 @@ import { PrizePool } from "@/components/pythea/prize-pool"
 import { HowItWorks } from "@/components/pythea/how-it-works"
 import { Register } from "@/components/pythea/register"
 import { Faq } from "@/components/pythea/faq"
+import { Party } from "@/components/pythea/party"
 import { FloatingCta } from "@/components/pythea/floating-cta"
 import { SiteFooter } from "@/components/pythea/site-footer"
 import { TeaserLanding } from "@/components/pythea/teaser-landing"
@@ -89,6 +90,7 @@ export default async function Page() {
         <Treasure />
         <HowItWorks />
         <Faq />
+        <Party />
       </main>
       <FloatingCta />
       <SiteFooter />
