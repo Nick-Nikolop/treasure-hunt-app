@@ -177,19 +177,19 @@ const el = {
     badge: "ΚΑΛΟΚΑΙΡΙ 2026 · ΚΑΛΑΜΑΤΑ",
     title: "Μπες στην ομάδα.",
     subtitle:
-      "Φτιάξε τον δικό σου λογαριασμό και κράτα τη θέση σου στο ταξίδι. Όταν ανοίξουν οι ομάδες, θα είσαι έτοιμος να σαλπάρεις με τους δικούς σου.",
+      "Φτιάξε τον δικό σου λογαριασμό, στήσε την ομάδα σου και σαλπάρετε μαζί στο ταξίδι του Πυθέα.",
     perks: [
       {
         title: "Η δική σου πορεία",
         text: "Ο λογαριασμός σου κρατά την πρόοδό σου καθώς ξεκλειδώνουν τα σημάδια.",
       },
       {
-        title: "Ομάδες σε λίγο καιρό",
-        text: "Σύντομα θα μπορείς να φτιάξεις ή να μπεις σε ομάδα ως και 8 ατόμων.",
+        title: "Φτιάξε την ομάδα σου",
+        text: "Δημιούργησε ή μπες σε ομάδα ως και 8 ατόμων με έναν σύνδεσμο πρόσκλησης.",
       },
       {
         title: "Πρώτος στα νέα",
-        text: "Ημερομηνία, κανόνες και ώρα εκκίνησης έρχονται πρώτα σε όσους έχουν λογαριασμό.",
+        text: "Κανόνες και ώρα εκκίνησης έρχονται πρώτα σε όσους έχουν λογαριασμό.",
       },
     ],
     ctaSignUp: "ΔΗΜΙΟΥΡΓΙΑ ΛΟΓΑΡΙΑΣΜΟΥ",
@@ -199,7 +199,7 @@ const el = {
     welcomeBody:
       "Η θέση σου στην ομάδα είναι κρατημένη. Άνοιξε το ημερολόγιο και διάβασε τα σημάδια που έχουν αποκαλυφθεί ως τώρα.",
     welcomeCta: "ΑΝΟΙΞΕ ΤΟ ΗΜΕΡΟΛΟΓΙΟ",
-    welcomeTeams: "Οι ομάδες ανοίγουν σε λίγο καιρό. Θα ειδοποιηθείς πρώτος.",
+    welcomeTeams: "Στήσε ή διαχειρίσου την ομάδα σου και καλέσε τους δικούς σου.",
   },
   teams: {
     metaTitle: "Η Ομάδα σου",
@@ -292,7 +292,7 @@ const el = {
       },
       {
         q: "Πόσα άτομα έχει μια ομάδα;",
-        a: "Ως και οκτώ άτομα. Η δυνατότητα να φτιάξεις ή να μπεις σε ομάδα ανοίγει σε λίγο καιρό. Προς το παρόν φτιάχνεις τον προσωπικό σου λογαριασμό.",
+        a: "Ως και οκτώ άτομα. Φτιάχνεις τον λογαριασμό σου και μετά δημιουργείς ή μπαίνεις σε ομάδα με έναν σύνδεσμο πρόσκλησης.",
       },
       {
         q: "Χρειάζομαι λογαριασμό;",
@@ -812,19 +812,19 @@ const en: Dictionary = {
     badge: "SUMMER 2026 · KALAMATA",
     title: "Join the team.",
     subtitle:
-      "Create your own account and hold your place on the voyage. When teams open, you'll be ready to set sail with your own.",
+      "Create your account, set up your team and set sail together on the voyage of Pytheas.",
     perks: [
       {
         title: "Your own course",
         text: "Your account keeps your progress as the marks unlock.",
       },
       {
-        title: "Teams coming soon",
-        text: "Soon you'll be able to create or join a team of up to 8 people.",
+        title: "Build your team",
+        text: "Create or join a team of up to 8 people with an invite link.",
       },
       {
         title: "First to know",
-        text: "Date, rules and start time reach account holders first.",
+        text: "Rules and start time reach account holders first.",
       },
     ],
     ctaSignUp: "CREATE ACCOUNT",
@@ -834,7 +834,7 @@ const en: Dictionary = {
     welcomeBody:
       "Your place in the team is held. Open the journal and read the marks revealed so far.",
     welcomeCta: "OPEN THE JOURNAL",
-    welcomeTeams: "Teams open soon. You'll be the first to know.",
+    welcomeTeams: "Set up or manage your team and invite your own.",
   },
   teams: {
     metaTitle: "Your Team",
@@ -920,7 +920,7 @@ const en: Dictionary = {
       },
       {
         q: "How many people are on a team?",
-        a: "Up to eight. The ability to create or join a team opens soon. For now you create your personal account.",
+        a: "Up to eight. You create your account, then create or join a team with an invite link.",
       },
       {
         q: "Do I need an account?",
