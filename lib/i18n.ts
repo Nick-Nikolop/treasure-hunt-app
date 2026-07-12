@@ -288,7 +288,7 @@ const el = {
       },
       {
         q: "Πότε ξεκινά;",
-        a: "Στις 30 Ιουλίου. Μέχρι τότε, οι σελίδες του ημερολογίου ξεκλειδώνουν σταδιακά και αποκαλύπτουν τα σημάδια, ένα ένα.",
+        a: "Στις 30 Ιουλίου εμφανίζεται ο πρώτος γρίφος και το κυνήγι κρατά δύο μέρες. Μέχρι τότε, οι σελίδες του ημερολογίου ξεκλειδώνουν σταδιακά και αποκαλύπτουν τα σημάδια, ένα ένα.",
       },
       {
         q: "Πόσα άτομα έχει μια ομάδα;",
@@ -300,7 +300,7 @@ const el = {
       },
       {
         q: "Πώς ξεκλειδώνουν τα σημάδια;",
-        a: "Με τον καιρό. Κάθε σελίδα του ημερολογίου ανοίγει σε προκαθορισμένη στιγμή και κανείς δεν ξέρει ποια χώρα κρύβει η επόμενη.",
+        a: "Ένα ένα, με τη σειρά. Έχεις τον πρώτο γρίφο, τον λύνεις και πας στο σημείο της πόλης. Εκεί σκανάρεις τον κωδικό QR και ξεκλειδώνεις τον επόμενο γρίφο. Έτσι προχωράς μέχρι το τέλος της διαδρομής.",
       },
       {
         q: "Τι κερδίζει η πρώτη ομάδα;",
@@ -912,7 +912,7 @@ const en: Dictionary = {
       },
       {
         q: "When does it start?",
-        a: "On 30 July. Until then, the pages of the journal unlock gradually, revealing the marks one by one.",
+        a: "On 30 July the first clue appears, and the hunt runs for two days. Until then, the pages of the journal unlock gradually, revealing the marks one by one.",
       },
       {
         q: "How many people are on a team?",
@@ -924,7 +924,7 @@ const en: Dictionary = {
       },
       {
         q: "How do the marks unlock?",
-        a: "Over time. Each page of the journal opens at a set moment, and no one knows which country the next one holds.",
+        a: "One by one, in order. You get the first clue, solve it and head to the spot in the city. There you scan the QR code and unlock the next clue. That is how you move all the way to the end of the trail.",
       },
       {
         q: "What does the first team win?",
