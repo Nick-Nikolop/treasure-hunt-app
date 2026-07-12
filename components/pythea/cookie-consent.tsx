@@ -133,7 +133,7 @@ export function CookieConsent() {
               </div>
             </div>
 
-            <div className="flex shrink-0 gap-2.5 sm:flex-col md:flex-row">
+            <div className="flex shrink-0 flex-col gap-2.5 sm:flex-col md:flex-row">
               <button
                 type="button"
                 onClick={() => decide("rejected")}
