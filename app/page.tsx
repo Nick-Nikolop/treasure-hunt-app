@@ -84,9 +84,9 @@ export default async function Page() {
           total={totalLeads}
           countdownToMs={countdownToMs}
         />
+        <PrizePool />
         <Story />
         <Treasure />
-        <PrizePool />
         <HowItWorks />
         <Faq />
       </main>
