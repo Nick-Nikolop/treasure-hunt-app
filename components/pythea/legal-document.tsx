@@ -52,7 +52,7 @@ const EL: Doc = {
         blocks: [
           {
             k: "p",
-            t: "Πρόκειται για ένα κυνήγι θησαυρού που εκτυλίσσεται στην πόλη της Καλαμάτας, Μεσσηνία, Ελλάδα. Οι συμμετέχοντες λύνουν γρίφους, εντοπίζουν σημάδια στον αστικό χώρο και σαρώνουν κωδικούς QR για να προχωρήσουν στη διαδρομή. Το παιχνίδι απευθύνεται σε ομάδες έως οκτώ ατόμων.",
+            t: "Πρόκειται για ένα κυνήγι θησαυρού που εκτυλίσσεται στην πόλη της Καλαμάτας, Μεσσηνία, Ελλάδα. Οι συμμετέχοντες λύνουν γρίφους, εντοπίζουν σημάδια στον αστικό χώρο και σαρώνουν κωδικούς QR για να προχωρήσουν στη διαδρομή. Το παιχνίδι απευθύνεται σε ομάδες έως πέντε ατόμων.",
           },
           {
             k: "p",
@@ -306,7 +306,7 @@ const EN: Doc = {
         blocks: [
           {
             k: "p",
-            t: `This is a treasure hunt that takes place in the city of Kalamata, ${GEO.regionEn}, Greece. Participants solve clues, locate marks in the urban space and scan QR codes to advance along the trail. The game is designed for teams of up to eight people.`,
+            t: `This is a treasure hunt that takes place in the city of Kalamata, ${GEO.regionEn}, Greece. Participants solve clues, locate marks in the urban space and scan QR codes to advance along the trail. The game is designed for teams of up to five people.`,
           },
           {
             k: "p",

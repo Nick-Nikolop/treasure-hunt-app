@@ -2,7 +2,7 @@
 // MAX_CREW_SIZE is the single source of truth for the cap. Change it here and
 // every check, label, and progress meter follows.
 
-export const MAX_CREW_SIZE = 8
+export const MAX_CREW_SIZE = 5
 
 // Invite codes avoid easily-confused characters (0/O, 1/I/L) so they read
 // cleanly off a screen or a printed QR. 8 chars over this alphabet gives

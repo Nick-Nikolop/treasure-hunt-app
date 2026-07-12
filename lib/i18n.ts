@@ -142,7 +142,7 @@ const el = {
     steps: [
       {
         title: "Φτιάξε την ομάδα σου",
-        text: "Μάζεψε τους συνεξερευνητές σου. Ως και οκτώ άτομα ανά ομάδα, όσοι τολμούν να κοιτούν αλλιώς.",
+        text: "Μάζεψε τους συνεξερευνητές σου. Ως και πέντε άτομα ανά ομάδα, όσοι τολμούν να κοιτούν αλλιώς.",
       },
       {
         title: "Ακολούθησε τον χάρτη",
@@ -185,7 +185,7 @@ const el = {
       },
       {
         title: "Φτιάξε την ομάδα σου",
-        text: "Δημιούργησε ή μπες σε ομάδα ως και 8 ατόμων με έναν σύνδεσμο πρόσκλησης.",
+        text: "Δημιούργησε ή μπες σε ομάδα ως και 5 ατόμων με έναν σύνδεσμο πρόσκλησης.",
       },
       {
         title: "Πρώτος στα νέα",
@@ -210,7 +210,7 @@ const el = {
     emptyBadge: "Η ΟΜΑΔΑ ΣΟΥ",
     emptyTitle: "Φτιάξε ή μπες σε μια ομάδα.",
     emptySubtitle:
-      "Εξερεύνησε μόνος σου ή μάζεψε ως και οκτώ άτομα. Φτιάξε τη δική σου ομάδα ή μπες σε μία με έναν σύνδεσμο πρόσκλησης.",
+      "Εξερεύνησε μόνος σου ή μάζεψε ως και πέντε άτομα. Φτιάξε τη δική σου ομάδα ή μπες σε μία με έναν σύνδεσμο πρόσκλησης.",
     createTitle: "Φτιάξε νέα ομάδα",
     createPlaceholder: "Όνομα ομάδας",
     createCta: "ΔΗΜΙΟΥΡΓΙΑ",
@@ -292,7 +292,7 @@ const el = {
       },
       {
         q: "Πόσα άτομα έχει μια ομάδα;",
-        a: "Ως και οκτώ άτομα. Φτιάχνεις τον λογαριασμό σου και μετά δημιουργείς ή μπαίνεις σε ομάδα με έναν σύνδεσμο πρόσκλησης.",
+        a: "Ως και πέντε άτομα. Φτιάχνεις τον λογαριασμό σου και μετά δημιουργείς ή μπαίνεις σε ομάδα με έναν σύνδεσμο πρόσκλησης.",
       },
       {
         q: "Χρειάζομαι λογαριασμό;",
@@ -777,7 +777,7 @@ const en: Dictionary = {
     steps: [
       {
         title: "Build your team",
-        text: "Gather your fellow explorers. Up to eight people per team, those who dare to look differently.",
+        text: "Gather your fellow explorers. Up to five people per team, those who dare to look differently.",
       },
       {
         title: "Follow the map",
@@ -820,7 +820,7 @@ const en: Dictionary = {
       },
       {
         title: "Build your team",
-        text: "Create or join a team of up to 8 people with an invite link.",
+        text: "Create or join a team of up to 5 people with an invite link.",
       },
       {
         title: "First to know",
@@ -844,7 +844,7 @@ const en: Dictionary = {
     emptyBadge: "YOUR TEAM",
     emptyTitle: "Create or join a team.",
     emptySubtitle:
-      "Explore solo or gather up to eight. Start your own team or join one with an invite link.",
+      "Explore solo or gather up to five. Start your own team or join one with an invite link.",
     createTitle: "Create a new team",
     createPlaceholder: "Team name",
     createCta: "CREATE",
@@ -920,7 +920,7 @@ const en: Dictionary = {
       },
       {
         q: "How many people are on a team?",
-        a: "Up to eight. You create your account, then create or join a team with an invite link.",
+        a: "Up to five. You create your account, then create or join a team with an invite link.",
       },
       {
         q: "Do I need an account?",
