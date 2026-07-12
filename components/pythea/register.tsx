@@ -24,10 +24,19 @@ export function Register() {
       session.user.email
     : null
 
+  // The signed-in welcome card is compact, so it doesn't need the tall bottom
+  // padding the signed-out "perks" layout uses. Balanced padding keeps the card
+  // visually centered in its band instead of stranded at the top of a big gap.
+  const signedIn = !isPending && !!session?.user
+
   return (
     <section
       id="register"
-      className="relative mx-auto max-w-5xl scroll-mt-20 px-5 pb-32 pt-8 md:scroll-mt-28 md:pb-48"
+      className={
+        signedIn
+          ? "relative mx-auto max-w-5xl scroll-mt-20 px-5 py-16 md:scroll-mt-28 md:py-24"
+          : "relative mx-auto max-w-5xl scroll-mt-20 px-5 pb-32 pt-8 md:scroll-mt-28 md:pb-48"
+      }
     >
       <motion.div
         initial={{ opacity: 0, y: 40 }}
