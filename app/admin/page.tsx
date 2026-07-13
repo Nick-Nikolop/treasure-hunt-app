@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import { redirect } from "next/navigation"
-import { getAdminUser } from "@/lib/admin"
+import { getAdminUser, isBootstrapEmail } from "@/lib/admin"
 import { getAdminData } from "@/app/admin/actions"
 import { Atmosphere } from "@/components/pythea/atmosphere"
 import { AdminDashboard } from "@/components/pythea/admin-dashboard"
@@ -24,7 +24,11 @@ export default async function AdminPage() {
     <>
       <Atmosphere />
       <div className="relative flex min-h-screen flex-col">
-        <AdminDashboard data={data} currentUserId={admin.id} />
+        <AdminDashboard
+          data={data}
+          currentUserId={admin.id}
+          isBootstrap={isBootstrapEmail(admin.email)}
+        />
       </div>
     </>
   )

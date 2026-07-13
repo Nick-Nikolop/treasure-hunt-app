@@ -60,6 +60,17 @@ export async function requireAdmin(): Promise<AdminUser> {
   return admin
 }
 
+/**
+ * Stricter guard for founder-only tooling: the caller must be a superadmin AND
+ * the bootstrap founder email. Other superadmins are rejected. Used to gate the
+ * internal location-ping diagnostic so it stays invisible to everyone else.
+ */
+export async function requireBootstrapAdmin(): Promise<AdminUser> {
+  const admin = await requireAdmin()
+  if (!isBootstrapEmail(admin.email)) throw new Error("Forbidden")
+  return admin
+}
+
 /** Count current superadmins, used to prevent removing the last one. */
 export async function superadminCount(): Promise<number> {
   const rows = await db

@@ -365,3 +365,39 @@ export const cookieConsent = pgTable(
     createdAtIdx: index("cookie_consent_createdAt_idx").on(t.createdAt),
   }),
 )
+
+// Diagnostic "ping me your location" QR codes. This is an internal, bootstrap
+// admin only tool: the founder generates a QR whose scan page asks the visitor
+// for their location and reports it back. Each QR is one `location_qr` row and
+// every scan that returns coordinates is one `location_ping` row.
+export const locationQr = pgTable(
+  "location_qr",
+  {
+    token: text("token").primaryKey(),
+    label: text("label"),
+    createdBy: text("createdBy"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (t) => ({
+    createdAtIdx: index("location_qr_createdAt_idx").on(t.createdAt),
+  }),
+)
+
+// One row per returned location. lat/lng/accuracy are stored as text to avoid
+// float precision surprises; they are parsed back to numbers in the UI.
+export const locationPing = pgTable(
+  "location_ping",
+  {
+    id: text("id").primaryKey(),
+    token: text("token").notNull(),
+    lat: text("lat").notNull(),
+    lng: text("lng").notNull(),
+    accuracy: text("accuracy"),
+    userAgent: text("userAgent"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (t) => ({
+    tokenIdx: index("location_ping_token_idx").on(t.token),
+    tokenCreatedIdx: index("location_ping_token_createdAt_idx").on(t.token, t.createdAt),
+  }),
+)

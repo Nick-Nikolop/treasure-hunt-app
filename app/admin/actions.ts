@@ -3,7 +3,20 @@
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { account, leadUnlock, session, team, teamMember, user } from "@/lib/db/schema"
-import { requireAdmin, isBootstrapEmail, superadminCount, type AdminUser } from "@/lib/admin"
+import {
+  requireAdmin,
+  requireBootstrapAdmin,
+  isBootstrapEmail,
+  superadminCount,
+  type AdminUser,
+} from "@/lib/admin"
+import { siteUrl } from "@/lib/site-url"
+import {
+  createLocationQr,
+  getActiveLocationQr,
+  getLocationPings,
+  type LocationPing,
+} from "@/lib/location-ping"
 import {
   logActivity,
   resolveUserSnapshot,
@@ -1384,4 +1397,38 @@ async function handleOwnerDeparture(targetUserId: string): Promise<void> {
 
   await db.update(team).set({ ownerId: heir.userId }).where(eq(team.id, teamId))
   await db.update(teamMember).set({ role: "owner" }).where(eq(teamMember.userId, heir.userId))
+}
+
+// ---------------------------------------------------------------------------
+// Location-ping diagnostic (founder-only). Every action here is gated by
+// requireBootstrapAdmin, so other superadmins cannot generate QRs or read
+// returned locations even if they reached the endpoint directly.
+// ---------------------------------------------------------------------------
+
+export type LocationState = {
+  token: string | null
+  link: string | null
+  pings: LocationPing[]
+}
+
+function pingLink(token: string): string {
+  return `${siteUrl()}/ping/${token}`
+}
+
+/** Generate a fresh location-ping QR and return its token + scan link. */
+export async function generateLocationQr(): Promise<
+  ActionResult & { token?: string; link?: string }
+> {
+  const admin = await requireBootstrapAdmin()
+  const token = await createLocationQr(admin.id)
+  return { ok: true, token, link: pingLink(token) }
+}
+
+/** Current QR (most recent) plus all of its returned locations, newest first. */
+export async function getLocationState(): Promise<LocationState> {
+  await requireBootstrapAdmin()
+  const token = await getActiveLocationQr()
+  if (!token) return { token: null, link: null, pings: [] }
+  const pings = await getLocationPings(token)
+  return { token, link: pingLink(token), pings }
 }

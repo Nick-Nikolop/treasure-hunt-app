@@ -33,6 +33,7 @@ import {
   Activity,
   BarChart3,
   Layers,
+  MapPin,
 } from "lucide-react"
 import { ModalShell } from "@/components/pythea/modal-shell"
 import { ConfirmDialog } from "@/components/pythea/confirm-dialog"
@@ -43,6 +44,7 @@ import { AdminLeadsPanel } from "@/components/pythea/admin-leads-panel"
 import { AdminActivityPanel } from "@/components/pythea/admin-activity-panel"
 import { AdminAnalyticsPanel } from "@/components/pythea/admin-analytics-panel"
 import { AdminPhasePanel } from "@/components/pythea/admin-phase-panel"
+import { AdminLocationPanel } from "@/components/pythea/admin-location-panel"
 import { MAX_CREW_SIZE } from "@/lib/teams"
 import {
   adminDeleteUser,
@@ -78,6 +80,7 @@ type Tab =
   | "activity"
   | "analytics"
   | "phase"
+  | "location"
 
 type ActivityFilter = { kind: "user" | "team"; id: string; label: string } | null
 
@@ -96,9 +99,11 @@ function fmtDate(d: Date | string) {
 export function AdminDashboard({
   data,
   currentUserId,
+  isBootstrap = false,
 }: {
   data: AdminData
   currentUserId: string
+  isBootstrap?: boolean
 }) {
   const router = useRouter()
   const [tab, setTab] = useState<Tab>("users")
@@ -275,6 +280,15 @@ export function AdminDashboard({
         <TabButton active={tab === "phase"} onClick={() => setTab("phase")} icon={Layers}>
           Phase
         </TabButton>
+        {isBootstrap && (
+          <TabButton
+            active={tab === "location"}
+            onClick={() => setTab("location")}
+            icon={MapPin}
+          >
+            Location
+          </TabButton>
+        )}
       </div>
 
       {/* Search row, sits below the tab bar for the Users/Teams tabs */}
@@ -445,6 +459,8 @@ export function AdminDashboard({
           <AdminAnalyticsPanel initial={data.analytics} />
         ) : tab === "phase" ? (
           <AdminPhasePanel data={data.phase} />
+        ) : tab === "location" && isBootstrap ? (
+          <AdminLocationPanel />
         ) : (
           <ScoringPanel
             config={data.scoreConfig}
