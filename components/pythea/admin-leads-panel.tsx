@@ -738,6 +738,20 @@ function StampEditor({
   const [aspect, setAspect] = useState<string>(lead.stampAspect || "2:3")
   const [fileName, setFileName] = useState<string | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
+  // True while this editor's file is mid-upload, so we can show progress and
+  // only clear the local selection once the upload actually completes.
+  const [uploading, setUploading] = useState(false)
+
+  // The upload finishes when the parent's `pending` flag flips back to false.
+  // At that point clear the picked file so the saved image (or an error) shows.
+  useEffect(() => {
+    if (uploading && !pending) {
+      setUploading(false)
+      setFileName(null)
+      setPreview(null)
+      if (fileRef.current) fileRef.current.value = ""
+    }
+  }, [uploading, pending])
 
   function onPick(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0]
@@ -752,10 +766,8 @@ function StampEditor({
     fd.set("id", lead.id)
     fd.set("aspect", aspect)
     fd.set("file", f)
+    setUploading(true)
     onUpload(fd)
-    setFileName(null)
-    setPreview(null)
-    if (fileRef.current) fileRef.current.value = ""
   }
 
   const shown = preview ?? lead.stampImageUrl
@@ -764,7 +776,7 @@ function StampEditor({
     <div className="rounded-sm border border-border bg-background/40 p-3">
       <div className="flex flex-col gap-4 sm:flex-row">
         <div
-          className="w-28 shrink-0 overflow-hidden rounded-sm border border-border bg-background"
+          className="relative w-28 shrink-0 overflow-hidden rounded-sm border border-border bg-background"
           style={{ aspectRatio: aspectToCss(aspect) }}
         >
           {shown ? (
@@ -777,6 +789,14 @@ function StampEditor({
           ) : (
             <div className="flex h-full w-full items-center justify-center">
               <ImageOff className="size-6 text-muted-foreground/40" aria-hidden />
+            </div>
+          )}
+          {uploading && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-background/80 backdrop-blur-sm">
+              <Loader2 className="size-5 animate-spin text-brass" aria-hidden />
+              <span className="font-sans text-[10px] font-bold uppercase tracking-chip text-brass">
+                Uploading
+              </span>
             </div>
           )}
         </div>
@@ -841,8 +861,12 @@ function StampEditor({
               disabled={pending || !fileName}
               className="inline-flex items-center gap-1.5 rounded-sm bg-brass px-3 py-1.5 font-sans text-xs font-bold tracking-chip text-background transition-opacity hover:opacity-90 disabled:opacity-40"
             >
-              <Save className="size-3.5" />
-              Upload stamp
+              {uploading ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <Save className="size-3.5" />
+              )}
+              {uploading ? "Uploading…" : "Upload stamp"}
             </button>
             {lead.stampImageUrl && (
               <button
