@@ -32,6 +32,7 @@ const el = {
   hero: {
     coords: "36°57′Β · 22°06′Α · ΚΑΛΑΜΑΤΑ",
     season: "ΚΑΛΟΚΑΙΡΙ 2026",
+    free: "ΔΩΡΕΑΝ ΣΥΜΜΕΤΟΧΗ",
     srTitle: "Το Ταξίδι του Πυθέα του Μεσσήνιου",
     titleTop: ["Το", "Ταξίδι", "του"],
     titleName: "Πυθέα",
@@ -520,6 +521,7 @@ const el = {
     signUpTitle: "Φτιάξε τον λογαριασμό σου",
     signUpSubtitle:
       "Γράψου στην ομάδα και κράτα τη δική σου πορεία στο ταξίδι του Πυθέα.",
+    signUpFree: "Η συμμετοχή στο κυνήγι είναι δωρεάν",
     signUpCta: "Δημιουργία λογαριασμού",
     signUpLoading: "Γίνεται εγγραφή...",
     haveAccount: "Έχεις ήδη λογαριασμό;",
@@ -670,6 +672,7 @@ const en: Dictionary = {
   hero: {
     coords: "36°57′N · 22°06′E · KALAMATA",
     season: "SUMMER 2026",
+    free: "FREE TO PLAY",
     srTitle: "The Voyage of Pytheas the Messenian",
     titleTop: ["The", "Voyage", "of"],
     titleName: "Pytheas",
@@ -1142,6 +1145,7 @@ const en: Dictionary = {
     signUpTitle: "Create your account",
     signUpSubtitle:
       "Join the team and keep your own course through the voyage of Pytheas.",
+    signUpFree: "Taking part in the hunt is free",
     signUpCta: "Create account",
     signUpLoading: "Creating account...",
     haveAccount: "Already have an account?",

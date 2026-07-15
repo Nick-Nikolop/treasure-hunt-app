@@ -381,6 +381,13 @@ export function AuthForm({ mode }: { mode: Mode }) {
             {isSignUp ? a.signUpSubtitle : a.signInSubtitle}
           </p>
 
+          {isSignUp && (
+            <p className="mt-4 inline-flex items-center gap-2 rounded-sm border border-brass/40 bg-brass/10 px-3 py-2 font-sans text-[11px] font-bold tracking-chip text-brass">
+              <CheckCircle2 className="size-4 shrink-0" />
+              {a.signUpFree}
+            </p>
+          )}
+
           <form onSubmit={handleSubmit} onFocusCapture={markStart} className="mt-7 flex flex-col gap-4">
             {isSignUp && (
               <>

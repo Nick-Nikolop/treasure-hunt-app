@@ -97,6 +97,9 @@ export function Hero() {
           <span className="inline-flex items-center rounded-full border border-border/70 bg-background/60 px-3 py-1 text-brass backdrop-blur-sm">
             {t.hero.season}
           </span>
+          <span className="inline-flex items-center rounded-full border border-brass/60 bg-brass/15 px-3 py-1 font-bold text-brass backdrop-blur-sm">
+            {t.hero.free}
+          </span>
         </motion.div>
 
         <h1 className="font-serif font-black leading-[0.92] text-foreground text-shadow-vintage">
