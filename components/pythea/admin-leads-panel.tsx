@@ -17,6 +17,7 @@ import {
   CheckCircle2,
   MapPin,
   MapPinOff,
+  ExternalLink,
 } from "lucide-react"
 import {
   adminSaveLead,
@@ -820,6 +821,22 @@ function GeoEditor({
     lng !== (lead.lng != null ? String(lead.lng) : "") ||
     radius !== (lead.geoRadiusM != null ? String(lead.geoRadiusM) : "")
 
+  // Link target from the CURRENT inputs (so it reflects unsaved edits too),
+  // only when both parse to valid WGS84 coordinates.
+  const latNum = Number(lat.trim())
+  const lngNum = Number(lng.trim())
+  const previewCoords =
+    lat.trim() !== "" &&
+    lng.trim() !== "" &&
+    Number.isFinite(latNum) &&
+    latNum >= -90 &&
+    latNum <= 90 &&
+    Number.isFinite(lngNum) &&
+    lngNum >= -180 &&
+    lngNum <= 180
+      ? { lat: latNum, lng: lngNum }
+      : null
+
   function save() {
     if (saving || pending) return
     setSaving(true)
@@ -909,6 +926,17 @@ function GeoEditor({
           {saving ? <Loader2 className="size-3.5 animate-spin" /> : <MapPin className="size-3.5" />}
           Save location
         </button>
+        {previewCoords && (
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${previewCoords.lat},${previewCoords.lng}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-sm border border-border px-3 py-1.5 font-sans text-xs font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass"
+          >
+            <ExternalLink className="size-3.5" />
+            Show in Google Maps
+          </a>
+        )}
         {hasCoords && (
           <button
             type="button"
