@@ -10,7 +10,7 @@ import { AnalyticsProvider } from '@/components/pythea/analytics-provider'
 import { CookieConsent } from '@/components/pythea/cookie-consent'
 import { getPhaseContext, getPublicPhase } from '@/lib/phase-guard'
 import { DEFAULT_LOCALE, isLocale, LANG_COOKIE, type Locale } from '@/lib/i18n'
-import { SITE, TEASER, SITE_URL, KEYWORDS, BRAND, BRAND_NAME_EN } from '@/lib/seo'
+import { SITE, TEASER, SITE_URL, KEYWORDS, BRAND, BRAND_NAME_EN, VERIFICATION } from '@/lib/seo'
 import './globals.css'
 
 const alegreya = Alegreya({
@@ -102,6 +102,13 @@ export async function generateMetadata(): Promise<Metadata> {
         'max-snippet': -1,
         'max-video-preview': -1,
       },
+    },
+    // Search-engine ownership verification. Only emitted when the matching env
+    // var is set (GOOGLE_SITE_VERIFICATION / BING_SITE_VERIFICATION), so the
+    // owner can verify in Google Search Console + Bing and submit the sitemap.
+    verification: {
+      ...(VERIFICATION.google ? { google: VERIFICATION.google } : {}),
+      ...(VERIFICATION.bing ? { other: { 'msvalidate.01': VERIFICATION.bing } } : {}),
     },
     formatDetection: {
       telephone: false,

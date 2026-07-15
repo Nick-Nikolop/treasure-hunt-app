@@ -55,6 +55,31 @@ export const BRAND_NAME_EL = "Το Ταξίδι του Πυθέα του Μεσ�
 export const BRAND_NAME_EN = "The Journey of Pytheas the Messenian"
 export const BRAND_SHORT = "Πυθέας · Pytheas"
 
+/**
+ * The exact phrases people type to find this event. Declared as `alternateName`
+ * on the Organization / WebSite / Event schema nodes so Google associates the
+ * brand with these high-intent queries. Keep these matching the primary
+ * keywords a visitor would search, in both languages.
+ */
+export const SEARCH_TERMS = [
+  "Κυνήγι Θησαυρού Καλαμάτα",
+  "Κυνήγι Θησαυρού στην Καλαμάτα",
+  "Treasure Hunt Kalamata",
+  "Kalamata Treasure Hunt",
+] as const
+
+/**
+ * Search-engine ownership verification tokens, read from env so they can be set
+ * per environment without code changes. Add the values in Project Settings:
+ *   GOOGLE_SITE_VERIFICATION  — the token from Google Search Console
+ *   BING_SITE_VERIFICATION    — the token from Bing Webmaster Tools
+ * Only the ones that are set are emitted into the document head.
+ */
+export const VERIFICATION = {
+  google: process.env.GOOGLE_SITE_VERIFICATION,
+  bing: process.env.BING_SITE_VERIFICATION,
+} as const
+
 export const SITE = {
   el: {
     title: "Το Ταξίδι του Πυθέα του Μεσσήνιου",
@@ -133,7 +158,7 @@ export function organizationJsonLd() {
     "@type": "Organization",
     "@id": `${SITE_URL}/#organization`,
     name: BRAND_NAME_EL,
-    alternateName: BRAND_NAME_EN,
+    alternateName: [BRAND_NAME_EN, ...SEARCH_TERMS],
     url: SITE_URL,
     logo: {
       "@type": "ImageObject",
@@ -158,6 +183,7 @@ export function webSiteJsonLd(lang: Lang = "el") {
     "@id": `${SITE_URL}/#website`,
     url: SITE_URL,
     name: SITE[lang].title,
+    alternateName: [...SEARCH_TERMS],
     description: SITE[lang].description,
     inLanguage: lang === "el" ? "el-GR" : "en",
     publisher: { "@id": `${SITE_URL}/#organization` },
@@ -177,6 +203,14 @@ export function eventJsonLd(lang: Lang = "el") {
     name: isEl
       ? "Κυνήγι Θησαυρού στην Καλαμάτα — Το Ταξίδι του Πυθέα"
       : "Kalamata Treasure Hunt — The Journey of Pytheas",
+    alternateName: [...SEARCH_TERMS],
+    keywords: isEl
+      ? "κυνήγι θησαυρού Καλαμάτα, κυνήγι θησαυρού Μεσσηνία, παιχνίδι πόλης Καλαμάτα, δραστηριότητες Καλαμάτα, εκδηλώσεις Καλαμάτα 2026"
+      : "treasure hunt Kalamata, Messenia treasure hunt, Kalamata city game, things to do in Kalamata, Kalamata summer 2026",
+    about: {
+      "@type": "Place",
+      name: isEl ? "Καλαμάτα, Μεσσηνία" : "Kalamata, Messenia",
+    },
     description: SITE[lang].description,
     // Summer 2026 — approximate; refine once the exact date is set.
     startDate: "2026-07-01",
