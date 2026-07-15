@@ -413,6 +413,9 @@ export async function createLead(
     stampImageUrl: r.stampImageUrl,
     stampAspect: r.stampAspect || "2:3",
     difficulty: normalizeDifficulty(r.difficulty),
+    lat: r.lat,
+    lng: r.lng,
+    geoRadiusM: r.geoRadiusM,
   }
 }
 

@@ -253,7 +253,7 @@ const el = {
     cancel: "Άκυρο",
     // Leave / remove confirmations.
     leaveTitle: "Αποχώρηση από την ομάδα;",
-    leaveBodyMember: "Θα φύγεις από αυτή την ομάδα. Μπορείς να ξ��ναμπείς με νέα πρόσκληση.",
+    leaveBodyMember: "Θα φύγεις από αυτή την ομάδα. Μπορείς να ξαναμπείς με νέα πρόσκληση.",
     leaveBodyOwner:
       "Είσαι ο αρχηγός. Φεύγοντας, η ομάδα περνά στο επόμενο παλαιότερο μέλος. Αν είσαι ο τελευταίος, η ομάδα διαλύεται.",
     leaveConfirm: "ΑΠΟΧΩΡΗΣΗ",
@@ -650,7 +650,7 @@ const el = {
     backToSignIn: "Πίσω στη σύνδεση",
     // reset password (set a new one from the link)
     resetTitle: "Όρισε νέο κωδικό",
-    resetSubtitle: "Διάλεξε έναν νέο κωδικό γ��α τον λογαριασμό σου.",
+    resetSubtitle: "Διάλεξε έναν νέο κωδικό για τον λογαριασμό σου.",
     resetCta: "Αποθήκευση νέου κωδικού",
     resetSaving: "Γίνεται αποθήκευση...",
     resetSuccessTitle: "Ο κωδικός άλλαξε",

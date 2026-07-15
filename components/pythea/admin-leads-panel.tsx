@@ -15,6 +15,8 @@ import {
   Loader2,
   AlertTriangle,
   CheckCircle2,
+  MapPin,
+  MapPinOff,
 } from "lucide-react"
 import {
   adminSaveLead,
@@ -24,6 +26,7 @@ import {
   adminUploadLeadStamp,
   adminClearLeadStamp,
   adminResetAllProgress,
+  adminSaveLeadGeo,
 } from "@/app/admin/actions"
 import { LEAD_ICONS, type Difficulty, type LeadIcon } from "@/lib/clues"
 import type { EditableLead } from "@/lib/lead-content"
@@ -37,6 +40,9 @@ const errorText: Record<string, string> = {
   no_file: "Choose an image first.",
   first_lead: "The opening lead can't be removed.",
   last_lead: "A hunt needs at least one lead.",
+  bad_lat: "Latitude must be between -90 and 90.",
+  bad_lng: "Longitude must be between -180 and 180.",
+  bad_radius: "Radius must be between 10 and 5000 metres.",
 }
 
 const DIFFICULTIES: Difficulty[] = ["easy", "medium", "hard"]
@@ -210,6 +216,9 @@ export function AdminLeadsPanel({ leads }: { leads: EditableLead[] }) {
         stampImageUrl: null,
         stampAspect: "2:3",
         difficulty: "easy",
+        lat: null,
+        lng: null,
+        geoRadiusM: null,
       }
       setItems((prev) => [...prev, fresh])
       setBaseline((prev) => [...prev, { ...fresh }])
@@ -263,6 +272,35 @@ export function AdminLeadsPanel({ leads }: { leads: EditableLead[] }) {
     })
   }
 
+  function saveGeo(
+    id: string,
+    lat: string,
+    lng: string,
+    radiusM: string,
+    done: (ok: boolean) => void,
+  ) {
+    startTransition(async () => {
+      const res = await adminSaveLeadGeo({ id, lat, lng, radiusM })
+      if (!res.ok) {
+        setPopup({ kind: "err", text: errorText[res.error] ?? "Could not save the location." })
+        done(false)
+        return
+      }
+      // Normalize the saved values back into local state (blank = cleared).
+      const latN = lat.trim() === "" ? null : Number(lat)
+      const lngN = lng.trim() === "" ? null : Number(lng)
+      const radN = radiusM.trim() === "" ? null : Math.round(Number(radiusM))
+      const patch = { lat: latN, lng: lngN, geoRadiusM: radN }
+      setItems((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)))
+      setBaseline((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)))
+      setPopup({
+        kind: "ok",
+        text: latN == null ? "Location gate cleared for this lead." : "Location saved.",
+      })
+      done(true)
+    })
+  }
+
   function resetAllProgress() {
     startTransition(async () => {
       const res = await adminResetAllProgress()
@@ -302,6 +340,8 @@ export function AdminLeadsPanel({ leads }: { leads: EditableLead[] }) {
         </p>
       </div>
 
+      <MissingCoordsAlert leads={items} onJump={(id) => setOpenId(id)} />
+
       <ul className="flex flex-col gap-2.5">
         {items.map((lead, index) => (
           <LeadCard
@@ -322,6 +362,7 @@ export function AdminLeadsPanel({ leads }: { leads: EditableLead[] }) {
             onRemove={() => removeLead(lead.id, lead.country)}
             onUpload={(fd) => uploadStamp(lead.id, fd)}
             onClearStamp={() => clearStamp(lead.id)}
+            onSaveGeo={(lat, lng, r, done) => saveGeo(lead.id, lat, lng, r, done)}
           />
         ))}
       </ul>
@@ -493,6 +534,7 @@ function LeadCard({
   onRemove,
   onUpload,
   onClearStamp,
+  onSaveGeo,
 }: {
   lead: EditableLead
   base: EditableLead | undefined
@@ -510,6 +552,7 @@ function LeadCard({
   onRemove: () => void
   onUpload: (formData: FormData) => void
   onClearStamp: () => void
+  onSaveGeo: (lat: string, lng: string, radiusM: string, done: (ok: boolean) => void) => void
 }) {
   const [confirmRemove, setConfirmRemove] = useState(false)
 
@@ -640,6 +683,8 @@ function LeadCard({
             </label>
           </div>
 
+          <GeoEditor lead={lead} pending={pending} onSaveGeo={onSaveGeo} />
+
           <div className="mt-5 flex items-center justify-between gap-2">
             <div>
               {position === 1 ? (
@@ -701,6 +746,182 @@ function LeadCard({
         </div>
       )}
     </li>
+  )
+}
+
+/**
+ * Bright, high-visibility banner listing every lead that still has no GPS
+ * coordinates. These leads cannot enforce the on-site scan check, so they need
+ * the admin's attention. Clicking a chip jumps straight to that lead's editor.
+ */
+function MissingCoordsAlert({
+  leads,
+  onJump,
+}: {
+  leads: EditableLead[]
+  onJump: (id: string) => void
+}) {
+  const missing = leads
+    .map((l, i) => ({ ...l, position: i + 1 }))
+    .filter((l) => l.lat == null || l.lng == null)
+  if (missing.length === 0) return null
+
+  return (
+    <div className="rounded-sm border-2 border-rose-500/70 bg-rose-500/15 p-4 shadow-[0_0_24px_-6px_rgba(244,63,94,0.6)]">
+      <div className="flex items-center gap-2">
+        <MapPinOff className="size-5 shrink-0 text-rose-300" />
+        <h3 className="font-serif text-base font-black text-rose-100">
+          {missing.length} lead{missing.length > 1 ? "s" : ""} without a location
+        </h3>
+      </div>
+      <p className="mt-1.5 font-sans text-[13px] leading-relaxed text-rose-100/90">
+        These leads have no GPS coordinates, so their QR codes will unlock without any on-site
+        check. Add coordinates below to enforce the &ldquo;be at the mark&rdquo; scan.
+      </p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {missing.map((l) => (
+          <button
+            key={l.id}
+            type="button"
+            onClick={() => onJump(l.id)}
+            className="inline-flex items-center gap-1.5 rounded-sm border border-rose-400/60 bg-rose-500/20 px-2.5 py-1 font-sans text-[12px] font-bold text-rose-50 transition-colors hover:bg-rose-500/30"
+          >
+            <MapPin className="size-3" />
+            Lead {String(l.position).padStart(2, "0")} · {l.country}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Per-lead GPS gate editor. Saving immediately (like the stamp) rather than via
+ * the copy save-bar, since it is a distinct setup action. Blank lat + lng
+ * clears the gate. Radius is optional and falls back to the global default.
+ */
+function GeoEditor({
+  lead,
+  pending,
+  onSaveGeo,
+}: {
+  lead: EditableLead
+  pending: boolean
+  onSaveGeo: (lat: string, lng: string, radiusM: string, done: (ok: boolean) => void) => void
+}) {
+  const [lat, setLat] = useState(lead.lat != null ? String(lead.lat) : "")
+  const [lng, setLng] = useState(lead.lng != null ? String(lead.lng) : "")
+  const [radius, setRadius] = useState(lead.geoRadiusM != null ? String(lead.geoRadiusM) : "")
+  const [saving, setSaving] = useState(false)
+
+  const hasCoords = lead.lat != null && lead.lng != null
+  const dirty =
+    lat !== (lead.lat != null ? String(lead.lat) : "") ||
+    lng !== (lead.lng != null ? String(lead.lng) : "") ||
+    radius !== (lead.geoRadiusM != null ? String(lead.geoRadiusM) : "")
+
+  function save() {
+    if (saving || pending) return
+    setSaving(true)
+    onSaveGeo(lat, lng, radius, () => setSaving(false))
+  }
+
+  function clear() {
+    setLat("")
+    setLng("")
+    setRadius("")
+    setSaving(true)
+    onSaveGeo("", "", "", () => setSaving(false))
+  }
+
+  return (
+    <div
+      className={`mt-4 rounded-sm border p-3.5 ${
+        hasCoords ? "border-border bg-background/40" : "border-rose-500/50 bg-rose-500/10"
+      }`}
+    >
+      <div className="flex items-center gap-2">
+        {hasCoords ? (
+          <MapPin className="size-4 text-brass" />
+        ) : (
+          <MapPinOff className="size-4 text-rose-300" />
+        )}
+        <span className="font-sans text-[11px] font-bold uppercase tracking-chip text-foreground">
+          Scan location
+        </span>
+        {!hasCoords && (
+          <span className="rounded-sm bg-rose-500/25 px-2 py-0.5 font-sans text-[10px] font-bold uppercase tracking-chip text-rose-100">
+            Not set
+          </span>
+        )}
+      </div>
+      <p className="mt-1.5 font-sans text-[11px] leading-relaxed text-muted-foreground">
+        The physical spot of this QR. When set, a scan requires the explorer to be within the radius.
+        Leave latitude and longitude blank to disable the check.
+      </p>
+
+      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <label className="flex flex-col gap-1">
+          <span className="font-sans text-[10px] font-bold uppercase tracking-chip text-muted-foreground">
+            Latitude
+          </span>
+          <input
+            value={lat}
+            onChange={(e) => setLat(e.target.value)}
+            inputMode="decimal"
+            placeholder="37.0412903"
+            className="w-full rounded-sm border border-border bg-background px-2.5 py-1.5 font-mono text-xs text-foreground outline-none focus:border-brass"
+          />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="font-sans text-[10px] font-bold uppercase tracking-chip text-muted-foreground">
+            Longitude
+          </span>
+          <input
+            value={lng}
+            onChange={(e) => setLng(e.target.value)}
+            inputMode="decimal"
+            placeholder="22.1122364"
+            className="w-full rounded-sm border border-border bg-background px-2.5 py-1.5 font-mono text-xs text-foreground outline-none focus:border-brass"
+          />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="font-sans text-[10px] font-bold uppercase tracking-chip text-muted-foreground">
+            Radius (m)
+          </span>
+          <input
+            value={radius}
+            onChange={(e) => setRadius(e.target.value)}
+            inputMode="numeric"
+            placeholder="200"
+            className="w-full rounded-sm border border-border bg-background px-2.5 py-1.5 font-mono text-xs text-foreground outline-none focus:border-brass"
+          />
+        </label>
+      </div>
+
+      <div className="mt-3 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={save}
+          disabled={!dirty || saving || pending}
+          className="inline-flex items-center gap-1.5 rounded-sm bg-brass px-3 py-1.5 font-sans text-xs font-bold tracking-chip text-background transition-opacity hover:opacity-90 disabled:opacity-40"
+        >
+          {saving ? <Loader2 className="size-3.5 animate-spin" /> : <MapPin className="size-3.5" />}
+          Save location
+        </button>
+        {hasCoords && (
+          <button
+            type="button"
+            onClick={clear}
+            disabled={saving || pending}
+            className="inline-flex items-center gap-1.5 rounded-sm border border-border px-3 py-1.5 font-sans text-xs font-bold tracking-chip text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+          >
+            <MapPinOff className="size-3.5" />
+            Clear
+          </button>
+        )}
+      </div>
+    </div>
   )
 }
 

@@ -1234,6 +1234,57 @@ export async function adminClearLeadStamp(id: string): Promise<ActionResult> {
   return { ok: true }
 }
 
+/**
+ * Set or clear a lead's GPS scan gate. Pass empty lat/lng strings to clear the
+ * gate (no location check). Radius is optional; blank falls back to the global
+ * default at check time. Coordinates are validated to plausible WGS84 ranges.
+ */
+export async function adminSaveLeadGeo(input: {
+  id: string
+  lat: string
+  lng: string
+  radiusM: string
+}): Promise<ActionResult> {
+  const admin = await requireAdmin()
+  const leadId = (input.id ?? "").trim()
+  if (!leadId) return { ok: false, error: "bad_value" }
+
+  const defs = await getLeadDefs()
+  const target = defs.find((d) => d.id === leadId)
+  if (!target) return { ok: false, error: "not_found" }
+
+  const latStr = (input.lat ?? "").trim()
+  const lngStr = (input.lng ?? "").trim()
+  const radiusStr = (input.radiusM ?? "").trim()
+
+  // Clearing the gate: both coordinates blank.
+  if (!latStr && !lngStr) {
+    await updateLeadGeo(leadId, null, null, null)
+  } else {
+    const lat = Number(latStr)
+    const lng = Number(lngStr)
+    if (!Number.isFinite(lat) || lat < -90 || lat > 90) return { ok: false, error: "bad_lat" }
+    if (!Number.isFinite(lng) || lng < -180 || lng > 180) return { ok: false, error: "bad_lng" }
+    let radius: number | null = null
+    if (radiusStr) {
+      const r = Number(radiusStr)
+      if (!Number.isFinite(r) || r < 10 || r > 5000) return { ok: false, error: "bad_radius" }
+      radius = Math.round(r)
+    }
+    await updateLeadGeo(leadId, lat, lng, radius)
+  }
+
+  await logActivity({
+    category: "admin",
+    action: "admin.lead_geo_updated",
+    ...adminActor(admin),
+    leadOrder: target.order,
+    summary: `${adminActor(admin).actorName} updated the location gate for lead "${target.country}"`,
+  })
+  revalidatePath("/admin")
+  return { ok: true }
+}
+
 // ── Hints (admin) ───────────────────────────────────────────────────────────
 
 /**
