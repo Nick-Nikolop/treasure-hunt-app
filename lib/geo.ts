@@ -7,7 +7,7 @@
  * near tall buildings) while still requiring the scanner to actually be at the
  * spot. Superadmins can override per lead.
  */
-export const DEFAULT_GEO_RADIUS_M = 300
+export const DEFAULT_GEO_RADIUS_M = 100
 
 /**
  * Great-circle distance between two lat/lng points in metres (haversine).
