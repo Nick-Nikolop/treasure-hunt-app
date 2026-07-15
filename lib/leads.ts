@@ -29,12 +29,19 @@ import {
   type Difficulty,
 } from "@/lib/clues"
 import { huntLinkFor } from "@/lib/site-url"
+import { DEFAULT_GEO_RADIUS_M } from "@/lib/geo"
 
 /** The reserved token id for the dedicated finishing QR (no real lead row). */
 export const FINISH_LEAD_ID = "__finish__"
 
-/** A fully-resolved lead: the public Clue shape plus its difficulty. */
-export type LeadDef = Clue & { difficulty: Difficulty }
+/** A fully-resolved lead: the public Clue shape plus its difficulty + geo gate. */
+export type LeadDef = Clue & {
+  difficulty: Difficulty
+  /** QR location gate. Null lat/lng means "not configured" (no gate). */
+  lat: number | null
+  lng: number | null
+  geoRadiusM: number | null
+}
 
 // ── Paragraph text helpers (body is stored raw, rendered as paragraphs) ─────
 
@@ -174,8 +181,46 @@ export const getLeadDefs = cache(async (): Promise<LeadDef[]> => {
     stampImageUrl: r.stampImageUrl,
     stampAspect: r.stampAspect || "2:3",
     difficulty: normalizeDifficulty(r.difficulty),
+    lat: r.lat,
+    lng: r.lng,
+    geoRadiusM: r.geoRadiusM,
   }))
 })
+
+/**
+ * The QR location gate for a lead, by stable id. `hasCoords` is true only when
+ * both lat and lng are set; `radiusM` falls back to the global default.
+ */
+export async function getLeadGeo(
+  leadId: string,
+): Promise<{ hasCoords: boolean; lat: number | null; lng: number | null; radiusM: number }> {
+  const rows = await db
+    .select({ lat: lead.lat, lng: lead.lng, geoRadiusM: lead.geoRadiusM })
+    .from(lead)
+    .where(eq(lead.id, leadId))
+    .limit(1)
+  const r = rows[0]
+  const hasCoords = !!r && r.lat != null && r.lng != null
+  return {
+    hasCoords,
+    lat: r?.lat ?? null,
+    lng: r?.lng ?? null,
+    radiusM: r?.geoRadiusM ?? DEFAULT_GEO_RADIUS_M,
+  }
+}
+
+/** Persist (or clear) a lead's GPS gate. Pass null lat/lng to clear the gate. */
+export async function updateLeadGeo(
+  leadId: string,
+  lat: number | null,
+  lng: number | null,
+  radiusM: number | null,
+): Promise<void> {
+  await db
+    .update(lead)
+    .set({ lat, lng, geoRadiusM: radiusM, updatedAt: new Date() })
+    .where(eq(lead.id, leadId))
+}
 
 /** The number of leads currently in the hunt. */
 export async function getTotalLeads(): Promise<number> {

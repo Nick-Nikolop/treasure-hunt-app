@@ -253,7 +253,7 @@ const el = {
     cancel: "Άκυρο",
     // Leave / remove confirmations.
     leaveTitle: "Αποχώρηση από την ομάδα;",
-    leaveBodyMember: "Θα φύγεις από αυτή την ομάδα. Μπορείς να ξαναμπείς με νέα πρόσκληση.",
+    leaveBodyMember: "Θα φύγεις από αυτή την ομάδα. Μπορείς να ξ��ναμπείς με νέα πρόσκληση.",
     leaveBodyOwner:
       "Είσαι ο αρχηγός. Φεύγοντας, η ομάδα περνά στο επόμενο παλαιότερο μέλος. Αν είσαι ο τελευταίος, η ομάδα διαλύεται.",
     leaveConfirm: "ΑΠΟΧΩΡΗΣΗ",
@@ -462,6 +462,28 @@ const el = {
     cooldownRetry: "ΔΟΚΙΜΑΣΕ ΞΑΝΑ",
     openJournal: "ΑΝΟΙΞΕ ΤΟ ΗΜΕΡΟΛΟΓΙΟ",
     viewLeaderboard: "ΚΑΤΑΤΑΞΗ",
+    gate: {
+      label: "ΕΠΙΒΕΒΑΙΩΣΗ ΤΟΠΟΘΕΣΙΑΣ",
+      title: "Είσαι στο σημάδι;",
+      body: "Αυτό το σημάδι ανοίγει μόνο από κοντά. Μοιράσου την τοποθεσία σου για να επιβεβαιώσουμε ότι βρίσκεσαι εκεί.",
+      privacy: "Δεν αποθηκεύουμε την τοποθεσία σου. Ελέγχουμε μόνο, τη στιγμή της σάρωσης, αν είσαι κοντά στο σημάδι.",
+      cta: "ΕΠΙΒΕΒΑΙΩΣΕ ΟΤΙ ΕΙΜΑΙ ΕΔΩ",
+      checking: "Έλεγχος τοποθεσίας",
+      tooFarLabel: "ΠΟΛΥ ΜΑΚΡΙΑ",
+      tooFarTitle: "Δεν είσαι αρκετά κοντά",
+      tooFarBody: (dist: number, radius: number) =>
+        `Βρίσκεσαι περίπου ${dist} μ. μακριά. Πλησίασε σε ${radius} μ. από το σημάδι και δοκίμασε ξανά.`,
+      retry: "ΔΟΚΙΜΑΣΕ ΞΑΝΑ",
+      deniedLabel: "ΧΡΕΙΑΖΕΤΑΙ ΤΟΠΟΘΕΣΙΑ",
+      deniedTitle: "Δεν έχουμε την τοποθεσία σου",
+      deniedBody:
+        "Χρειαζόμαστε άδεια τοποθεσίας για να επιβεβαιώσουμε ότι είσαι στο σημάδι. Ενεργοποίησε την τοποθεσία και δοκίμασε ξανά.",
+      unsupported: "Η συσκευή σου δεν υποστηρίζει εντοπισμό τοποθεσίας.",
+      altNotImplemented:
+        "Εναλλακτικός τρόπος επιβεβαίωσης δεν υπάρχει ακόμα. Θα προστεθεί σύντομα.",
+      adminSkip: "ΠΑΡΑΚΑΜΨΗ (ADMIN)",
+      adminHint: "Μόνο για διαχειριστές: παράκαμψη του ελέγχου τοποθεσίας.",
+    },
   },
   hint: {
     eyebrow: "ΜΙΑ ΒΟΗΘΕΙΑ",
@@ -628,7 +650,7 @@ const el = {
     backToSignIn: "Πίσω στη σύνδεση",
     // reset password (set a new one from the link)
     resetTitle: "Όρισε νέο κωδικό",
-    resetSubtitle: "Διάλεξε έναν νέο κωδικό για τον λογαριασμό σου.",
+    resetSubtitle: "Διάλεξε έναν νέο κωδικό γ��α τον λογαριασμό σου.",
     resetCta: "Αποθήκευση νέου κωδικού",
     resetSaving: "Γίνεται αποθήκευση...",
     resetSuccessTitle: "Ο κωδικός άλλαξε",
@@ -1115,6 +1137,28 @@ const en: Dictionary = {
     cooldownRetry: "TRY AGAIN",
     openJournal: "OPEN THE JOURNAL",
     viewLeaderboard: "LEADERBOARD",
+    gate: {
+      label: "CONFIRM YOUR LOCATION",
+      title: "Are you at the mark?",
+      body: "This mark only opens up close. Share your location so we can confirm you're really here.",
+      privacy: "We don't save your location. At the moment of the scan we only check whether you're near the mark.",
+      cta: "CONFIRM I'M HERE",
+      checking: "Checking your location",
+      tooFarLabel: "TOO FAR AWAY",
+      tooFarTitle: "You're not close enough",
+      tooFarBody: (dist: number, radius: number) =>
+        `You're about ${dist} m away. Get within ${radius} m of the mark and try again.`,
+      retry: "TRY AGAIN",
+      deniedLabel: "LOCATION NEEDED",
+      deniedTitle: "We don't have your location",
+      deniedBody:
+        "We need location permission to confirm you're at the mark. Turn location on and try again.",
+      unsupported: "Your device doesn't support location.",
+      altNotImplemented:
+        "An alternative way to verify isn't implemented yet. It's coming soon.",
+      adminSkip: "SKIP (ADMIN)",
+      adminHint: "Superadmins only: bypass the location check.",
+    },
   },
   hint: {
     eyebrow: "A HELPING HAND",

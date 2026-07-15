@@ -80,6 +80,7 @@ import {
   reorderLeads,
   updateLeadContent,
   updateLeadStamp,
+  updateLeadGeo,
 } from "@/lib/leads"
 import { put, del } from "@vercel/blob"
 import { getAnalyticsSnapshot, type AnalyticsSnapshot } from "@/lib/analytics"

@@ -2,9 +2,11 @@ import type { Metadata } from "next"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
-import { unlockByToken } from "@/lib/hunt"
+import { unlockByToken, resolveScanContext } from "@/lib/hunt"
+import { getAdminUser } from "@/lib/admin"
 import { Atmosphere } from "@/components/pythea/atmosphere"
 import { ScanResult } from "@/components/pythea/scan-result"
+import { ScanGate } from "@/components/pythea/scan-gate"
 
 // Every scan must hit the server fresh: it mutates progress and reads the
 // crew's live state.
@@ -29,15 +31,20 @@ export default async function ScanPage({
     redirect(`/sign-in?redirect=/q/${encodeURIComponent(token)}`)
   }
 
-  // Try to unlock the scanned lead for this user and their whole crew. The
-  // result is fully resolved server-side; the client only renders it.
-  const result = await unlockByToken(session.user.id, token)
+  // A valid in-order scan of a lead that has a GPS gate must first prove the
+  // explorer is at the mark. Everything else (finish, out-of-order, already,
+  // invalid, or leads with no coordinates) unlocks directly as before.
+  const ctx = await resolveScanContext(session.user.id, token)
 
   return (
     <>
       <Atmosphere />
       <div className="flex min-h-screen flex-col items-center justify-center px-5 py-16">
-        <ScanResult result={result} />
+        {ctx.mode === "verify" ? (
+          <ScanGate token={token} isSuperAdmin={!!(await getAdminUser())} />
+        ) : (
+          <ScanResult result={await unlockByToken(session.user.id, token)} />
+        )}
       </div>
     </>
   )

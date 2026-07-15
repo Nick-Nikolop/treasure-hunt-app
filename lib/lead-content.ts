@@ -63,6 +63,9 @@ export async function getEditableLeads() {
     stampImageUrl: d.stampImageUrl,
     stampAspect: d.stampAspect,
     difficulty: d.difficulty,
+    lat: d.lat,
+    lng: d.lng,
+    geoRadiusM: d.geoRadiusM,
   }))
 }
 

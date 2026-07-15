@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, integer, jsonb, index } from "drizzle-orm/pg-core"
+import { pgTable, text, timestamp, boolean, integer, jsonb, index, doublePrecision } from "drizzle-orm/pg-core"
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -124,6 +124,13 @@ export const lead = pgTable(
     stampImageUrl: text("stampImageUrl"),
     stampAspect: text("stampAspect").notNull().default("2:3"),
     difficulty: text("difficulty").notNull().default("easy"),
+    // GPS gate for scans: the physical spot the QR lives at. When both lat and
+    // lng are set, a scan requires the explorer to be within `geoRadiusM`
+    // metres (falling back to a global default when null). Left null for leads
+    // whose real-world location has not been configured yet.
+    lat: doublePrecision("lat"),
+    lng: doublePrecision("lng"),
+    geoRadiusM: integer("geoRadiusM"),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
     updatedAt: timestamp("updatedAt").notNull().defaultNow(),
   },

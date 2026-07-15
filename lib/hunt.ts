@@ -24,8 +24,10 @@ import {
   getTotalLeads,
   listTokens,
   regenerateTokenForLead,
+  getLeadGeo,
   FINISH_LEAD_ID,
 } from "@/lib/leads"
+import { haversineMeters } from "@/lib/geo"
 import { getScoreConfig } from "@/lib/scoring"
 import { getSolveCooldownSeconds } from "@/lib/hunt-config"
 import { logActivity, resolveUserSnapshot } from "@/lib/activity"
@@ -447,6 +449,83 @@ export async function unlockByToken(userId: string, token: string): Promise<Unlo
   await ensureUpTo(crew, leadOrder, "qr", new Date(now))
   await logLeadSolved(userId, leadOrder, clue.country, clue.countryEn, false)
   return { status: "unlocked", leadOrder, country: clue.country, countryEn: clue.countryEn }
+}
+
+// ── Scan location gate ───────────────────────────────────────────────────────
+
+export type ScanContext =
+  // Unlock straight away, no location needed (finish QR, out-of-order/already
+  // scans, invalid tokens, or a lead with no coordinates configured).
+  | { mode: "direct" }
+  // A valid in-order scan for a lead that has a location gate: the explorer
+  // must prove they are near the mark before it is unlocked.
+  | { mode: "verify"; leadOrder: number }
+
+/**
+ * Decide, WITHOUT mutating anything, whether a scan needs a location check.
+ * Only a genuine in-order next unlock of a lead that has coordinates is gated;
+ * everything else falls through to `direct` so the existing scan result (kind
+ * message, cooldown, etc.) renders exactly as before.
+ */
+export async function resolveScanContext(
+  userId: string,
+  token: string,
+  nowMs: number = Date.now(),
+): Promise<ScanContext> {
+  const tokenRows = await db
+    .select({ leadId: clueToken.leadId })
+    .from(clueToken)
+    .where(eq(clueToken.token, token))
+    .limit(1)
+  const leadId = tokenRows[0]?.leadId
+  if (!leadId || leadId === FINISH_LEAD_ID) return { mode: "direct" }
+
+  const defs = await getLeadDefs()
+  const clue = defs.find((c) => c.id === leadId)
+  if (!clue) return { mode: "direct" }
+
+  const geo = await getLeadGeo(leadId)
+  if (!geo.hasCoords) return { mode: "direct" }
+
+  const crew = await getCrewUserIds(userId)
+  const current = await getCrewEffectiveProgress(crew, nowMs)
+  // Only the immediate next lead is a real unlock; anything else just renders
+  // its status without asking for location.
+  if (current !== clue.order - 1) return { mode: "direct" }
+
+  return { mode: "verify", leadOrder: clue.order }
+}
+
+export type LocationCheck =
+  | { ok: true }
+  | { ok: false; distanceM: number; radiusM: number }
+  | { ok: false; distanceM: null; radiusM: number } // no coords for the lead
+
+/**
+ * Compare a scanned explorer's reported position to a lead's mark. The reported
+ * coordinates are used only for this comparison and are never stored. Returns
+ * whether they are within the lead's radius. A lead with no coordinates always
+ * passes (nothing to check against).
+ */
+export async function checkScanLocation(
+  token: string,
+  lat: number,
+  lng: number,
+): Promise<LocationCheck> {
+  const tokenRows = await db
+    .select({ leadId: clueToken.leadId })
+    .from(clueToken)
+    .where(eq(clueToken.token, token))
+    .limit(1)
+  const leadId = tokenRows[0]?.leadId
+  if (!leadId || leadId === FINISH_LEAD_ID) return { ok: true }
+
+  const geo = await getLeadGeo(leadId)
+  if (!geo.hasCoords || geo.lat == null || geo.lng == null) return { ok: true }
+
+  const distanceM = Math.round(haversineMeters(lat, lng, geo.lat, geo.lng))
+  if (distanceM <= geo.radiusM) return { ok: true }
+  return { ok: false, distanceM, radiusM: geo.radiusM }
 }
 
 // ── Tokens (admin) ──────────────────────────────────────────────────────────
