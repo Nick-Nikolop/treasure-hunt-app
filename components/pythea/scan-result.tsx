@@ -1,11 +1,23 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useTransition } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { BadgeCheck, Info, Lock, XCircle, BookOpen, Trophy, Hourglass, RotateCw } from "lucide-react"
+import {
+  BadgeCheck,
+  Info,
+  Lock,
+  XCircle,
+  BookOpen,
+  Trophy,
+  Hourglass,
+  RotateCw,
+  ShieldCheck,
+  Loader2,
+} from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
 import type { UnlockResult } from "@/lib/hunt"
+import { bypassCooldownScan } from "@/app/q/[token]/actions"
 import { track } from "@/lib/analytics-client"
 import { EV } from "@/lib/analytics-events"
 
@@ -14,20 +26,31 @@ import { EV } from "@/lib/analytics-events"
  * decision is made entirely on the server; this component only renders the
  * already-computed result in the player's language.
  */
-export function ScanResult({ result }: { result: UnlockResult }) {
+export function ScanResult({
+  result: initialResult,
+  token,
+  isSuperAdmin = false,
+}: {
+  result: UnlockResult
+  token: string
+  isSuperAdmin?: boolean
+}) {
   const { t, locale } = useI18n()
   const s = t.scan
+
+  // The result can change client-side when a superadmin bypasses the cooldown.
+  const [result, setResult] = useState(initialResult)
 
   // Record the outcome of every scan exactly once. The server already decided
   // the status; we log it (plus the lead order when present) for the funnel.
   useEffect(() => {
-    const leadOrder = "leadOrder" in result ? result.leadOrder : undefined
-    track(EV.scanResult, { status: result.status, leadOrder }, { category: "hunt" })
-    if (result.status === "unlocked") {
+    const leadOrder = "leadOrder" in initialResult ? initialResult.leadOrder : undefined
+    track(EV.scanResult, { status: initialResult.status, leadOrder }, { category: "hunt" })
+    if (initialResult.status === "unlocked") {
       track(EV.leadUnlocked, { leadOrder, source: "qr" }, { category: "hunt" })
-    } else if (result.status === "finished") {
+    } else if (initialResult.status === "finished") {
       track(EV.huntFinished, undefined, { category: "hunt" })
-    } else if (result.status === "cooldown") {
+    } else if (initialResult.status === "cooldown") {
       track(EV.cooldownShown, { leadOrder }, { category: "hunt" })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -35,7 +58,14 @@ export function ScanResult({ result }: { result: UnlockResult }) {
 
   // The cooldown card ticks down live, so it gets its own stateful renderer.
   if (result.status === "cooldown") {
-    return <CooldownCard availableAtMs={result.availableAtMs} />
+    return (
+      <CooldownCard
+        availableAtMs={result.availableAtMs}
+        token={token}
+        isSuperAdmin={isSuperAdmin}
+        onBypassed={setResult}
+      />
+    )
   }
 
   // Resolve the headline, body and tone for the given status. Country names
@@ -156,10 +186,22 @@ function formatRemaining(ms: number): string {
  * The anti-cheat cooldown card: a live countdown to the moment the next solve
  * becomes possible. When it hits zero, it invites the player to scan/try again.
  */
-function CooldownCard({ availableAtMs }: { availableAtMs: number }) {
+function CooldownCard({
+  availableAtMs,
+  token,
+  isSuperAdmin,
+  onBypassed,
+}: {
+  availableAtMs: number
+  token: string
+  isSuperAdmin: boolean
+  onBypassed: (result: UnlockResult) => void
+}) {
   const { t } = useI18n()
   const s = t.scan
   const [remaining, setRemaining] = useState(() => availableAtMs - Date.now())
+  const [bypassing, startBypass] = useTransition()
+  const [bypassError, setBypassError] = useState(false)
 
   useEffect(() => {
     const tick = () => setRemaining(availableAtMs - Date.now())
@@ -169,6 +211,21 @@ function CooldownCard({ availableAtMs }: { availableAtMs: number }) {
   }, [availableAtMs])
 
   const ready = remaining <= 0
+
+  function bypass() {
+    setBypassError(false)
+    startBypass(async () => {
+      const res = await bypassCooldownScan(token)
+      if (res.ok) {
+        if (res.result.status === "unlocked" || res.result.status === "finished") {
+          track(EV.leadUnlocked, { source: "qr", bypass: true }, { category: "hunt" })
+        }
+        onBypassed(res.result)
+      } else {
+        setBypassError(true)
+      }
+    })
+  }
 
   return (
     <motion.div
@@ -224,6 +281,27 @@ function CooldownCard({ availableAtMs }: { availableAtMs: number }) {
           </Link>
         )}
       </div>
+
+      {isSuperAdmin && !ready && (
+        <div className="mt-6 border-t border-dashed border-border pt-5">
+          <button
+            type="button"
+            onClick={bypass}
+            disabled={bypassing}
+            className="inline-flex items-center justify-center gap-2 rounded-sm border border-brass/60 bg-brass/10 px-5 py-2.5 font-sans text-xs font-bold tracking-chip text-brass transition-colors hover:bg-brass/20 disabled:opacity-50"
+          >
+            {bypassing ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <ShieldCheck className="size-4" />
+            )}
+            {s.cooldownBypass}
+          </button>
+          <p className="mt-2 font-sans text-[11px] leading-relaxed text-muted-foreground">
+            {bypassError ? s.cooldownBypassError : s.cooldownBypassHint}
+          </p>
+        </div>
+      )}
     </motion.div>
   )
 }

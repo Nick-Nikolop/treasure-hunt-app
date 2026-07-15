@@ -460,6 +460,9 @@ const el = {
       "Είναι αδύνατον να βρεις τη λύση και να φτάσεις εδώ τόσο γρήγορα. Θα μπορέσεις να ξεκλειδώσεις το επόμενο σημάδι σε:",
     cooldownReady: "Πέρασε η αναμονή. Πάτησε «Δοκίμασε ξανά» για να ξεκλειδώσεις το σημάδι.",
     cooldownRetry: "ΔΟΚΙΜΑΣΕ ΞΑΝΑ",
+    cooldownBypass: "ΠΑΡΑΚΑΜΨΗ ΑΝΑΜΟΝΗΣ (ADMIN)",
+    cooldownBypassHint: "Μόνο για διαχειριστές: ξεκλείδωσε το σημάδι χωρίς να περιμένεις.",
+    cooldownBypassError: "Η παράκαμψη απέτυχε. Δοκίμασε ξανά.",
     openJournal: "ΑΝΟΙΞΕ ΤΟ ΗΜΕΡΟΛΟΓΙΟ",
     viewLeaderboard: "ΚΑΤΑΤΑΞΗ",
     gate: {
@@ -1134,6 +1137,9 @@ const en: Dictionary = {
       "It is impossible to find the solution and reach here this quickly. You will be able to unlock the next mark in:",
     cooldownReady: "The wait is over. Press \"Try again\" to unlock the mark.",
     cooldownRetry: "TRY AGAIN",
+    cooldownBypass: "SKIP THE WAIT (ADMIN)",
+    cooldownBypassHint: "Superadmins only: unlock the mark without waiting.",
+    cooldownBypassError: "Bypass failed. Try again.",
     openJournal: "OPEN THE JOURNAL",
     viewLeaderboard: "LEADERBOARD",
     gate: {

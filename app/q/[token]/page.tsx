@@ -35,15 +35,20 @@ export default async function ScanPage({
   // explorer is at the mark. Everything else (finish, out-of-order, already,
   // invalid, or leads with no coordinates) unlocks directly as before.
   const ctx = await resolveScanContext(session.user.id, token)
+  const isSuperAdmin = !!(await getAdminUser())
 
   return (
     <>
       <Atmosphere />
       <div className="flex min-h-screen flex-col items-center justify-center px-5 py-16">
         {ctx.mode === "verify" ? (
-          <ScanGate token={token} isSuperAdmin={!!(await getAdminUser())} />
+          <ScanGate token={token} isSuperAdmin={isSuperAdmin} />
         ) : (
-          <ScanResult result={await unlockByToken(session.user.id, token)} />
+          <ScanResult
+            result={await unlockByToken(session.user.id, token)}
+            token={token}
+            isSuperAdmin={isSuperAdmin}
+          />
         )}
       </div>
     </>

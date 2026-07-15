@@ -77,7 +77,7 @@ export function ScanGate({
   }
 
   if (state.phase === "result") {
-    return <ScanResult result={state.result} />
+    return <ScanResult result={state.result} token={token} isSuperAdmin={isSuperAdmin} />
   }
 
   const adminSkip = isSuperAdmin ? (

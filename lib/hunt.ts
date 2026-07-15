@@ -383,8 +383,16 @@ async function logLeadSolved(
 /**
  * Attempt to unlock a lead from a scanned QR token, for `userId` and their
  * whole crew. Enforces strict order against the crew's furthest progress.
+ *
+ * `opts.bypassCooldown` skips ONLY the anti-cheat solve cooldown (never the
+ * ordering rules). It is reserved for superadmins and must only be set by a
+ * server action that has verified the caller is an admin.
  */
-export async function unlockByToken(userId: string, token: string): Promise<UnlockResult> {
+export async function unlockByToken(
+  userId: string,
+  token: string,
+  opts: { bypassCooldown?: boolean } = {},
+): Promise<UnlockResult> {
   // Resolve the token to the STABLE lead id it was bound to. Progression is
   // then evaluated against that lead's CURRENT position, so a printed QR keeps
   // working no matter where the lead now sits in the sequence.
@@ -418,8 +426,10 @@ export async function unlockByToken(userId: string, token: string): Promise<Unlo
         countryEn: last.countryEn,
       }
     }
-    const finishCooldown = await checkSolveCooldown(crew, FINISH_ORDER, now)
-    if (finishCooldown) return finishCooldown
+    if (!opts.bypassCooldown) {
+      const finishCooldown = await checkSolveCooldown(crew, FINISH_ORDER, now)
+      if (finishCooldown) return finishCooldown
+    }
     await insertFinishRows(crew, new Date(now))
     await logLeadSolved(userId, FINISH_ORDER, last.country, last.countryEn, true)
     return { status: "finished", country: last.country, countryEn: last.countryEn }
@@ -443,8 +453,11 @@ export async function unlockByToken(userId: string, token: string): Promise<Unlo
   }
 
   // Anti-cheat: block solves that come too soon after the previous one.
-  const cooldown = await checkSolveCooldown(crew, leadOrder, now)
-  if (cooldown) return cooldown
+  // Superadmins may bypass this (never the ordering rules above).
+  if (!opts.bypassCooldown) {
+    const cooldown = await checkSolveCooldown(crew, leadOrder, now)
+    if (cooldown) return cooldown
+  }
 
   await ensureUpTo(crew, leadOrder, "qr", new Date(now))
   await logLeadSolved(userId, leadOrder, clue.country, clue.countryEn, false)

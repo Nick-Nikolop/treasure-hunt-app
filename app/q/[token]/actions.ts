@@ -50,3 +50,23 @@ export async function verifyScan(
   const result = await unlockByToken(session.user.id, token)
   return { ok: true, result }
 }
+
+export type BypassCooldownResponse =
+  | { ok: true; result: UnlockResult }
+  | { ok: false; reason: "auth" | "forbidden" }
+
+/**
+ * Superadmin-only: unlock the scanned lead while skipping the anti-cheat solve
+ * cooldown. Ordering rules still apply. Used by the bypass button on the
+ * cooldown card so an admin isn't blocked by the wait during the event.
+ */
+export async function bypassCooldownScan(token: string): Promise<BypassCooldownResponse> {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session?.user) return { ok: false, reason: "auth" }
+
+  const admin = await getAdminUser()
+  if (!admin) return { ok: false, reason: "forbidden" }
+
+  const result = await unlockByToken(session.user.id, token, { bypassCooldown: true })
+  return { ok: true, result }
+}
