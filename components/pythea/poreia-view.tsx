@@ -19,6 +19,8 @@ import { Countdown } from "@/components/pythea/countdown"
 import { useI18n } from "@/components/pythea/language-provider"
 import { useLiteMode } from "@/components/pythea/lite-mode-provider"
 import { JournalCover } from "@/components/pythea/journal-cover"
+import { JournalWidgets } from "@/components/pythea/journal-widgets"
+import type { StandingsSummary } from "@/lib/hunt"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { track } from "@/lib/analytics-client"
 import { EV } from "@/lib/analytics-events"
@@ -47,6 +49,8 @@ type Props = {
   startMs: number
   /** The single next sealed lead the player is working towards, or null. */
   next: LockedClue | null
+  /** Live standings summary powering the leaderboard + port widgets. */
+  standings: StandingsSummary
 }
 
 // A stop drawn on the voyage chart. Built only from already-unlocked clues,
@@ -74,6 +78,7 @@ export function PoreiaView({
   unlockedCount,
   total,
   next,
+  standings,
 }: Props) {
   const { t } = useI18n()
   const { lite, toggle: toggleLite } = useLiteMode()
@@ -569,6 +574,9 @@ export function PoreiaView({
           {t.journal.liteHint}
         </span>
       </div>
+
+      {/* Leaderboard preview + "who is at your port" widgets */}
+      <JournalWidgets standings={standings} />
     </main>
   )
 }

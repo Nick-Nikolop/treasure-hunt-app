@@ -391,6 +391,28 @@ const el = {
     liteHint: "Λιγότερα εφέ και κινήσεις για πιο ομαλή εμπειρία σε παλιά κινητά.",
     liteAria: "Εναλλαγή ελαφριάς λειτουργίας με λιγότερα εφέ",
     footerNote: "Νέες σελίδες χαράσσονται στο ημερολόγιο όσο σαρώνεις τους κωδικούς QR.",
+    widgets: {
+      label: "ΟΙ ΑΛΛΟΙ ΕΞΕΡΕΥΝΗΤΕΣ",
+      lbTitle: "Κατάταξη",
+      lbView: "Δες όλη την κατάταξη",
+      lbRank: (rank: number, total: number) => `Είσαι στη θέση ${rank} από ${total}`,
+      lbNotRanked: "Δεν έχεις μπει ακόμα στην κατάταξη",
+      lbEmpty: "Κανείς δεν έχει ξεκινήσει ακόμα.",
+      you: "ΕΣΥ",
+      teamTag: "ΟΜΑΔΑ",
+      soloTag: "ΑΤΟΜΙΚΟ",
+      portTitle: "Στο ίδιο λιμάνι",
+      portMarks: (n: number, total: number) => `Λιμάνι ${n} / ${total}`,
+      portCount: (teams: number, solos: number) => {
+        const t = `${teams} ${teams === 1 ? "ομάδα" : "ομάδες"}`
+        const s = `${solos} ${solos === 1 ? "μοναχικός εξερευνητής" : "μοναχικοί εξερευνητές"}`
+        if (teams > 0 && solos > 0) return `${t} και ${s} βρίσκονται κι αυτοί εδώ`
+        if (teams > 0) return `${t} ${teams === 1 ? "βρίσκεται" : "βρίσκονται"} κι αυτή εδώ`
+        return `${s} ${solos === 1 ? "βρίσκεται" : "βρίσκονται"} κι αυτοί εδώ`
+      },
+      portAlone: "Είσαι ο μόνος σε αυτό το λιμάνι. Προηγείσαι.",
+      portNotStarted: "Ξεκίνα το κυνήγι για να δεις ποιος βρίσκεται στο ίδιο λιμάνι με εσένα.",
+    },
     mapLabel: "Ο ΧΑΡΤΗΣ ΤΟΥ ΤΑΞΙΔΙΟΥ",
     mapTitle: "Η πορεία",
     mapLead:
@@ -1023,6 +1045,28 @@ const en: Dictionary = {
     liteHint: "Fewer effects and animations for a smoother experience on older phones.",
     liteAria: "Toggle lite mode with fewer effects",
     footerNote: "New pages are written into the journal as you scan the QR codes.",
+    widgets: {
+      label: "THE OTHER EXPLORERS",
+      lbTitle: "Standings",
+      lbView: "See the full leaderboard",
+      lbRank: (rank: number, total: number) => `You're ranked ${rank} of ${total}`,
+      lbNotRanked: "You're not on the board yet",
+      lbEmpty: "No one has started yet.",
+      you: "YOU",
+      teamTag: "TEAM",
+      soloTag: "SOLO",
+      portTitle: "At your port",
+      portMarks: (n: number, total: number) => `Port ${n} / ${total}`,
+      portCount: (teams: number, solos: number) => {
+        const t = `${teams} ${teams === 1 ? "team" : "teams"}`
+        const s = `${solos} solo ${solos === 1 ? "explorer" : "explorers"}`
+        if (teams > 0 && solos > 0) return `${t} and ${s} are also here`
+        if (teams > 0) return `${t} ${teams === 1 ? "is" : "are"} also here`
+        return `${s} ${solos === 1 ? "is" : "are"} also here`
+      },
+      portAlone: "You're alone at this port. You're ahead.",
+      portNotStarted: "Start the hunt to see who shares your port.",
+    },
     mapLabel: "THE VOYAGE CHART",
     mapTitle: "The course",
     mapLead:

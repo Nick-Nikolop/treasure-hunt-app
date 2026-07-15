@@ -95,6 +95,85 @@ export async function getUserScore(
   return entry?.score ?? 0
 }
 
+export type StandingsTop = {
+  rank: number
+  name: string
+  kind: "team" | "solo"
+  progress: number
+  isMe: boolean
+}
+
+export type StandingsSummary = {
+  /** The signed-in entity's 1-based rank, or null before they have started. */
+  rank: number | null
+  /** How many teams/solos have started (progress > 0). */
+  totalEntrants: number
+  /** The lead order the user is currently on (their effective progress). */
+  myProgress: number
+  /** Total number of leads in the hunt. */
+  total: number
+  /** Other teams currently on the same lead as the user. */
+  sameLeadTeams: number
+  /** Other solo explorers currently on the same lead as the user. */
+  sameLeadSolos: number
+  /** Top few entries for the mini leaderboard preview. */
+  top: StandingsTop[]
+}
+
+/**
+ * A compact standings read for the journal widgets: the user's rank, the top
+ * few entries, and how many other teams / solo players are on the same lead.
+ * Reuses the single live leaderboard so it always matches the full board.
+ */
+export async function getStandingsSummary(
+  userId: string,
+  total: number,
+  nowMs: number = Date.now(),
+): Promise<StandingsSummary> {
+  const me = await db
+    .select({ teamId: teamMember.teamId })
+    .from(teamMember)
+    .where(eq(teamMember.userId, userId))
+    .limit(1)
+  const teamId = me[0]?.teamId ?? null
+
+  const board = await getLeaderboard(nowMs)
+  const isMine = (e: LeaderboardEntry) =>
+    teamId ? e.kind === "team" && e.id === teamId : e.kind === "solo" && e.id === userId
+
+  const myIndex = board.findIndex(isMine)
+  const myEntry = myIndex >= 0 ? board[myIndex] : null
+  const myProgress = myEntry?.progress ?? 0
+
+  let sameLeadTeams = 0
+  let sameLeadSolos = 0
+  if (myProgress > 0) {
+    for (const e of board) {
+      if (isMine(e) || e.progress !== myProgress) continue
+      if (e.kind === "team") sameLeadTeams++
+      else sameLeadSolos++
+    }
+  }
+
+  const top: StandingsTop[] = board.slice(0, 3).map((e, i) => ({
+    rank: i + 1,
+    name: e.name,
+    kind: e.kind,
+    progress: e.progress,
+    isMe: isMine(e),
+  }))
+
+  return {
+    rank: myProgress > 0 && myIndex >= 0 ? myIndex + 1 : null,
+    totalEntrants: board.filter((e) => e.progress > 0).length,
+    myProgress,
+    total,
+    sameLeadTeams,
+    sameLeadSolos,
+    top,
+  }
+}
+
 /** The effective progress for a crew = the furthest any member has reached. */
 export async function getCrewEffectiveProgress(
   userIds: string[],

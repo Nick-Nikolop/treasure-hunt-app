@@ -8,7 +8,7 @@ import { PoreiaView } from "@/components/pythea/poreia-view"
 import { SiteFooter } from "@/components/pythea/site-footer"
 import { ClueControls } from "@/components/pythea/clue-controls"
 import { buildClueState, isOverrideAuthorized, PREVIEW_COOKIE } from "@/lib/clues"
-import { getCrewUserIds, getCrewEffectiveProgress, getUserScore } from "@/lib/hunt"
+import { getCrewUserIds, getCrewEffectiveProgress, getUserScore, getStandingsSummary } from "@/lib/hunt"
 import { getLeadDefs } from "@/lib/leads"
 import { getPhaseContext } from "@/lib/phase-guard"
 
@@ -71,6 +71,11 @@ export default async function PoreiaPage() {
   // The player's live score (always 0 before they're ranked) and the lead they
   // are currently at (the furthest clue they've unlocked) for the topbar.
   const score = await getUserScore(session.user.id, now)
+
+  // Live standings for the journal widgets: the user's rank, a top-3 preview,
+  // and how many other teams / solo players share the user's current lead.
+  const standings = await getStandingsSummary(session.user.id, state.total, now)
+
   const currentClue = unlocked[unlocked.length - 1] ?? null
   const current = currentClue
     ? { order: currentClue.order, country: currentClue.country, countryEn: currentClue.countryEn }
@@ -91,6 +96,7 @@ export default async function PoreiaPage() {
           total={state.total}
           startMs={state.startMs}
           next={state.next}
+          standings={standings}
         />
         <SiteFooter />
       </div>
