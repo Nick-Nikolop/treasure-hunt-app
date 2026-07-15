@@ -108,7 +108,7 @@ export function ScanGate({
           icon: <Navigation className="size-9 text-brass" aria-hidden />,
           label: g.tooFarLabel,
           title: g.tooFarTitle,
-          body: g.tooFarBody(state.distanceM, state.radiusM),
+          body: g.tooFarBody,
           actions: (
             <>
               <button

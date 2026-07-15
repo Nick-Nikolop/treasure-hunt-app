@@ -471,8 +471,7 @@ const el = {
       checking: "Έλεγχος τοποθεσίας",
       tooFarLabel: "ΠΟΛΥ ΜΑΚΡΙΑ",
       tooFarTitle: "Δεν είσαι αρκετά κοντά",
-      tooFarBody: (dist: number, radius: number) =>
-        `Βρίσκεσαι περίπου ${dist} μ. μακριά. Πλησίασε σε ${radius} μ. από το σημάδι και δοκίμασε ξανά.`,
+      tooFarBody: "Δεν βρίσκεσαι στο σημάδι ακόμα. Πλησίασε το σημείο και δοκίμασε ξανά.",
       retry: "ΔΟΚΙΜΑΣΕ ΞΑΝΑ",
       deniedLabel: "ΧΡΕΙΑΖΕΤΑΙ ΤΟΠΟΘΕΣΙΑ",
       deniedTitle: "Δεν έχουμε την τοποθεσία σου",
@@ -1146,8 +1145,7 @@ const en: Dictionary = {
       checking: "Checking your location",
       tooFarLabel: "TOO FAR AWAY",
       tooFarTitle: "You're not close enough",
-      tooFarBody: (dist: number, radius: number) =>
-        `You're about ${dist} m away. Get within ${radius} m of the mark and try again.`,
+      tooFarBody: "You're not at the mark yet. Get closer to the spot and try again.",
       retry: "TRY AGAIN",
       deniedLabel: "LOCATION NEEDED",
       deniedTitle: "We don't have your location",
