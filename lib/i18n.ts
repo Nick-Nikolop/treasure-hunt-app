@@ -201,6 +201,11 @@ const el = {
       "Η θέση σου στην ομάδα είναι κρατημένη. Άνοιξε το ημερολόγιο και διάβασε τα σημάδια που έχουν αποκαλυφθεί ως τώρα.",
     welcomeCta: "ΑΝΟΙΞΕ ΤΟ ΗΜΕΡΟΛΟΓΙΟ",
     welcomeTeams: "Στήσε ή διαχειρίσου την ομάδα σου και καλέσε τους δικούς σου.",
+    teamBadge: "ΤΕΛΕΥΤΑΙΟ ΒΗΜΑ",
+    teamTitle: (name: string) => `Φτιάξε την ομάδα σου, ${name}.`,
+    teamBody:
+      "Έχεις λογαριασμό αλλά όχι ομάδα ακόμα. Δημιούργησε μια ομάδα ή μπες σε μια με σύνδεσμο πρόσκλησης, ως και 5 άτομα.",
+    teamCta: "ΦΤΙΑΞΕ Ή ΜΠΕΣ ΣΕ ΟΜΑΔΑ",
   },
   teams: {
     metaTitle: "Η Ομάδα σου",
@@ -862,6 +867,11 @@ const en: Dictionary = {
       "Your place in the team is held. Open the journal and read the marks revealed so far.",
     welcomeCta: "OPEN THE JOURNAL",
     welcomeTeams: "Set up or manage your team and invite your own.",
+    teamBadge: "LAST STEP",
+    teamTitle: (name: string) => `Build your team, ${name}.`,
+    teamBody:
+      "You have an account but no team yet. Create a team or join one with an invite link, up to 5 people.",
+    teamCta: "CREATE OR JOIN A TEAM",
   },
   teams: {
     metaTitle: "Your Team",

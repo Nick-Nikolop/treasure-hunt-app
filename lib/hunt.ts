@@ -174,6 +174,16 @@ export async function getStandingsSummary(
   }
 }
 
+/** Cheap membership check: is this user currently in any team? */
+export async function getIsInTeam(userId: string): Promise<boolean> {
+  const rows = await db
+    .select({ teamId: teamMember.teamId })
+    .from(teamMember)
+    .where(eq(teamMember.userId, userId))
+    .limit(1)
+  return rows.length > 0
+}
+
 /** The effective progress for a crew = the furthest any member has reached. */
 export async function getCrewEffectiveProgress(
   userIds: string[],

@@ -17,6 +17,7 @@ import { getPhaseContext } from "@/lib/phase-guard"
 import { cookies, headers } from "next/headers"
 import { auth } from "@/lib/auth"
 import { isLeadOneOpen, START_MS } from "@/lib/clues"
+import { getIsInTeam } from "@/lib/hunt"
 import { getTotalLeads } from "@/lib/leads"
 import { DEFAULT_LOCALE, isLocale, LANG_COOKIE, getDictionary } from "@/lib/i18n"
 import { homeJsonLd } from "@/lib/seo"
@@ -56,6 +57,10 @@ export default async function Page() {
   // sequence an admin has actually configured (not a hardcoded 9).
   const totalLeads = await getTotalLeads()
 
+  // Whether the signed-in visitor already belongs to a team, so the join panel
+  // can show the right CTA (create/join a team) or hide once they're set.
+  const isInTeam = session?.user ? await getIsInTeam(session.user.id) : false
+
   // Structured data (JSON-LD) for the home page, localized to the saved
   // language and built from the SAME FAQ copy that renders on the page so the
   // FAQ rich results stay valid.
@@ -79,7 +84,7 @@ export default async function Page() {
         {/* Welcome / join panel first, then the path (9 countries / 9 leads),
             then the "Ι. Ο ΘΡΥΛΟΣ" legend. The path links down to the legend for
             anyone who wants the backstory. */}
-        <Register />
+        <Register isInTeam={isInTeam} />
         <PrizePool />
         <Journey
           unlockedCount={publicCount}

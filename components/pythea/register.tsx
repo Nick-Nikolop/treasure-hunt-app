@@ -14,7 +14,7 @@ const PERK_ICONS = [Compass, Users, Mail]
  * of an account, signed-in explorers get a personal welcome and a path into
  * the journal. Keeps the #register anchor used by the nav and floating CTA.
  */
-export function Register() {
+export function Register({ isInTeam = false }: { isInTeam?: boolean }) {
   const { t } = useI18n()
   const { data: session, isPending } = useSession()
 
@@ -28,6 +28,10 @@ export function Register() {
   // padding the signed-out "perks" layout uses. Balanced padding keeps the card
   // visually centered in its band instead of stranded at the top of a big gap.
   const signedIn = !isPending && !!session?.user
+
+  // A signed-in explorer who already has a team has nothing to do here: the
+  // "join the team" section is redundant, so hide it entirely for them.
+  if (signedIn && isInTeam) return null
 
   return (
     <section
@@ -61,34 +65,34 @@ export function Register() {
             <span className="size-10 animate-pulse rounded-full border border-brass/40" />
           </div>
         ) : session?.user ? (
-          /* ── Signed in: personal welcome ───────────────────────────── */
+          /* ── Signed in, no team yet: create or join a team ─────────── */
           <div className="relative flex flex-col items-start gap-6 md:flex-row md:items-center md:justify-between md:gap-12">
             <div>
               <span className="inline-flex items-center gap-2 font-sans text-xs font-bold tracking-chip text-brass">
                 <Anchor className="size-3.5" />
-                {t.crew.welcomeBadge}
+                {t.crew.teamBadge}
               </span>
               <h2 className="mt-4 text-balance font-serif text-4xl font-black leading-tight text-foreground md:text-5xl">
-                {t.crew.welcomeTitle(firstName ?? "")}
+                {t.crew.teamTitle(firstName ?? "")}
               </h2>
               <p className="mt-4 max-w-xl text-pretty font-serif text-lg leading-relaxed text-muted-foreground">
-                {t.crew.welcomeBody}
+                {t.crew.teamBody}
               </p>
             </div>
             <div className="flex shrink-0 flex-col gap-3 sm:flex-row md:flex-col">
               <Link
-                href="/journal"
+                href="/teams"
                 className="inline-flex items-center justify-center gap-2 rounded-sm bg-brass px-7 py-3.5 font-sans text-sm font-bold tracking-chip text-primary-foreground transition-transform hover:-translate-y-0.5"
+              >
+                <Users className="size-4" />
+                {t.crew.teamCta}
+              </Link>
+              <Link
+                href="/journal"
+                className="inline-flex items-center justify-center gap-2 rounded-sm border border-brass/60 px-7 py-3.5 font-sans text-sm font-bold tracking-chip text-brass transition-colors hover:bg-brass/10"
               >
                 <BookOpen className="size-4" />
                 {t.crew.welcomeCta}
-              </Link>
-              <Link
-                href="/teams"
-                className="inline-flex items-center justify-center gap-2 rounded-sm border border-brass/60 px-7 py-3.5 font-sans text-sm font-bold tracking-chip text-brass transition-colors hover:bg-brass/10"
-              >
-                <Users className="size-4" />
-                {t.auth.crewNav}
               </Link>
             </div>
           </div>
