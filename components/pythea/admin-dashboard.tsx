@@ -52,7 +52,6 @@ import {
   adminSetTeamProgress,
   adminResetUserProgress,
   adminResetTeamProgress,
-  adminRegenerateToken,
   adminSaveScoring,
   getActivityLog,
   type AdminData,
