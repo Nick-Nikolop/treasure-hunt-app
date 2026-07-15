@@ -28,9 +28,13 @@ import {
   adminClearLeadStamp,
   adminResetAllProgress,
   adminSaveLeadGeo,
+  adminRegenerateToken,
 } from "@/app/admin/actions"
 import { LEAD_ICONS, type Difficulty, type LeadIcon } from "@/lib/clues"
 import type { EditableLead } from "@/lib/lead-content"
+import type { ClueTokenRow } from "@/lib/hunt"
+import { DEFAULT_GEO_RADIUS_M } from "@/lib/geo"
+import { LeadQrBlock } from "@/components/pythea/lead-qr"
 
 const errorText: Record<string, string> = {
   bad_value: "That change could not be saved.",
@@ -88,10 +92,23 @@ function contentDiffers(a: EditableLead, b: EditableLead): boolean {
  * touch files or structure) but they update the local list in place instead of
  * triggering a full refresh, so the view stays put.
  */
-export function AdminLeadsPanel({ leads }: { leads: EditableLead[] }) {
+export function AdminLeadsPanel({
+  leads,
+  tokens,
+}: {
+  leads: EditableLead[]
+  tokens: ClueTokenRow[]
+}) {
   const [pending, startTransition] = useTransition()
   const [popup, setPopup] = useState<Popup | null>(null)
   const [openId, setOpenId] = useState<string | null>(leads[0]?.id ?? null)
+
+  // Tokens are read straight from props (not seeded into local state) so they
+  // refresh whenever a regenerate revalidates the page. Keyed by stable leadId
+  // so a lead's QR follows it across reorders. The finish QR isn't a lead, so
+  // it renders in its own card after the list.
+  const tokenByLeadId = new Map(tokens.map((t) => [t.leadId, t]))
+  const finishToken = tokens.find((t) => t.isFinish) ?? null
 
   // Working copy (live edits) + baseline (last-saved snapshot). Seeded from
   // props once; from here on this component owns the state.
@@ -273,6 +290,18 @@ export function AdminLeadsPanel({ leads }: { leads: EditableLead[] }) {
     })
   }
 
+  function regenToken(leadOrder: number) {
+    startTransition(async () => {
+      const res = await adminRegenerateToken(leadOrder)
+      if (!res.ok) {
+        setPopup({ kind: "err", text: errorText[res.error] ?? "Could not regenerate the QR link." })
+        return
+      }
+      // The action revalidates /admin, so the fresh token flows back via props.
+      setPopup({ kind: "ok", text: "New QR link generated. Reprint the QR code." })
+    })
+  }
+
   function saveGeo(
     id: string,
     lat: string,
@@ -364,9 +393,14 @@ export function AdminLeadsPanel({ leads }: { leads: EditableLead[] }) {
             onUpload={(fd) => uploadStamp(lead.id, fd)}
             onClearStamp={() => clearStamp(lead.id)}
             onSaveGeo={(lat, lng, r, done) => saveGeo(lead.id, lat, lng, r, done)}
+            token={tokenByLeadId.get(lead.id) ?? null}
+            isTimerLead={index === 0}
+            onRegenerateToken={(order) => regenToken(order)}
           />
         ))}
       </ul>
+
+      <FinishQrCard token={finishToken} pending={pending} onRegenerate={regenToken} />
 
       <AddLeadForm pending={pending} onAdd={addLead} />
 
@@ -536,6 +570,9 @@ function LeadCard({
   onUpload,
   onClearStamp,
   onSaveGeo,
+  token,
+  isTimerLead,
+  onRegenerateToken,
 }: {
   lead: EditableLead
   base: EditableLead | undefined
@@ -554,6 +591,9 @@ function LeadCard({
   onUpload: (formData: FormData) => void
   onClearStamp: () => void
   onSaveGeo: (lat: string, lng: string, radiusM: string, done: (ok: boolean) => void) => void
+  token: ClueTokenRow | null
+  isTimerLead: boolean
+  onRegenerateToken: (leadOrder: number) => void
 }) {
   const [confirmRemove, setConfirmRemove] = useState(false)
 
@@ -607,6 +647,15 @@ function LeadCard({
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
+          {lead.lat != null && lead.lng != null && (
+            <span
+              title="Scan radius"
+              className="hidden items-center gap-1 rounded-sm border border-border px-2 py-0.5 font-sans text-[10px] font-bold tracking-chip text-muted-foreground sm:inline-flex"
+            >
+              <MapPin className="size-3 text-brass" />
+              {lead.geoRadiusM ?? DEFAULT_GEO_RADIUS_M} m
+            </span>
+          )}
           {dirty && (
             <span className="rounded-sm bg-brass/15 px-2 py-0.5 font-sans text-[10px] font-bold uppercase tracking-chip text-brass">
               Edited
@@ -686,6 +735,15 @@ function LeadCard({
 
           <GeoEditor lead={lead} pending={pending} onSaveGeo={onSaveGeo} />
 
+          <LeadQrBlock
+            token={token}
+            isTimerLead={isTimerLead}
+            pending={pending}
+            onRegenerate={() => {
+              if (token) onRegenerateToken(token.leadOrder)
+            }}
+          />
+
           <div className="mt-5 flex items-center justify-between gap-2">
             <div>
               {position === 1 ? (
@@ -747,6 +805,44 @@ function LeadCard({
         </div>
       )}
     </li>
+  )
+}
+
+/**
+ * Standalone card for the finishing QR. The finish token isn't a lead (it marks
+ * the last lead solved), so it lives on its own below the list rather than in a
+ * lead's editor. Reuses the same QR block as the leads.
+ */
+function FinishQrCard({
+  token,
+  pending,
+  onRegenerate,
+}: {
+  token: ClueTokenRow | null
+  pending: boolean
+  onRegenerate: (leadOrder: number) => void
+}) {
+  if (!token) return null
+  return (
+    <div className="rounded-sm border border-border bg-card/40 p-4">
+      <div className="flex items-center gap-2">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-sm bg-brass/15 font-serif text-xs font-black text-brass">
+          FIN
+        </span>
+        <div>
+          <h3 className="font-serif text-base font-black text-foreground">Finish QR</h3>
+          <p className="font-sans text-[12px] leading-relaxed text-muted-foreground">
+            Scanning this marks the last lead as solved and locks in everyone&rsquo;s finishing
+            points. It has no location gate.
+          </p>
+        </div>
+      </div>
+      <LeadQrBlock
+        token={token}
+        pending={pending}
+        onRegenerate={() => onRegenerate(token.leadOrder)}
+      />
+    </div>
   )
 }
 
@@ -837,6 +933,14 @@ function GeoEditor({
       ? { lat: latNum, lng: lngNum }
       : null
 
+  // The radius actually enforced at scan time: the custom value if valid, else
+  // the global default.
+  const radiusNum = Number(radius.trim())
+  const effectiveRadius =
+    radius.trim() !== "" && Number.isFinite(radiusNum) && radiusNum > 0
+      ? Math.round(radiusNum)
+      : DEFAULT_GEO_RADIUS_M
+
   function save() {
     if (saving || pending) return
     setSaving(true)
@@ -910,11 +1014,22 @@ function GeoEditor({
             value={radius}
             onChange={(e) => setRadius(e.target.value)}
             inputMode="numeric"
-            placeholder="200"
+            placeholder={String(DEFAULT_GEO_RADIUS_M)}
             className="w-full rounded-sm border border-border bg-background px-2.5 py-1.5 font-mono text-xs text-foreground outline-none focus:border-brass"
           />
         </label>
       </div>
+
+      {previewCoords && (
+        <p className="mt-2 font-sans text-[11px] leading-relaxed text-muted-foreground">
+          Active radius:{" "}
+          <span className="font-bold text-foreground">
+            {effectiveRadius} m
+          </span>
+          {radius.trim() === "" && ` (default, no custom radius set)`}. A scan must be within this
+          distance of the mark.
+        </p>
+      )}
 
       <div className="mt-3 flex items-center gap-2">
         <button

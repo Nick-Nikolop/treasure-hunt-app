@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import QRCodeLib from "qrcode"
 import {
   ArrowLeft,
   KeyRound,
@@ -19,11 +18,6 @@ import {
   Crown,
   Flag,
   RotateCcw,
-  QrCode,
-  Copy,
-  Check,
-  RefreshCw,
-  Download,
   Lightbulb,
   Trophy,
   Save,
@@ -72,7 +66,6 @@ import type { ActivityPage } from "@/lib/activity"
 type Tab =
   | "users"
   | "teams"
-  | "qr"
   | "hints"
   | "campaigns"
   | "scoring"
@@ -256,9 +249,6 @@ export function AdminDashboard({
         <TabButton active={tab === "teams"} onClick={() => setTab("teams")} icon={Crown}>
           Teams
         </TabButton>
-        <TabButton active={tab === "qr"} onClick={() => setTab("qr")} icon={QrCode}>
-          QR codes
-        </TabButton>
         <TabButton active={tab === "hints"} onClick={() => setTab("hints")} icon={Lightbulb}>
           Hints
         </TabButton>
@@ -425,29 +415,12 @@ export function AdminDashboard({
             ))}
             {filteredTeams.length === 0 && <Empty>No teams match your search.</Empty>}
           </ul>
-        ) : tab === "qr" ? (
-          <QrPanel
-            tokens={data.tokens}
-            totalLeads={data.totalLeads}
-            pending={pending}
-            onRegenerate={(leadOrder) =>
-              setConfirm({
-                title: "Regenerate QR link",
-                body:
-                  leadOrder > data.totalLeads
-                    ? "Issue a fresh link for the finishing QR? Any code already printed from the old link will stop working."
-                    : `Issue a fresh link for lead No. ${String(leadOrder).padStart(2, "0")}? Any QR code already printed from the old link will stop working.`,
-                confirmLabel: "Regenerate",
-                run: () => adminRegenerateToken(leadOrder),
-              })
-            }
-          />
         ) : tab === "hints" ? (
           <AdminHintsPanel hints={data.hints} leadOptions={data.leadOptions} />
         ) : tab === "campaigns" ? (
           <AdminCampaignsPanel campaigns={data.campaigns} />
         ) : tab === "leads" ? (
-          <AdminLeadsPanel leads={data.leads} />
+          <AdminLeadsPanel leads={data.leads} tokens={data.tokens} />
         ) : tab === "activity" ? (
           <AdminActivityPanel
             key={activityKey}
@@ -1311,235 +1284,5 @@ function NumberField({
         className="w-full rounded-sm border border-border bg-background px-3 py-2 font-mono text-sm text-foreground outline-none focus:border-brass"
       />
     </label>
-  )
-}
-
-/**
- * The QR codes panel: one row per scannable lead (2..9) plus the finishing QR,
- * showing the scan link an organizer turns into a printed QR code.
- */
-function QrPanel({
-  tokens,
-  totalLeads,
-  pending,
-  onRegenerate,
-}: {
-  tokens: AdminData["tokens"]
-  totalLeads: number
-  pending: boolean
-  onRegenerate: (leadOrder: number) => void
-}) {
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="rounded-sm border border-border bg-card/40 p-4">
-        <div className="flex items-center gap-2">
-          <QrCode className="size-4 text-brass" />
-          <h2 className="font-serif text-lg font-black text-foreground">QR scan links</h2>
-        </div>
-        <p className="mt-1 font-sans text-[13px] leading-relaxed text-muted-foreground">
-          Each link below unlocks one lead. Turn each into a QR code (any QR generator works) and
-          hide it at the matching location. When a player scans it, that lead opens for them and
-          their whole team. Lead 01 opens on a timer, so it has no QR code. The final FINISH code
-          marks the last lead as solved, so its placement points get awarded.
-        </p>
-      </div>
-      <ul className="flex flex-col gap-2.5">
-        {tokens.length === 0 && <Empty>No QR links have been generated yet.</Empty>}
-        {tokens.map((tk) => (
-          <QrRow
-            key={tk.leadOrder}
-            tk={tk}
-            isFinish={tk.leadOrder > totalLeads}
-            pending={pending}
-            onRegenerate={onRegenerate}
-          />
-        ))}
-      </ul>
-    </div>
-  )
-}
-
-function QrRow({
-  tk,
-  isFinish,
-  pending,
-  onRegenerate,
-}: {
-  tk: AdminData["tokens"][number]
-  isFinish: boolean
-  pending: boolean
-  onRegenerate: (leadOrder: number) => void
-}) {
-  const [copied, setCopied] = useState(false)
-  const [qrOpen, setQrOpen] = useState(false)
-  const orderLabel = isFinish ? "FIN" : String(tk.leadOrder).padStart(2, "0")
-  const title = isFinish ? "Finish" : `Lead ${orderLabel}`
-
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(tk.link)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      // Clipboard can fail in some embedded contexts; ignore silently.
-    }
-  }
-
-  return (
-    <li className="flex flex-col gap-3 rounded-sm border border-border bg-card/40 p-4 md:flex-row md:items-center md:justify-between">
-      <div className="flex min-w-0 items-center gap-3">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-sm bg-brass/15 font-serif text-sm font-black text-brass">
-          {orderLabel}
-        </span>
-        <div className="min-w-0">
-          <p className="font-sans text-[11px] font-bold uppercase tracking-chip text-muted-foreground">
-            {title}
-          </p>
-          <p className="truncate font-mono text-xs text-foreground">{tk.link}</p>
-        </div>
-      </div>
-      <div className="flex shrink-0 flex-wrap gap-2">
-        <IconBtn
-          onClick={() => setQrOpen(true)}
-          disabled={pending}
-          title="Show QR code"
-          icon={QrCode}
-          label="QR code"
-        />
-        <IconBtn
-          onClick={copy}
-          disabled={pending}
-          title="Copy link"
-          icon={copied ? Check : Copy}
-          label={copied ? "Copied" : "Copy"}
-        />
-        <IconBtn
-          onClick={() => onRegenerate(tk.leadOrder)}
-          disabled={pending}
-          title="Regenerate link"
-          danger
-          icon={RefreshCw}
-          label="Regenerate"
-        />
-      </div>
-
-      <QrCodeModal
-        open={qrOpen}
-        onClose={() => setQrOpen(false)}
-        link={tk.link}
-        orderLabel={orderLabel}
-        title={title}
-        isFinish={isFinish}
-      />
-    </li>
-  )
-}
-
-/**
- * Renders the scan link as a downloadable QR image. The PNG is generated in the
- * browser from the live link, so it always matches the current (possibly
- * regenerated) token. Organizers preview it here and download a print-ready file.
- */
-function QrCodeModal({
-  open,
-  onClose,
-  link,
-  orderLabel,
-  title,
-  isFinish,
-}: {
-  open: boolean
-  onClose: () => void
-  link: string
-  orderLabel: string
-  title: string
-  isFinish: boolean
-}) {
-  const [dataUrl, setDataUrl] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!open) return
-    let active = true
-    setDataUrl(null)
-    QRCodeLib.toDataURL(link, {
-      width: 1024,
-      margin: 2,
-      errorCorrectionLevel: "M",
-      color: { dark: "#1a1a1a", light: "#ffffff" },
-    })
-      .then((url) => {
-        if (active) setDataUrl(url)
-      })
-      .catch(() => {
-        if (active) setDataUrl(null)
-      })
-    return () => {
-      active = false
-    }
-  }, [open, link])
-
-  function download() {
-    if (!dataUrl) return
-    const a = document.createElement("a")
-    a.href = dataUrl
-    a.download = isFinish ? "pythea-finish.png" : `pythea-lead-${orderLabel}.png`
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-  }
-
-  return (
-    <ModalShell open={open} onClose={onClose} labelledBy="qr-modal-title">
-      <h2 id="qr-modal-title" className="font-serif text-2xl font-black text-foreground">
-        {title} QR code
-      </h2>
-      <p className="mt-1 font-sans text-sm text-muted-foreground">
-        {isFinish
-          ? "Print this and hide it at the final location. Scanning it marks the last lead as solved and locks in everyone's finishing points."
-          : `Print this and hide it at the matching location. Scanning it unlocks lead ${orderLabel}.`}
-      </p>
-
-      <div className="mt-6 flex justify-center">
-        <div className="w-full max-w-[15rem] rounded-md border border-border bg-white p-3">
-          {dataUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={dataUrl || "/placeholder.svg"}
-              alt={`QR code for lead ${orderLabel}`}
-              width={256}
-              height={256}
-              className="aspect-square w-full"
-            />
-          ) : (
-            <div className="flex aspect-square w-full items-center justify-center" aria-hidden>
-              <span className="size-8 animate-pulse rounded-full border border-muted-foreground/40" />
-            </div>
-          )}
-        </div>
-      </div>
-
-      <p className="mt-4 break-all text-center font-mono text-[11px] text-muted-foreground">
-        {link}
-      </p>
-
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row-reverse">
-        <button
-          type="button"
-          onClick={download}
-          disabled={!dataUrl}
-          className="inline-flex flex-1 items-center justify-center gap-2 rounded-sm bg-brass px-5 py-3 font-sans text-sm font-bold tracking-chip text-background transition-transform hover:-translate-y-0.5 disabled:opacity-50"
-        >
-          <Download className="size-4" />
-          Download PNG
-        </button>
-        <button
-          type="button"
-          onClick={onClose}
-          className="inline-flex flex-1 items-center justify-center rounded-sm border border-border px-5 py-3 font-sans text-sm font-bold tracking-chip text-foreground transition-colors hover:border-brass"
-        >
-          Close
-        </button>
-      </div>
-    </ModalShell>
   )
 }
