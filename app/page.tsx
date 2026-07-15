@@ -80,12 +80,12 @@ export default async function Page() {
             then the "Ι. Ο ΘΡΥΛΟΣ" legend. The path links down to the legend for
             anyone who wants the backstory. */}
         <Register />
+        <PrizePool />
         <Journey
           unlockedCount={publicCount}
           total={totalLeads}
           countdownToMs={countdownToMs}
         />
-        <PrizePool />
         <Story />
         <Treasure />
         <HowItWorks />

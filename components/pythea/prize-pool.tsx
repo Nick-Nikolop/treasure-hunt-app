@@ -195,8 +195,8 @@ export function PrizePool() {
                       m.tall ? "text-3xl md:text-5xl" : "text-3xl md:text-4xl",
                     )}
                   >
-                    {p.currency}
                     <CountUp to={tier.amount} delay={0.3 + i * 0.16} />
+                    {p.currency}
                   </span>
 
                   <p className="mt-2 text-pretty font-sans text-xs leading-relaxed text-muted-foreground md:mt-3 md:max-w-[13rem]">
