@@ -464,6 +464,43 @@ export async function unlockByToken(
   return { status: "unlocked", leadOrder, country: clue.country, countryEn: clue.countryEn }
 }
 
+export type ApproveUnlockResult =
+  | { status: "unlocked"; leadOrder: number; country: string; countryEn: string }
+  | { status: "already"; leadOrder: number; country: string; countryEn: string }
+  | { status: "out_of_order"; required: number; current: number; leadOrder: number }
+  | { status: "invalid" }
+
+/**
+ * Unlock `leadOrder` for `userId`'s whole crew as the result of an APPROVED
+ * photo proof (source "proof"). Mirrors the lead branch of `unlockByToken`:
+ * ordering is still enforced against the crew's current progress at approval
+ * time, but the solve cooldown is intentionally skipped (a human already
+ * vetted this). No token is needed; the lead is addressed by its position.
+ */
+export async function approveLeadUnlock(
+  userId: string,
+  leadOrder: number,
+): Promise<ApproveUnlockResult> {
+  const defs = await getLeadDefs()
+  const clue = defs.find((c) => c.order === leadOrder)
+  if (!clue) return { status: "invalid" }
+
+  const crew = await getCrewUserIds(userId)
+  const now = Date.now()
+  const current = await getCrewEffectiveProgress(crew, now)
+
+  if (current >= leadOrder) {
+    return { status: "already", leadOrder, country: clue.country, countryEn: clue.countryEn }
+  }
+  if (current !== leadOrder - 1) {
+    return { status: "out_of_order", required: leadOrder - 1, current, leadOrder }
+  }
+
+  await ensureUpTo(crew, leadOrder, "proof", new Date(now))
+  await logLeadSolved(userId, leadOrder, clue.country, clue.countryEn, false)
+  return { status: "unlocked", leadOrder, country: clue.country, countryEn: clue.countryEn }
+}
+
 // ── Scan location gate ───────────────────────────────────────────────────────
 
 export type ScanContext =

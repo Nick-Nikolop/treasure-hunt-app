@@ -30,8 +30,17 @@ import {
   setProgressForUsers,
   getClueTokens,
   regenerateToken,
+  approveLeadUnlock,
   type ClueTokenRow,
 } from "@/lib/hunt"
+import {
+  getPendingProofs,
+  getPendingProofCount,
+  getRecentDecidedProofs,
+  getProofById,
+  decideProof,
+  type ProofRow,
+} from "@/lib/proofs"
 import {
   listHints,
   createHint,
@@ -189,6 +198,8 @@ export type AdminData = {
   analytics: AnalyticsSnapshot
   /** Phased-rollout control state for the Phase tab. */
   phase: PhaseAdminData
+  /** Count of photo proofs awaiting review (drives the Proofs tab badge). */
+  pendingProofCount: number
 }
 
 /** Everything the Phase tab needs to render + edit the rollout gates. */
@@ -308,7 +319,91 @@ export async function getAdminData(): Promise<AdminData> {
     activity: await listActivity({ limit: 50 }),
     analytics: await getAnalyticsSnapshot(14),
     phase: await getPhaseAdminData(),
+    pendingProofCount: await getPendingProofCount(),
   }
+}
+
+// ── Photo-proof review ───────────────────────────────────────────────────────
+
+/** A proof submission enriched with the lead's country names for display. */
+export type AdminProofRow = ProofRow & { country: string; countryEn: string }
+
+export type AdminProofsData = {
+  pending: AdminProofRow[]
+  recent: AdminProofRow[]
+}
+
+/** Attach the lead's current country names to a batch of proof rows. */
+async function enrichProofs(rows: ProofRow[]): Promise<AdminProofRow[]> {
+  const defs = await getLeadDefs()
+  return rows.map((r) => {
+    const def = defs.find((d) => d.order === r.leadOrder)
+    return {
+      ...r,
+      country: def?.country ?? `No. ${String(r.leadOrder).padStart(2, "0")}`,
+      countryEn: def?.countryEn ?? `No. ${String(r.leadOrder).padStart(2, "0")}`,
+    }
+  })
+}
+
+/** The proof review queue: pending (oldest first) + recently decided. Admin only. */
+export async function adminListProofs(): Promise<AdminProofsData> {
+  await requireAdmin()
+  const [pending, recent] = await Promise.all([getPendingProofs(), getRecentDecidedProofs(20)])
+  return {
+    pending: await enrichProofs(pending),
+    recent: await enrichProofs(recent),
+  }
+}
+
+/**
+ * Approve or reject a pending photo proof. On approve, unlock the lead for the
+ * submitter's crew (order still enforced at approval time; the solve cooldown is
+ * skipped since a human vetted it). Superadmin only. Idempotent: a proof that was
+ * already decided by another admin is reported as such.
+ */
+export async function adminDecideProof(
+  id: string,
+  decision: "approved" | "rejected",
+  reason?: string,
+): Promise<
+  | { ok: true; decision: "approved" | "rejected"; unlock?: string }
+  | { ok: false; error: string }
+> {
+  const admin = await requireAdmin()
+
+  const existing = await getProofById(id)
+  if (!existing) return { ok: false, error: "not_found" }
+  if (existing.status !== "pending") return { ok: false, error: "already_decided" }
+
+  const cleanReason = decision === "rejected" ? (reason ?? "").trim().slice(0, 500) || null : null
+
+  const decided = await decideProof(id, decision, { id: admin.id, name: actorLabel(admin) }, cleanReason)
+  if (!decided) return { ok: false, error: "already_decided" }
+
+  let unlock: string | undefined
+  if (decision === "approved") {
+    const res = await approveLeadUnlock(existing.userId, existing.leadOrder)
+    unlock = res.status
+  }
+
+  const padded = String(existing.leadOrder).padStart(2, "0")
+  await logActivity({
+    category: "admin",
+    action: decision === "approved" ? "admin.proof_approved" : "admin.proof_rejected",
+    ...adminActor(admin),
+    targetUserId: existing.userId,
+    targetUserName: existing.userName,
+    leadOrder: existing.leadOrder,
+    summary:
+      decision === "approved"
+        ? `${actorLabel(admin)} approved ${existing.userName}'s photo proof for lead No. ${padded}`
+        : `${actorLabel(admin)} rejected ${existing.userName}'s photo proof for lead No. ${padded}`,
+    metadata: { context: existing.context, reason: cleanReason, unlock },
+  })
+
+  revalidatePath("/admin")
+  return { ok: true, decision, unlock }
 }
 
 /** Load the phase settings, the effective phase now, and the waitlist. */

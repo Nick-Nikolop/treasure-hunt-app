@@ -8,6 +8,7 @@ import { LiteModeProvider } from '@/components/pythea/lite-mode-provider'
 import { PhaseProvider } from '@/components/pythea/phase-provider'
 import { AnalyticsProvider } from '@/components/pythea/analytics-provider'
 import { CookieConsent } from '@/components/pythea/cookie-consent'
+import { NotificationProvider } from '@/components/pythea/notification-provider'
 import { getPhaseContext, getPublicPhase } from '@/lib/phase-guard'
 import { DEFAULT_LOCALE, isLocale, LANG_COOKIE, type Locale } from '@/lib/i18n'
 import { SITE, TEASER, SITE_URL, KEYWORDS, BRAND, BRAND_NAME_EN, VERIFICATION } from '@/lib/seo'
@@ -168,6 +169,7 @@ export default async function RootLayout({
               <PhaseProvider value={phaseValue}>{children}</PhaseProvider>
             </LiteModeProvider>
             <CookieConsent />
+            <NotificationProvider />
           </LanguageProvider>
           <AnalyticsProvider />
         </ThemeProvider>

@@ -390,6 +390,45 @@ export const locationQr = pgTable(
   }),
 )
 
+// Manual photo-proof of presence, submitted when an explorer can't/won't pass
+// the GPS scan gate (permission denied, or GPS says they're too far). Holds
+// 1-3 image URLs (Vercel Blob) and its review lifecycle. A superadmin approves
+// (which unlocks the lead for the submitter's crew) or rejects (with a reason).
+// The explorer is notified of the decision; `acknowledgedAt` records when they
+// have seen the decision popup so it stops re-appearing.
+//
+//  - `context`        why the fallback was offered: "denied" | "too_far".
+//  - `photoUrls`      JSON string[] of Blob URLs (unguessable random suffixes).
+//  - `status`         "pending" | "approved" | "rejected".
+//  - `userName`       snapshot of the submitter's display name at submit time.
+//  - raw coordinates are intentionally NOT stored (only the context label).
+export const proofSubmission = pgTable(
+  "proof_submission",
+  {
+    id: text("id").primaryKey(),
+    userId: text("userId").notNull(),
+    userName: text("userName").notNull(),
+    leadOrder: integer("leadOrder").notNull(),
+    leadId: text("leadId"),
+    token: text("token").notNull(),
+    context: text("context").notNull(),
+    photoUrls: jsonb("photoUrls").$type<string[]>().notNull(),
+    note: text("note"),
+    status: text("status").notNull().default("pending"),
+    reason: text("reason"),
+    reviewerId: text("reviewerId"),
+    reviewerName: text("reviewerName"),
+    decidedAt: timestamp("decidedAt"),
+    acknowledgedAt: timestamp("acknowledgedAt"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("proof_submission_userId_idx").on(t.userId),
+    statusIdx: index("proof_submission_status_idx").on(t.status),
+    createdAtIdx: index("proof_submission_createdAt_idx").on(t.createdAt),
+  }),
+)
+
 // One row per returned location. lat/lng/accuracy are stored as text to avoid
 // float precision surprises; they are parsed back to numbers in the UI.
 export const locationPing = pgTable(
