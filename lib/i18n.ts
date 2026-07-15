@@ -479,6 +479,8 @@ const el = {
     legendSealed: "Κρυμμένο μπροστά",
     finished: "Τερμάτισε",
     points: "πόντοι",
+    scoreSealed: "κρυφό",
+    scoreSealedSr: "Η βαθμολογία κρύβεται μέχρι το τελικό πάρτι.",
   },
   controls: {
     openAria: "Άνοιγμα πίνακα δοκιμών",
@@ -1103,6 +1105,8 @@ const en: Dictionary = {
     legendSealed: "Hidden ahead",
     finished: "Finished",
     points: "pts",
+    scoreSealed: "hidden",
+    scoreSealedSr: "Score is hidden until the closing party.",
   },
   controls: {
     openAria: "Open test panel",

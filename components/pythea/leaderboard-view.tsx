@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { motion } from "framer-motion"
-import { Trophy, Users, User as UserIcon, MapPin, Flag, X } from "lucide-react"
+import { Trophy, Users, User as UserIcon, MapPin, Flag, X, Lock } from "lucide-react"
 import { ModalShell } from "@/components/pythea/modal-shell"
 import { useI18n } from "@/components/pythea/language-provider"
 import { track } from "@/lib/analytics-client"
@@ -28,6 +28,13 @@ const INK_BROWN_RING = "oklch(0.3 0.08 40)"
 const NODE_TEXT = "oklch(0.94 0.02 80)"
 const BRASS = "oklch(0.62 0.14 70)"
 const TEAL = "oklch(0.5 0.07 200)"
+
+// Once a crew has completed riddle 8 (i.e. moved onto the final riddle, so
+// progress climbs past 8), its score is concealed so the podium stays a
+// surprise until the closing party. Tie the cutoff to the riddle number, not
+// the total, so it holds even if the route length ever changes.
+const SCORE_HIDDEN_AFTER_RIDDLE = 8
+const isScoreHidden = (progress: number) => progress > SCORE_HIDDEN_AFTER_RIDDLE
 
 export function LeaderboardView({
   entries,
@@ -355,14 +362,11 @@ export function LeaderboardView({
                       </span>
                       /{total}
                     </span>
-                    <span className="flex flex-col items-end leading-none">
-                      <span className="font-serif text-base font-black text-brass">
-                        {entry.score}
-                      </span>
-                      <span className="font-sans text-[9px] font-bold tracking-chip text-muted-foreground/70">
-                        {lb.points}
-                      </span>
-                    </span>
+                    <ScoreCell
+                      score={entry.score}
+                      hidden={isScoreHidden(entry.progress)}
+                      lb={lb}
+                    />
                   </div>
                 </li>
               )
@@ -492,13 +496,53 @@ function PortEntryRow({
           {lb.reachedLabel} {reachedText}
         </p>
       </div>
-      <span className="flex shrink-0 flex-col items-end leading-none">
-        <span className="font-serif text-lg font-black text-brass">{entry.score}</span>
-        <span className="font-sans text-[9px] font-bold tracking-chip text-muted-foreground/70">
-          {lb.points}
-        </span>
+      <span className="shrink-0">
+        <ScoreCell score={entry.score} hidden={isScoreHidden(entry.progress)} big lb={lb} />
       </span>
     </li>
+  )
+}
+
+function ScoreCell({
+  score,
+  hidden,
+  big,
+  lb,
+}: {
+  score: number
+  hidden: boolean
+  big?: boolean
+  lb: ReturnType<typeof useI18n>["t"]["leaderboard"]
+}) {
+  const numClass = big ? "text-lg" : "text-base"
+  if (hidden) {
+    return (
+      <span className="flex flex-col items-end leading-none">
+        <span className="relative inline-flex items-center">
+          {/* Blurred placeholder digits, decoupled from the real score so the
+              value cannot be read or inferred through the blur. */}
+          <span
+            aria-hidden
+            className={`select-none font-serif ${numClass} font-black text-brass blur-[6px]`}
+          >
+            888
+          </span>
+          <Lock className="absolute left-1/2 top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 text-brass/90" aria-hidden />
+        </span>
+        <span className="font-sans text-[9px] font-bold tracking-chip text-muted-foreground/70">
+          {lb.scoreSealed}
+        </span>
+        <span className="sr-only">{lb.scoreSealedSr}</span>
+      </span>
+    )
+  }
+  return (
+    <span className="flex flex-col items-end leading-none">
+      <span className={`font-serif ${numClass} font-black text-brass`}>{score}</span>
+      <span className="font-sans text-[9px] font-bold tracking-chip text-muted-foreground/70">
+        {lb.points}
+      </span>
+    </span>
   )
 }
 
