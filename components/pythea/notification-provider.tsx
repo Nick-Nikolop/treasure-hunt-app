@@ -10,6 +10,8 @@ import {
   acknowledgeMyDecision,
   type DecisionNotification,
 } from "@/app/actions/notifications"
+import { track } from "@/lib/analytics-client"
+import { EV } from "@/lib/analytics-events"
 
 const POLL_MS = 15000
 
@@ -52,6 +54,13 @@ export function NotificationProvider() {
   }, [load])
 
   const current = queue[0] ?? null
+
+  // Record each decision the explorer actually sees, once, keyed by id.
+  useEffect(() => {
+    if (current) {
+      track(EV.proofDecision, { decision: current.status }, { category: "hunt" })
+    }
+  }, [current?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function dismiss() {
     if (!current) return

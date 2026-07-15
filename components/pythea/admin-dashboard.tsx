@@ -28,7 +28,9 @@ import {
   BarChart3,
   Layers,
   MapPin,
+  Camera,
 } from "lucide-react"
+import { AdminProofsPanel } from "@/components/pythea/admin-proofs-panel"
 import { ModalShell } from "@/components/pythea/modal-shell"
 import { ConfirmDialog } from "@/components/pythea/confirm-dialog"
 import { AdminPasswordDialog } from "@/components/pythea/admin-password-dialog"
@@ -73,6 +75,7 @@ type Tab =
   | "analytics"
   | "phase"
   | "location"
+  | "proofs"
 
 type ActivityFilter = { kind: "user" | "team"; id: string; label: string } | null
 
@@ -269,6 +272,14 @@ export function AdminDashboard({
         <TabButton active={tab === "phase"} onClick={() => setTab("phase")} icon={Layers}>
           Phase
         </TabButton>
+        <TabButton active={tab === "proofs"} onClick={() => setTab("proofs")} icon={Camera}>
+          Proofs
+          {data.pendingProofCount > 0 && (
+            <span className="ml-1.5 inline-flex min-w-4 items-center justify-center rounded-full bg-brass px-1 py-0.5 font-sans text-[10px] font-black leading-none text-primary-foreground">
+              {data.pendingProofCount}
+            </span>
+          )}
+        </TabButton>
         {isBootstrap && (
           <TabButton
             active={tab === "location"}
@@ -431,6 +442,8 @@ export function AdminDashboard({
           <AdminAnalyticsPanel initial={data.analytics} />
         ) : tab === "phase" ? (
           <AdminPhasePanel data={data.phase} />
+        ) : tab === "proofs" ? (
+          <AdminProofsPanel />
         ) : tab === "location" && isBootstrap ? (
           <AdminLocationPanel />
         ) : (

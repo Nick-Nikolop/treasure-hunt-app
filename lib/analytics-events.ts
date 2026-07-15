@@ -36,6 +36,9 @@ export const EV = {
   leadUnlocked: "hunt.lead_unlocked", // props: { leadOrder, source }
   cooldownShown: "hunt.cooldown_shown", // props: { leadOrder }
   cooldownRetry: "hunt.cooldown_retry",
+  proofOpen: "hunt.proof_open", // props: { context } "denied" | "too_far"
+  proofSubmitted: "hunt.proof_submitted", // props: { context, photoCount }
+  proofDecision: "hunt.proof_decision", // props: { decision } seen by explorer
   journalOpen: "hunt.journal_open",
   journalLeadView: "hunt.journal_lead_view", // props: { leadOrder }
   huntFinished: "hunt.finished",

@@ -23,6 +23,8 @@ import { ScanResult } from "@/components/pythea/scan-result"
 import { verifyScan, submitLocationProof } from "@/app/q/[token]/actions"
 import type { UnlockResult } from "@/lib/hunt"
 import type { ProofContext } from "@/lib/proofs"
+import { track } from "@/lib/analytics-client"
+import { EV } from "@/lib/analytics-events"
 
 type GateState =
   | { phase: "intro" }
@@ -126,13 +128,13 @@ export function ScanGate({
           <Clock className="size-9 text-brass" aria-hidden />
         </div>
         <p className="mt-6 font-sans text-[11px] font-bold tracking-chip text-brass">
-          {g.proof.reviewLabel}
+          {t.scan.proof.reviewLabel}
         </p>
         <h1 className="mt-3 text-balance font-serif text-3xl font-black text-foreground md:text-4xl">
-          {g.proof.reviewTitle}
+          {t.scan.proof.reviewTitle}
         </h1>
         <p className="mx-auto mt-4 max-w-sm whitespace-pre-line text-pretty font-serif text-base leading-relaxed text-muted-foreground md:text-lg">
-          {g.proof.reviewBody}
+          {t.scan.proof.reviewBody}
         </p>
         <div className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:justify-center">
           <button
@@ -153,7 +155,7 @@ export function ScanGate({
           </Link>
         </div>
         <p className="mx-auto mt-4 max-w-sm text-pretty font-sans text-[11px] leading-relaxed text-muted-foreground/70">
-          {g.proof.reviewHint}
+          {t.scan.proof.reviewHint}
         </p>
       </motion.div>
     )
@@ -199,7 +201,12 @@ export function ScanGate({
                 <RotateCw className="size-4" />
                 {g.retry}
               </button>
-              <ProofButton onClick={() => setState({ phase: "proof", context: "too_far" })} />
+              <ProofButton
+                onClick={() => {
+                  track(EV.proofOpen, { context: "too_far" }, { category: "hunt" })
+                  setState({ phase: "proof", context: "too_far" })
+                }}
+              />
               {adminSkip}
             </>
           ),
@@ -209,9 +216,7 @@ export function ScanGate({
           icon: <XCircle className="size-9 text-muted-foreground" aria-hidden />,
           label: g.deniedLabel,
           title: g.deniedTitle,
-          body: `${state.unsupported ? g.unsupported : g.deniedBody}${
-            isSuperAdmin ? "" : `\n\n${g.altNotImplemented}`
-          }`,
+          body: state.unsupported ? g.unsupported : g.deniedBody,
           actions: (
             <>
               <button
@@ -223,7 +228,12 @@ export function ScanGate({
                 <RotateCw className="size-4" />
                 {g.retry}
               </button>
-              <ProofButton onClick={() => setState({ phase: "proof", context: "denied" })} />
+              <ProofButton
+                onClick={() => {
+                  track(EV.proofOpen, { context: "denied" }, { category: "hunt" })
+                  setState({ phase: "proof", context: "denied" })
+                }}
+              />
               {adminSkip}
               {!isSuperAdmin && (
                 <Link
@@ -384,6 +394,7 @@ function ProofForm({
       for (const f of files) fd.append("photos", f)
       const resp = await submitLocationProof(token, fd)
       if (resp.ok) {
+        track(EV.proofSubmitted, { context, photoCount: files.length }, { category: "hunt" })
         onSubmitted()
       } else if (resp.reason === "auth") {
         window.location.href = `/sign-in?redirect=/q/${encodeURIComponent(token)}`
