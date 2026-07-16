@@ -244,7 +244,7 @@ export function AdminDashboard({
       )}
 
       {/* Tab bar */}
-      <div className="mt-6 flex max-w-full overflow-x-auto rounded-sm border border-border p-1 sm:inline-flex">
+      <div className="mt-6 flex flex-wrap gap-1 rounded-sm border border-border p-1">
         <TabButton active={tab === "users"} onClick={() => setTab("users")} icon={Users}>
           Users
         </TabButton>
