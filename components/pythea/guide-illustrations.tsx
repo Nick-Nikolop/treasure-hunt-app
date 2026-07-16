@@ -180,71 +180,75 @@ function UnlockIllo() {
   )
 }
 
-/* 4. VERIFY — a GPS locate: crosshair map grid, concentric accuracy rings, a
-   rotating radar sweep, expanding pings, and a pin that locks onto the target. */
+/* 4. VERIFY — a radar scope: range rings, cross-hairs, a continuously spinning
+   sweep with a trailing fade, and blips that light up as the beam passes them. */
 function VerifyIllo() {
   const reduce = useReducedMotion()
+  const cx = 120
+  const cy = 90
+  const R = 50
+  // Blips fixed on the scope; each glows in sync with the ~4s sweep rotation.
+  const blips = [
+    { x: 150, y: 68, at: 0.12 },
+    { x: 96, y: 116, at: 0.55 },
+    { x: 142, y: 112, at: 0.78 },
+  ]
   return (
     <Frame>
       <defs>
-        <radialGradient id="sweep" cx="0%" cy="100%" r="100%">
-          <stop offset="0%" stopColor={TEAL} stopOpacity="0.35" />
+        {/* a quarter-wedge that fades out behind the leading sweep line */}
+        <linearGradient id="radarSweep" x1="1" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={TEAL} stopOpacity="0.4" />
+          <stop offset="60%" stopColor={TEAL} stopOpacity="0.08" />
           <stop offset="100%" stopColor={TEAL} stopOpacity="0" />
-        </radialGradient>
+        </linearGradient>
+        <clipPath id="radarClip">
+          <circle cx={cx} cy={cy} r={R} />
+        </clipPath>
       </defs>
 
-      {/* map grid */}
-      {[54, 90, 126].map((y) => (
-        <line key={`h${y}`} x1="40" y1={y} x2="200" y2={y} stroke={BORDER} strokeWidth="1" opacity="0.5" />
-      ))}
-      {[72, 120, 168].map((x) => (
-        <line key={`v${x}`} x1={x} y1="40" x2={x} y2="140" stroke={BORDER} strokeWidth="1" opacity="0.5" />
-      ))}
+      {/* scope face + range rings */}
+      <circle cx={cx} cy={cy} r={R} fill={TEAL} fillOpacity="0.04" stroke={BORDER} strokeWidth="1.5" />
+      <circle cx={cx} cy={cy} r={R * 0.66} fill="none" stroke={BORDER} strokeWidth="1" opacity="0.7" />
+      <circle cx={cx} cy={cy} r={R * 0.33} fill="none" stroke={BORDER} strokeWidth="1" opacity="0.7" />
+      {/* cross-hairs */}
+      <line x1={cx - R} y1={cy} x2={cx + R} y2={cy} stroke={BORDER} strokeWidth="1" opacity="0.6" />
+      <line x1={cx} y1={cy - R} x2={cx} y2={cy + R} stroke={BORDER} strokeWidth="1" opacity="0.6" />
+      {/* outer accuracy ring in brass */}
+      <circle cx={cx} cy={cy} r={R + 6} fill="none" stroke={BRASS} strokeWidth="1.5" strokeDasharray="3 6" opacity="0.55" />
 
-      {/* accuracy rings */}
-      <circle cx="120" cy="90" r="48" fill="none" stroke={BRASS} strokeWidth="1.5" strokeDasharray="3 6" opacity="0.7" />
-      <circle cx="120" cy="90" r="30" fill="none" stroke={BORDER} strokeWidth="1.5" />
+      {/* spinning sweep (wedge + leading line), clipped to the scope */}
+      <g clipPath="url(#radarClip)">
+        <motion.g
+          style={{ originX: `${cx}px`, originY: `${cy}px` }}
+          animate={reduce ? { rotate: 0 } : { rotate: 360 }}
+          transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+        >
+          <path d={`M${cx} ${cy} L${cx} ${cy - R} A${R} ${R} 0 0 1 ${cx + R} ${cy} Z`} fill="url(#radarSweep)" />
+          <line x1={cx} y1={cy} x2={cx} y2={cy - R} stroke={TEAL} strokeWidth="2" />
+        </motion.g>
+      </g>
 
-      {/* rotating radar sweep */}
-      <motion.g
-        style={{ originX: "120px", originY: "90px" }}
-        animate={reduce ? undefined : { rotate: 360 }}
-        transition={{ duration: 3.6, repeat: Infinity, ease: "linear" }}
-      >
-        <path d="M120 90 L120 42 A48 48 0 0 1 158 66 Z" fill="url(#sweep)" />
-        <line x1="120" y1="90" x2="120" y2="42" stroke={TEAL} strokeWidth="2" />
-      </motion.g>
-
-      {/* expanding locate pings */}
-      {[0, 1].map((i) => (
+      {/* blips that flash as the sweep passes over them */}
+      {blips.map((b, i) => (
         <motion.circle
           key={i}
-          cx="120"
-          cy="90"
-          r="14"
-          fill="none"
-          stroke={TEAL}
-          strokeWidth="2"
-          animate={reduce ? { scale: 2, opacity: 0 } : { scale: [0.5, 2.6], opacity: [0.6, 0] }}
-          transition={{ duration: 2.8, delay: i * 1.4, repeat: Infinity, ease: "easeOut" }}
-          style={{ originX: "120px", originY: "90px" }}
+          cx={b.x}
+          cy={b.y}
+          r="4"
+          fill={BRASS}
+          animate={reduce ? { opacity: 0.9 } : { opacity: [0, 1, 0.85, 0.15, 0] }}
+          transition={{
+            duration: 4,
+            times: [0, b.at, b.at + 0.05, b.at + 0.4, 1],
+            repeat: Infinity,
+            ease: "linear",
+          }}
         />
       ))}
 
-      {/* pin locking onto the target */}
-      <motion.g
-        animate={reduce ? undefined : { y: [-7, 0], scale: [0.86, 1] }}
-        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], repeat: Infinity, repeatType: "reverse", repeatDelay: 1.9 }}
-        style={{ originX: "120px", originY: "102px" }}
-      >
-        <path
-          d="M120 62 a16 16 0 1 1 0 32 c0 9 0 11 0 16 c0 -5 0 -7 0 -16 a16 16 0 1 1 0 -32z"
-          fill="var(--card)"
-          stroke={BRASS}
-          strokeWidth="2.5"
-        />
-        <circle cx="120" cy="78" r="6" fill={BRASS} />
-      </motion.g>
+      {/* fixed centre point */}
+      <circle cx={cx} cy={cy} r="3.5" fill={TEAL} />
     </Frame>
   )
 }
