@@ -97,7 +97,8 @@ export default async function Page() {
         <Faq />
         <Party />
       </main>
-      <FloatingCta />
+      {/* The floating register CTA only makes sense for signed-out visitors. */}
+      {!initialUser && <FloatingCta />}
       <SiteFooter />
     </>
   )
