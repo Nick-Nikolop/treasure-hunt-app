@@ -202,6 +202,21 @@ export function AdminDashboard({
     )
   }, [data.teams, query])
 
+  // Leads missing required content (same rules as the global alerts widget:
+  // no location, story, clue, or stamp image). Drives the red badge on the tab.
+  const leadIssueCount = useMemo(
+    () =>
+      data.leads.filter(
+        (l) =>
+          l.lat == null ||
+          l.lng == null ||
+          !l.body?.trim() ||
+          !l.subtitle?.trim() ||
+          !l.stampImageUrl,
+      ).length,
+    [data.leads],
+  )
+
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-10 md:py-14">
       {/* Header */}
@@ -259,6 +274,14 @@ export function AdminDashboard({
         </TabButton>
         <TabButton active={tab === "leads"} onClick={() => setTab("leads")} icon={ScrollText}>
           Leads
+          {leadIssueCount > 0 && (
+            <span
+              title={`${leadIssueCount} lead${leadIssueCount === 1 ? "" : "s"} missing info`}
+              className="ml-1.5 inline-flex min-w-4 items-center justify-center rounded-full bg-destructive px-1 py-0.5 font-sans text-[10px] font-black leading-none text-destructive-foreground"
+            >
+              {leadIssueCount}
+            </span>
+          )}
         </TabButton>
         <TabButton active={tab === "scoring"} onClick={() => setTab("scoring")} icon={Trophy}>
           Scoring
