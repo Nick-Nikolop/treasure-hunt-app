@@ -91,6 +91,9 @@ export type SubmitProofResponse =
       ok: false
       reason: "auth" | "not_verify" | "duplicate" | "no_files" | "too_many" | "too_large" | "bad_type"
     }
+  // Unexpected failure (e.g. Blob upload). `detail` is only populated for
+  // superadmins, so a technical message can be surfaced (and copied) to them.
+  | { ok: false; reason: "error"; detail?: string }
 
 /**
  * Submit 1-3 photos as manual proof of presence when the GPS gate was denied or
@@ -134,43 +137,55 @@ export async function submitLocationProof(
   const def = (await getLeadDefs()).find((d) => d.order === leadOrder)
   const leadId = def?.id ?? null
 
-  // Upload each image to Blob. Access is public but the random suffix makes the
-  // URL unguessable, matching how lead stamp images are stored.
-  const photoUrls: string[] = []
-  for (const f of files) {
-    const ext = f.type.split("/")[1]?.replace("jpeg", "jpg") ?? "jpg"
-    const blob = await put(`proofs/${userId}-${leadOrder}-${Date.now()}.${ext}`, f, {
-      access: "public",
-      addRandomSuffix: true,
-      contentType: f.type,
-    })
-    photoUrls.push(blob.url)
-  }
+  try {
+    // Upload each image to Blob. Access is public but the random suffix makes the
+    // URL unguessable, matching how lead stamp images are stored.
+    const photoUrls: string[] = []
+    for (const f of files) {
+      const ext = f.type.split("/")[1]?.replace("jpeg", "jpg") ?? "jpg"
+      const blob = await put(`proofs/${userId}-${leadOrder}-${Date.now()}.${ext}`, f, {
+        access: "public",
+        addRandomSuffix: true,
+        contentType: f.type,
+      })
+      photoUrls.push(blob.url)
+    }
 
-  await createProofSubmission({
-    userId,
-    userName: session.user.name ?? "Explorer",
-    leadOrder,
-    leadId,
-    token,
-    context,
-    photoUrls,
-    note,
-  })
-
-  await logActivity({
-    category: "lead",
-    action: "proof.submitted",
-    actorId: userId,
-    actorName: session.user.name ?? "Explorer",
-    targetUserId: userId,
-    targetUserName: session.user.name ?? "Explorer",
-    leadOrder,
-    summary: `${session.user.name ?? "An explorer"} submitted photo proof for lead No. ${String(
+    await createProofSubmission({
+      userId,
+      userName: session.user.name ?? "Explorer",
       leadOrder,
-    ).padStart(2, "0")}`,
-    metadata: { context, photoCount: photoUrls.length },
-  })
+      leadId,
+      token,
+      context,
+      photoUrls,
+      note,
+    })
 
-  return { ok: true }
+    await logActivity({
+      category: "lead",
+      action: "proof.submitted",
+      actorId: userId,
+      actorName: session.user.name ?? "Explorer",
+      targetUserId: userId,
+      targetUserName: session.user.name ?? "Explorer",
+      leadOrder,
+      summary: `${session.user.name ?? "An explorer"} submitted photo proof for lead No. ${String(
+        leadOrder,
+      ).padStart(2, "0")}`,
+      metadata: { context, photoCount: photoUrls.length },
+    })
+
+    return { ok: true }
+  } catch (err) {
+    // Surface the raw error to superadmins only (so they can copy/report it);
+    // regular explorers just see a generic failure message.
+    const admin = await getAdminUser()
+    if (!admin) return { ok: false, reason: "error" }
+    const detail =
+      err instanceof Error
+        ? `${err.name}: ${err.message}${err.stack ? `\n\n${err.stack}` : ""}`
+        : String(err)
+    return { ok: false, reason: "error", detail }
+  }
 }

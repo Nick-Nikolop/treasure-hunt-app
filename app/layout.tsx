@@ -9,6 +9,7 @@ import { PhaseProvider } from '@/components/pythea/phase-provider'
 import { AnalyticsProvider } from '@/components/pythea/analytics-provider'
 import { CookieConsent } from '@/components/pythea/cookie-consent'
 import { NotificationProvider } from '@/components/pythea/notification-provider'
+import { AdminAlertsWidget } from '@/components/pythea/admin-alerts-widget'
 import { getPhaseContext, getPublicPhase } from '@/lib/phase-guard'
 import { DEFAULT_LOCALE, isLocale, LANG_COOKIE, type Locale } from '@/lib/i18n'
 import { SITE, TEASER, SITE_URL, KEYWORDS, BRAND, BRAND_NAME_EN, VERIFICATION } from '@/lib/seo'
@@ -170,6 +171,7 @@ export default async function RootLayout({
             </LiteModeProvider>
             <CookieConsent />
             <NotificationProvider />
+            <AdminAlertsWidget />
           </LanguageProvider>
           <AnalyticsProvider />
         </ThemeProvider>

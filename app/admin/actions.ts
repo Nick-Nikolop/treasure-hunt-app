@@ -6,6 +6,7 @@ import { account, leadUnlock, session, team, teamMember, user } from "@/lib/db/s
 import {
   requireAdmin,
   requireBootstrapAdmin,
+  getAdminUser,
   isBootstrapEmail,
   superadminCount,
   type AdminUser,
@@ -404,6 +405,45 @@ export async function adminDecideProof(
 
   revalidatePath("/admin")
   return { ok: true, decision, unlock }
+}
+
+// ── Global admin alerts (top-right widget on every page) ─────────────────────
+
+/** A single lead that is missing required content, for the alerts widget. */
+export type LeadIssue = { order: number; country: string; issues: string[] }
+
+export type AdminAlerts = {
+  /** Whether the caller is an admin. Non-admins get a benign empty payload. */
+  isAdmin: boolean
+  /** Photo proofs awaiting review. */
+  pendingProofs: number
+  /** Leads missing a location or other required info. */
+  leadIssues: LeadIssue[]
+}
+
+/**
+ * Lightweight, admin-gated summary powering the floating alerts widget. Safe to
+ * call from any page: non-admins receive `{ isAdmin: false }` with zeroed
+ * counts, so the widget renders nothing for them. Flags each lead that is
+ * missing a location or key content (story, clue, or stamp image).
+ */
+export async function getAdminAlerts(): Promise<AdminAlerts> {
+  const admin = await getAdminUser()
+  if (!admin) return { isAdmin: false, pendingProofs: 0, leadIssues: [] }
+
+  const [pendingProofs, leads] = await Promise.all([getPendingProofCount(), getEditableLeads()])
+
+  const leadIssues: LeadIssue[] = []
+  for (const l of leads) {
+    const issues: string[] = []
+    if (l.lat == null || l.lng == null) issues.push("location")
+    if (!l.body || !l.body.trim()) issues.push("story")
+    if (!l.subtitle || !l.subtitle.trim()) issues.push("clue")
+    if (!l.stampImageUrl) issues.push("stamp")
+    if (issues.length > 0) leadIssues.push({ order: l.order, country: l.country, issues })
+  }
+
+  return { isAdmin: true, pendingProofs, leadIssues }
 }
 
 /** Load the phase settings, the effective phase now, and the waitlist. */

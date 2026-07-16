@@ -233,36 +233,59 @@ export function AdminProofsPanel() {
           </h2>
           <ul className="divide-y divide-border rounded-sm border border-border">
             {recent.map((p) => (
-              <li key={p.id} className="flex items-center justify-between gap-3 px-4 py-3">
-                <div className="flex items-center gap-3">
-                  {p.status === "approved" ? (
-                    <BadgeCheck className="size-4 shrink-0 text-brass" />
-                  ) : (
-                    <XCircle className="size-4 shrink-0 text-amber-500" />
-                  )}
-                  <div>
-                    <p className="font-serif text-sm text-foreground">
-                      {p.userName} · No. {String(p.leadOrder).padStart(2, "0")} · {p.country}
+              <li key={p.id} className="px-4 py-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    {p.status === "approved" ? (
+                      <BadgeCheck className="size-4 shrink-0 text-brass" />
+                    ) : (
+                      <XCircle className="size-4 shrink-0 text-amber-500" />
+                    )}
+                    <div>
+                      <p className="font-serif text-sm text-foreground">
+                        {p.userName} · No. {String(p.leadOrder).padStart(2, "0")} · {p.country}
+                      </p>
+                      {p.status === "rejected" && p.reason && (
+                        <p className="font-sans text-[11px] text-muted-foreground">{p.reason}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p
+                      className={`font-sans text-[10px] font-bold tracking-chip ${
+                        p.status === "approved" ? "text-brass" : "text-amber-500"
+                      }`}
+                    >
+                      {p.status === "approved" ? "APPROVED" : "REJECTED"}
                     </p>
-                    {p.status === "rejected" && p.reason && (
-                      <p className="font-sans text-[11px] text-muted-foreground">{p.reason}</p>
+                    {p.reviewerName && (
+                      <p className="font-sans text-[10px] tracking-chip text-muted-foreground/70">
+                        {p.reviewerName}
+                      </p>
                     )}
                   </div>
                 </div>
-                <div className="shrink-0 text-right">
-                  <p
-                    className={`font-sans text-[10px] font-bold tracking-chip ${
-                      p.status === "approved" ? "text-brass" : "text-amber-500"
-                    }`}
-                  >
-                    {p.status === "approved" ? "APPROVED" : "REJECTED"}
-                  </p>
-                  {p.reviewerName && (
-                    <p className="font-sans text-[10px] tracking-chip text-muted-foreground/70">
-                      {p.reviewerName}
-                    </p>
-                  )}
-                </div>
+
+                {/* Submitted photos stay viewable after a decision. */}
+                {p.photoUrls.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5 pl-7">
+                    {p.photoUrls.map((url, i) => (
+                      <button
+                        key={url}
+                        type="button"
+                        onClick={() => setLightbox({ urls: p.photoUrls, index: i })}
+                        className="size-12 overflow-hidden rounded-sm border border-border transition-opacity hover:opacity-80"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={url || "/placeholder.svg"}
+                          alt={`${p.userName} proof ${i + 1}`}
+                          className="size-full object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
               </li>
             ))}
           </ul>

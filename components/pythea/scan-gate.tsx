@@ -17,6 +17,8 @@ import {
   X,
   Clock,
   Send,
+  Copy,
+  Check,
 } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
 import { ScanResult } from "@/components/pythea/scan-result"
@@ -104,6 +106,7 @@ export function ScanGate({
       <ProofForm
         token={token}
         context={state.context}
+        isSuperAdmin={isSuperAdmin}
         onCancel={() =>
           setState(
             state.context === "too_far"
@@ -332,11 +335,13 @@ const MAX_PROOF_BYTES = 10 * 1024 * 1024
 function ProofForm({
   token,
   context,
+  isSuperAdmin,
   onCancel,
   onSubmitted,
 }: {
   token: string
   context: ProofContext
+  isSuperAdmin: boolean
   onCancel: () => void
   onSubmitted: () => void
 }) {
@@ -346,6 +351,8 @@ function ProofForm({
   const [previews, setPreviews] = useState<string[]>([])
   const [note, setNote] = useState("")
   const [error, setError] = useState<string | null>(null)
+  // Raw technical error text, shown with a copy button to superadmins only.
+  const [errorDetail, setErrorDetail] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -387,6 +394,7 @@ function ProofForm({
     }
     setBusy(true)
     setError(null)
+    setErrorDetail(null)
     try {
       const fd = new FormData()
       fd.set("context", context)
@@ -401,11 +409,17 @@ function ProofForm({
       } else if (resp.reason === "duplicate") {
         // Already have a pending proof for this lead: treat as submitted.
         onSubmitted()
+      } else if (resp.reason === "error") {
+        setError(p.errGeneric)
+        if (isSuperAdmin && resp.detail) setErrorDetail(resp.detail)
       } else {
         setError(p.errGeneric)
       }
-    } catch {
+    } catch (err) {
       setError(p.errGeneric)
+      if (isSuperAdmin) {
+        setErrorDetail(err instanceof Error ? `${err.name}: ${err.message}` : String(err))
+      }
     } finally {
       setBusy(false)
     }
@@ -488,6 +502,8 @@ function ProofForm({
         </p>
       )}
 
+      {errorDetail && <ErrorDetailBox detail={errorDetail} />}
+
       <div className="mt-6 flex flex-col items-stretch gap-3 sm:flex-row sm:justify-center">
         <button
           type="button"
@@ -508,5 +524,45 @@ function ProofForm({
         </button>
       </div>
     </motion.div>
+  )
+}
+
+/**
+ * Superadmin-only technical error panel with a copy button. Shows the raw error
+ * text returned by the server (or caught client-side) so a superadmin can copy
+ * and report exactly what went wrong during an upload.
+ */
+function ErrorDetailBox({ detail }: { detail: string }) {
+  const [copied, setCopied] = useState(false)
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(detail)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // Clipboard blocked: leave the text visible for manual copy.
+    }
+  }
+
+  return (
+    <div className="mt-3 rounded-sm border border-destructive/40 bg-background">
+      <div className="flex items-center justify-between gap-2 border-b border-destructive/20 px-3 py-2">
+        <span className="font-sans text-[10px] font-bold tracking-chip text-destructive">
+          ADMIN: TECHNICAL DETAILS
+        </span>
+        <button
+          type="button"
+          onClick={copy}
+          className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-card px-2 py-1 font-sans text-[10px] font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass"
+        >
+          {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
+          {copied ? "COPIED" : "COPY"}
+        </button>
+      </div>
+      <pre className="max-h-40 overflow-auto whitespace-pre-wrap px-3 py-2 font-mono text-[10px] leading-relaxed text-muted-foreground">
+        {detail}
+      </pre>
+    </div>
   )
 }
