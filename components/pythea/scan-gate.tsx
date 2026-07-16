@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import {
@@ -19,24 +19,38 @@ import {
   Send,
   Copy,
   Check,
+  LogOut,
 } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
 import { ScanResult } from "@/components/pythea/scan-result"
 import { upload } from "@vercel/blob/client"
-import { verifyScan, submitLocationProof } from "@/app/q/[token]/actions"
+import { verifyScan, submitLocationProof, getScanPendingProof } from "@/app/q/[token]/actions"
 import type { UnlockResult } from "@/lib/hunt"
 import type { ProofContext } from "@/lib/proofs"
 import { track } from "@/lib/analytics-client"
 import { EV } from "@/lib/analytics-events"
 
 type GateState =
+  // Brief initial state while we check for an existing pending crew proof.
+  | { phase: "loading" }
   | { phase: "intro" }
   | { phase: "checking" }
   | { phase: "result"; result: UnlockResult }
   | { phase: "too_far"; distanceM: number; radiusM: number }
   | { phase: "denied"; unsupported?: boolean }
-  | { phase: "proof"; context: ProofContext }
+  | { phase: "proof"; context: ProofContext; replace?: boolean }
+  // The crew already has a pending proof for this lead (shown on re-scan).
+  | { phase: "already" }
   | { phase: "submitted" }
+
+/** The crew's existing pending proof, surfaced on a re-scan. */
+type PendingInfo = {
+  photoUrls: string[]
+  note: string | null
+  isMine: boolean
+  submittedByName: string
+  country: string
+}
 
 /**
  * The location gate shown before a real in-order unlock. The explorer proves
@@ -53,8 +67,39 @@ export function ScanGate({
 }) {
   const { t } = useI18n()
   const g = t.scan.gate
-  const [state, setState] = useState<GateState>({ phase: "intro" })
+  const [state, setState] = useState<GateState>({ phase: "loading" })
   const [busy, setBusy] = useState(false)
+  // The crew's existing pending proof (if any), kept so the "already submitted"
+  // card survives navigating into a replacement form and back.
+  const [pending, setPending] = useState<PendingInfo | null>(null)
+
+  // On mount, check whether the crew already filed a pending proof for this
+  // mark. If so, open on the "already submitted" card instead of asking again.
+  useEffect(() => {
+    let active = true
+    getScanPendingProof(token)
+      .then((res) => {
+        if (!active) return
+        if (res.pending) {
+          setPending({
+            photoUrls: res.photoUrls,
+            note: res.note,
+            isMine: res.isMine,
+            submittedByName: res.submittedByName,
+            country: res.country,
+          })
+          setState({ phase: "already" })
+        } else {
+          setState({ phase: "intro" })
+        }
+      })
+      .catch(() => {
+        if (active) setState({ phase: "intro" })
+      })
+    return () => {
+      active = false
+    }
+  }, [token])
 
   // Send whatever payload (coords or admin-skip) to the server and route the
   // response into the right card. The server does the real unlock.
@@ -103,20 +148,116 @@ export function ScanGate({
   }
 
   if (state.phase === "proof") {
+    const replace = state.replace ?? false
     return (
       <ProofForm
         token={token}
         context={state.context}
+        replace={replace}
         isSuperAdmin={isSuperAdmin}
         onCancel={() =>
           setState(
-            state.context === "too_far"
-              ? { phase: "too_far", distanceM: 0, radiusM: 0 }
-              : { phase: "denied" },
+            replace
+              ? { phase: "already" }
+              : state.context === "too_far"
+                ? { phase: "too_far", distanceM: 0, radiusM: 0 }
+                : { phase: "denied" },
           )
         }
         onSubmitted={() => setState({ phase: "submitted" })}
       />
+    )
+  }
+
+  if (state.phase === "loading") {
+    return (
+      <div className="flex w-full max-w-md items-center justify-center rounded-sm border border-border bg-card/60 px-6 py-16">
+        <Loader2 className="size-8 animate-spin text-brass" aria-hidden />
+        <span className="sr-only">{g.checking}</span>
+      </div>
+    )
+  }
+
+  if (state.phase === "already" && pending) {
+    const p = t.scan.proof
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        className="w-full max-w-md rounded-sm border border-brass bg-card/60 px-6 py-9 text-center md:px-8 md:py-11"
+      >
+        <div className="mx-auto flex size-16 items-center justify-center rounded-full border border-border bg-background">
+          <Clock className="size-9 text-brass" aria-hidden />
+        </div>
+        <p className="mt-6 font-sans text-[11px] font-bold tracking-chip text-brass">
+          {p.alreadyLabel}
+        </p>
+        <h1 className="mt-3 text-balance font-serif text-3xl font-black text-foreground md:text-4xl">
+          {p.alreadyTitle}
+        </h1>
+        <p className="mx-auto mt-4 max-w-sm text-pretty font-serif text-base leading-relaxed text-muted-foreground md:text-lg">
+          {pending.isMine ? p.alreadyBodyMine : p.alreadyBodyTeam(pending.submittedByName)}
+        </p>
+
+        {pending.photoUrls.length > 0 && (
+          <div className="mt-6 flex flex-wrap justify-center gap-2">
+            {pending.photoUrls.map((url, i) => (
+              <a
+                key={url}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="size-20 overflow-hidden rounded-sm border border-border transition-opacity hover:opacity-80"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={url || "/placeholder.svg"}
+                  alt={`${p.label} ${i + 1}`}
+                  className="size-full object-cover"
+                />
+              </a>
+            ))}
+          </div>
+        )}
+
+        {pending.note && (
+          <div className="mt-5 rounded-sm border border-border bg-background px-4 py-3 text-left">
+            <p className="font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
+              {p.alreadyNoteLabel}
+            </p>
+            <p className="mt-1.5 font-serif text-sm italic leading-relaxed text-muted-foreground">
+              {"\u201C"}
+              {pending.note}
+              {"\u201D"}
+            </p>
+          </div>
+        )}
+
+        <div className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:justify-center">
+          <Link
+            href="/journal"
+            className="inline-flex items-center justify-center gap-2 rounded-sm border border-border bg-background px-5 py-3 font-sans text-xs font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass"
+          >
+            <LogOut className="size-4" />
+            {p.exit}
+          </Link>
+          <button
+            type="button"
+            onClick={() => {
+              track(EV.proofOpen, { context: "denied", source: "replace" }, { category: "hunt" })
+              setState({ phase: "proof", context: "denied", replace: true })
+            }}
+            className="inline-flex items-center justify-center gap-2 rounded-sm bg-brass px-5 py-3 font-sans text-xs font-bold tracking-chip text-primary-foreground transition-opacity hover:opacity-90"
+          >
+            <Camera className="size-4" />
+            {p.replace}
+          </button>
+        </div>
+        <p className="mx-auto mt-4 max-w-sm text-pretty font-sans text-[11px] leading-relaxed text-muted-foreground/70">
+          {p.replaceHint}
+        </p>
+      </motion.div>
     )
   }
 
@@ -342,12 +483,14 @@ const MAX_PROOF_BYTES = 10 * 1024 * 1024
 function ProofForm({
   token,
   context,
+  replace,
   isSuperAdmin,
   onCancel,
   onSubmitted,
 }: {
   token: string
   context: ProofContext
+  replace: boolean
   isSuperAdmin: boolean
   onCancel: () => void
   onSubmitted: () => void
@@ -421,6 +564,7 @@ function ProofForm({
         context,
         note: note.trim() || undefined,
         photoUrls,
+        replace,
       })
       if (resp.ok) {
         track(EV.proofSubmitted, { context, photoCount: files.length }, { category: "hunt" })

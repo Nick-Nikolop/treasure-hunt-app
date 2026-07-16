@@ -486,6 +486,16 @@ const el = {
       reviewBody:
         "Ένας διαχειριστής θα ελέγξει τις φωτογραφίες σου.\nΘα ειδοποιηθείς μόλις εγκριθεί ή απορριφθεί, είτε είσαι στην εφαρμογή είτε μπεις ξανά αργότερα.",
       reviewHint: "Στο μεταξύ, μπορείς να ξαναδοκιμάσεις τον έλεγχο τοποθεσίας αν πλησιάσεις το σημάδι.",
+      alreadyLabel: "ΕΚΚΡΕΜΕΙ ΕΛΕΓΧΟΣ",
+      alreadyTitle: "Έχει ήδη σταλεί απόδειξη",
+      alreadyBodyMine:
+        "Έχεις ήδη στείλει φωτογραφίες για αυτό το σημάδι και εκκρεμεί ο έλεγχος από διαχειριστή.",
+      alreadyBodyTeam: (name: string) =>
+        `Η ομάδα σου (${name}) έχει ήδη στείλει φωτογραφίες για αυτό το σημάδι και εκκρεμεί ο έλεγχος από διαχειριστή.`,
+      alreadyNoteLabel: "Το σημείωμα που στάλθηκε",
+      exit: "ΕΞΟΔΟΣ",
+      replace: "ΝΕΑ ΥΠΟΒΟΛΗ",
+      replaceHint: "Μια νέα υποβολή θα αντικαταστήσει την τρέχουσα που εκκρεμεί.",
     },
     gate: {
       label: "ΕΠΙΒΕΒΑΙΩΣΗ ΤΟΠΟΘΕΣΙΑΣ",
@@ -1195,6 +1205,16 @@ const en: Dictionary = {
       reviewBody:
         "An admin will review your photos.\nYou'll be notified once it's approved or rejected, whether you're in the app or you come back later.",
       reviewHint: "In the meantime, you can retry the location check if you get closer to the mark.",
+      alreadyLabel: "UNDER REVIEW",
+      alreadyTitle: "Proof already submitted",
+      alreadyBodyMine:
+        "You've already submitted photos for this mark and they're waiting for an admin to review.",
+      alreadyBodyTeam: (name: string) =>
+        `Your team (${name}) has already submitted photos for this mark and they're waiting for an admin to review.`,
+      alreadyNoteLabel: "Note that was sent",
+      exit: "EXIT",
+      replace: "NEW SUBMISSION",
+      replaceHint: "A new submission will replace the one that's currently pending.",
     },
     gate: {
       label: "CONFIRM YOUR LOCATION",

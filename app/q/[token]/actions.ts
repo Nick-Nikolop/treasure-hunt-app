@@ -3,14 +3,21 @@
 import { headers } from "next/headers"
 import { auth } from "@/lib/auth"
 import { getAdminUser } from "@/lib/admin"
+import { del } from "@vercel/blob"
 import {
   checkScanLocation,
   resolveScanContext,
   unlockByToken,
+  getCrewUserIds,
   type UnlockResult,
 } from "@/lib/hunt"
 import { getLeadDefs } from "@/lib/leads"
-import { createProofSubmission, hasPendingProof, type ProofContext } from "@/lib/proofs"
+import {
+  createProofSubmission,
+  getCrewPendingProof,
+  deletePendingCrewProofs,
+  type ProofContext,
+} from "@/lib/proofs"
 import { logActivity } from "@/lib/activity"
 
 /**
@@ -101,6 +108,56 @@ export type SubmitProofInput = {
   note?: string
   /** Blob URLs of the images already uploaded from the client. */
   photoUrls: string[]
+  /**
+   * When true, delete the crew's existing pending proof for this lead first, so
+   * the new submission replaces it instead of being rejected as a duplicate.
+   */
+  replace?: boolean
+}
+
+export type ScanPendingProof =
+  | { pending: false }
+  | {
+      pending: true
+      photoUrls: string[]
+      note: string | null
+      /** Who filed it, and whether that was the current explorer. */
+      submittedByName: string
+      isMine: boolean
+      leadOrder: number
+      country: string
+      countryEn: string
+    }
+
+/**
+ * If the crew already has a pending photo proof for the lead this token unlocks,
+ * return it (photos + note + who sent it) so a re-scan can show an "already
+ * submitted" state instead of asking again. Returns `{ pending: false }` when
+ * there is nothing pending or the scan isn't a genuine in-order gated unlock.
+ */
+export async function getScanPendingProof(token: string): Promise<ScanPendingProof> {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session?.user) return { pending: false }
+  const userId = session.user.id
+
+  const ctx = await resolveScanContext(userId, token)
+  if (ctx.mode !== "verify") return { pending: false }
+
+  const crew = await getCrewUserIds(userId)
+  const existing = await getCrewPendingProof(crew, ctx.leadOrder)
+  if (!existing) return { pending: false }
+
+  const def = (await getLeadDefs()).find((d) => d.order === ctx.leadOrder)
+  return {
+    pending: true,
+    photoUrls: existing.photoUrls,
+    note: existing.note,
+    submittedByName: existing.userName,
+    isMine: existing.userId === userId,
+    leadOrder: ctx.leadOrder,
+    country: def?.country ?? "",
+    countryEn: def?.countryEn ?? def?.country ?? "",
+  }
 }
 
 /** A URL is an acceptable proof photo only if it's an https Blob URL under the proofs/ prefix. */
@@ -150,8 +207,21 @@ export async function submitLocationProof(
   if (photoUrls.length > MAX_PROOF_PHOTOS) return { ok: false, reason: "too_many" }
   if (!photoUrls.every(isValidProofUrl)) return { ok: false, reason: "bad_url" }
 
-  // One pending proof per lead per explorer.
-  if (await hasPendingProof(userId, leadOrder)) return { ok: false, reason: "duplicate" }
+  // One pending proof per lead per crew. If replacing, delete the crew's current
+  // pending submission (and its photos) first; otherwise a duplicate is blocked.
+  const crew = await getCrewUserIds(userId)
+  if (input.replace) {
+    const removed = await deletePendingCrewProofs(crew, leadOrder)
+    if (removed.photoUrls.length > 0) {
+      try {
+        await del(removed.photoUrls)
+      } catch {
+        // orphaned blobs are harmless; don't block the replacement
+      }
+    }
+  } else if (await getCrewPendingProof(crew, leadOrder)) {
+    return { ok: false, reason: "duplicate" }
+  }
 
   const def = (await getLeadDefs()).find((d) => d.order === leadOrder)
   const leadId = def?.id ?? null

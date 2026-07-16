@@ -66,6 +66,55 @@ export async function hasPendingProof(userId: string, leadOrder: number): Promis
   return rows.length > 0
 }
 
+/**
+ * The pending proof for this lead filed by anyone in the crew (the explorer or
+ * a teammate), if one exists. Used so a re-scan surfaces "you already submitted
+ * this" for the whole crew, not just the person who happened to upload it.
+ */
+export async function getCrewPendingProof(
+  userIds: string[],
+  leadOrder: number,
+): Promise<ProofRow | null> {
+  if (userIds.length === 0) return null
+  const rows = await db
+    .select()
+    .from(proofSubmission)
+    .where(
+      and(
+        inArray(proofSubmission.userId, userIds),
+        eq(proofSubmission.leadOrder, leadOrder),
+        eq(proofSubmission.status, "pending"),
+      ),
+    )
+    .orderBy(desc(proofSubmission.createdAt))
+    .limit(1)
+  return rows[0] ?? null
+}
+
+/**
+ * Delete the crew's pending proofs for a lead (used when replacing a submission).
+ * Unlike `deleteProofsByIds`, this DOES delete pending rows, because the crew is
+ * intentionally superseding their own pending submission. Returns the removed
+ * count and photo URLs so the caller can purge them from Blob.
+ */
+export async function deletePendingCrewProofs(
+  userIds: string[],
+  leadOrder: number,
+): Promise<DeletedProofs> {
+  if (userIds.length === 0) return { count: 0, photoUrls: [] }
+  const rows = await db
+    .delete(proofSubmission)
+    .where(
+      and(
+        inArray(proofSubmission.userId, userIds),
+        eq(proofSubmission.leadOrder, leadOrder),
+        eq(proofSubmission.status, "pending"),
+      ),
+    )
+    .returning({ photoUrls: proofSubmission.photoUrls })
+  return { count: rows.length, photoUrls: rows.flatMap((r) => r.photoUrls) }
+}
+
 /** All pending submissions, oldest first (fair review order). */
 export async function getPendingProofs(): Promise<ProofRow[]> {
   return db
