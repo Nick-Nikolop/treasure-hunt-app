@@ -40,7 +40,7 @@ export default async function GuidePage() {
     <>
       <Atmosphere />
       <SiteHeader initialUser={initialUser} />
-      <GuideView />
+      <GuideView isLoggedIn={initialUser !== null} />
       <SiteFooter />
     </>
   )

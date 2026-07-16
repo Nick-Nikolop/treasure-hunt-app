@@ -25,7 +25,7 @@ const REVEAL = {
 // Icons for the quick-fact cards, matched by position: Entry, When, Where, Team, Prize.
 const FACT_ICONS = [Ticket, CalendarDays, MapPin, Users, Trophy]
 
-export function GuideView() {
+export function GuideView({ isLoggedIn = false }: { isLoggedIn?: boolean }) {
   const { t } = useI18n()
   const g = t.guide
 
@@ -171,41 +171,47 @@ export function GuideView() {
         })}
       </div>
 
-      {/* Closing CTA */}
-      <motion.div
-        {...REVEAL}
-        className="mt-12 rounded-sm border border-brass/40 bg-brass/[0.06] p-8 text-center md:mt-16 md:p-12"
-      >
-        <h2 className="text-balance font-serif text-3xl font-black text-foreground md:text-4xl">
-          {g.ctaTitle}
-        </h2>
-        <p className="mx-auto mt-3 max-w-xl text-pretty font-serif leading-relaxed text-muted-foreground">
-          {g.ctaBody}
-        </p>
-        <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
-          <a
-            href="/#register"
-            className="inline-flex items-center gap-2 rounded-sm bg-brass px-5 py-3 font-sans text-xs font-bold tracking-chip text-primary-foreground transition-transform hover:-translate-y-0.5"
-          >
-            {g.ctaRegister}
-            <ArrowRight className="size-4" />
-          </a>
-          <a
-            href="#faq"
-            className="inline-flex items-center gap-2 rounded-sm border border-border px-5 py-3 font-sans text-xs font-bold tracking-chip text-foreground transition-colors hover:border-brass/60 hover:text-brass"
-          >
-            <HelpCircle className="size-4" />
-            {g.ctaFaq}
-          </a>
-        </div>
+      {/* Closing CTA — the register push only makes sense for signed-out visitors. */}
+      {!isLoggedIn && (
+        <motion.div
+          {...REVEAL}
+          className="mt-12 rounded-sm border border-brass/40 bg-brass/[0.06] p-8 text-center md:mt-16 md:p-12"
+        >
+          <h2 className="text-balance font-serif text-3xl font-black text-foreground md:text-4xl">
+            {g.ctaTitle}
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl text-pretty font-serif leading-relaxed text-muted-foreground">
+            {g.ctaBody}
+          </p>
+          <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+            <a
+              href="/#register"
+              className="inline-flex items-center gap-2 rounded-sm bg-brass px-5 py-3 font-sans text-xs font-bold tracking-chip text-primary-foreground transition-transform hover:-translate-y-0.5"
+            >
+              {g.ctaRegister}
+              <ArrowRight className="size-4" />
+            </a>
+            <a
+              href="#faq"
+              className="inline-flex items-center gap-2 rounded-sm border border-border px-5 py-3 font-sans text-xs font-bold tracking-chip text-foreground transition-colors hover:border-brass/60 hover:text-brass"
+            >
+              <HelpCircle className="size-4" />
+              {g.ctaFaq}
+            </a>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Back-home link stays available in both states. */}
+      <div className={isLoggedIn ? "mt-12 text-center md:mt-16" : "mt-6 text-center"}>
         <a
           href="/"
-          className="mt-6 inline-flex items-center gap-2 font-sans text-[11px] font-semibold tracking-chip text-muted-foreground transition-colors hover:text-foreground"
+          className="inline-flex items-center gap-2 font-sans text-[11px] font-semibold tracking-chip text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft className="size-3.5" />
           {g.backHome}
         </a>
-      </motion.div>
+      </div>
 
       {/* FAQ — the same accordion used on the home page, closing out the guide */}
       <div className="mt-16 md:mt-24">
