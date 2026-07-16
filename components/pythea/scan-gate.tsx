@@ -22,6 +22,7 @@ import {
 } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
 import { ScanResult } from "@/components/pythea/scan-result"
+import { upload } from "@vercel/blob/client"
 import { verifyScan, submitLocationProof } from "@/app/q/[token]/actions"
 import type { UnlockResult } from "@/lib/hunt"
 import type { ProofContext } from "@/lib/proofs"
@@ -402,11 +403,25 @@ function ProofForm({
     setError(null)
     setErrorDetail(null)
     try {
-      const fd = new FormData()
-      fd.set("context", context)
-      if (note.trim()) fd.set("note", note.trim())
-      for (const f of files) fd.append("photos", f)
-      const resp = await submitLocationProof(token, fd)
+      // Upload each image straight from the browser to Blob. This avoids the
+      // Server Action body limit that made large photo uploads fail; the action
+      // below only receives the resulting URLs.
+      const photoUrls: string[] = []
+      for (const f of files) {
+        const ext = f.type.split("/")[1]?.replace("jpeg", "jpg") ?? "jpg"
+        const blob = await upload(`proofs/${Date.now()}-${f.name || `photo.${ext}`}`, f, {
+          access: "public",
+          handleUploadUrl: "/api/proof-upload",
+          contentType: f.type,
+        })
+        photoUrls.push(blob.url)
+      }
+
+      const resp = await submitLocationProof(token, {
+        context,
+        note: note.trim() || undefined,
+        photoUrls,
+      })
       if (resp.ok) {
         track(EV.proofSubmitted, { context, photoCount: files.length }, { category: "hunt" })
         onSubmitted()
@@ -424,7 +439,9 @@ function ProofForm({
     } catch (err) {
       setError(p.errGeneric)
       if (isSuperAdmin) {
-        setErrorDetail(err instanceof Error ? `${err.name}: ${err.message}` : String(err))
+        setErrorDetail(
+          err instanceof Error ? `${err.name}: ${err.message}${err.stack ? `\n\n${err.stack}` : ""}` : String(err),
+        )
       }
     } finally {
       setBusy(false)
