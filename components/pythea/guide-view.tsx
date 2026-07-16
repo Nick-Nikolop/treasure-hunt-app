@@ -1,7 +1,16 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { ArrowLeft, ArrowRight, HelpCircle } from "lucide-react"
+import {
+  ArrowLeft,
+  ArrowRight,
+  CalendarDays,
+  HelpCircle,
+  MapPin,
+  Ticket,
+  Trophy,
+  Users,
+} from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
 import { GUIDE_ILLOS } from "@/components/pythea/guide-illustrations"
 import { Faq } from "@/components/pythea/faq"
@@ -12,6 +21,9 @@ const REVEAL = {
   viewport: { once: true, margin: "-80px" },
   transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] as const },
 }
+
+// Icons for the quick-fact cards, matched by position: Entry, When, Where, Team, Prize.
+const FACT_ICONS = [Ticket, CalendarDays, MapPin, Users, Trophy]
 
 export function GuideView() {
   const { t } = useI18n()
@@ -43,19 +55,33 @@ export function GuideView() {
       <motion.ul
         {...REVEAL}
         transition={{ ...REVEAL.transition, delay: 0.18 }}
-        className="mt-8 flex flex-wrap gap-2.5"
+        className="mt-8 grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-5"
       >
-        {g.facts.map((f) => (
-          <li
-            key={f.label}
-            className="flex items-baseline gap-2 rounded-sm border border-border bg-card/50 px-3 py-2"
-          >
-            <span className="font-sans text-[10px] font-bold uppercase tracking-chip text-muted-foreground/70">
-              {f.label}
-            </span>
-            <span className="font-serif text-sm font-black text-brass">{f.value}</span>
-          </li>
-        ))}
+        {g.facts.map((f, i) => {
+          const Icon = FACT_ICONS[i] ?? Ticket
+          return (
+            <li
+              key={f.label}
+              className="group relative flex flex-col gap-3 overflow-hidden rounded-sm border border-border bg-card/50 p-4 transition-colors hover:border-brass/50"
+            >
+              <span
+                className="pointer-events-none absolute -right-5 -top-5 size-16 rounded-full bg-brass/[0.07] blur-xl transition-opacity group-hover:opacity-100 md:opacity-0"
+                aria-hidden
+              />
+              <span className="flex size-9 items-center justify-center rounded-sm border border-brass/30 bg-brass/10 text-brass">
+                <Icon className="size-4" strokeWidth={2} />
+              </span>
+              <div className="flex flex-col gap-0.5">
+                <span className="font-sans text-[10px] font-bold uppercase tracking-chip text-muted-foreground/70">
+                  {f.label}
+                </span>
+                <span className="font-serif text-lg font-black leading-tight text-brass">
+                  {f.value}
+                </span>
+              </div>
+            </li>
+          )
+        })}
       </motion.ul>
 
       {/* Table of contents */}
