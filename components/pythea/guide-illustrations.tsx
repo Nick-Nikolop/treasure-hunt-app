@@ -220,7 +220,7 @@ function VerifyIllo() {
       {/* spinning sweep (wedge + leading line), clipped to the scope */}
       <g clipPath="url(#radarClip)">
         <motion.g
-          style={{ originX: `${cx}px`, originY: `${cy}px` }}
+          style={{ transformOrigin: `${cx}px ${cy}px`, transformBox: "view-box" }}
           animate={reduce ? { rotate: 0 } : { rotate: 360 }}
           transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
         >
