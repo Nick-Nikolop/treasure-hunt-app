@@ -11,7 +11,7 @@ export function SiteFooter() {
   const exploreLinks = [
     { href: "/#story", label: t.footer.linkStory },
     { href: "/#treasure", label: t.footer.linkTreasure },
-    { href: "/#how", label: t.footer.linkHow },
+    { href: "/guide", label: t.footer.linkHow },
     { href: "/#faq", label: t.footer.linkFaq },
   ]
   const accountLinks = [

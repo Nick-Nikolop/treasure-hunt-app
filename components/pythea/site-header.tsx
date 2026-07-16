@@ -58,7 +58,7 @@ export function SiteHeader({
     { label: t.nav.story, href: "/#story" },
     { label: t.nav.journal, href: "/journal", lock: "journal" as const },
     { label: t.nav.treasure, href: "/#treasure" },
-    { label: t.nav.how, href: "/#how" },
+    { label: t.nav.how, href: "/guide" },
   ]
 
   useEffect(() => {
