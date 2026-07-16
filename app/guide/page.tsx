@@ -1,15 +1,13 @@
 import type { Metadata } from "next"
 import { cookies, headers } from "next/headers"
 import { auth } from "@/lib/auth"
-import { getPhaseContext } from "@/lib/phase-guard"
 import { Atmosphere } from "@/components/pythea/atmosphere"
 import { SiteHeader } from "@/components/pythea/site-header"
 import { SiteFooter } from "@/components/pythea/site-footer"
 import { GuideView } from "@/components/pythea/guide-view"
-import { TeaserLanding } from "@/components/pythea/teaser-landing"
 import { DEFAULT_LOCALE, isLocale, LANG_COOKIE, getDictionary } from "@/lib/i18n"
 
-// The effective phase is recomputed against the live clock on each request.
+// Resolve the viewer per request for a flash-free header, no phase gating.
 export const dynamic = "force-dynamic"
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -25,13 +23,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function GuidePage() {
-  // Phase 1 seals the whole site behind the teaser (the guide reveals the hunt
-  // and teams), so a shared /guide link stays mysterious until launch.
-  const phaseCtx = await getPhaseContext()
-  if (phaseCtx.siteLocked) {
-    return <TeaserLanding targetMs={phaseCtx.settings.phase2UnlockMs} />
-  }
-
+  // Public at all times, including during the pre-launch teaser phase. The guide
+  // is meant to explain the game to anyone, logged in or not.
   // Server-resolved user for a flash-free header on first paint.
   const session = await auth.api.getSession({ headers: await headers() })
   const initialUser = session?.user
