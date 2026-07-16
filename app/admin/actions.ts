@@ -32,6 +32,7 @@ import {
   getClueTokens,
   regenerateToken,
   approveLeadUnlock,
+  getCrewUserIds,
   type ClueTokenRow,
 } from "@/lib/hunt"
 import {
@@ -1075,9 +1076,10 @@ async function uniqueInviteCode(): Promise<string> {
 }
 
 /**
- * Set a single user's progress to an exact lead (0..TOTAL_CLUES). This only
- * affects that user; teammates are not touched. Use the team action to move a
- * whole crew together.
+ * Set a user's progress to an exact lead (0..TOTAL_CLUES). Because a team shares
+ * one effective progress, this moves the target user's WHOLE crew (the user and
+ * every teammate) to the same point, in both directions, so a team never drifts
+ * out of sync. For a solo player it just moves that one account.
  */
 export async function adminSetUserProgress(
   targetUserId: string,
@@ -1103,7 +1105,9 @@ export async function adminSetUserProgress(
   if (exists.length === 0) return { ok: false, error: "not_found" }
 
   const lead = Math.floor(targetLead)
-  await setProgressForUsers([targetUserId], lead)
+  // Move the whole crew together (solo players resolve to just themselves).
+  const crew = await getCrewUserIds(targetUserId)
+  await setProgressForUsers(crew, lead)
 
   const targetName = actorLabel(exists[0])
   await logActivity({
@@ -1117,7 +1121,7 @@ export async function adminSetUserProgress(
       lead === 0
         ? `${adminActor(admin).actorName} reset ${targetName}'s progress to the start`
         : `${adminActor(admin).actorName} set ${targetName}'s progress to lead No. ${String(lead).padStart(2, "0")}`,
-    metadata: { lead },
+    metadata: { lead, crewSize: crew.length },
   })
 
   revalidatePath("/admin")

@@ -117,7 +117,7 @@ export function AdminDashboard({
   const [createValue, setCreateValue] = useState("")
   // Progress editor: targets either a user or a whole team.
   const [progressTarget, setProgressTarget] = useState<
-    | { kind: "user"; id: string; label: string; current: number }
+    | { kind: "user"; id: string; label: string; current: number; teamName: string | null }
     | { kind: "team"; id: string; label: string; current: number }
     | null
   >(null)
@@ -342,13 +342,21 @@ export function AdminDashboard({
                 onSetProgress={() => {
                   const label =
                     [u.firstName, u.lastName].filter(Boolean).join(" ") || u.name || u.email
-                  setProgressTarget({ kind: "user", id: u.id, label, current: u.progress })
+                  setProgressTarget({
+                    kind: "user",
+                    id: u.id,
+                    label,
+                    current: u.progress,
+                    teamName: u.teamName ?? null,
+                  })
                   setProgressValue(u.progress)
                 }}
                 onResetProgress={() =>
                   setConfirm({
                     title: "Reset progress",
-                    body: `Reset ${u.email} back to the start? They will hold no QR leads.`,
+                    body: u.teamName
+                      ? `Reset ${u.email} back to the start? This moves their whole team "${u.teamName}" back to the start too, since a team shares one progress.`
+                      : `Reset ${u.email} back to the start? They will hold no QR leads.`,
                     confirmLabel: "Reset",
                     run: () => adminResetUserProgress(u.id),
                   })
@@ -690,6 +698,10 @@ export function AdminDashboard({
               Move the whole team <span className="text-foreground">{progressTarget?.label}</span> to a
               specific lead. Every member is brought to the same point.
             </>
+          ) : progressTarget?.teamName ? (
+            <>
+              Set <span className="text-foreground">{progressTarget?.label}</span> to a specific lead.
+            </>
           ) : (
             <>
               Set <span className="text-foreground">{progressTarget?.label}</span> to a specific lead.
@@ -697,6 +709,14 @@ export function AdminDashboard({
             </>
           )}
         </p>
+
+        {progressTarget?.kind === "user" && progressTarget.teamName && (
+          <p className="mt-3 rounded-sm border border-brass/40 bg-brass/10 px-3 py-2 font-sans text-xs text-foreground">
+            Heads up: this player is on team{" "}
+            <span className="font-bold">{progressTarget.teamName}</span>. Since a team shares one
+            progress, this moves the whole crew to the same lead.
+          </p>
+        )}
         <form
           onSubmit={(e) => {
             e.preventDefault()
