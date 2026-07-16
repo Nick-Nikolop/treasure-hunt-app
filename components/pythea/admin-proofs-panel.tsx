@@ -39,6 +39,13 @@ function timeAgo(d: Date | string): string {
   return `${Math.round(h / 24)}d ago`
 }
 
+/** "1st", "2nd", "3rd", "4th"… for phrasing which lead a proof is for. */
+function ordinal(n: number): string {
+  const s = ["th", "st", "nd", "rd"]
+  const v = n % 100
+  return `${n}${s[(v - 20) % 10] ?? s[v] ?? s[0]}`
+}
+
 type Lightbox = { urls: string[]; index: number } | null
 
 export function AdminProofsPanel() {
@@ -178,6 +185,13 @@ export function AdminProofsPanel() {
                     </span>
                   </div>
                 </div>
+
+                <p className="mt-3 font-serif text-sm leading-relaxed text-muted-foreground">
+                  <span className="font-bold text-foreground">{p.userName}</span> scanned the QR for
+                  the {ordinal(p.leadOrder)} lead ({p.country}) and submitted{" "}
+                  {p.photoUrls.length} photo{p.photoUrls.length === 1 ? "" : "s"} as proof of being
+                  there. Approving unlocks {p.country} and lets their crew continue.
+                </p>
 
                 {p.note && (
                   <p className="mt-3 rounded-sm border border-border bg-background px-3 py-2 font-serif text-sm italic text-muted-foreground">
