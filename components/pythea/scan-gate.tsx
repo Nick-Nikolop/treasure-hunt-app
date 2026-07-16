@@ -268,6 +268,12 @@ export function ScanGate({
                 <LocateFixed className="size-4" />
                 {g.cta}
               </button>
+              <ProofButton
+                onClick={() => {
+                  track(EV.proofOpen, { context: "denied", source: "intro" }, { category: "hunt" })
+                  setState({ phase: "proof", context: "denied" })
+                }}
+              />
               {adminSkip}
             </>
           ),
