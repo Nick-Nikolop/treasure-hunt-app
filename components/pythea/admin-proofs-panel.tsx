@@ -187,10 +187,11 @@ export function AdminProofsPanel() {
                 </div>
 
                 <p className="mt-3 font-serif text-sm leading-relaxed text-muted-foreground">
-                  <span className="font-bold text-foreground">{p.userName}</span> scanned the QR for
-                  the {ordinal(p.leadOrder)} lead ({p.country}) and submitted{" "}
-                  {p.photoUrls.length} photo{p.photoUrls.length === 1 ? "" : "s"} as proof of being
-                  there. Approving unlocks {p.country} and lets their crew continue.
+                  <span className="font-bold text-foreground">{p.userName}</span> scanned the QR of
+                  the {ordinal(p.leadOrder - 1)} lead in order to proceed to the{" "}
+                  {ordinal(p.leadOrder)} ({p.country}), submitting {p.photoUrls.length} photo
+                  {p.photoUrls.length === 1 ? "" : "s"} as proof of being there. Approving unlocks{" "}
+                  {p.country} and lets their crew continue.
                 </p>
 
                 {p.note && (
