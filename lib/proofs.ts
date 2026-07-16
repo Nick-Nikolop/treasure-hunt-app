@@ -11,7 +11,7 @@
 
 import { db } from "@/lib/db"
 import { proofSubmission } from "@/lib/db/schema"
-import { and, desc, eq, isNull } from "drizzle-orm"
+import { and, desc, eq, inArray, isNull, ne } from "drizzle-orm"
 import { randomUUID } from "node:crypto"
 
 export type ProofContext = "denied" | "too_far"
@@ -150,4 +150,33 @@ export async function decideProof(
     .where(and(eq(proofSubmission.id, id), eq(proofSubmission.status, "pending")))
     .returning()
   return rows[0] ?? null
+}
+
+export type DeletedProofs = { count: number; photoUrls: string[] }
+
+/**
+ * Delete decided (approved/rejected) submissions by id, to free up storage.
+ * Pending rows are never deleted (a review shouldn't be able to vanish out from
+ * under an explorer). Returns the count removed and the flat list of their photo
+ * URLs so the caller can also purge them from Blob.
+ */
+export async function deleteProofsByIds(ids: string[]): Promise<DeletedProofs> {
+  if (ids.length === 0) return { count: 0, photoUrls: [] }
+  const rows = await db
+    .delete(proofSubmission)
+    .where(and(inArray(proofSubmission.id, ids), ne(proofSubmission.status, "pending")))
+    .returning({ photoUrls: proofSubmission.photoUrls })
+  return { count: rows.length, photoUrls: rows.flatMap((r) => r.photoUrls) }
+}
+
+/**
+ * Delete every decided submission (approved/rejected). Pending rows are kept.
+ * Returns the count removed and all their photo URLs for Blob cleanup.
+ */
+export async function deleteAllDecidedProofs(): Promise<DeletedProofs> {
+  const rows = await db
+    .delete(proofSubmission)
+    .where(ne(proofSubmission.status, "pending"))
+    .returning({ photoUrls: proofSubmission.photoUrls })
+  return { count: rows.length, photoUrls: rows.flatMap((r) => r.photoUrls) }
 }

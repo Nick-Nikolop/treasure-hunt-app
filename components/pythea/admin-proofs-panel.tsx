@@ -15,8 +15,16 @@ import {
   Inbox,
   ChevronLeft,
   ChevronRight,
+  Trash2,
+  Square,
+  CheckSquare,
 } from "lucide-react"
-import { adminListProofs, adminDecideProof, type AdminProofRow } from "@/app/admin/actions"
+import {
+  adminListProofs,
+  adminDecideProof,
+  adminDeleteProofs,
+  type AdminProofRow,
+} from "@/app/admin/actions"
 
 const POLL_MS = 8000
 
@@ -43,6 +51,10 @@ export function AdminProofsPanel() {
   const [rejecting, setRejecting] = useState<string | null>(null)
   const [reason, setReason] = useState("")
   const [busyId, setBusyId] = useState<string | null>(null)
+  // Selection + deletion state for the "recently decided" log.
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [confirmDelete, setConfirmDelete] = useState<null | "selected" | "all">(null)
+  const [deleting, setDeleting] = useState(false)
   const [, startTransition] = useTransition()
   const initialised = useRef(false)
 
@@ -79,6 +91,46 @@ export function AdminProofsPanel() {
 
   const pending = data.pending
   const recent = data.recent
+
+  // Drop any selected ids that are no longer in the decided list (e.g. removed
+  // by another admin or after our own delete).
+  useEffect(() => {
+    setSelected((prev) => {
+      if (prev.size === 0) return prev
+      const live = new Set(recent.map((r) => r.id))
+      const next = new Set([...prev].filter((id) => live.has(id)))
+      return next.size === prev.size ? prev : next
+    })
+  }, [recent])
+
+  function toggle(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const allSelected = recent.length > 0 && selected.size === recent.length
+  function toggleAll() {
+    setSelected(allSelected ? new Set() : new Set(recent.map((r) => r.id)))
+  }
+
+  function runDelete(mode: "selected" | "all") {
+    setDeleting(true)
+    startTransition(async () => {
+      try {
+        if (mode === "all") await adminDeleteProofs({ all: true })
+        else await adminDeleteProofs({ ids: [...selected] })
+      } finally {
+        setDeleting(false)
+        setConfirmDelete(null)
+        setSelected(new Set())
+        void load()
+      }
+    })
+  }
 
   return (
     <div className="space-y-8">
@@ -228,14 +280,102 @@ export function AdminProofsPanel() {
       {/* Recently decided */}
       {recent.length > 0 && (
         <section>
-          <h2 className="mb-4 font-sans text-xs font-bold tracking-chip text-muted-foreground">
-            RECENTLY DECIDED
-          </h2>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <h2 className="font-sans text-xs font-bold tracking-chip text-muted-foreground">
+                RECENTLY DECIDED
+              </h2>
+              <button
+                type="button"
+                onClick={toggleAll}
+                className="inline-flex items-center gap-1.5 font-sans text-[10px] font-bold tracking-chip text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {allSelected ? (
+                  <CheckSquare className="size-3.5 text-brass" />
+                ) : (
+                  <Square className="size-3.5" />
+                )}
+                {allSelected ? "CLEAR" : "SELECT ALL"}
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              {selected.size > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete("selected")}
+                  disabled={deleting}
+                  className="inline-flex items-center gap-1.5 rounded-sm border border-destructive/40 bg-background px-3 py-1.5 font-sans text-[10px] font-bold tracking-chip text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-50"
+                >
+                  <Trash2 className="size-3.5" />
+                  DELETE {selected.size}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setConfirmDelete("all")}
+                disabled={deleting}
+                className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-background px-3 py-1.5 font-sans text-[10px] font-bold tracking-chip text-muted-foreground transition-colors hover:border-destructive hover:text-destructive disabled:opacity-50"
+              >
+                <Trash2 className="size-3.5" />
+                DELETE ALL
+              </button>
+            </div>
+          </div>
+
+          {confirmDelete && (
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-sm border border-destructive/40 bg-destructive/10 px-4 py-3">
+              <p className="font-sans text-xs text-destructive">
+                {confirmDelete === "all"
+                  ? "Permanently delete ALL decided proofs and their photos? This cannot be undone."
+                  : `Permanently delete ${selected.size} selected proof${
+                      selected.size === 1 ? "" : "s"
+                    } and their photos? This cannot be undone.`}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => runDelete(confirmDelete)}
+                  disabled={deleting}
+                  className="inline-flex items-center gap-1.5 rounded-sm bg-destructive px-3 py-1.5 font-sans text-[10px] font-bold tracking-chip text-destructive-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+                >
+                  {deleting ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+                  CONFIRM DELETE
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(null)}
+                  disabled={deleting}
+                  className="inline-flex items-center rounded-sm border border-border bg-background px-3 py-1.5 font-sans text-[10px] font-bold tracking-chip text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+                >
+                  CANCEL
+                </button>
+              </div>
+            </div>
+          )}
+
           <ul className="divide-y divide-border rounded-sm border border-border">
             {recent.map((p) => (
-              <li key={p.id} className="px-4 py-3">
+              <li
+                key={p.id}
+                className={`px-4 py-3 transition-colors ${
+                  selected.has(p.id) ? "bg-brass/5" : ""
+                }`}
+              >
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => toggle(p.id)}
+                      aria-label={selected.has(p.id) ? "Deselect" : "Select"}
+                      aria-pressed={selected.has(p.id)}
+                      className="shrink-0 text-muted-foreground transition-colors hover:text-brass"
+                    >
+                      {selected.has(p.id) ? (
+                        <CheckSquare className="size-4 text-brass" />
+                      ) : (
+                        <Square className="size-4" />
+                      )}
+                    </button>
                     {p.status === "approved" ? (
                       <BadgeCheck className="size-4 shrink-0 text-brass" />
                     ) : (

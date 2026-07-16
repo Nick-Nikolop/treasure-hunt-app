@@ -40,6 +40,8 @@ import {
   getRecentDecidedProofs,
   getProofById,
   decideProof,
+  deleteProofsByIds,
+  deleteAllDecidedProofs,
   type ProofRow,
 } from "@/lib/proofs"
 import {
@@ -405,6 +407,48 @@ export async function adminDecideProof(
 
   revalidatePath("/admin")
   return { ok: true, decision, unlock }
+}
+
+/**
+ * Permanently delete decided (approved/rejected) photo proofs to free up space,
+ * removing both the DB rows and their Blob images. Pass `{ all: true }` to purge
+ * every decided proof, or a list of ids to delete a selection. Pending proofs
+ * are never deleted. Superadmin only.
+ */
+export async function adminDeleteProofs(input: {
+  ids?: string[]
+  all?: boolean
+}): Promise<{ ok: true; count: number } | { ok: false; error: string }> {
+  const admin = await requireAdmin()
+
+  const deleted = input.all
+    ? await deleteAllDecidedProofs()
+    : await deleteProofsByIds(input.ids ?? [])
+
+  // Purge the images from Blob. A failure here shouldn't undo the DB deletion,
+  // so swallow errors (orphan blobs are harmless and can be cleaned up later).
+  if (deleted.photoUrls.length > 0) {
+    try {
+      await del(deleted.photoUrls)
+    } catch {
+      // ignore: rows are already gone; blobs are at worst orphaned
+    }
+  }
+
+  if (deleted.count > 0) {
+    await logActivity({
+      category: "admin",
+      action: "admin.proofs_deleted",
+      ...adminActor(admin),
+      summary: `${actorLabel(admin)} deleted ${deleted.count} photo proof${
+        deleted.count === 1 ? "" : "s"
+      }${input.all ? " (all decided)" : ""}`,
+      metadata: { count: deleted.count, all: Boolean(input.all) },
+    })
+    revalidatePath("/admin")
+  }
+
+  return { ok: true, count: deleted.count }
 }
 
 // ── Global admin alerts (top-right widget on every page) ─────────────────────
