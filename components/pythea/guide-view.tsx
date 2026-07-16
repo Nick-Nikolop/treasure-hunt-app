@@ -4,6 +4,7 @@ import { motion } from "framer-motion"
 import { ArrowLeft, ArrowRight, HelpCircle } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
 import { GUIDE_ILLOS } from "@/components/pythea/guide-illustrations"
+import { Faq } from "@/components/pythea/faq"
 
 const REVEAL = {
   initial: { opacity: 0, y: 24 },
@@ -162,7 +163,7 @@ export function GuideView() {
             <ArrowRight className="size-4" />
           </a>
           <a
-            href="/#faq"
+            href="#faq"
             className="inline-flex items-center gap-2 rounded-sm border border-border px-5 py-3 font-sans text-xs font-bold tracking-chip text-foreground transition-colors hover:border-brass/60 hover:text-brass"
           >
             <HelpCircle className="size-4" />
@@ -177,6 +178,11 @@ export function GuideView() {
           {g.backHome}
         </a>
       </motion.div>
+
+      {/* FAQ — the same accordion used on the home page, closing out the guide */}
+      <div className="mt-16 md:mt-24">
+        <Faq />
+      </div>
     </main>
   )
 }

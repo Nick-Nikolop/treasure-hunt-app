@@ -7,6 +7,7 @@
 //  drop the right one next to each section.
 // ─────────────────────────────────────────────────────────────────────────
 
+import Image from "next/image"
 import { motion, useReducedMotion } from "framer-motion"
 
 const BRASS = "var(--brass)"
@@ -26,35 +27,32 @@ function Frame({ children }: { children: React.ReactNode }) {
   )
 }
 
-/* 1. WHAT — a swaying compass with a rotating needle. */
+/* 1. WHAT — the Pytheas compass logo, swaying slowly left and right. */
 function WhatIllo() {
   const reduce = useReducedMotion()
   return (
-    <Frame>
-      <circle cx="120" cy="90" r="52" fill="none" stroke={BORDER} strokeWidth="2" />
-      <circle cx="120" cy="90" r="42" fill="none" stroke={BRASS} strokeWidth="1" strokeDasharray="2 6" />
-      {[0, 90, 180, 270].map((a) => (
-        <line
-          key={a}
-          x1="120"
-          y1="42"
-          x2="120"
-          y2="52"
-          stroke={MUTED}
-          strokeWidth="2"
-          transform={`rotate(${a} 120 90)`}
-        />
-      ))}
-      <motion.g
-        style={{ originX: "120px", originY: "90px" }}
-        animate={reduce ? undefined : { rotate: [0, 18, -14, 8, 0] }}
-        transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+    <div className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-sm border border-border bg-card/40">
+      <div className="pointer-events-none absolute inset-0 grain-layer" aria-hidden />
+      {/* faint cartography rings behind the mark */}
+      <svg viewBox="0 0 240 180" className="absolute inset-0 h-full w-full" aria-hidden>
+        <circle cx="120" cy="90" r="74" fill="none" stroke={BRASS} strokeWidth="1" strokeDasharray="2 8" opacity="0.35" />
+        <circle cx="120" cy="90" r="62" fill="none" stroke={BORDER} strokeWidth="1" opacity="0.6" />
+      </svg>
+      <motion.div
+        className="relative aspect-square w-[46%]"
+        style={{ transformOrigin: "50% 50%" }}
+        animate={reduce ? undefined : { rotate: [-11, 11, -11] }}
+        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
       >
-        <polygon points="120,50 129,90 120,86 111,90" fill={BRASS} />
-        <polygon points="120,130 111,90 120,94 129,90" fill={TEAL} />
-      </motion.g>
-      <circle cx="120" cy="90" r="4" fill={FG} />
-    </Frame>
+        <Image
+          src="/compass-icon.png"
+          alt=""
+          fill
+          sizes="240px"
+          className="object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.35)]"
+        />
+      </motion.div>
+    </div>
   )
 }
 
@@ -107,44 +105,73 @@ function StartIllo() {
   )
 }
 
-/* 3. UNLOCK — riddle, pin, QR, open lock, with a highlight travelling the chain. */
+/* 3. UNLOCK — a spotlight beam sweeps the chain (riddle, pin, QR, open lock),
+   lighting each station in turn as it passes. */
 function UnlockIllo() {
   const reduce = useReducedMotion()
-  const xs = [40, 93, 146, 199]
+  // Beam sweep spans 5s; each of the 4 stations lights as the beam is over it.
+  const glow = () =>
+    reduce ? { opacity: 1 } : { opacity: [0.4, 0.4, 1, 0.4, 0.4] as number[] }
+  const glowT = (start: number) => ({
+    duration: 5,
+    times: [0, start - 0.12, start, start + 0.12, 1],
+    repeat: Infinity,
+    ease: "easeInOut" as const,
+  })
   return (
     <Frame>
+      <defs>
+        <linearGradient id="beam" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor={BRASS} stopOpacity="0" />
+          <stop offset="50%" stopColor={BRASS} stopOpacity="0.28" />
+          <stop offset="100%" stopColor={BRASS} stopOpacity="0" />
+        </linearGradient>
+      </defs>
       <line x1="40" y1="90" x2="199" y2="90" stroke={BORDER} strokeWidth="1.5" strokeDasharray="3 5" />
-      {xs.map((x, i) => (
-        <motion.circle
-          key={`hl${i}`}
-          cx={x}
-          cy="90"
-          r="24"
-          fill={BRASS}
-          opacity="0.16"
-          initial={{ scale: 0.6, opacity: 0 }}
-          animate={reduce ? { opacity: 0.16 } : { scale: [0.6, 1, 0.6], opacity: [0, 0.22, 0] }}
-          transition={{ duration: 0.9, delay: i * 0.8, repeat: Infinity, repeatDelay: 3.2 }}
-          style={{ originX: `${x}px`, originY: "90px" }}
-        />
-      ))}
+
+      {/* travelling spotlight beam */}
+      <motion.rect
+        y="30"
+        width="60"
+        height="120"
+        fill="url(#beam)"
+        animate={reduce ? { x: 90 } : { x: [10, 150, 10] }}
+        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+      />
+
       {/* riddle */}
-      <text x="40" y="98" textAnchor="middle" fontSize="26" fontWeight="900" fill={FG}>?</text>
+      <motion.text
+        x="40"
+        y="99"
+        textAnchor="middle"
+        fontSize="27"
+        fontWeight="900"
+        fill={FG}
+        animate={glow()}
+        transition={glowT(0.06)}
+      >
+        ?
+      </motion.text>
       {/* pin */}
-      <path d="M93 74 a11 11 0 1 1 0 22 c0 6 -0 8 0 12 c0 -4 0 -6 0 -12 a11 11 0 1 1 0 -22z" fill="none" stroke={TEAL} strokeWidth="2.5" />
-      <circle cx="93" cy="85" r="4" fill={TEAL} />
+      <motion.g animate={glow()} transition={glowT(0.37)}>
+        <path d="M93 74 a11 11 0 1 1 0 22 c0 6 -0 8 0 12 c0 -4 0 -6 0 -12 a11 11 0 1 1 0 -22z" fill="none" stroke={TEAL} strokeWidth="2.5" />
+        <circle cx="93" cy="85" r="4" fill={TEAL} />
+      </motion.g>
       {/* QR */}
-      <g stroke={FG} strokeWidth="2" fill="none">
-        <rect x="136" y="78" width="9" height="9" />
-        <rect x="147" y="78" width="9" height="9" />
-        <rect x="136" y="89" width="9" height="9" />
-      </g>
-      <rect x="147" y="89" width="4" height="4" fill={FG} />
-      <rect x="153" y="93" width="4" height="4" fill={FG} />
-      {/* open lock */}
+      <motion.g animate={glow()} transition={glowT(0.68)}>
+        <g stroke={FG} strokeWidth="2" fill="none">
+          <rect x="136" y="78" width="9" height="9" />
+          <rect x="147" y="78" width="9" height="9" />
+          <rect x="136" y="89" width="9" height="9" />
+        </g>
+        <rect x="147" y="89" width="4" height="4" fill={FG} />
+        <rect x="153" y="93" width="4" height="4" fill={FG} />
+      </motion.g>
+      {/* open lock — pops when the beam reaches it */}
       <motion.g
-        animate={reduce ? undefined : { y: [0, -1, 0] }}
-        transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+        animate={reduce ? { opacity: 1, scale: 1 } : { opacity: [0.4, 0.4, 1, 0.4, 0.4], scale: [1, 1, 1.14, 1, 1] }}
+        transition={glowT(0.94)}
+        style={{ originX: "199px", originY: "95px" }}
       >
         <rect x="190" y="88" width="18" height="14" rx="2" fill="none" stroke={BRASS} strokeWidth="2.5" />
         <path d="M193 88 v-4 a6 6 0 0 1 12 0" fill="none" stroke={BRASS} strokeWidth="2.5" />
@@ -153,34 +180,71 @@ function UnlockIllo() {
   )
 }
 
-/* 4. VERIFY — a location pin with a pulsing accuracy radius. */
+/* 4. VERIFY — a GPS locate: crosshair map grid, concentric accuracy rings, a
+   rotating radar sweep, expanding pings, and a pin that locks onto the target. */
 function VerifyIllo() {
   const reduce = useReducedMotion()
   return (
     <Frame>
-      {[0, 1, 2].map((i) => (
+      <defs>
+        <radialGradient id="sweep" cx="0%" cy="100%" r="100%">
+          <stop offset="0%" stopColor={TEAL} stopOpacity="0.35" />
+          <stop offset="100%" stopColor={TEAL} stopOpacity="0" />
+        </radialGradient>
+      </defs>
+
+      {/* map grid */}
+      {[54, 90, 126].map((y) => (
+        <line key={`h${y}`} x1="40" y1={y} x2="200" y2={y} stroke={BORDER} strokeWidth="1" opacity="0.5" />
+      ))}
+      {[72, 120, 168].map((x) => (
+        <line key={`v${x}`} x1={x} y1="40" x2={x} y2="140" stroke={BORDER} strokeWidth="1" opacity="0.5" />
+      ))}
+
+      {/* accuracy rings */}
+      <circle cx="120" cy="90" r="48" fill="none" stroke={BRASS} strokeWidth="1.5" strokeDasharray="3 6" opacity="0.7" />
+      <circle cx="120" cy="90" r="30" fill="none" stroke={BORDER} strokeWidth="1.5" />
+
+      {/* rotating radar sweep */}
+      <motion.g
+        style={{ originX: "120px", originY: "90px" }}
+        animate={reduce ? undefined : { rotate: 360 }}
+        transition={{ duration: 3.6, repeat: Infinity, ease: "linear" }}
+      >
+        <path d="M120 90 L120 42 A48 48 0 0 1 158 66 Z" fill="url(#sweep)" />
+        <line x1="120" y1="90" x2="120" y2="42" stroke={TEAL} strokeWidth="2" />
+      </motion.g>
+
+      {/* expanding locate pings */}
+      {[0, 1].map((i) => (
         <motion.circle
           key={i}
           cx="120"
-          cy="96"
-          r="20"
+          cy="90"
+          r="14"
           fill="none"
           stroke={TEAL}
           strokeWidth="2"
-          initial={{ scale: 0.4, opacity: 0.6 }}
-          animate={reduce ? { scale: 1.6, opacity: 0 } : { scale: [0.4, 2.4], opacity: [0.55, 0] }}
-          transition={{ duration: 3, delay: i * 1, repeat: Infinity, ease: "easeOut" }}
-          style={{ originX: "120px", originY: "96px" }}
+          animate={reduce ? { scale: 2, opacity: 0 } : { scale: [0.5, 2.6], opacity: [0.6, 0] }}
+          transition={{ duration: 2.8, delay: i * 1.4, repeat: Infinity, ease: "easeOut" }}
+          style={{ originX: "120px", originY: "90px" }}
         />
       ))}
-      <circle cx="120" cy="96" r="34" fill="none" stroke={BRASS} strokeWidth="1.5" strokeDasharray="3 5" />
-      <path
-        d="M120 58 a20 20 0 1 1 0 40 c0 12 0 14 0 22 c0 -8 0 -10 0 -22 a20 20 0 1 1 0 -40z"
-        fill="var(--card)"
-        stroke={BRASS}
-        strokeWidth="2.5"
-      />
-      <circle cx="120" cy="78" r="7" fill={BRASS} />
+
+      {/* pin locking onto the target */}
+      <motion.g
+        animate={reduce ? undefined : { y: [-7, 0], scale: [0.86, 1] }}
+        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], repeat: Infinity, repeatType: "reverse", repeatDelay: 1.9 }}
+        style={{ originX: "120px", originY: "102px" }}
+      >
+        <path
+          d="M120 62 a16 16 0 1 1 0 32 c0 9 0 11 0 16 c0 -5 0 -7 0 -16 a16 16 0 1 1 0 -32z"
+          fill="var(--card)"
+          stroke={BRASS}
+          strokeWidth="2.5"
+        />
+        <circle cx="120" cy="78" r="6" fill={BRASS} />
+      </motion.g>
     </Frame>
   )
 }

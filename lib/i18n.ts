@@ -170,7 +170,7 @@ const el = {
     tocLabel: "Σε αυτή τη σελίδα",
     facts: [
       { label: "Συμμετοχή", value: "Δωρεάν" },
-      { label: "Πότε", value: "Καλοκαίρι 2026" },
+      { label: "Πότε", value: "30 Ιουλίου 2026" },
       { label: "Πού", value: "Καλαμάτα" },
       { label: "Ομάδα", value: "Ως 5 άτομα" },
       { label: "Έπαθλο", value: "500€" },
@@ -250,12 +250,12 @@ const el = {
         id: "when",
         num: "07",
         eyebrow: "ΠΟΤΕ ΚΑΙ ΚΟΣΤΟΣ",
-        title: "Καλοκαίρι 2026, δωρεάν",
-        body: "Η συμμετοχή στο κυνήγι είναι δωρεάν. Το πρώτο σημάδι ανοίγει την ημέρα της εκκίνησης το καλοκαίρι του 2026 και το κυνήγι κρατά δύο μέρες. Στην αρχική σελίδα μετρά αντίστροφα ένα χρονόμετρο ως την εκκίνηση.",
+        title: "30 Ιουλίου 2026, δωρεάν",
+        body: "Η συμμετοχή στο κυνήγι είναι δωρεάν. Το πρώτο σημάδι ανοίγει στις 30 Ιουλίου 2026 και το κυνήγι κρατά δύο μέρες. Στην αρχική σελίδα μετρά αντίστροφα ένα χρονόμετρο ως την εκκίνηση.",
         points: [
+          "Ξεκινά στις 30 Ιουλίου 2026.",
           "Δωρεάν συμμετοχή για κάθε ομάδα.",
           "Το κυνήγι κρατά δύο μέρες από την εκκίνηση.",
-          "Δες το χρονόμετρο στην αρχική για την ακριβή ώρα.",
         ],
       },
       {
@@ -1016,7 +1016,7 @@ const en: Dictionary = {
     tocLabel: "On this page",
     facts: [
       { label: "Entry", value: "Free" },
-      { label: "When", value: "Summer 2026" },
+      { label: "When", value: "30 July 2026" },
       { label: "Where", value: "Kalamata" },
       { label: "Team", value: "Up to 5" },
       { label: "Prize", value: "500€" },
@@ -1096,12 +1096,12 @@ const en: Dictionary = {
         id: "when",
         num: "07",
         eyebrow: "WHEN AND COST",
-        title: "Summer 2026, free to play",
-        body: "Entry to the hunt is free. The first mark opens on launch day in the summer of 2026, and the hunt runs for two days. On the home page a countdown ticks down to the start.",
+        title: "30 July 2026, free to play",
+        body: "Entry to the hunt is free. The first mark opens on 30 July 2026, and the hunt runs for two days. On the home page a countdown ticks down to the start.",
         points: [
+          "Begins on 30 July 2026.",
           "Free entry for every team.",
           "The hunt runs for two days from the start.",
-          "Check the countdown on the home page for the exact time.",
         ],
       },
       {
