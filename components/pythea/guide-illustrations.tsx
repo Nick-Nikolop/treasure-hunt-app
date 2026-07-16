@@ -197,7 +197,7 @@ function VerifyIllo() {
     <Frame>
       <defs>
         {/* a quarter-wedge that fades out behind the leading sweep line */}
-        <linearGradient id="radarSweep" x1="1" y1="0" x2="0" y2="1">
+        <linearGradient id="radarSweep" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor={TEAL} stopOpacity="0.4" />
           <stop offset="60%" stopColor={TEAL} stopOpacity="0.08" />
           <stop offset="100%" stopColor={TEAL} stopOpacity="0" />
@@ -224,7 +224,7 @@ function VerifyIllo() {
           animate={reduce ? { rotate: 0 } : { rotate: 360 }}
           transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
         >
-          <path d={`M${cx} ${cy} L${cx} ${cy - R} A${R} ${R} 0 0 1 ${cx + R} ${cy} Z`} fill="url(#radarSweep)" />
+          <path d={`M${cx} ${cy} L${cx} ${cy - R} A${R} ${R} 0 0 0 ${cx - R} ${cy} Z`} fill="url(#radarSweep)" />
           <line x1={cx} y1={cy} x2={cx} y2={cy - R} stroke={TEAL} strokeWidth="2" />
         </motion.g>
       </g>
