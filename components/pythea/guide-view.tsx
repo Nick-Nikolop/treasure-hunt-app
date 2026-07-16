@@ -129,7 +129,9 @@ export function GuideView() {
                 {/* Text */}
                 <div>
                   <div className="flex items-center gap-3">
-                    <span className="font-serif text-3xl font-black text-border">{s.num}</span>
+                    <span className="flex size-11 shrink-0 items-center justify-center rounded-sm border border-brass/40 bg-brass/10 font-serif text-xl font-black text-brass shadow-[0_0_20px_-6px_var(--brass)]">
+                      {s.num}
+                    </span>
                     <span className="font-sans text-[11px] font-bold tracking-chip text-brass">
                       {s.eyebrow}
                     </span>
