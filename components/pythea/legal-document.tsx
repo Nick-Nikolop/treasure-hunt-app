@@ -176,14 +176,36 @@ const EL: Doc = {
               "Δεδομένα λίστας ειδοποιήσεων: το email σου, αν εγγραφείς για ενημέρωση.",
               "Δεδομένα παιχνιδιού: ομάδα, πρόοδος, χρονικές σημάνσεις λύσεων και κατάταξη.",
               "Απόδειξη συγκατάθεσης: η έκδοση των όρων που αποδέχτηκες και η στιγμή αποδοχής.",
+              "Δεδομένα τοποθεσίας: μόνο στιγμιαίος έλεγχος εγγύτητας κατά τη σάρωση, χωρίς αποθήκευση των συντεταγμένων σου (βλ. ενότητα 3).",
+              "Φωτογραφίες απόδειξης: αν επιλέξεις να ανεβάσεις φωτογραφίες αντί για τοποθεσία, ώστε να ελεγχθεί ότι βρίσκεσαι στο σημάδι.",
               "Τεχνικά δεδομένα: διεύθυνση IP, τύπος συσκευής και προγράμματος περιήγησης, βασικά αναλυτικά συμβάντα χρήσης.",
             ],
           },
         ],
       },
       {
+        id: "location",
+        title: "3. Δεδομένα τοποθεσίας (GPS)",
+        blocks: [
+          {
+            k: "p",
+            t: "Ορισμένα σημάδια ξεκλειδώνουν μόνο από κοντά. Για να επιβεβαιώσουμε ότι βρίσκεσαι πραγματικά εκεί, μπορείς να μοιραστείς την τοποθεσία σου τη στιγμή που σαρώνεις τον κωδικό. Ο έλεγχος αυτός γίνεται αποκλειστικά εκείνη τη στιγμή.",
+          },
+          {
+            k: "list",
+            items: [
+              "Η τοποθεσία σου χρησιμοποιείται μόνο τη στιγμή της σάρωσης, για να υπολογιστεί αν απέχεις έως 100 μέτρα από το σημάδι.",
+              "Δεν αποθηκεύουμε τις συντεταγμένες σου. Δεν κρατάμε ιστορικό τοποθεσίας και δεν παρακολουθούμε τις κινήσεις σου.",
+              "Ο υπολογισμός της απόστασης είναι στιγμιαίος και το μόνο που παραμένει είναι το αποτέλεσμα «εντός ή εκτός εμβέλειας». Οι ίδιες οι συντεταγμένες δεν αποθηκεύονται πουθενά.",
+              "Ο εντοπισμός τοποθεσίας απαιτεί τη ρητή άδειά σου στο πρόγραμμα περιήγησης. Μπορείς να την αρνηθείς ή να την ανακαλέσεις οποτεδήποτε.",
+              "Αν δεν θέλεις ή δεν μπορείς να μοιραστείς τοποθεσία, ξεκλειδώνεις το σημάδι ανεβάζοντας 1 έως 3 φωτογραφίες ως απόδειξη.",
+            ],
+          },
+        ],
+      },
+      {
         id: "bases",
-        title: "3. Νομικές βάσεις επεξεργασίας",
+        title: "4. Νομικές βάσεις επεξεργασίας",
         blocks: [
           {
             k: "list",
@@ -197,7 +219,7 @@ const EL: Doc = {
       },
       {
         id: "retention",
-        title: "4. Χρόνος διατήρησης",
+        title: "5. Χρόνος διατήρησης",
         blocks: [
           {
             k: "p",
@@ -207,7 +229,7 @@ const EL: Doc = {
       },
       {
         id: "sharing",
-        title: "5. Αποδέκτες & διαβιβάσεις",
+        title: "6. Αποδέκτες & διαβιβάσεις",
         blocks: [
           {
             k: "p",
@@ -217,7 +239,7 @@ const EL: Doc = {
       },
       {
         id: "rights",
-        title: "6. Τα δικαιώματά σου",
+        title: "7. Τα δικαιώματά σου",
         blocks: [
           {
             k: "p",
@@ -240,7 +262,7 @@ const EL: Doc = {
       },
       {
         id: "security",
-        title: "7. Ασφάλεια & ανήλικοι",
+        title: "8. Ασφάλεια & ανήλικοι",
         blocks: [
           {
             k: "p",
@@ -430,14 +452,36 @@ const EN: Doc = {
               "Notify-list data: your email, if you sign up to be notified.",
               "Gameplay data: team, progress, solve timestamps and ranking.",
               "Proof of consent: the version of the terms you accepted and the moment of acceptance.",
+              "Location data: only an instant proximity check at the moment of a scan, without storing your coordinates (see section 3).",
+              "Proof photos: if you choose to upload photos instead of location, so we can verify you're at the mark.",
               "Technical data: IP address, device and browser type, basic first-party analytics events.",
             ],
           },
         ],
       },
       {
+        id: "location",
+        title: "3. Location data (GPS)",
+        blocks: [
+          {
+            k: "p",
+            t: "Some marks only unlock up close. To confirm you're really there, you can share your location at the moment you scan the code. This check happens only at that moment.",
+          },
+          {
+            k: "list",
+            items: [
+              "Your location is used only at the moment of the scan, to calculate whether you're within 100 metres of the mark.",
+              "We do not store your coordinates. We keep no location history and do not track your movements.",
+              "The distance is calculated instantly and the only thing kept is the in-range or out-of-range result. The coordinates themselves are not saved anywhere.",
+              "Location access requires your explicit permission in the browser. You can refuse it or revoke it at any time.",
+              "If you won't or can't share location, you unlock the mark by uploading 1 to 3 photos as proof instead.",
+            ],
+          },
+        ],
+      },
+      {
         id: "bases",
-        title: "3. Legal bases for processing",
+        title: "4. Legal bases for processing",
         blocks: [
           {
             k: "list",
@@ -451,7 +495,7 @@ const EN: Doc = {
       },
       {
         id: "retention",
-        title: "4. Retention period",
+        title: "5. Retention period",
         blocks: [
           {
             k: "p",
@@ -461,7 +505,7 @@ const EN: Doc = {
       },
       {
         id: "sharing",
-        title: "5. Recipients & transfers",
+        title: "6. Recipients & transfers",
         blocks: [
           {
             k: "p",
@@ -471,7 +515,7 @@ const EN: Doc = {
       },
       {
         id: "rights",
-        title: "6. Your rights",
+        title: "7. Your rights",
         blocks: [
           {
             k: "p",
@@ -494,7 +538,7 @@ const EN: Doc = {
       },
       {
         id: "security",
-        title: "7. Security & children",
+        title: "8. Security & children",
         blocks: [
           {
             k: "p",
