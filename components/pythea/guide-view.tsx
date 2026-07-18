@@ -55,14 +55,19 @@ export function GuideView({ isLoggedIn = false }: { isLoggedIn?: boolean }) {
       <motion.ul
         {...REVEAL}
         transition={{ ...REVEAL.transition, delay: 0.18 }}
-        className="mt-8 grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-5"
+        className="mt-8 grid grid-cols-2 gap-2.5 md:grid-cols-5"
       >
         {g.facts.map((f, i) => {
           const Icon = FACT_ICONS[i] ?? Ticket
+          // With an odd number of facts, let the last one fill the row on the
+          // 2-column mobile grid instead of sitting orphaned beside empty space.
+          const fillLast = i === g.facts.length - 1 && g.facts.length % 2 === 1
           return (
             <li
               key={f.label}
-              className="group relative flex flex-col gap-3 overflow-hidden rounded-sm border border-border bg-card/50 p-4 transition-colors hover:border-brass/50"
+              className={`group relative flex flex-col gap-3 overflow-hidden rounded-sm border border-border bg-card/50 p-4 transition-colors hover:border-brass/50 ${
+                fillLast ? "col-span-2 md:col-span-1" : ""
+              }`}
             >
               <span
                 className="pointer-events-none absolute -right-5 -top-5 size-16 rounded-full bg-brass/[0.07] blur-xl transition-opacity group-hover:opacity-100 md:opacity-0"
