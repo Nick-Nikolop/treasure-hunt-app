@@ -31,7 +31,7 @@ const el = {
   },
   hero: {
     coords: "36°57′Β · 22°06′Α · ΚΑΛΑΜΑΤΑ",
-    season: "ΚΑΛΟΚΑΙΡΙ 2026",
+    season: "30 ΙΟΥΛΙΟΥ 2026",
     free: "ΔΩΡΕΑΝ ΣΥΜΜΕΤΟΧΗ",
     srTitle: "Κυνήγι Θησαυρού στην Καλαμάτα · Το Ταξίδι του Πυθέα του Μεσσήνιου",
     titleTop: ["Το", "Ταξίδι", "του"],
@@ -44,7 +44,7 @@ const el = {
     scroll: "ΚΥΛΗΣΕ",
   },
   story: {
-    section: "Ι. Ο ΘΡΥΛΟΣ",
+    section: "ΙΙ. Ο ΘΡΥΛΟΣ",
     paragraphs: [
       "Λένε πως στην Καλαμάτα, όχι πολύ παλιά, κάπου στις αρχές του περασμένου αιώνα, έζησε ένας άνθρωπος παράξενος και πολυταξιδεμένος. Τον ονόμαζαν Πυθέα τον Μεσσήνιο.",
       "Άλλοι τον έλεγαν εξερευνητή, άλλοι ονειροπόλο, κι άλλοι απλώς έναν άνθρωπο που δεν μπορούσε να μείνει για πολύ στο ίδιο μέρος. Όμως ο ίδιος έλεγε πως ο κόσμος δεν κρύβεται μόνο πίσω από ωκεανούς, βουνά και μακρινές ηπείρους. Κρύβεται και μέσα στις πόλεις μας, στις γωνιές που προσπερνάμε κάθε μέρα, στα σημάδια που βλέπουμε χωρίς να τα παρατηρούμε.",
@@ -55,7 +55,7 @@ const el = {
     author: "ΠΥΘΕΑΣ Ο ΜΕΣΣΗΝΙΟΣ",
   },
   journey: {
-    section: "ΙΙ. Η ΔΙΑΔΡΟΜΗ",
+    section: "Ι. Η ΔΙΑΔΡΟΜΗ",
     titlePre: (n: number) => `${n} χώρες. ${n} σημάδια.`,
     titleEm: "Μία πόλη.",
     intro:
@@ -230,7 +230,7 @@ const el = {
         title: "Όλη η ομάδα προχωρά μαζί",
         body: "Η πρόοδος είναι κοινή για όλη την ομάδα. Αρκεί ένα μέλος να σκανάρει έναν κωδικό και ξεκλειδώνει για όλους. Το ίδιο ισχύει και όταν εγκρίνεται μια απόδειξη με φωτογραφίες.",
         points: [
-          "Το σκανάρισμα ενός μέλους προχωρά ολόκληρη την ομάδα.",
+          "Το σκανάρισμα ενός μέλους προχωρά ολόκλ��ρη την ομάδα.",
           "Δεν χρειάζεται να είστε όλοι στο ίδιο σημείο ταυτόχρονα.",
         ],
       },
@@ -288,8 +288,8 @@ const el = {
     noSpam: "Κανένα spam. Μόνο ό,τι χρειάζεσαι για να ξεκινήσεις το ταξίδι.",
   },
   crew: {
-    section: "V. Η ΟΜΑΔΑ",
-    badge: "ΚΑΛΟΚΑΙΡΙ 2026 · ΚΑΛΑΜΑΤΑ",
+    section: "Η ΟΜΑΔΑ",
+    badge: "30 ΙΟΥΛΙΟΥ 2026 · ΚΑΛΑΜΑΤΑ",
     title: "Μπες στην ομάδα.",
     subtitle:
       "Φτιάξε τον δικό σου λογαριασμό, στήσε την ομάδα σου και σαλπάρετε μαζί στο ταξίδι του Πυθέα.",
@@ -398,7 +398,7 @@ const el = {
     },
   },
   faq: {
-    section: "VI. ΑΠΟΡΙΕΣ",
+    section: "V. ΑΠΟΡΙΕΣ",
     titlePre: "Ό,τι θες να ξέρεις",
     titleEm: "πριν σαλπάρεις.",
     items: [
@@ -494,7 +494,7 @@ const el = {
     sealedNotStartedBody:
       "Το πρώτο σημάδι θα εμφανιστεί μόλις ο Πυθέας ανοίξει τον χάρτη του.",
     sealedBody: (n: string) =>
-      `Η σελίδα Νο. ${n} μένει κάτω από το κερί μέχρι να φτάσεις στο σημείο της μέσα στην πόλη. Εντόπισε τον κρυμμένο κωδικό QR στην επόμενη στάση και σάρωσέ τον: η σφραγίδα σπάει και η σελίδα χαράσσεται στο ημερολόγιό σου.`,
+      `Η σελίδα Νο. ${n} μένει κάτω από το κερί μέχρι να φτάσεις στο σημείο της μέσα στην πόλη. Εντόπισε τον κρυμμένο κωδικό QR στην επόμενη στάση και σάρ��σέ τον: η σφραγίδα σπάει και η σελίδα χαράσσεται στο ημερολόγιό σου.`,
     finalLabel: "ΤΕΛΟΣ ΤΟΥ ΗΜΕΡΟΛΟΓΙΟΥ",
     finalBody:
       "Όλα τα σημάδια αποκαλύφθηκαν. Ο θησαυρός περιμένει εκείνους που έμαθαν να κοιτούν την Καλαμάτα σαν εξερευνητές.",
@@ -714,7 +714,7 @@ const el = {
     emailPlaceholder: "navigator@pythea.gr",
     passwordLabel: "Κωδικός",
     passwordPlaceholder: "Τουλάχιστον 8 χαρακτήρες",
-    confirmPasswordLabel: "Επιβεβαίωση κωδικού",
+    confirmPasswordLabel: "��πιβεβαίωση κωδικού",
     confirmPasswordPlaceholder: "Ξαναγράψε τον κωδικό",
     firstNameLabel: "Όνομα",
     firstNamePlaceholder: "Πυθέας",
@@ -880,7 +880,7 @@ const en: Dictionary = {
   },
   hero: {
     coords: "36°57′N · 22°06′E · KALAMATA",
-    season: "SUMMER 2026",
+    season: "30 JULY 2026",
     free: "FREE TO PLAY",
     srTitle: "Treasure Hunt in Kalamata · The Voyage of Pytheas the Messenian",
     titleTop: ["The", "Voyage", "of"],
@@ -893,7 +893,7 @@ const en: Dictionary = {
     scroll: "SCROLL",
   },
   story: {
-    section: "I. THE LEGEND",
+    section: "II. THE LEGEND",
     paragraphs: [
       "They say that in Kalamata, not so long ago, somewhere in the early years of the last century, there lived a strange and well-travelled man. They called him Pytheas the Messenian.",
       "Some called him an explorer, others a dreamer, and others simply a man who could not stay long in the same place. Yet he himself used to say that the world is not hidden only beyond oceans, mountains and distant continents. It hides inside our own cities too, in the corners we pass every day, in the marks we see without ever noticing.",
@@ -904,7 +904,7 @@ const en: Dictionary = {
     author: "PYTHEAS THE MESSENIAN",
   },
   journey: {
-    section: "II. THE ROUTE",
+    section: "I. THE ROUTE",
     titlePre: (n: number) => `${n} countries. ${n} marks.`,
     titleEm: "One city.",
     intro:
@@ -1134,8 +1134,8 @@ const en: Dictionary = {
     noSpam: "No spam. Only what you need to begin the journey.",
   },
   crew: {
-    section: "V. THE TEAM",
-    badge: "SUMMER 2026 · KALAMATA",
+    section: "THE TEAM",
+    badge: "30 JULY 2026 · KALAMATA",
     title: "Join the team.",
     subtitle:
       "Create your account, set up your team and set sail together on the voyage of Pytheas.",
@@ -1237,7 +1237,7 @@ const en: Dictionary = {
     },
   },
   faq: {
-    section: "VI. QUESTIONS",
+    section: "V. QUESTIONS",
     titlePre: "Everything you need to know",
     titleEm: "before you set sail.",
     items: [
