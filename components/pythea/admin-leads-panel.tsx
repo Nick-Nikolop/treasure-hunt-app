@@ -19,6 +19,7 @@ import {
   MapPin,
   MapPinOff,
   ExternalLink,
+  Droplets,
 } from "lucide-react"
 import {
   adminSaveLead,
@@ -32,6 +33,7 @@ import {
   adminResetAllProgress,
   adminSaveLeadGeo,
   adminRegenerateToken,
+  adminSetLeadBgWash,
 } from "@/app/admin/actions"
 import { LEAD_ICONS, type Difficulty, type LeadIcon } from "@/lib/clues"
 import type { EditableLead } from "@/lib/lead-content"
@@ -98,9 +100,12 @@ function contentDiffers(a: EditableLead, b: EditableLead): boolean {
 export function AdminLeadsPanel({
   leads,
   tokens,
+  leadBgWashPct,
 }: {
   leads: EditableLead[]
   tokens: ClueTokenRow[]
+  /** Global parchment-wash strength (%) over every lead page's landmark art. */
+  leadBgWashPct: number
 }) {
   const [pending, startTransition] = useTransition()
   const [popup, setPopup] = useState<Popup | null>(null)
@@ -401,6 +406,8 @@ export function AdminLeadsPanel({
         </p>
       </div>
 
+      <WashControl initial={leadBgWashPct} />
+
       <MissingCoordsAlert leads={items} onJump={(id) => setOpenId(id)} />
 
       <ul className="flex flex-col gap-2.5">
@@ -455,6 +462,100 @@ export function AdminLeadsPanel({
           onClose={() => setPopup(null)}
         />
       )}
+    </div>
+  )
+}
+
+/**
+ * Global parchment-wash control: one slider that sets how strongly the landmark
+ * background art is covered across every journal lead page. 0 shows the art
+ * fully; 100 hides it behind solid parchment. Saved on its own (independent of
+ * the per-lead "Save all changes" bar) and applies to every lead at once.
+ */
+function WashControl({ initial }: { initial: number }) {
+  const [pct, setPct] = useState(initial)
+  const [saved, setSaved] = useState(initial)
+  const [pending, startTransition] = useTransition()
+  const [done, setDone] = useState(false)
+  const dirty = pct !== saved
+
+  useEffect(() => {
+    if (!done) return
+    const t = setTimeout(() => setDone(false), 2500)
+    return () => clearTimeout(t)
+  }, [done])
+
+  function save() {
+    startTransition(async () => {
+      const res = await adminSetLeadBgWash(pct)
+      if (res.ok) {
+        setSaved(pct)
+        setDone(true)
+      }
+    })
+  }
+
+  return (
+    <div className="rounded-sm border border-border bg-card/40 p-4">
+      <div className="flex items-center gap-2">
+        <Droplets className="size-4 text-brass" />
+        <h3 className="font-serif text-base font-black text-foreground">Lead background wash</h3>
+      </div>
+      <p className="mt-1 font-sans text-[13px] leading-relaxed text-muted-foreground">
+        One global setting for every lead page. Higher covers the landmark artwork with more
+        parchment so the ink stays readable; lower lets the art show through.
+      </p>
+      <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
+        {/* Live preview: the wash over a sample landmark-toned gradient */}
+        <div className="relative h-16 w-full shrink-0 overflow-hidden rounded-sm border border-border sm:w-40">
+          <div className="absolute inset-0 bg-gradient-to-br from-brass/70 to-ink/60" />
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundColor: `color-mix(in oklch, var(--parchment) ${pct}%, transparent)`,
+            }}
+          />
+        </div>
+        <div className="flex flex-1 items-center gap-3">
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={1}
+            value={pct}
+            onChange={(e) => setPct(Number(e.target.value))}
+            className="h-1.5 flex-1 cursor-pointer accent-brass"
+            aria-label="Lead background wash strength"
+          />
+          <div className="flex items-center gap-1">
+            <input
+              type="number"
+              min={0}
+              max={100}
+              value={pct}
+              onChange={(e) => setPct(Math.max(0, Math.min(100, Number(e.target.value) || 0)))}
+              className="w-16 rounded-sm border border-border bg-background px-2 py-1 text-right font-mono text-sm text-foreground"
+            />
+            <span className="font-mono text-sm text-muted-foreground">%</span>
+          </div>
+        </div>
+      </div>
+      <div className="mt-3 flex items-center gap-3">
+        <button
+          type="button"
+          onClick={save}
+          disabled={pending || !dirty}
+          className="inline-flex items-center gap-2 rounded-sm border border-brass/50 bg-brass/15 px-3 py-1.5 font-sans text-sm font-bold text-brass transition hover:bg-brass/25 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {pending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+          Save wash
+        </button>
+        {done && (
+          <span className="inline-flex items-center gap-1 font-sans text-[13px] text-emerald-300">
+            <CheckCircle2 className="size-4" /> Saved
+          </span>
+        )}
+      </div>
     </div>
   )
 }

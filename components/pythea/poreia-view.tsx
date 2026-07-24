@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { motion } from "framer-motion"
 import {
   Lock,
@@ -72,6 +72,8 @@ type Props = {
   next: LockedClue | null
   /** Live standings summary powering the leaderboard + port widgets. */
   standings: StandingsSummary
+  /** Global parchment-wash strength (0..100) over lead-page landmark art. */
+  washPct?: number
 }
 
 // A stop drawn on the voyage chart. Built only from already-unlocked clues,
@@ -100,8 +102,23 @@ export function PoreiaView({
   total,
   next,
   standings,
+  washPct = 72,
 }: Props) {
   const { t } = useI18n()
+
+  // Derive the three parchment-wash stops from the single global setting. The
+  // flat wash sits at the base strength; the corner gradient runs a touch
+  // heavier near the spine/top (where the heading sits) down to a lighter
+  // outer corner, so one knob scales the whole effect. Exposed as CSS vars on
+  // the book stage below so every lead page picks them up.
+  const washBase = Math.max(0, Math.min(100, washPct))
+  const washStrong = Math.min(100, washBase + 10)
+  const washSoft = Math.round(washBase * 0.55)
+  const washVars = {
+    "--lead-wash-base": `${washBase}%`,
+    "--lead-wash-strong": `${washStrong}%`,
+    "--lead-wash-soft": `${washSoft}%`,
+  } as CSSProperties
   const { lite, toggle: toggleLite } = useLiteMode()
   const isMobile = useIsMobile()
   const router = useRouter()
@@ -321,7 +338,7 @@ export function PoreiaView({
       {/* The book, centered. Pages are bound on the left; a turned page rotates
           around the spine and tucks behind the journal. The stage clips at the
           spine so the leaf slips behind instead of floating away on the left. */}
-      <div ref={bookRef} className="flex scroll-mt-20 justify-center md:scroll-mt-28">
+      <div ref={bookRef} style={washVars} className="flex scroll-mt-20 justify-center md:scroll-mt-28">
         <div
           className="relative w-full max-w-2xl cursor-pointer select-none touch-pan-y"
           style={{ perspective: "2800px", perspectiveOrigin: "50% 40%" }}
@@ -650,10 +667,14 @@ function JournalPage({
             loading="eager"
             decoding="async"
           />
-          {/* Paper wash keeps body text legible over the art */}
+          {/* Paper wash keeps body text legible over the art. Strength is the
+              global --lead-wash-* set on the book stage from the admin setting. */}
           <div
             className="absolute inset-0"
-            style={{ backgroundColor: "color-mix(in oklch, var(--parchment) 72%, transparent)" }}
+            style={{
+              backgroundColor:
+                "color-mix(in oklch, var(--parchment) var(--lead-wash-base, 72%), transparent)",
+            }}
           />
           {/* A touch heavier toward the spine/top where the heading + first
               paragraph sit, easing off toward the outer corner */}
@@ -661,7 +682,7 @@ function JournalPage({
             className="absolute inset-0"
             style={{
               background:
-                "linear-gradient(to bottom right, color-mix(in oklch, var(--parchment) 82%, transparent), color-mix(in oklch, var(--parchment) 40%, transparent) 55%, transparent)",
+                "linear-gradient(to bottom right, color-mix(in oklch, var(--parchment) var(--lead-wash-strong, 82%), transparent), color-mix(in oklch, var(--parchment) var(--lead-wash-soft, 40%), transparent) 55%, transparent)",
             }}
           />
         </div>

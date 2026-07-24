@@ -62,6 +62,8 @@ import {
 import {
   getSolveCooldownSeconds,
   setSolveCooldownSeconds,
+  getLeadBgWashPct,
+  setLeadBgWashPct,
   getPhaseSettings,
   setPhaseOverride,
   setPhaseUnlockTimes,
@@ -193,6 +195,8 @@ export type AdminData = {
   scoreConfig: ScoreConfig
   /** Anti-cheat cooldown (seconds) enforced between consecutive QR solves. */
   solveCooldownSeconds: number
+  /** Global parchment-wash strength (%) over journal lead-page landmark art. */
+  leadBgWashPct: number
   /** Difficulty per lead order (1..TOTAL_CLUES). */
   leadDifficulties: { order: number; difficulty: Difficulty }[]
   /** Editable lead copy (subtitle + body, per language) with defaults merged. */
@@ -316,6 +320,7 @@ export async function getAdminData(): Promise<AdminData> {
     })),
     scoreConfig: await getScoreConfig(),
     solveCooldownSeconds: await getSolveCooldownSeconds(),
+    leadBgWashPct: await getLeadBgWashPct(),
     leadDifficulties: editableLeads.map((c) => ({
       order: c.order,
       difficulty: c.difficulty,
@@ -624,6 +629,32 @@ export async function adminSaveLead(input: {
     ...adminActor(admin),
     leadOrder: existing.order,
     summary: `${adminActor(admin).actorName} edited lead No. ${String(existing.order).padStart(2, "0")} (${country})`,
+  })
+
+  revalidatePath("/admin")
+  revalidatePath("/journal")
+  return { ok: true }
+}
+
+/**
+ * Set the single global parchment-wash strength (0..100) applied over the
+ * landmark background on every journal lead page. 0 shows the art fully, 100
+ * hides it behind solid parchment. Superadmin only.
+ */
+export async function adminSetLeadBgWash(pct: number): Promise<ActionResult> {
+  const admin = await requireAdmin()
+
+  if (!Number.isFinite(pct)) return { ok: false, error: "bad_value" }
+  const value = Math.max(0, Math.min(100, Math.round(pct)))
+
+  await setLeadBgWashPct(value)
+
+  await logActivity({
+    category: "admin",
+    action: "admin.lead_bg_wash",
+    ...adminActor(admin),
+    summary: `${adminActor(admin).actorName} set the lead background wash to ${value}%`,
+    metadata: { leadBgWashPct: value },
   })
 
   revalidatePath("/admin")
@@ -1233,7 +1264,7 @@ export async function adminRegenerateToken(leadOrder: number): Promise<ActionRes
   return { ok: true }
 }
 
-// ── Leads: add / remove / reorder / stamp (admin) ───────────────────────────
+  // ── Leads: add / remove / reorder / stamp (admin) ───────────────────────────
 
 /**
  * Reorder the whole sequence. `orderedIds` is the full list of lead ids in the

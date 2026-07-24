@@ -10,6 +10,7 @@ import { ClueControls } from "@/components/pythea/clue-controls"
 import { buildClueState, isOverrideAuthorized, PREVIEW_COOKIE } from "@/lib/clues"
 import { getCrewUserIds, getCrewEffectiveProgress, getUserScore, getStandingsSummary } from "@/lib/hunt"
 import { getLeadDefs } from "@/lib/leads"
+import { getLeadBgWashPct } from "@/lib/hunt-config"
 import { getPhaseContext } from "@/lib/phase-guard"
 
 // Recompute against the live server clock, the player's stored progress, and
@@ -64,6 +65,9 @@ export default async function PoreiaPage() {
   const leadDefs = await getLeadDefs()
   const state = buildClueState(unlockedCount, now, leadDefs)
 
+  // Global wash strength applied to every lead page's landmark background.
+  const leadBgWashPct = await getLeadBgWashPct()
+
   // The unlocked slice already carries full live content (country, body,
   // stamp), so it is used directly.
   const unlocked = state.unlocked
@@ -97,6 +101,7 @@ export default async function PoreiaPage() {
           startMs={state.startMs}
           next={state.next}
           standings={standings}
+          washPct={leadBgWashPct}
         />
         <SiteFooter />
       </div>

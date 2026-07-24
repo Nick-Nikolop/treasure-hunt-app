@@ -52,6 +52,47 @@ export async function setSolveCooldownSeconds(seconds: number): Promise<void> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
+//  Journal lead-page background wash (also on the single `score_config` row).
+// ─────────────────────────────────────────────────────────────────────────
+
+/** Default opacity (%) of the parchment wash over lead-page landmark art. */
+export const DEFAULT_LEAD_BG_WASH_PCT = 72
+
+/** Clamp a raw wash value to a whole percentage in the 0..100 range. */
+function clampWash(value: number): number {
+  if (!Number.isFinite(value)) return DEFAULT_LEAD_BG_WASH_PCT
+  return Math.max(0, Math.min(100, Math.round(value)))
+}
+
+/**
+ * How strongly the parchment wash covers the landmark background on every
+ * journal lead page (0 = art fully visible, 100 = art hidden). A single global
+ * setting shared by all leads. Falls back to the default when no row exists.
+ */
+export async function getLeadBgWashPct(): Promise<number> {
+  const rows = await db
+    .select({ pct: scoreConfig.leadBgWashPct })
+    .from(scoreConfig)
+    .where(eq(scoreConfig.id, "default"))
+    .limit(1)
+  const row = rows[0]
+  if (!row) return DEFAULT_LEAD_BG_WASH_PCT
+  return clampWash(row.pct)
+}
+
+/** Upsert the lead-page background wash strength (%) onto the settings row. */
+export async function setLeadBgWashPct(pct: number): Promise<void> {
+  const value = clampWash(pct)
+  await db
+    .insert(scoreConfig)
+    .values({ id: "default", leadBgWashPct: value, updatedAt: new Date() })
+    .onConflictDoUpdate({
+      target: scoreConfig.id,
+      set: { leadBgWashPct: value, updatedAt: new Date() },
+    })
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 //  Phased rollout settings (also live on the single `score_config` row).
 // ─────────────────────────────────────────────────────────────────────────
 

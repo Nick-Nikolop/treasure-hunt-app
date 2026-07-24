@@ -461,7 +461,7 @@ export function AdminDashboard({
         ) : tab === "campaigns" ? (
           <AdminCampaignsPanel campaigns={data.campaigns} />
         ) : tab === "leads" ? (
-          <AdminLeadsPanel leads={data.leads} tokens={data.tokens} />
+          <AdminLeadsPanel leads={data.leads} tokens={data.tokens} leadBgWashPct={data.leadBgWashPct} />
         ) : tab === "activity" ? (
           <AdminActivityPanel
             key={activityKey}

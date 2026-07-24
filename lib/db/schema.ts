@@ -195,6 +195,10 @@ export const scoreConfig = pgTable("score_config", {
   // When phase 2 → 3 auto-advances (journal + leaderboard open). NULL falls
   // back to the code default in lib/phase.ts.
   journalUnlockAt: timestamp("journalUnlockAt"),
+  // How strongly the parchment wash covers the landmark art behind every
+  // journal lead page (0 = art fully visible, 100 = art fully hidden). One
+  // global knob for all leads.
+  leadBgWashPct: integer("leadBgWashPct").notNull().default(72),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 })
 
