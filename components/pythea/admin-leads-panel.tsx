@@ -12,6 +12,7 @@ import {
   Trash2,
   Upload,
   ImageOff,
+  ImageIcon,
   Loader2,
   AlertTriangle,
   CheckCircle2,
@@ -26,6 +27,8 @@ import {
   adminReorderLeads,
   adminUploadLeadStamp,
   adminClearLeadStamp,
+  adminUploadLeadBackground,
+  adminClearLeadBackground,
   adminResetAllProgress,
   adminSaveLeadGeo,
   adminRegenerateToken,
@@ -233,6 +236,7 @@ export function AdminLeadsPanel({
         bodyEn: "",
         stampImageUrl: null,
         stampAspect: "2:3",
+        backgroundImageUrl: null,
         difficulty: "easy",
         lat: null,
         lng: null,
@@ -287,6 +291,33 @@ export function AdminLeadsPanel({
       setItems((prev) => prev.map((l) => (l.id === id ? { ...l, stampImageUrl: null } : l)))
       setBaseline((prev) => prev.map((l) => (l.id === id ? { ...l, stampImageUrl: null } : l)))
       setPopup({ kind: "ok", text: "Stamp cleared, reverted to the default art." })
+    })
+  }
+
+  function uploadBackground(id: string, fd: FormData) {
+    startTransition(async () => {
+      const res = await adminUploadLeadBackground(fd)
+      if (!res.ok) {
+        setPopup({ kind: "err", text: errorText[res.error] ?? "Could not upload that background." })
+        return
+      }
+      const patch = { backgroundImageUrl: res.url }
+      setItems((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)))
+      setBaseline((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)))
+      setPopup({ kind: "ok", text: "Page background updated." })
+    })
+  }
+
+  function clearBackground(id: string) {
+    startTransition(async () => {
+      const res = await adminClearLeadBackground(id)
+      if (!res.ok) {
+        setPopup({ kind: "err", text: errorText[res.error] ?? "Could not clear that background." })
+        return
+      }
+      setItems((prev) => prev.map((l) => (l.id === id ? { ...l, backgroundImageUrl: null } : l)))
+      setBaseline((prev) => prev.map((l) => (l.id === id ? { ...l, backgroundImageUrl: null } : l)))
+      setPopup({ kind: "ok", text: "Background cleared, reverted to the default landmark art." })
     })
   }
 
@@ -392,6 +423,8 @@ export function AdminLeadsPanel({
             onRemove={() => removeLead(lead.id, lead.country)}
             onUpload={(fd) => uploadStamp(lead.id, fd)}
             onClearStamp={() => clearStamp(lead.id)}
+            onUploadBackground={(fd) => uploadBackground(lead.id, fd)}
+            onClearBackground={() => clearBackground(lead.id)}
             onSaveGeo={(lat, lng, r, done) => saveGeo(lead.id, lat, lng, r, done)}
             token={tokenByLeadId.get(lead.id) ?? null}
             isTimerLead={index === 0}
@@ -569,6 +602,8 @@ function LeadCard({
   onRemove,
   onUpload,
   onClearStamp,
+  onUploadBackground,
+  onClearBackground,
   onSaveGeo,
   token,
   isTimerLead,
@@ -590,6 +625,8 @@ function LeadCard({
   onRemove: () => void
   onUpload: (formData: FormData) => void
   onClearStamp: () => void
+  onUploadBackground: (formData: FormData) => void
+  onClearBackground: () => void
   onSaveGeo: (lat: string, lng: string, radiusM: string, done: (ok: boolean) => void) => void
   token: ClueTokenRow | null
   isTimerLead: boolean
@@ -675,7 +712,16 @@ function LeadCard({
 
       {open && (
         <div className="border-t border-border p-4">
-          <StampEditor lead={lead} pending={pending} onUpload={onUpload} onClear={onClearStamp} />
+            <StampEditor lead={lead} pending={pending} onUpload={onUpload} onClear={onClearStamp} />
+
+            <div className="mt-3">
+              <BackgroundEditor
+                lead={lead}
+                pending={pending}
+                onUpload={onUploadBackground}
+                onClear={onClearBackground}
+              />
+            </div>
 
           <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
             <LangColumn
@@ -1233,6 +1279,159 @@ function StampEditor({
               {uploading ? "Uploading…" : "Upload stamp"}
             </button>
             {lead.stampImageUrl && (
+              <button
+                type="button"
+                onClick={onClear}
+                disabled={pending}
+                className="inline-flex items-center gap-1.5 rounded-sm border border-border px-3 py-1.5 font-sans text-xs font-bold tracking-chip text-muted-foreground transition-colors hover:text-destructive disabled:opacity-40"
+              >
+                <ImageOff className="size-3.5" />
+                Clear
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/** Bundled landmark fallbacks, matched to the journal's order-based defaults. */
+const LEAD_BG_FALLBACK = [
+  "/lead-bg/great-wall.jpg",
+  "/lead-bg/temple.jpg",
+  "/lead-bg/eiffel-tower.jpg",
+  "/lead-bg/watch.jpg",
+  "/lead-bg/st-sava.jpg",
+  "/lead-bg/sagrada-familia.jpg",
+  "/lead-bg/pyramids.jpg",
+  "/lead-bg/blue-mosque.jpg",
+  "/lead-bg/big-ben.jpg",
+  "/lead-bg/library.jpg",
+]
+
+function BackgroundEditor({
+  lead,
+  pending,
+  onUpload,
+  onClear,
+}: {
+  lead: EditableLead
+  pending: boolean
+  onUpload: (formData: FormData) => void
+  onClear: () => void
+}) {
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [fileName, setFileName] = useState<string | null>(null)
+  const [preview, setPreview] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+
+  useEffect(() => {
+    if (uploading && !pending) {
+      setUploading(false)
+      setFileName(null)
+      setPreview(null)
+      if (fileRef.current) fileRef.current.value = ""
+    }
+  }, [uploading, pending])
+
+  function onPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0]
+    setFileName(f?.name ?? null)
+    setPreview(f ? URL.createObjectURL(f) : null)
+  }
+
+  function submit() {
+    const f = fileRef.current?.files?.[0]
+    if (!f) return
+    const fd = new FormData()
+    fd.set("id", lead.id)
+    fd.set("file", f)
+    setUploading(true)
+    onUpload(fd)
+  }
+
+  // The bundled landmark this lead falls back to when it has no custom image.
+  const fallback = LEAD_BG_FALLBACK[(lead.order - 1) % LEAD_BG_FALLBACK.length]
+  const isCustom = Boolean(lead.backgroundImageUrl)
+  const shown = preview ?? lead.backgroundImageUrl ?? fallback
+
+  return (
+    <div className="rounded-sm border border-border bg-background/40 p-3">
+      <div className="flex flex-col gap-4 sm:flex-row">
+        <div
+          className="relative w-32 shrink-0 overflow-hidden rounded-sm border border-border bg-background"
+          style={{ aspectRatio: "3 / 4" }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={shown || "/placeholder.svg"}
+            alt={`${lead.country} page background preview`}
+            className="h-full w-full object-cover"
+          />
+          {uploading && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-background/80 backdrop-blur-sm">
+              <Loader2 className="size-5 animate-spin text-brass" aria-hidden />
+              <span className="font-sans text-[10px] font-bold uppercase tracking-chip text-brass">
+                Uploading
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className="flex min-w-0 flex-1 flex-col gap-3">
+          <div>
+            <h4 className="flex items-center gap-1.5 font-sans text-[11px] font-bold uppercase tracking-chip text-brass">
+              <ImageIcon className="size-3.5" aria-hidden />
+              Page background
+            </h4>
+            <p className="mt-1 font-sans text-[12px] leading-relaxed text-muted-foreground">
+              The full-page art behind this lead in the journal. Best as{" "}
+              <span className="font-bold text-foreground">3:4 portrait</span> (e.g. 1536×2048). PNG,
+              JPG, WebP or AVIF, up to 5 MB.{" "}
+              {isCustom ? (
+                <span className="text-foreground">Using a custom image.</span>
+              ) : (
+                <span>Currently using the default landmark.</span>
+              )}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/avif"
+              onChange={onPick}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={pending}
+              className="inline-flex items-center gap-1.5 rounded-sm border border-border px-3 py-1.5 font-sans text-xs font-bold tracking-chip text-foreground transition-colors hover:border-brass disabled:opacity-40"
+            >
+              <Upload className="size-3.5" />
+              Choose image
+            </button>
+            {fileName && (
+              <span className="max-w-[12rem] truncate font-sans text-[11px] text-muted-foreground">
+                {fileName}
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={submit}
+              disabled={pending || !fileName}
+              className="inline-flex items-center gap-1.5 rounded-sm bg-brass px-3 py-1.5 font-sans text-xs font-bold tracking-chip text-background transition-opacity hover:opacity-90 disabled:opacity-40"
+            >
+              {uploading ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
+              {uploading ? "Uploading…" : "Upload background"}
+            </button>
+            {isCustom && (
               <button
                 type="button"
                 onClick={onClear}

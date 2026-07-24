@@ -93,6 +93,7 @@ import {
   reorderLeads,
   updateLeadContent,
   updateLeadStamp,
+  updateLeadBackground,
   updateLeadGeo,
 } from "@/lib/leads"
 import { put, del } from "@vercel/blob"
@@ -1411,6 +1412,90 @@ export async function adminClearLeadStamp(id: string): Promise<ActionResult> {
     ...adminActor(admin),
     leadOrder: target.order,
     summary: `${adminActor(admin).actorName} cleared the stamp for lead "${target.country}"`,
+  })
+  revalidatePath("/admin")
+  revalidatePath("/journal")
+  return { ok: true }
+}
+
+/**
+ * Upload a new full-bleed background image for a lead's journal page. Stored in
+ * Blob; any previous uploaded background is removed. When cleared, the journal
+ * falls back to a bundled landmark chosen by lead order.
+ */
+export async function adminUploadLeadBackground(
+  formData: FormData,
+): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  const admin = await requireAdmin()
+
+  const id = String(formData.get("id") ?? "").trim()
+  const file = formData.get("file")
+  if (!id) return { ok: false, error: "bad_value" }
+  if (!(file instanceof File) || file.size === 0) return { ok: false, error: "no_file" }
+  if (file.size > MAX_STAMP_BYTES) return { ok: false, error: "too_large" }
+  if (!ALLOWED_STAMP_TYPES.includes(file.type)) return { ok: false, error: "bad_type" }
+
+  const defs = await getLeadDefs()
+  const target = defs.find((d) => d.id === id)
+  if (!target) return { ok: false, error: "not_found" }
+
+  const ext = file.type.split("/")[1]?.replace("jpeg", "jpg") ?? "jpg"
+  const blob = await put(`lead-bg/${id}-${Date.now()}.${ext}`, file, {
+    access: "public",
+    contentType: file.type,
+  })
+
+  // Remove the previous uploaded background (bundled defaults are left alone).
+  const prev = target.backgroundImageUrl
+  if (prev && prev.includes(".public.blob.vercel-storage.com") && prev !== blob.url) {
+    try {
+      await del(prev)
+    } catch {
+      // Non-fatal.
+    }
+  }
+
+  await updateLeadBackground(id, blob.url)
+  await logActivity({
+    category: "admin",
+    action: "admin.lead_background_updated",
+    ...adminActor(admin),
+    leadOrder: target.order,
+    summary: `${adminActor(admin).actorName} updated the page background for lead "${target.country}"`,
+  })
+  revalidatePath("/admin")
+  revalidatePath("/journal")
+  return { ok: true, url: blob.url }
+}
+
+/** Clear a lead's uploaded background, reverting it to the bundled landmark art. */
+export async function adminClearLeadBackground(id: string): Promise<ActionResult> {
+  const admin = await requireAdmin()
+  const leadId = (id ?? "").trim()
+  if (!leadId) return { ok: false, error: "bad_value" }
+
+  const defs = await getLeadDefs()
+  const target = defs.find((d) => d.id === leadId)
+  if (!target) return { ok: false, error: "not_found" }
+
+  if (
+    target.backgroundImageUrl &&
+    target.backgroundImageUrl.includes(".public.blob.vercel-storage.com")
+  ) {
+    try {
+      await del(target.backgroundImageUrl)
+    } catch {
+      // Non-fatal.
+    }
+  }
+
+  await updateLeadBackground(leadId, null)
+  await logActivity({
+    category: "admin",
+    action: "admin.lead_background_cleared",
+    ...adminActor(admin),
+    leadOrder: target.order,
+    summary: `${adminActor(admin).actorName} cleared the page background for lead "${target.country}"`,
   })
   revalidatePath("/admin")
   revalidatePath("/journal")
