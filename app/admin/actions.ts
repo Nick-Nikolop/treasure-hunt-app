@@ -1366,6 +1366,8 @@ export async function adminRemoveLead(id: string): Promise<ActionResult> {
 /** Server-enforced cap for an uploaded stamp image (5 MB). */
 const MAX_STAMP_BYTES = 5 * 1024 * 1024
 const ALLOWED_STAMP_TYPES = ["image/png", "image/jpeg", "image/webp", "image/avif"]
+/** Full-page background art is far heavier than a stamp, so it gets a 15 MB cap. */
+const MAX_BACKGROUND_BYTES = 15 * 1024 * 1024
 
 /**
  * Upload a new γραμματόσημο (stamp) image for a lead. The file is stored in
@@ -1463,7 +1465,7 @@ export async function adminUploadLeadBackground(
   const file = formData.get("file")
   if (!id) return { ok: false, error: "bad_value" }
   if (!(file instanceof File) || file.size === 0) return { ok: false, error: "no_file" }
-  if (file.size > MAX_STAMP_BYTES) return { ok: false, error: "too_large" }
+  if (file.size > MAX_BACKGROUND_BYTES) return { ok: false, error: "too_large_bg" }
   if (!ALLOWED_STAMP_TYPES.includes(file.type)) return { ok: false, error: "bad_type" }
 
   const defs = await getLeadDefs()

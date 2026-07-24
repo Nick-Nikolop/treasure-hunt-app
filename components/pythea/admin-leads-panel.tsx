@@ -46,6 +46,7 @@ const errorText: Record<string, string> = {
   not_found: "That lead no longer exists.",
   too_short: "Both country names are required.",
   too_large: "That image is too large (max 5 MB).",
+  too_large_bg: "That background is too large (max 15 MB).",
   bad_type: "Use a PNG, JPG, WebP or AVIF image.",
   no_file: "Choose an image first.",
   first_lead: "The opening lead can't be removed.",
@@ -1489,7 +1490,7 @@ function BackgroundEditor({
             <p className="mt-1 font-sans text-[12px] leading-relaxed text-muted-foreground">
               The full-page art behind this lead in the journal. Best as{" "}
               <span className="font-bold text-foreground">3:4 portrait</span> (e.g. 1536×2048). PNG,
-              JPG, WebP or AVIF, up to 5 MB.{" "}
+              JPG, WebP or AVIF, up to 15 MB.{" "}
               {isCustom ? (
                 <span className="text-foreground">Using a custom image.</span>
               ) : (
