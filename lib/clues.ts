@@ -63,6 +63,9 @@ export type Clue = {
   stampImageUrl: string | null
   /** Suggested/authored aspect ratio for the stamp image, e.g. "2:3". */
   stampAspect: string
+  /** Full-bleed landmark art shown behind this lead's journal page. Uploaded by
+   *  an admin; when null the journal falls back to bundled art by order. */
+  backgroundImageUrl: string | null
   /** The country this stop represents (Greek; also the canonical stamp key) */
   country: string
   /** The country name in English */
@@ -79,7 +82,7 @@ export type Clue = {
   bodyEn: string[]
 }
 
-const RAW_CLUES: Omit<Clue, "id" | "stampImageUrl" | "stampAspect">[] = [
+const RAW_CLUES: Omit<Clue, "id" | "stampImageUrl" | "stampAspect" | "backgroundImageUrl">[] = [
   {
     order: 1,
     country: "Κίνα",
@@ -249,16 +252,16 @@ const RAW_CLUES: Omit<Clue, "id" | "stampImageUrl" | "stampAspect">[] = [
 // Per-lead seed identity + bundled stamp art. `id` is the stable QR-binding
 // identity; `stamp` is the vintage image in /public/stamps; `aspect` is the
 // suggested stamp ratio (most are 2:3 portrait; Switzerland's art is 3:2).
-const SEED_META: Record<number, { id: string; stamp: string; aspect: string }> = {
-  1: { id: "china", stamp: "/stamps/china.png", aspect: "2:3" },
-  2: { id: "thailand", stamp: "/stamps/thailand.png", aspect: "2:3" },
-  3: { id: "france", stamp: "/stamps/france.png", aspect: "2:3" },
-  4: { id: "switzerland", stamp: "/stamps/helvetia.png", aspect: "3:2" },
-  5: { id: "serbia", stamp: "/stamps/serbia.png", aspect: "2:3" },
-  6: { id: "spain", stamp: "/stamps/spain.png", aspect: "2:3" },
-  7: { id: "egypt", stamp: "/stamps/egypt.png", aspect: "2:3" },
-  8: { id: "russia", stamp: "/stamps/russia.png", aspect: "2:3" },
-  9: { id: "finland", stamp: "/stamps/finland.png", aspect: "2:3" },
+const SEED_META: Record<number, { id: string; stamp: string; aspect: string; bg: string }> = {
+  1: { id: "china", stamp: "/stamps/china.png", aspect: "2:3", bg: "/lead-bg/great-wall.jpg" },
+  2: { id: "thailand", stamp: "/stamps/thailand.png", aspect: "2:3", bg: "/lead-bg/temple.jpg" },
+  3: { id: "france", stamp: "/stamps/france.png", aspect: "2:3", bg: "/lead-bg/eiffel-tower.jpg" },
+  4: { id: "switzerland", stamp: "/stamps/helvetia.png", aspect: "3:2", bg: "/lead-bg/watch.jpg" },
+  5: { id: "serbia", stamp: "/stamps/serbia.png", aspect: "2:3", bg: "/lead-bg/st-sava.jpg" },
+  6: { id: "spain", stamp: "/stamps/spain.png", aspect: "2:3", bg: "/lead-bg/sagrada-familia.jpg" },
+  7: { id: "egypt", stamp: "/stamps/egypt.png", aspect: "2:3", bg: "/lead-bg/pyramids.jpg" },
+  8: { id: "russia", stamp: "/stamps/russia.png", aspect: "2:3", bg: "/lead-bg/blue-mosque.jpg" },
+  9: { id: "finland", stamp: "/stamps/finland.png", aspect: "2:3", bg: "/lead-bg/big-ben.jpg" },
 }
 
 /**
@@ -271,6 +274,7 @@ export const CLUES: Clue[] = RAW_CLUES.map((c) => ({
   id: SEED_META[c.order].id,
   stampImageUrl: SEED_META[c.order].stamp,
   stampAspect: SEED_META[c.order].aspect,
+  backgroundImageUrl: SEED_META[c.order].bg,
 }))
 
 /** Count of seed leads. Runtime total is dynamic — see lib/leads.ts. */

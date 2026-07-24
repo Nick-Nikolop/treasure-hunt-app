@@ -41,6 +41,27 @@ const STAMP_SRC: Record<string, string> = {
 /** A small set of natural-looking tilt angles, picked by clue order. */
 const STAMP_ROTATION = [-6, 5, -4, 7, -7, 4, -5, 6, -3]
 
+/** Bundled landmark backgrounds, assigned by lead order when a lead has no
+ *  admin-uploaded background of its own. Admins can override any of these. */
+const LEAD_BG_FALLBACK = [
+  "/lead-bg/great-wall.jpg",
+  "/lead-bg/temple.jpg",
+  "/lead-bg/eiffel-tower.jpg",
+  "/lead-bg/watch.jpg",
+  "/lead-bg/st-sava.jpg",
+  "/lead-bg/sagrada-familia.jpg",
+  "/lead-bg/pyramids.jpg",
+  "/lead-bg/blue-mosque.jpg",
+  "/lead-bg/big-ben.jpg",
+  "/lead-bg/library.jpg",
+]
+
+/** The background art for a clue page: the lead's own image, or a bundled
+ *  landmark chosen deterministically by order so it never shifts between visits. */
+function leadBackground(clue: Clue): string {
+  return clue.backgroundImageUrl ?? LEAD_BG_FALLBACK[(clue.order - 1) % LEAD_BG_FALLBACK.length]
+}
+
 type Props = {
   unlocked: Clue[]
   locked: LockedClue[]
@@ -616,6 +637,35 @@ function JournalPage({
           : "rounded-r-lg shadow-[0_30px_60px_-25px_rgba(0,0,0,0.7)]"
       }`}
     >
+      {/* Landmark background for revealed lead pages: the art sits full-bleed
+          behind a paper wash so the ink stays readable and the journal keeps
+          its parchment feel, with the landmark reading like a faint watermark. */}
+      {page.kind === "clue" && (
+        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-l-sm rounded-r-lg">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={leadBackground(page.clue) || "/placeholder.svg"}
+            alt=""
+            className="size-full object-cover"
+            loading="eager"
+            decoding="async"
+          />
+          {/* Paper wash keeps body text legible over the art */}
+          <div
+            className="absolute inset-0"
+            style={{ backgroundColor: "color-mix(in oklch, var(--parchment) 72%, transparent)" }}
+          />
+          {/* A touch heavier toward the spine/top where the heading + first
+              paragraph sit, easing off toward the outer corner */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(to bottom right, color-mix(in oklch, var(--parchment) 82%, transparent), color-mix(in oklch, var(--parchment) 40%, transparent) 55%, transparent)",
+            }}
+          />
+        </div>
+      )}
       {/* Spiral binding rings on the left */}
       <BindingRings />
       {/* Paper fiber grain */}

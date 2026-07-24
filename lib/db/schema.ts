@@ -123,6 +123,9 @@ export const lead = pgTable(
     bodyEn: text("bodyEn").notNull().default(""),
     stampImageUrl: text("stampImageUrl"),
     stampAspect: text("stampAspect").notNull().default("2:3"),
+    // Full-bleed background art shown behind this lead's journal page. Uploaded
+    // to Blob by an admin; falls back to a bundled landmark image when null.
+    backgroundImageUrl: text("backgroundImageUrl"),
     difficulty: text("difficulty").notNull().default("easy"),
     // GPS gate for scans: the physical spot the QR lives at. When both lat and
     // lng are set, a scan requires the explorer to be within `geoRadiusM`

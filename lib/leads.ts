@@ -113,6 +113,7 @@ async function doSeed(): Promise<void> {
         bodyEn: cleanStr(o?.bodyEn) ?? joinParagraphs(c.bodyEn),
         stampImageUrl: c.stampImageUrl,
         stampAspect: c.stampAspect,
+        backgroundImageUrl: c.backgroundImageUrl,
         difficulty: normalizeDifficulty(diffById.get(c.order)),
         createdAt: now,
         updatedAt: now,
@@ -180,6 +181,7 @@ export const getLeadDefs = cache(async (): Promise<LeadDef[]> => {
     bodyEn: splitParagraphs(r.bodyEn),
     stampImageUrl: r.stampImageUrl,
     stampAspect: r.stampAspect || "2:3",
+    backgroundImageUrl: r.backgroundImageUrl,
     difficulty: normalizeDifficulty(r.difficulty),
     lat: r.lat,
     lng: r.lng,
@@ -391,6 +393,7 @@ export async function createLead(
     bodyEn: input.bodyEn ?? "",
     stampImageUrl: null,
     stampAspect: "2:3",
+    backgroundImageUrl: null,
     difficulty: normalizeDifficulty(input.difficulty ?? "easy"),
     createdAt: now,
     updatedAt: now,
@@ -412,6 +415,7 @@ export async function createLead(
     bodyEn: splitParagraphs(r.bodyEn),
     stampImageUrl: r.stampImageUrl,
     stampAspect: r.stampAspect || "2:3",
+    backgroundImageUrl: r.backgroundImageUrl,
     difficulty: normalizeDifficulty(r.difficulty),
     lat: r.lat,
     lng: r.lng,
@@ -447,6 +451,18 @@ export async function updateLeadStamp(
   await db
     .update(lead)
     .set({ stampImageUrl, stampAspect, updatedAt: new Date() })
+    .where(eq(lead.id, id))
+  invalidate()
+}
+
+/** Update just a lead's full-bleed background image (null clears it). */
+export async function updateLeadBackground(
+  id: string,
+  backgroundImageUrl: string | null,
+): Promise<void> {
+  await db
+    .update(lead)
+    .set({ backgroundImageUrl, updatedAt: new Date() })
     .where(eq(lead.id, id))
   invalidate()
 }
