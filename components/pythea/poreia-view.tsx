@@ -15,7 +15,7 @@ import {
   Zap,
 } from "lucide-react"
 import type { Clue, LockedClue } from "@/lib/clues"
-import { STOP_XY, ROUTE_D, TAIL_D } from "@/lib/voyage-map"
+import { buildVoyageRoute, TREASURE_XY } from "@/lib/voyage-map"
 import { Countdown } from "@/components/pythea/countdown"
 import { useI18n } from "@/components/pythea/language-provider"
 import { useLiteMode } from "@/components/pythea/lite-mode-provider"
@@ -1090,6 +1090,13 @@ function MapPageBody({
   const { lite } = useLiteMode()
   // Fraction of the route inked so far: stop k sits at (k-1)/(total-1).
   const frac = total > 1 ? (stops.length - 1) / (total - 1) : 1
+  // The course is plotted for however many stops the hunt has, so adding or
+  // removing a lead reshapes the whole route instead of stranding a node.
+  const {
+    stops: stopXY,
+    routeD,
+    tailD,
+  } = useMemo(() => buildVoyageRoute(total), [total])
 
   return (
     <div className="flex flex-1 flex-col">
@@ -1134,7 +1141,7 @@ function MapPageBody({
 
         {/* The complete course, a faint pencil sketch */}
         <path
-          d={ROUTE_D}
+          d={routeD}
           fill="none"
           stroke="currentColor"
           strokeWidth="1.6"
@@ -1146,7 +1153,7 @@ function MapPageBody({
         {/* The inked portion of the course, drawn live up to the last stop */}
         {frac > 0 && (
           <motion.path
-            d={ROUTE_D}
+            d={routeD}
             fill="none"
             stroke="oklch(0.45 0.1 40)"
             strokeWidth="2.4"
@@ -1159,7 +1166,7 @@ function MapPageBody({
 
         {/* The final leg to the treasure */}
         <path
-          d={TAIL_D}
+          d={tailD}
           fill="none"
           stroke="currentColor"
           strokeWidth="1.4"
@@ -1169,7 +1176,7 @@ function MapPageBody({
         />
         {allDone && (
           <motion.path
-            d={TAIL_D}
+            d={tailD}
             fill="none"
             stroke="oklch(0.45 0.1 40)"
             strokeWidth="2.4"
@@ -1181,7 +1188,10 @@ function MapPageBody({
         )}
 
         {/* The treasure X at Kalamata */}
-        <g transform="translate(212, 420)" opacity={allDone ? 1 : 0.25}>
+        <g
+          transform={`translate(${TREASURE_XY[0]}, ${TREASURE_XY[1]})`}
+          opacity={allDone ? 1 : 0.25}
+        >
           <path
             d="M-9 -9 L9 9 M9 -9 L-9 9"
             stroke={allDone ? "oklch(0.45 0.13 30)" : "currentColor"}
@@ -1201,7 +1211,7 @@ function MapPageBody({
         </g>
 
         {/* Locked stops: empty circles waiting to be inked */}
-        {STOP_XY.slice(stops.length).map(([x, y], i) => (
+        {stopXY.slice(stops.length).map(([x, y], i) => (
           <g key={`locked-${i}`} transform={`translate(${x}, ${y})`} opacity="0.4">
             <circle r="6" fill="none" stroke="currentColor" strokeWidth="1.3" strokeDasharray="2.5 3" />
             <text y="3.5" textAnchor="middle" fontSize="9" fill="currentColor" className="font-serif italic">
@@ -1212,7 +1222,7 @@ function MapPageBody({
 
         {/* Unlocked stops, appearing one after another as the ink dries */}
         {stops.map((s, i) => {
-          const [x, y] = STOP_XY[i] ?? [200, 240]
+          const [x, y] = stopXY[i] ?? [200, 240]
           const name = locale === "en" ? s.countryEn : s.country
           // Alternate the label above/below the node; clamp near the edges.
           const labelAbove = i % 2 === 0

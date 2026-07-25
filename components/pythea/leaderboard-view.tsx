@@ -7,7 +7,7 @@ import { ModalShell } from "@/components/pythea/modal-shell"
 import { useI18n } from "@/components/pythea/language-provider"
 import { track } from "@/lib/analytics-client"
 import { EV } from "@/lib/analytics-events"
-import { STOP_XY, ROUTE_D, TAIL_D, TREASURE_XY, MAP_VIEWBOX } from "@/lib/voyage-map"
+import { buildVoyageRoute, TREASURE_XY, MAP_VIEWBOX } from "@/lib/voyage-map"
 import type { LeaderboardEntry } from "@/lib/hunt"
 
 type Port = { order: number; country: string; countryEn: string }
@@ -68,6 +68,13 @@ export function LeaderboardView({
     for (const p of revealedPorts) map.set(p.order, p)
     return map
   }, [revealedPorts])
+
+  // Chart plotted for the hunt's real stop count, matching the journal map.
+  const {
+    stops: stopXY,
+    routeD,
+    tailD,
+  } = useMemo(() => buildVoyageRoute(total), [total])
 
   // Which port is open in the detail modal. Null means no modal is open, so
   // the info surfaces only when the player taps a port or a standings row.
@@ -145,7 +152,7 @@ export function LeaderboardView({
 
             {/* Full faint course */}
             <path
-              d={ROUTE_D}
+              d={routeD}
               fill="none"
               stroke="currentColor"
               strokeWidth="1.6"
@@ -156,7 +163,7 @@ export function LeaderboardView({
             {/* Inked portion up to where the viewer has reached */}
             {frac > 0 && (
               <motion.path
-                d={ROUTE_D}
+                d={routeD}
                 fill="none"
                 stroke={INK_BROWN}
                 strokeWidth="2.4"
@@ -168,10 +175,10 @@ export function LeaderboardView({
             )}
 
             {/* Final leg + treasure */}
-            <path d={TAIL_D} fill="none" stroke="currentColor" strokeWidth="1.4" strokeDasharray="2 8" strokeLinecap="round" opacity="0.25" />
+            <path d={tailD} fill="none" stroke="currentColor" strokeWidth="1.4" strokeDasharray="2 8" strokeLinecap="round" opacity="0.25" />
             {allDone && (
               <motion.path
-                d={TAIL_D}
+                d={tailD}
                 fill="none"
                 stroke={INK_BROWN}
                 strokeWidth="2.4"
@@ -192,7 +199,7 @@ export function LeaderboardView({
 
             {/* Stops 1..total */}
             {Array.from({ length: total }, (_, i) => i + 1).map((order) => {
-              const [x, y] = STOP_XY[order - 1] ?? [200, 240]
+              const [x, y] = stopXY[order - 1] ?? [200, 240]
               const revealed = order <= viewerProgress
               const here = byPort.get(order) ?? []
               const count = here.length
