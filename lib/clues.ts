@@ -261,7 +261,7 @@ const SEED_META: Record<number, { id: string; stamp: string; aspect: string; bg:
   6: { id: "spain", stamp: "/stamps/spain.png", aspect: "2:3", bg: "/lead-bg/sagrada-familia.jpg" },
   7: { id: "egypt", stamp: "/stamps/egypt.png", aspect: "2:3", bg: "/lead-bg/pyramids.jpg" },
   8: { id: "russia", stamp: "/stamps/russia.png", aspect: "2:3", bg: "/lead-bg/blue-mosque.jpg" },
-  9: { id: "finland", stamp: "/stamps/finland.png", aspect: "2:3", bg: "/lead-bg/big-ben.jpg" },
+  9: { id: "finland", stamp: "/stamps/finland.png", aspect: "2:3", bg: "/lead-bg/library.jpg" },
 }
 
 /**

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
+import { resolveLeadBackground } from "@/lib/lead-backgrounds"
 import { motion } from "framer-motion"
 import {
   Lock,
@@ -41,25 +42,12 @@ const STAMP_SRC: Record<string, string> = {
 /** A small set of natural-looking tilt angles, picked by clue order. */
 const STAMP_ROTATION = [-6, 5, -4, 7, -7, 4, -5, 6, -3]
 
-/** Bundled landmark backgrounds, assigned by lead order when a lead has no
- *  admin-uploaded background of its own. Admins can override any of these. */
-const LEAD_BG_FALLBACK = [
-  "/lead-bg/great-wall.jpg",
-  "/lead-bg/temple.jpg",
-  "/lead-bg/eiffel-tower.jpg",
-  "/lead-bg/watch.jpg",
-  "/lead-bg/st-sava.jpg",
-  "/lead-bg/sagrada-familia.jpg",
-  "/lead-bg/pyramids.jpg",
-  "/lead-bg/blue-mosque.jpg",
-  "/lead-bg/big-ben.jpg",
-  "/lead-bg/library.jpg",
-]
-
-/** The background art for a clue page: the lead's own image, or a bundled
- *  landmark chosen deterministically by order so it never shifts between visits. */
-function leadBackground(clue: Clue): string {
-  return clue.backgroundImageUrl ?? LEAD_BG_FALLBACK[(clue.order - 1) % LEAD_BG_FALLBACK.length]
+/** The background art for a clue page: the lead's own uploaded image, else the
+ *  bundled landmark for that lead's identity. Resolved by lead id (never by
+ *  order) so reordering the hunt keeps each country with its own landmark.
+ *  Returns null when a lead has no art yet, leaving plain parchment. */
+function leadBackground(clue: Clue): string | null {
+  return resolveLeadBackground(clue.id, clue.backgroundImageUrl)
 }
 
 type Props = {
@@ -657,11 +645,18 @@ function JournalPage({
       {/* Landmark background for revealed lead pages: the art sits full-bleed
           behind a paper wash so the ink stays readable and the journal keeps
           its parchment feel, with the landmark reading like a faint watermark. */}
-      {page.kind === "clue" && (
+      {page.kind === "clue" &&
+        (() => {
+          // Resolved from the lead's own identity, so it survives reordering.
+          // Leads with no art yet render plain parchment instead of a
+          // mismatched landmark.
+          const bg = leadBackground(page.clue)
+          if (!bg) return null
+          return (
         <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-l-sm rounded-r-lg">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={leadBackground(page.clue) || "/placeholder.svg"}
+            src={bg || "/placeholder.svg"}
             alt=""
             className="size-full object-cover"
             loading="eager"
@@ -686,7 +681,8 @@ function JournalPage({
             }}
           />
         </div>
-      )}
+          )
+        })()}
       {/* Spiral binding rings on the left */}
       <BindingRings />
       {/* Paper fiber grain */}

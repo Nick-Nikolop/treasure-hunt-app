@@ -39,6 +39,7 @@ import { LEAD_ICONS, type Difficulty, type LeadIcon } from "@/lib/clues"
 import type { EditableLead } from "@/lib/lead-content"
 import type { ClueTokenRow } from "@/lib/hunt"
 import { DEFAULT_GEO_RADIUS_M } from "@/lib/geo"
+import { resolveLeadBackground } from "@/lib/lead-backgrounds"
 import { LeadQrBlock } from "@/components/pythea/lead-qr"
 
 const errorText: Record<string, string> = {
@@ -1398,20 +1399,6 @@ function StampEditor({
   )
 }
 
-/** Bundled landmark fallbacks, matched to the journal's order-based defaults. */
-const LEAD_BG_FALLBACK = [
-  "/lead-bg/great-wall.jpg",
-  "/lead-bg/temple.jpg",
-  "/lead-bg/eiffel-tower.jpg",
-  "/lead-bg/watch.jpg",
-  "/lead-bg/st-sava.jpg",
-  "/lead-bg/sagrada-familia.jpg",
-  "/lead-bg/pyramids.jpg",
-  "/lead-bg/blue-mosque.jpg",
-  "/lead-bg/big-ben.jpg",
-  "/lead-bg/library.jpg",
-]
-
 function BackgroundEditor({
   lead,
   pending,
@@ -1453,10 +1440,11 @@ function BackgroundEditor({
     onUpload(fd)
   }
 
-  // The bundled landmark this lead falls back to when it has no custom image.
-  const fallback = LEAD_BG_FALLBACK[(lead.order - 1) % LEAD_BG_FALLBACK.length]
+  // Resolved from the lead's identity (not its position), so this preview keeps
+  // matching the journal after the sequence is reordered. Leads with no art of
+  // their own show an empty state instead of another country's landmark.
   const isCustom = Boolean(lead.backgroundImageUrl)
-  const shown = preview ?? lead.backgroundImageUrl ?? fallback
+  const shown = preview ?? resolveLeadBackground(lead.id, lead.backgroundImageUrl)
 
   return (
     <div className="rounded-sm border border-border bg-background/40 p-3">
@@ -1465,12 +1453,21 @@ function BackgroundEditor({
           className="relative w-32 shrink-0 overflow-hidden rounded-sm border border-border bg-background"
           style={{ aspectRatio: "3 / 4" }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={shown || "/placeholder.svg"}
-            alt={`${lead.country} page background preview`}
-            className="h-full w-full object-cover"
-          />
+          {shown ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={shown || "/placeholder.svg"}
+              alt={`${lead.country} page background preview`}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full flex-col items-center justify-center gap-1 px-2 text-center">
+              <ImageOff className="size-4 text-muted-foreground" aria-hidden />
+              <span className="font-sans text-[10px] leading-tight text-muted-foreground">
+                No background
+              </span>
+            </div>
+          )}
           {uploading && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-background/80 backdrop-blur-sm">
               <Loader2 className="size-5 animate-spin text-brass" aria-hidden />
@@ -1493,8 +1490,12 @@ function BackgroundEditor({
               JPG, WebP or AVIF, up to 15 MB.{" "}
               {isCustom ? (
                 <span className="text-foreground">Using a custom image.</span>
+              ) : shown ? (
+                <span>Using this lead&rsquo;s default landmark.</span>
               ) : (
-                <span>Currently using the default landmark.</span>
+                <span className="text-amber-200/90">
+                  No art yet, this page shows plain parchment.
+                </span>
               )}
             </p>
           </div>
