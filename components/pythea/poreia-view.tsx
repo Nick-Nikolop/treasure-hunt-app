@@ -821,8 +821,8 @@ function CluePageBody({ clue }: { clue: Clue }) {
   return (
     <div>
       {/* Entry header with a real vintage stamp affixed to the page */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
+      <div className="flex items-start justify-between gap-3 sm:gap-4">
+        <div className="min-w-0">
           <p className="font-sans text-[11px] font-bold tracking-chip text-ink/55">
             {t.journal.entryNo} {String(clue.order).padStart(2, "0")}
           </p>
@@ -892,7 +892,7 @@ function JournalStamp({ clue }: { clue: Clue }) {
   const aspectStyle = uploaded ? { aspectRatio: aspectToCss(clue.stampAspect) } : undefined
   return (
     <div
-      className="relative hidden shrink-0 select-none sm:block"
+      className="relative block shrink-0 select-none"
       style={{ transform: `rotate(${rotate}deg)` }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -904,7 +904,7 @@ function JournalStamp({ clue }: { clue: Clue }) {
         decoding="sync"
         fetchPriority="high"
         style={aspectStyle}
-        className={`block w-24 drop-shadow-[0_7px_12px_rgba(40,30,15,0.32)] md:w-28 ${
+        className={`block w-16 drop-shadow-[0_7px_12px_rgba(40,30,15,0.32)] sm:w-24 md:w-28 ${
           uploaded ? "object-cover" : "h-auto"
         }`}
       />
@@ -927,8 +927,8 @@ function Postmark() {
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute -bottom-4 -left-9 opacity-[0.55] mix-blend-multiply"
-      style={{ transform: "rotate(-12deg)" }}
+      className="pointer-events-none absolute -bottom-2 -left-5 origin-bottom-left opacity-[0.55] mix-blend-multiply [--postmark-scale:0.62] sm:-bottom-4 sm:-left-9 sm:[--postmark-scale:1]"
+      style={{ transform: "rotate(-12deg) scale(var(--postmark-scale, 1))" }}
     >
       <svg
         width="104"
