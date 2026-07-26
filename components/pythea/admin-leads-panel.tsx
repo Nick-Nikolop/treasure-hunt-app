@@ -979,10 +979,14 @@ function FinishQrCard({
           FIN
         </span>
         <div>
-          <h3 className="font-serif text-base font-black text-foreground">Finish QR</h3>
+          <h3 className="font-serif text-base font-black text-foreground">
+            Compass QR (Finish)
+          </h3>
           <p className="font-sans text-[12px] leading-relaxed text-muted-foreground">
-            Scanning this marks the last lead as solved and locks in everyone&rsquo;s finishing
-            points. It has no location gate.
+            This is the compass. Scanning it marks the last lead as solved, locks in
+            everyone&rsquo;s finishing points, and triggers the winner screen. Set its GPS gate and
+            the notes shown on scan in the <span className="font-semibold text-foreground">Finale</span>{" "}
+            tab.
           </p>
         </div>
       </div>
