@@ -16,6 +16,7 @@ import {
   Loader2,
 } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
+import { WinnerReveal } from "@/components/pythea/winner-reveal"
 import type { UnlockResult } from "@/lib/hunt"
 import { bypassCooldownScan } from "@/app/q/[token]/actions"
 import { track } from "@/lib/analytics-client"
@@ -66,6 +67,12 @@ export function ScanResult({
         onBypassed={setResult}
       />
     )
+  }
+
+  // Finishing the hunt (the compass QR) gets the full cinematic finale: the
+  // handwritten compass note, then the animated winner screen with placement.
+  if (result.status === "finished") {
+    return <WinnerReveal />
   }
 
   // Resolve the headline, body and tone for the given status. Country names

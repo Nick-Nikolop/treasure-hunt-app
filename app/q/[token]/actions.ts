@@ -9,8 +9,10 @@ import {
   resolveScanContext,
   unlockByToken,
   getCrewUserIds,
+  getFinishPlacement,
   type UnlockResult,
 } from "@/lib/hunt"
+import { getFinaleConfig } from "@/lib/finale"
 import { getLeadDefs } from "@/lib/leads"
 import {
   createProofSubmission,
@@ -64,6 +66,49 @@ export async function verifyScan(
 
   const result = await unlockByToken(session.user.id, token)
   return { ok: true, result }
+}
+
+export type FinaleSummary = {
+  /** 1-based finish position (who reached the compass first), or null. */
+  place: number | null
+  /** How many crews/solos have finished so far. */
+  totalFinishers: number
+  /** The compass-scan note, both languages. */
+  note2: string
+  note2En: string
+  /** The winner-screen message, both languages. */
+  winner: string
+  winnerEn: string
+  /** The top-3 prize fine-print, both languages. */
+  winnerNote: string
+  winnerNoteEn: string
+}
+
+/**
+ * Everything the winner screen needs after a finish: the crew's finishing
+ * placement (by finish order) plus the editable compass note and winner
+ * message. Safe to call for any signed-in explorer; placement is null until
+ * their crew has actually scanned the compass.
+ */
+export async function getFinaleSummary(): Promise<FinaleSummary | null> {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session?.user) return null
+
+  const [placement, finale] = await Promise.all([
+    getFinishPlacement(session.user.id),
+    getFinaleConfig(),
+  ])
+
+  return {
+    place: placement.place,
+    totalFinishers: placement.totalFinishers,
+    note2: finale.note2,
+    note2En: finale.note2En,
+    winner: finale.winner,
+    winnerEn: finale.winnerEn,
+    winnerNote: finale.winnerNote,
+    winnerNoteEn: finale.winnerNoteEn,
+  }
 }
 
 export type BypassCooldownResponse =

@@ -124,7 +124,7 @@ const el = {
         amount: 50,
         tag: "Χαλκός",
         share: "10%",
-        blurb: "Η τρίτη ομάδα που θα ανέβει στο βάθρο των νικητών.",
+        blurb: "Η τρίτη ομάδα που θα ανέβ��ι στο βάθρο των νικητών.",
       },
     ],
     currency: "€",
@@ -494,7 +494,7 @@ const el = {
     sealedNotStartedBody:
       "Το πρώτο σημάδι θα εμφανιστεί μόλις ο Πυθέας ανοίξει τον χάρτη του.",
     sealedBody: (n: string) =>
-      `Η σελίδα Νο. ${n} μένει κάτω από το κερί μέχρι να φτάσεις στο σημείο της μέσα στην πόλη. Εντόπισε τον κρυμμένο κωδικό QR στην επόμενη στάση και σάρωσέ τον: η σφραγίδα σπάει και η σελίδα χαράσσεται στο ημερολόγιό σου.`,
+      `Η σελίδα Νο. ${n} μένει κάτω απ�� το κερί μέχρι να φτάσεις στο σημείο της μέσα στην πόλη. Εντόπισε τον κρυμμένο κωδικό QR στην επόμενη στάση και σάρωσέ τον: η σφραγίδα σπάει και η σελίδα χαράσσεται στο ημερολόγιό σου.`,
     finalLabel: "ΤΕΛΟΣ ΤΟΥ ΗΜΕΡΟΛΟΓΙΟΥ",
     finalBody:
       "Όλα τα σημάδια αποκαλύφθηκαν. Ο θησαυρός περιμένει εκείνους που έμαθαν να κοιτούν την Καλαμάτα σαν εξερευνητές.",
@@ -541,6 +541,25 @@ const el = {
     mapTreasure: "Ο ΘΗΣΑΥΡΟΣ",
     postmark: "ΚΑΛΑΜΑΤΑ",
     finalStampsLabel: "ΟΛΑ ΤΑ ΓΡΑΜΜΑΤΟΣΗΜΑ ΤΟΥ ΤΑΞΙΔΙΟΥ",
+  },
+  finale: {
+    // Journal note (shown once every lead is solved)
+    journalHint: "Ένα χειρόγραφο σημείωμα στο πίσω μέρος της τελευταίας σελίδας.",
+    openNote: "ΔΙΑΒΑΣΕ ΤΟ ΣΗΜΕΙΩΜΑ",
+    noteLabel: "ΤΟ ΣΗΜΕΙΩΜΑ ΤΟΥ ΠΥΘΕΑ",
+    signature: "— Πυθέας",
+    close: "ΚΛΕΙΣΙΜΟ",
+    // Winner reveal (after the compass QR is scanned)
+    revealCta: "ΑΠΟΚΑΛΥΨΕ ΤΟΝ ΘΗΣΑΥΡΟ",
+    winnerKicker: "ΤΟ ΤΑΞΙΔΙ ΟΛΟΚΛΗΡΩΘΗΚΕ",
+    winnerTitle: "Βρήκατε την πυξίδα!",
+    place: (n: number) => `${n}η ΘΕΣΗ`,
+    finishers: (place: number, total: number) =>
+      total > 1 ? `Τερματίσατε ${place}οι στους ${total}` : "Είστε οι πρώτοι που τερμάτισαν",
+    prizeLabel: "ΤΟ ΕΠΑΘΛΟ",
+    openJournal: "ΗΜΕΡΟΛΟΓΙΟ",
+    viewLeaderboard: "ΚΑΤΑΤΑΞΗ",
+    loading: "Άνοιγμα της πυξίδας…",
   },
   scan: {
     unlockedLabel: "ΝΕΟ ΣΗΜΑΔΙ ΞΕΚΛΕΙΔΩΘΗΚΕ",
@@ -714,7 +733,7 @@ const el = {
     emailPlaceholder: "navigator@pythea.gr",
     passwordLabel: "Κωδικός",
     passwordPlaceholder: "Τουλάχιστον 8 χαρακτήρες",
-    confirmPasswordLabel: "Επιβεβαίωση κωδικού",
+    confirmPasswordLabel: "Επι��εβαίωση κωδικού",
     confirmPasswordPlaceholder: "Ξαναγράψε τον κωδικό",
     firstNameLabel: "Όνομα",
     firstNamePlaceholder: "Πυθέας",
@@ -1380,6 +1399,31 @@ const en: Dictionary = {
     mapTreasure: "THE TREASURE",
     postmark: "KALAMATA",
     finalStampsLabel: "EVERY STAMP OF THE VOYAGE",
+  },
+  finale: {
+    journalHint: "A handwritten note on the back of the last page.",
+    openNote: "READ THE NOTE",
+    noteLabel: "A NOTE FROM PYTHEAS",
+    signature: "— Pytheas",
+    close: "CLOSE",
+    revealCta: "REVEAL THE TREASURE",
+    winnerKicker: "THE VOYAGE IS COMPLETE",
+    winnerTitle: "You found the compass!",
+    place: (n: number) => {
+      const s = ["th", "st", "nd", "rd"]
+      const v = n % 100
+      return `${n}${s[(v - 20) % 10] ?? s[v] ?? s[0]} PLACE`
+    },
+    finishers: (place: number, total: number) => {
+      const s = ["th", "st", "nd", "rd"]
+      const v = place % 100
+      const ord = `${place}${s[(v - 20) % 10] ?? s[v] ?? s[0]}`
+      return total > 1 ? `You finished ${ord} of ${total}` : "You are the first to finish"
+    },
+    prizeLabel: "THE PRIZE",
+    openJournal: "JOURNAL",
+    viewLeaderboard: "LEADERBOARD",
+    loading: "Opening the compass…",
   },
   scan: {
     unlockedLabel: "NEW MARK UNLOCKED",

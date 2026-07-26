@@ -1,9 +1,23 @@
 "use server"
 
-import { cookies } from "next/headers"
+import { cookies, headers } from "next/headers"
 import { revalidatePath } from "next/cache"
+import { auth } from "@/lib/auth"
 import { PREVIEW_COOKIE } from "@/lib/clues"
 import { getTotalLeads } from "@/lib/leads"
+import { getFinaleConfig } from "@/lib/finale"
+
+/**
+ * The journal's closing handwritten note ("find my compass"), both languages.
+ * Read on demand by the final journal page once every lead is solved. Requires
+ * a signed-in explorer (the journal itself is already gated to accounts).
+ */
+export async function getFinaleNote1(): Promise<{ note1: string; note1En: string } | null> {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session?.user) return null
+  const finale = await getFinaleConfig()
+  return { note1: finale.note1, note1En: finale.note1En }
+}
 
 /**
  * Force a specific number of clues open for the current browser only.

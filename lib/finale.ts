@@ -21,21 +21,27 @@ import { DEFAULT_GEO_RADIUS_M } from "@/lib/geo"
 
 /** Default handwritten note shown in the journal once every lead is solved. */
 const DEFAULT_NOTE1 =
-  "Αν διαβάζεις αυτές τις γραμμές, ακολούθησες κάθε μου σημάδι ως το τέλος.\n\nΜου απομένει ένα ακόμη μυστικό. Στην καρδιά της Καλαμάτας κρύβεται η πυξίδα μου, εκείνη που με οδήγησε σε όλες τις θάλασσες.\n\nΒρες την πυξίδα μου και το ταξίδι θα ολοκληρωθεί."
+  'Κάπου εδώ τελειώνει το ημερολόγιο μου. Θα αναρωτηθείτε λοιπόν "μα καλα, και που είναι αυτός ο θησαυρός του Πυθέα;". Μην ανησυχείτε, ο θησαυρός δεν είναι το ταξίδι αυτή τη φορά, όπως ξέρετε από τα γνωστά κλισέ.\n\nΓια να μπορέσετε, όμως, να βρείτε τον θησαυρό, θα χρειαστείτε την πυξίδα μου. Την έχω κρύψει πολύ καλά.\n\nΗ πυξίδα μου είναι μόνο για όσους ξέρουν να παρατηρούν και όχι απλώς να βλέπουν. Για εκείνους που δεν βιάζονται, αλλά προσέχουν και συνδυάζουν ακόμη και τις πιο μικρές λεπτομέρεια στο ταξίδι τους. Το αφήνω πάνω σας. Πιστεύω πως θα βρείτε την πυξίδα μου· κάπου μέσα στην Καλαμάτα βρίσκεται, άλλωστε.'
 const DEFAULT_NOTE1_EN =
-  "If you are reading these lines, you followed every mark of mine to the very end.\n\nOne secret remains. In the heart of Kalamata my compass lies hidden, the one that guided me across every sea.\n\nFind my compass, and the voyage will be complete."
+  'This is roughly where my journal ends. So you will wonder, "well then, where is this treasure of Pytheas?". Do not worry, the treasure is not the journey this time, as you know from the usual cliches.\n\nTo be able to find the treasure, though, you will need my compass. I have hidden it very well.\n\nMy compass is only for those who know how to observe, and not merely to look. For those who do not rush, but pay attention and piece together even the smallest detail of their journey. I leave it to you. I believe you will find my compass; somewhere inside Kalamata it lies, after all.'
 
 /** Default note revealed the moment the compass QR is scanned. */
 const DEFAULT_NOTE2 =
-  "Την κρατάς πια στα χέρια σου. Η πυξίδα του Πυθέα, ο πιο πιστός μου σύντροφος.\n\nΔεν έδειχνε ποτέ έναν θησαυρό από χρυσό, αλλά τον δρόμο προς το άγνωστο. Τώρα ανήκει σε σένα."
+  "Τελικα δεν την είχα κρύψει όσο καλά νόμιζα…\n\nΣυγχαρητήρια λοιπόν εξερευνητές, βρήκατε την πυξίδα μου.\n\nΉταν η πυξιδα ο θησαυρός; Προφανώς και όχι! Πιστέψτε με, υπαρχει θησαυρός, αλλά θα χρειαστεί να ψάξετε λίγο ακόμα. Ξέρω, Ξέρω, σας έχω στείλει από τη Σερβία μέχρι την Τουρκία και από ένα σωρό άλλα μέρη, αλλά αυτή είναι η τελευταία δοκιμασία. Χρησιμοποιήστε την πυξίδα και θα βγάλετε άκρη, είμαι σίγουρος - και αυτή τη φορά θα φτασετε επιτέλους στον θησαυρό, υπόσχομαι."
 const DEFAULT_NOTE2_EN =
-  "You now hold it in your hands. The compass of Pytheas, my most faithful companion.\n\nIt never pointed to a treasure of gold, but to the road toward the unknown. Now it belongs to you."
+  "In the end I had not hidden it as well as I thought…\n\nCongratulations then, explorers, you found my compass.\n\nWas the compass the treasure? Of course not! Believe me, there is a treasure, but you will need to search a little more. I know, I know, I have sent you from Serbia all the way to Turkey and to a heap of other places, but this is the final trial. Use the compass and you will figure it out, I am sure - and this time you will finally reach the treasure, I promise."
 
 /** Default message shown on the winner screen (below the placement). */
 const DEFAULT_WINNER =
-  "Ολοκλήρωσες το ταξίδι του Πυθέα. Η πυξίδα είναι δική σου και το όνομά σου ανήκει πια στους εξερευνητές."
+  "Συγχαρητήρια, τα καταφέρατε! Ο θησαυρός βέβαια δεν είναι εδώ, αλλά θα σας πούμε πως θα τον παραλάβετε. Ελάτε στην εκδήλωσή μας όπου θα ανακοινωθούν οι νικητές (διαφορετικά θα σας ενημερώσουμε, να κοιτάτε το εμαιλ σας)."
 const DEFAULT_WINNER_EN =
-  "You have completed the voyage of Pytheas. The compass is yours, and your name now belongs among the explorers."
+  "Congratulations, you made it! The treasure is not here, of course, but we will tell you how to collect it. Come to our event where the winners will be announced (otherwise we will let you know, so keep an eye on your email)."
+
+/** Fine-print shown under the winner message about the top-3 prize. */
+const DEFAULT_WINNER_NOTE =
+  "Προσέξτε, μπορεί να φτάσατε ως εδώ αλλά, κάποιος άλλος να έφτασε πριν από εσάς. Αν είστε στους πρώτους 3 βαθμολογικά, σας περιμένει ένα ωραίο ποσό…"
+const DEFAULT_WINNER_NOTE_EN =
+  "Careful: you may have reached this point, but someone else may have arrived before you. If you are in the top 3 on the scoreboard, a nice sum awaits you…"
 
 export type FinaleConfig = {
   /** Compass GPS gate. `hasCoords` is true only when both lat and lng are set. */
@@ -52,6 +58,9 @@ export type FinaleConfig = {
   /** Winner-screen message. */
   winner: string
   winnerEn: string
+  /** Winner-screen prize fine-print. */
+  winnerNote: string
+  winnerNoteEn: string
 }
 
 // Provision the finale columns at most once per process. Mirrors the memoized
@@ -70,7 +79,9 @@ function ensureFinaleColumns(): Promise<void> {
            ADD COLUMN IF NOT EXISTS "finaleNote2" text,
            ADD COLUMN IF NOT EXISTS "finaleNote2En" text,
            ADD COLUMN IF NOT EXISTS "finaleWinner" text,
-           ADD COLUMN IF NOT EXISTS "finaleWinnerEn" text`,
+           ADD COLUMN IF NOT EXISTS "finaleWinnerEn" text,
+           ADD COLUMN IF NOT EXISTS "finaleWinnerNote" text,
+           ADD COLUMN IF NOT EXISTS "finaleWinnerNoteEn" text`,
       )
       .then(() => undefined)
       .catch((err) => {
@@ -105,7 +116,8 @@ export async function getFinaleConfig(): Promise<FinaleConfig> {
     `SELECT "compassLat" AS lat, "compassLng" AS lng, "compassRadiusM" AS radius,
             "finaleNote1" AS n1, "finaleNote1En" AS n1e,
             "finaleNote2" AS n2, "finaleNote2En" AS n2e,
-            "finaleWinner" AS w, "finaleWinnerEn" AS we
+            "finaleWinner" AS w, "finaleWinnerEn" AS we,
+            "finaleWinnerNote" AS wn, "finaleWinnerNoteEn" AS wne
        FROM "score_config" WHERE id = 'default' LIMIT 1`,
   )
   const row = res.rows[0] as
@@ -119,6 +131,8 @@ export async function getFinaleConfig(): Promise<FinaleConfig> {
         n2e: string | null
         w: string | null
         we: string | null
+        wn: string | null
+        wne: string | null
       }
     | undefined
 
@@ -135,6 +149,8 @@ export async function getFinaleConfig(): Promise<FinaleConfig> {
     note2En: textOr(row?.n2e, DEFAULT_NOTE2_EN),
     winner: textOr(row?.w, DEFAULT_WINNER),
     winnerEn: textOr(row?.we, DEFAULT_WINNER_EN),
+    winnerNote: textOr(row?.wn, DEFAULT_WINNER_NOTE),
+    winnerNoteEn: textOr(row?.wne, DEFAULT_WINNER_NOTE_EN),
   }
 }
 
@@ -149,6 +165,8 @@ export type FinaleConfigInput = {
   note2En: string
   winner: string
   winnerEn: string
+  winnerNote: string
+  winnerNoteEn: string
 }
 
 /** Upsert the finale configuration onto the single `score_config` row. */
@@ -164,8 +182,8 @@ export async function setFinaleConfig(input: FinaleConfigInput): Promise<void> {
   await pool.query(
     `INSERT INTO "score_config" (id, "compassLat", "compassLng", "compassRadiusM",
         "finaleNote1", "finaleNote1En", "finaleNote2", "finaleNote2En",
-        "finaleWinner", "finaleWinnerEn", "updatedAt")
-     VALUES ('default', $1, $2, $3, $4, $5, $6, $7, $8, $9, now())
+        "finaleWinner", "finaleWinnerEn", "finaleWinnerNote", "finaleWinnerNoteEn", "updatedAt")
+     VALUES ('default', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, now())
      ON CONFLICT (id) DO UPDATE SET
         "compassLat" = EXCLUDED."compassLat",
         "compassLng" = EXCLUDED."compassLng",
@@ -176,6 +194,8 @@ export async function setFinaleConfig(input: FinaleConfigInput): Promise<void> {
         "finaleNote2En" = EXCLUDED."finaleNote2En",
         "finaleWinner" = EXCLUDED."finaleWinner",
         "finaleWinnerEn" = EXCLUDED."finaleWinnerEn",
+        "finaleWinnerNote" = EXCLUDED."finaleWinnerNote",
+        "finaleWinnerNoteEn" = EXCLUDED."finaleWinnerNoteEn",
         "updatedAt" = now()`,
     [
       lat,
@@ -187,6 +207,8 @@ export async function setFinaleConfig(input: FinaleConfigInput): Promise<void> {
       clip(input.note2En),
       clip(input.winner),
       clip(input.winnerEn),
+      clip(input.winnerNote),
+      clip(input.winnerNoteEn),
     ],
   )
 }
