@@ -1681,6 +1681,52 @@ export async function adminSaveFinale(input: {
   return { ok: true }
 }
 
+/**
+ * Save only ONE finale QR's GPS gate (compass or treasure) without touching the
+ * notes or the other gate. Powers the inline location editor on each finale QR
+ * card in the Leads tab. Blank lat/lng clears that gate. Read-modify-write over
+ * the shared `score_config` row so the other finale fields are preserved.
+ */
+export async function adminSaveFinaleGeo(input: {
+  which: "compass" | "treasure"
+  lat: string
+  lng: string
+  radiusM: string
+}): Promise<ActionResult> {
+  const admin = await requireAdmin()
+
+  const gate = parseGate(input.lat, input.lng, input.radiusM)
+  if ("error" in gate) return { ok: false, error: gate.error }
+
+  const current = await getFinaleConfig()
+  await setFinaleConfig({
+    lat: input.which === "compass" ? gate.lat : current.lat,
+    lng: input.which === "compass" ? gate.lng : current.lng,
+    radiusM: input.which === "compass" ? gate.radius : current.radiusM,
+    treasureLat: input.which === "treasure" ? gate.lat : current.treasureLat,
+    treasureLng: input.which === "treasure" ? gate.lng : current.treasureLng,
+    treasureRadiusM: input.which === "treasure" ? gate.radius : current.treasureRadiusM,
+    note1: current.note1,
+    note1En: current.note1En,
+    note2: current.note2,
+    note2En: current.note2En,
+    winner: current.winner,
+    winnerEn: current.winnerEn,
+    winnerNote: current.winnerNote,
+    winnerNoteEn: current.winnerNoteEn,
+  })
+
+  await logActivity({
+    category: "admin",
+    action: "admin.finale_updated",
+    ...adminActor(admin),
+    summary: `${adminActor(admin).actorName} updated the ${input.which} QR location`,
+  })
+  revalidatePath("/admin")
+  revalidatePath("/journal")
+  return { ok: true }
+}
+
 // ── Hints (admin) ───────────────────────────────────────────────────────────
 
 /**

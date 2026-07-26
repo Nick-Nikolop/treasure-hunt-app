@@ -36,6 +36,7 @@ import {
   adminRegenerateToken,
   adminSetLeadBgWash,
   getFinaleState,
+  adminSaveFinaleGeo,
 } from "@/app/admin/actions"
 import { LEAD_ICONS, type Difficulty, type LeadIcon } from "@/lib/clues"
 import type { EditableLead } from "@/lib/lead-content"
@@ -126,9 +127,9 @@ export function AdminLeadsPanel({
   const compassToken = tokens.find((t) => t.isCompass) ?? null
   const finishToken = tokens.find((t) => t.isFinish) ?? null
 
-  // The compass + treasure GPS gates live on the finale config (edited in the
-  // Finale tab). We fetch them here purely to SHOW each finale QR's location
-  // status on its card, so the scan-time gate is visible next to the QR.
+  // The compass + treasure GPS gates live on the finale config. We fetch them
+  // here so each finale QR card can EDIT its own scan-location inline, exactly
+  // like a lead QR, instead of sending admins to the Finale tab.
   const [finaleGeo, setFinaleGeo] = useState<{
     compass: FinaleGate
     treasure: FinaleGate
@@ -148,6 +149,39 @@ export function AdminLeadsPanel({
       alive = false
     }
   }, [])
+
+  // Save one finale QR's GPS gate inline, then reflect it in local state so the
+  // card updates without a full reload.
+  function saveFinaleGeo(
+    which: "compass" | "treasure",
+    lat: string,
+    lng: string,
+    radiusM: string,
+    done: (ok: boolean) => void,
+  ) {
+    startTransition(async () => {
+      const res = await adminSaveFinaleGeo({ which, lat, lng, radiusM })
+      if (res.ok) {
+        const fresh = await getFinaleState().catch(() => null)
+        if (fresh) {
+          setFinaleGeo({
+            compass: { lat: fresh.lat, lng: fresh.lng, radiusM: fresh.radiusM },
+            treasure: {
+              lat: fresh.treasureLat,
+              lng: fresh.treasureLng,
+              radiusM: fresh.treasureRadiusM,
+            },
+          })
+        }
+      } else {
+        setPopup({
+          kind: "err",
+          text: errorText[res.error ?? ""] ?? "That location could not be saved.",
+        })
+      }
+      done(res.ok)
+    })
+  }
 
   // Working copy (live edits) + baseline (last-saved snapshot). Seeded from
   // props once; from here on this component owns the state.
@@ -515,6 +549,9 @@ export function AdminLeadsPanel({
             purpose="Scanned first, once every lead is solved. Reveals the compass note. Does NOT finish the hunt."
             gate={finaleGeo?.compass ?? null}
             gateReady={finaleGeo !== null}
+            onSaveGeo={(lat, lng, radiusM, done) =>
+              saveFinaleGeo("compass", lat, lng, radiusM, done)
+            }
           />
           <FinaleQrCard
             token={finishToken}
@@ -525,11 +562,13 @@ export function AdminLeadsPanel({
             purpose="Scanned second, after the compass. Records the crew's finish and shows the winner screen with their placement (1st, 2nd, 3rd…). Crews keep finishing; nothing is locked."
             gate={finaleGeo?.treasure ?? null}
             gateReady={finaleGeo !== null}
+            onSaveGeo={(lat, lng, radiusM, done) =>
+              saveFinaleGeo("treasure", lat, lng, radiusM, done)
+            }
           />
           <p className="font-sans text-[12px] leading-relaxed text-muted-foreground">
-            Edit each QR&rsquo;s GPS coordinates and the notes shown on scan in
-            the <span className="font-semibold text-foreground">Finale</span>{" "}
-            tab.
+            The notes shown when each QR is scanned are edited in the{" "}
+            <span className="font-semibold text-foreground">Finale</span> tab.
           </p>
         </div>
       </div>
@@ -1061,6 +1100,7 @@ function FinaleQrCard({
   purpose,
   gate,
   gateReady,
+  onSaveGeo,
 }: {
   token: ClueTokenRow | null
   pending: boolean
@@ -1070,11 +1110,11 @@ function FinaleQrCard({
   purpose: string
   /** The QR's GPS gate (from finale config), or null while still loading. */
   gate: FinaleGate | null
-  /** True once the finale config fetch has resolved (so "not set" is truthful). */
+  /** True once the finale config fetch has resolved (so the editor can seed). */
   gateReady: boolean
+  onSaveGeo: (lat: string, lng: string, radiusM: string, done: (ok: boolean) => void) => void
 }) {
   if (!token) return null
-  const hasCoords = gate != null && gate.lat != null && gate.lng != null
   return (
     <div className="rounded-sm border border-border bg-card/40 p-4">
       <div className="flex items-start gap-2">
@@ -1087,50 +1127,187 @@ function FinaleQrCard({
         </div>
       </div>
 
-      {/* GPS gate status — read-only mirror of the Finale-tab coordinates,
-          shown so the on-scan location check is visible right by the QR. */}
-      <div className="mt-3 rounded-sm border border-border bg-background/40 p-2.5">
-        {!gateReady ? (
-          <div className="flex items-center gap-1.5 font-sans text-[12px] text-muted-foreground">
-            <Loader2 className="size-3.5 animate-spin" />
-            Checking scan location…
-          </div>
-        ) : hasCoords ? (
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <span className="inline-flex items-center gap-1.5 font-sans text-[12px] font-bold text-emerald-500">
-              <MapPin className="size-3.5" />
-              Scan-location check ON
-            </span>
-            <span className="font-mono text-[12px] text-foreground">
-              {gate!.lat!.toFixed(5)}, {gate!.lng!.toFixed(5)}
-            </span>
-            <span className="font-sans text-[11px] text-muted-foreground">
-              within {gate!.radiusM} m
-            </span>
-            <a
-              href={`https://www.google.com/maps/search/?api=1&query=${gate!.lat},${gate!.lng}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 font-sans text-[11px] font-bold tracking-chip text-brass"
-            >
-              <ExternalLink className="size-3" />
-              Map
-            </a>
-          </div>
-        ) : (
-          <div className="flex items-center gap-1.5 font-sans text-[12px] font-bold text-amber-500">
-            <MapPinOff className="size-3.5" />
-            No scan-location set — this QR scans from anywhere. Add coordinates in
-            the Finale tab.
-          </div>
-        )}
-      </div>
+      {/* Inline GPS gate editor — same lat/lng/radius controls a lead QR has,
+          saving to the finale config so this QR's on-scan check is set here. */}
+      {!gateReady ? (
+        <div className="mt-3 flex items-center gap-1.5 rounded-sm border border-border bg-background/40 p-3 font-sans text-[12px] text-muted-foreground">
+          <Loader2 className="size-3.5 animate-spin" />
+          Loading scan location…
+        </div>
+      ) : (
+        <FinaleGeoEditor gate={gate} pending={pending} onSaveGeo={onSaveGeo} />
+      )}
 
       <LeadQrBlock
         token={token}
         pending={pending}
         onRegenerate={() => onRegenerate(token.leadOrder)}
       />
+    </div>
+  )
+}
+
+/**
+ * Inline GPS gate editor for a finale QR (compass/treasure). Mirrors the
+ * per-lead GeoEditor: lat/lng/radius, Save, Clear, and a Maps preview. Blank
+ * lat + lng disables the on-scan location check for that QR.
+ */
+function FinaleGeoEditor({
+  gate,
+  pending,
+  onSaveGeo,
+}: {
+  gate: FinaleGate | null
+  pending: boolean
+  onSaveGeo: (lat: string, lng: string, radiusM: string, done: (ok: boolean) => void) => void
+}) {
+  const savedLat = gate?.lat != null ? String(gate.lat) : ""
+  const savedLng = gate?.lng != null ? String(gate.lng) : ""
+  const savedRadius = gate?.radiusM != null ? String(gate.radiusM) : ""
+
+  const [lat, setLat] = useState(savedLat)
+  const [lng, setLng] = useState(savedLng)
+  const [radius, setRadius] = useState(savedRadius)
+  const [saving, setSaving] = useState(false)
+
+  // Re-seed the inputs whenever the saved gate changes (e.g. after a save
+  // refetch or the async config load resolves).
+  useEffect(() => {
+    setLat(savedLat)
+    setLng(savedLng)
+    setRadius(savedRadius)
+  }, [savedLat, savedLng, savedRadius])
+
+  const hasCoords = gate != null && gate.lat != null && gate.lng != null
+  const dirty = lat !== savedLat || lng !== savedLng || radius !== savedRadius
+
+  const latNum = Number(lat.trim())
+  const lngNum = Number(lng.trim())
+  const previewCoords =
+    lat.trim() !== "" &&
+    lng.trim() !== "" &&
+    Number.isFinite(latNum) &&
+    latNum >= -90 &&
+    latNum <= 90 &&
+    Number.isFinite(lngNum) &&
+    lngNum >= -180 &&
+    lngNum <= 180
+      ? { lat: latNum, lng: lngNum }
+      : null
+
+  function save() {
+    if (saving || pending) return
+    setSaving(true)
+    onSaveGeo(lat, lng, radius, () => setSaving(false))
+  }
+
+  function clear() {
+    setLat("")
+    setLng("")
+    setRadius("")
+    setSaving(true)
+    onSaveGeo("", "", "", () => setSaving(false))
+  }
+
+  return (
+    <div
+      className={`mt-3 rounded-sm border p-3.5 ${
+        hasCoords ? "border-border bg-background/40" : "border-amber-500/50 bg-amber-500/10"
+      }`}
+    >
+      <div className="flex items-center gap-2">
+        {hasCoords ? (
+          <MapPin className="size-4 text-brass" />
+        ) : (
+          <MapPinOff className="size-4 text-amber-400" />
+        )}
+        <span className="font-sans text-[11px] font-bold uppercase tracking-chip text-foreground">
+          Scan location
+        </span>
+        {!hasCoords && (
+          <span className="rounded-sm bg-amber-500/25 px-2 py-0.5 font-sans text-[10px] font-bold uppercase tracking-chip text-amber-100">
+            Not set
+          </span>
+        )}
+      </div>
+      <p className="mt-1.5 font-sans text-[11px] leading-relaxed text-muted-foreground">
+        The physical spot of this QR. When set, a scan requires the crew to be
+        within the radius. Leave latitude and longitude blank to scan from
+        anywhere.
+      </p>
+
+      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <label className="flex flex-col gap-1">
+          <span className="font-sans text-[10px] font-bold uppercase tracking-chip text-muted-foreground">
+            Latitude
+          </span>
+          <input
+            value={lat}
+            onChange={(e) => setLat(e.target.value)}
+            inputMode="decimal"
+            placeholder="37.0412903"
+            className="w-full rounded-sm border border-border bg-background px-2.5 py-1.5 font-mono text-xs text-foreground outline-none focus:border-brass"
+          />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="font-sans text-[10px] font-bold uppercase tracking-chip text-muted-foreground">
+            Longitude
+          </span>
+          <input
+            value={lng}
+            onChange={(e) => setLng(e.target.value)}
+            inputMode="decimal"
+            placeholder="22.1122364"
+            className="w-full rounded-sm border border-border bg-background px-2.5 py-1.5 font-mono text-xs text-foreground outline-none focus:border-brass"
+          />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="font-sans text-[10px] font-bold uppercase tracking-chip text-muted-foreground">
+            Radius (m)
+          </span>
+          <input
+            value={radius}
+            onChange={(e) => setRadius(e.target.value)}
+            inputMode="numeric"
+            placeholder={String(DEFAULT_GEO_RADIUS_M)}
+            className="w-full rounded-sm border border-border bg-background px-2.5 py-1.5 font-mono text-xs text-foreground outline-none focus:border-brass"
+          />
+        </label>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={save}
+          disabled={!dirty || saving || pending}
+          className="inline-flex items-center gap-1.5 rounded-sm bg-brass px-3 py-1.5 font-sans text-xs font-bold tracking-chip text-background transition-opacity hover:opacity-90 disabled:opacity-40"
+        >
+          {saving ? <Loader2 className="size-3.5 animate-spin" /> : <MapPin className="size-3.5" />}
+          Save location
+        </button>
+        {previewCoords && (
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${previewCoords.lat},${previewCoords.lng}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-sm border border-border px-3 py-1.5 font-sans text-xs font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass"
+          >
+            <ExternalLink className="size-3.5" />
+            Show in Google Maps
+          </a>
+        )}
+        {hasCoords && (
+          <button
+            type="button"
+            onClick={clear}
+            disabled={saving || pending}
+            className="inline-flex items-center gap-1.5 rounded-sm border border-border px-3 py-1.5 font-sans text-xs font-bold tracking-chip text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+          >
+            <MapPinOff className="size-3.5" />
+            Clear
+          </button>
+        )}
+      </div>
     </div>
   )
 }
