@@ -54,7 +54,7 @@ export function AdminAlertsWidget() {
   if (total === 0) return null
 
   return (
-    <div className="fixed right-3 top-3 z-[60] flex flex-col items-end gap-2 sm:right-4 sm:top-4">
+    <div className="fixed right-3 top-20 z-40 flex flex-col items-end gap-2 sm:right-4">
       {/* Trigger pill */}
       <button
         type="button"
