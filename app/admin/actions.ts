@@ -12,6 +12,7 @@ import {
   type AdminUser,
 } from "@/lib/admin"
 import { siteUrl } from "@/lib/site-url"
+import { getFinaleConfig, setFinaleConfig, type FinaleConfig } from "@/lib/finale"
 import {
   createLocationQr,
   getActiveLocationQr,
@@ -1583,6 +1584,79 @@ export async function adminSaveLeadGeo(input: {
     summary: `${adminActor(admin).actorName} updated the location gate for lead "${target.country}"`,
   })
   revalidatePath("/admin")
+  return { ok: true }
+}
+
+// ── Finale (the compass + winner screen) ────────────────────────────────────
+
+/** Read the finale configuration (compass GPS + editable notes) for the admin. */
+export async function getFinaleState(): Promise<FinaleConfig> {
+  await requireAdmin()
+  return getFinaleConfig()
+}
+
+/**
+ * Save the finale configuration: the compass GPS gate and every editable piece
+ * of finale copy (journal note, compass-scan note, winner message + prize note),
+ * both languages. Blank lat/lng clears the gate so the compass QR just finishes.
+ */
+export async function adminSaveFinale(input: {
+  lat: string
+  lng: string
+  radiusM: string
+  note1: string
+  note1En: string
+  note2: string
+  note2En: string
+  winner: string
+  winnerEn: string
+  winnerNote: string
+  winnerNoteEn: string
+}): Promise<ActionResult> {
+  const admin = await requireAdmin()
+
+  const latStr = (input.lat ?? "").trim()
+  const lngStr = (input.lng ?? "").trim()
+  const radiusStr = (input.radiusM ?? "").trim()
+
+  let lat: number | null = null
+  let lng: number | null = null
+  let radius: number | null = null
+
+  if (latStr || lngStr) {
+    lat = Number(latStr)
+    lng = Number(lngStr)
+    if (!Number.isFinite(lat) || lat < -90 || lat > 90) return { ok: false, error: "bad_lat" }
+    if (!Number.isFinite(lng) || lng < -180 || lng > 180) return { ok: false, error: "bad_lng" }
+  }
+  if (radiusStr) {
+    const r = Number(radiusStr)
+    if (!Number.isFinite(r) || r < 10 || r > 5000) return { ok: false, error: "bad_radius" }
+    radius = Math.round(r)
+  }
+
+  await setFinaleConfig({
+    lat,
+    lng,
+    radiusM: radius,
+    note1: input.note1 ?? "",
+    note1En: input.note1En ?? "",
+    note2: input.note2 ?? "",
+    note2En: input.note2En ?? "",
+    winner: input.winner ?? "",
+    winnerEn: input.winnerEn ?? "",
+    winnerNote: input.winnerNote ?? "",
+    winnerNoteEn: input.winnerNoteEn ?? "",
+  })
+
+  await logActivity({
+    category: "admin",
+    action: "admin.finale_updated",
+    ...adminActor(admin),
+    summary: `${adminActor(admin).actorName} updated the finale (compass gate and notes)`,
+  })
+  revalidatePath("/admin")
+  revalidatePath("/journal")
   return { ok: true }
 }
 

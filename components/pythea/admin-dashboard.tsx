@@ -28,6 +28,7 @@ import {
   BarChart3,
   Layers,
   MapPin,
+  Compass,
   Camera,
 } from "lucide-react"
 import { AdminProofsPanel } from "@/components/pythea/admin-proofs-panel"
@@ -41,6 +42,7 @@ import { AdminActivityPanel } from "@/components/pythea/admin-activity-panel"
 import { AdminAnalyticsPanel } from "@/components/pythea/admin-analytics-panel"
 import { AdminPhasePanel } from "@/components/pythea/admin-phase-panel"
 import { AdminLocationPanel } from "@/components/pythea/admin-location-panel"
+import { AdminFinalePanel } from "@/components/pythea/admin-finale-panel"
 import { MAX_CREW_SIZE } from "@/lib/teams"
 import {
   adminDeleteUser,
@@ -75,6 +77,7 @@ type Tab =
   | "analytics"
   | "phase"
   | "location"
+  | "finale"
   | "proofs"
 
 type ActivityFilter = { kind: "user" | "team"; id: string; label: string } | null
@@ -312,6 +315,11 @@ export function AdminDashboard({
             Location
           </TabButton>
         )}
+        {isBootstrap && (
+          <TabButton active={tab === "finale"} onClick={() => setTab("finale")} icon={Compass}>
+            Finale
+          </TabButton>
+        )}
       </div>
 
       {/* Search row, sits below the tab bar for the Users/Teams tabs */}
@@ -477,6 +485,8 @@ export function AdminDashboard({
           <AdminProofsPanel />
         ) : tab === "location" && isBootstrap ? (
           <AdminLocationPanel />
+        ) : tab === "finale" && isBootstrap ? (
+          <AdminFinalePanel />
         ) : (
           <ScoringPanel
             config={data.scoreConfig}

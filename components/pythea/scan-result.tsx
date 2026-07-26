@@ -71,7 +71,8 @@ export function ScanResult({
 
   // Finishing the hunt (the compass QR) gets the full cinematic finale: the
   // handwritten compass note, then the animated winner screen with placement.
-  if (result.status === "finished") {
+  // Finish is terminal, so it is read off the original (never-narrowed) result.
+  if (initialResult.status === "finished") {
     return <WinnerReveal />
   }
 

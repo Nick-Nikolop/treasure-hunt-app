@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { resolveLeadBackground } from "@/lib/lead-backgrounds"
+import { getFinaleNote1 } from "@/app/journal/actions"
+import { HandwrittenNote } from "@/components/pythea/handwritten-note"
 import { motion } from "framer-motion"
 import {
   Lock,
@@ -13,6 +15,7 @@ import {
   Hand,
   Keyboard,
   Zap,
+  ScrollText,
 } from "lucide-react"
 import type { Clue, LockedClue } from "@/lib/clues"
 import { buildVoyageRoute, TREASURE_XY } from "@/lib/voyage-map"
@@ -1033,6 +1036,39 @@ function SealedPageBody({
 
 function FinalPageBody({ stamps }: { stamps: MapStop[] }) {
   const { t, locale } = useI18n()
+
+  // Pytheas's closing note lives on the back of this last page. It is fetched
+  // on demand (only this page can mount it) and auto-revealed once, then stays
+  // re-openable via the tucked corner below.
+  const [note, setNote] = useState<{ note1: string; note1En: string } | null>(null)
+  const [noteOpen, setNoteOpen] = useState(false)
+  const autoShown = useRef(false)
+
+  useEffect(() => {
+    let alive = true
+    getFinaleNote1().then((n) => {
+      if (!alive || !n) return
+      setNote(n)
+      // Auto-open the note the first time the explorer reaches this page.
+      const seen = typeof window !== "undefined" && localStorage.getItem("pythea:note1-seen")
+      if (!seen && !autoShown.current) {
+        autoShown.current = true
+        setNoteOpen(true)
+      }
+    })
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  const openNote = useCallback(() => setNoteOpen(true), [])
+  const closeNote = useCallback(() => {
+    setNoteOpen(false)
+    if (typeof window !== "undefined") localStorage.setItem("pythea:note1-seen", "1")
+  }, [])
+
+  const noteText = note ? (locale === "en" ? note.note1En : note.note1) : ""
+
   return (
     <div className="flex flex-1 flex-col items-center justify-center text-center">
       <Compass className="size-12 text-[oklch(0.5_0.12_60)]" />
@@ -1042,6 +1078,43 @@ function FinalPageBody({ stamps }: { stamps: MapStop[] }) {
       <p className="mt-4 max-w-md text-pretty font-serif text-xl font-bold italic leading-relaxed text-ink/85 md:text-2xl">
         {t.journal.finalBody}
       </p>
+
+      {note && (
+        <button
+          type="button"
+          onClick={openNote}
+          className="group mt-6 inline-flex items-center gap-2 rounded-full border border-ink/25 bg-ink/[0.04] px-4 py-2 font-sans text-[11px] font-bold tracking-chip text-ink/70 transition-colors hover:bg-ink/[0.09] hover:text-ink"
+        >
+          <ScrollText className="size-3.5 transition-transform group-hover:-rotate-6" />
+          {t.finale.openNote}
+        </button>
+      )}
+
+      {noteOpen && note && (
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center overflow-y-auto bg-black/55 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-label={t.finale.noteLabel}
+          onClick={closeNote}
+        >
+          <div className="my-auto w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+            <p className="mb-3 text-center font-sans text-[11px] font-bold tracking-chip text-[oklch(0.92_0.03_86)]">
+              {t.finale.noteLabel}
+            </p>
+            <HandwrittenNote body={noteText} signature={t.finale.signature} />
+            <div className="mt-5 flex justify-center">
+              <button
+                type="button"
+                onClick={closeNote}
+                className="rounded-full border border-white/30 bg-white/10 px-6 py-2 font-sans text-[11px] font-bold tracking-chip text-white transition-colors hover:bg-white/20"
+              >
+                {t.finale.close}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* The complete stamp collection, fanned out like keepsakes */}
       <p className="mt-8 font-sans text-[10px] font-bold tracking-chip text-ink/45">
