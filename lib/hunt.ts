@@ -12,6 +12,7 @@ import { db } from "@/lib/db"
 import { clueToken, leadUnlock, teamMember, team, user } from "@/lib/db/schema"
 import {
   FINISH_ORDER,
+  COMPASS_ORDER,
   clampProgress,
   effectiveUnlockedCount,
   isLeadOneOpen,
@@ -26,6 +27,7 @@ import {
   regenerateTokenForLead,
   getLeadGeo,
   FINISH_LEAD_ID,
+  COMPASS_LEAD_ID,
 } from "@/lib/leads"
 import { haversineMeters } from "@/lib/geo"
 import { getScoreConfig } from "@/lib/scoring"
@@ -265,6 +267,9 @@ export type UnlockResult =
   | { status: "unlocked"; leadOrder: number; country: string; countryEn: string }
   | { status: "already"; leadOrder: number; country: string; countryEn: string }
   | { status: "out_of_order"; required: number; current: number; leadOrder: number }
+  // The compass QR was scanned (after every lead is solved). Reveals the
+  // compass note; the crew is NOT finished yet — the treasure QR does that.
+  | { status: "compass_reached" }
   | { status: "finished"; country: string; countryEn: string }
   // The scan is valid and in order, but the crew solved their previous lead too
   // recently. `availableAtMs` is the epoch ms the next solve becomes possible.
@@ -342,6 +347,39 @@ async function insertFinishRows(userIds: string[], at: Date): Promise<void> {
   }
 }
 
+/** Whether any member of the crew has scanned the compass QR. */
+async function crewHasReachedCompass(userIds: string[]): Promise<boolean> {
+  if (userIds.length === 0) return false
+  const rows = await db
+    .select({ id: leadUnlock.id })
+    .from(leadUnlock)
+    .where(and(inArray(leadUnlock.userId, userIds), eq(leadUnlock.leadOrder, COMPASS_ORDER)))
+    .limit(1)
+  return rows.length > 0
+}
+
+/** Stamp the compass row for every crew member that doesn't have one yet. */
+async function insertCompassRows(userIds: string[], at: Date): Promise<void> {
+  if (userIds.length === 0) return
+  const existing = await db
+    .select({ userId: leadUnlock.userId })
+    .from(leadUnlock)
+    .where(and(inArray(leadUnlock.userId, userIds), eq(leadUnlock.leadOrder, COMPASS_ORDER)))
+  const have = new Set(existing.map((r) => r.userId))
+  const values = userIds
+    .filter((uid) => !have.has(uid))
+    .map((uid) => ({
+      id: randomUUID(),
+      userId: uid,
+      leadOrder: COMPASS_ORDER,
+      source: "qr",
+      unlockedAt: at,
+    }))
+  if (values.length > 0) {
+    await db.insert(leadUnlock).values(values).onConflictDoNothing()
+  }
+}
+
 /**
  * Record a lead solve / finish in the activity log. The scanner is the actor;
  * a scan advances the whole crew, so we tag the scanner's team for context.
@@ -408,8 +446,29 @@ export async function unlockByToken(
   const defs = await getLeadDefs()
   const total = defs.length
 
-  // The finishing QR marks the final lead as solved. It carries no real clue
-  // and never raises displayed progress; it only lets the last lead be scored.
+  // The compass QR: the first finale step, scanned once every lead is solved.
+  // It reveals the compass note but does not finish the hunt. No cooldown — the
+  // finale is a narrative two-step, not a competitive lead grab. Re-scanning
+  // just shows the note again (idempotent).
+  if (leadId === COMPASS_LEAD_ID) {
+    const crew = await getCrewUserIds(userId)
+    const now = Date.now()
+    const current = await getCrewEffectiveProgress(crew, now)
+    const last = defs[defs.length - 1]
+    if (!last) return { status: "invalid" }
+    if (current < total) {
+      return { status: "out_of_order", required: total, current, leadOrder: COMPASS_ORDER }
+    }
+    if (!(await crewHasReachedCompass(crew))) {
+      await insertCompassRows(crew, new Date(now))
+      await logLeadSolved(userId, COMPASS_ORDER, last.country, last.countryEn, true)
+    }
+    return { status: "compass_reached" }
+  }
+
+  // The treasure/finish QR: the real finish, scanned AFTER the compass. It
+  // marks the final lead as solved (so it can be scored) and locks in the
+  // crew's finishing time. No cooldown, same as the compass.
   if (leadId === FINISH_LEAD_ID) {
     const crew = await getCrewUserIds(userId)
     const now = Date.now()
@@ -419,6 +478,10 @@ export async function unlockByToken(
     if (current < total) {
       return { status: "out_of_order", required: total, current, leadOrder: FINISH_ORDER }
     }
+    // Must reach the compass first — it is the step before the treasure.
+    if (!(await crewHasReachedCompass(crew))) {
+      return { status: "out_of_order", required: total, current, leadOrder: FINISH_ORDER }
+    }
     if (await crewHasFinished(crew)) {
       return {
         status: "already",
@@ -426,10 +489,6 @@ export async function unlockByToken(
         country: last.country,
         countryEn: last.countryEn,
       }
-    }
-    if (!opts.bypassCooldown) {
-      const finishCooldown = await checkSolveCooldown(crew, FINISH_ORDER, now)
-      if (finishCooldown) return finishCooldown
     }
     await insertFinishRows(crew, new Date(now))
     await logLeadSolved(userId, FINISH_ORDER, last.country, last.countryEn, true)
@@ -484,9 +543,8 @@ export async function approveLeadUnlock(
 ): Promise<ApproveUnlockResult> {
   const defs = await getLeadDefs()
 
-  // Approving a proof filed against the compass (finishing QR) stamps the
-  // finish rows for the crew, mirroring the finish branch of unlockByToken.
-  if (leadOrder === FINISH_ORDER) {
+  // Approving a proof filed against the compass QR stamps the compass row.
+  if (leadOrder === COMPASS_ORDER) {
     const crew = await getCrewUserIds(userId)
     const now = Date.now()
     const total = defs.length
@@ -494,6 +552,27 @@ export async function approveLeadUnlock(
     if (!last) return { status: "invalid" }
     const current = await getCrewEffectiveProgress(crew, now)
     if (current < total) {
+      return { status: "out_of_order", required: total, current, leadOrder: COMPASS_ORDER }
+    }
+    if (await crewHasReachedCompass(crew)) {
+      return { status: "already", leadOrder: total, country: last.country, countryEn: last.countryEn }
+    }
+    await insertCompassRows(crew, new Date(now))
+    await logLeadSolved(userId, COMPASS_ORDER, last.country, last.countryEn, true)
+    return { status: "unlocked", leadOrder: total, country: last.country, countryEn: last.countryEn }
+  }
+
+  // Approving a proof filed against the treasure/finish QR stamps the finish
+  // rows for the crew, mirroring the finish branch of unlockByToken. Requires
+  // the crew to have reached the compass first.
+  if (leadOrder === FINISH_ORDER) {
+    const crew = await getCrewUserIds(userId)
+    const now = Date.now()
+    const total = defs.length
+    const last = defs[defs.length - 1]
+    if (!last) return { status: "invalid" }
+    const current = await getCrewEffectiveProgress(crew, now)
+    if (current < total || !(await crewHasReachedCompass(crew))) {
       return { status: "out_of_order", required: total, current, leadOrder: FINISH_ORDER }
     }
     if (await crewHasFinished(crew)) {
@@ -552,11 +631,11 @@ export async function resolveScanContext(
   const leadId = tokenRows[0]?.leadId
   if (!leadId) return { mode: "direct" }
 
-  // The compass (finishing QR) can carry its own GPS gate. Only a genuine
-  // finishing scan is gated: the crew must have solved every lead and not yet
-  // finished. Everything else (not there yet, already finished, or no compass
-  // coordinates configured) falls through to a direct unlock as before.
-  if (leadId === FINISH_LEAD_ID) {
+  // The compass QR can carry its own GPS gate. Only a genuine compass scan is
+  // gated: the crew must have solved every lead and not yet reached the
+  // compass. Everything else falls through to a direct unlock (which just
+  // re-shows the note or a not-ready message).
+  if (leadId === COMPASS_LEAD_ID) {
     const finale = await getFinaleConfig()
     if (!finale.hasCoords) return { mode: "direct" }
     const crew = await getCrewUserIds(userId)
@@ -565,6 +644,17 @@ export async function resolveScanContext(
       getTotalLeads(),
     ])
     if (current < total) return { mode: "direct" }
+    if (await crewHasReachedCompass(crew)) return { mode: "direct" }
+    return { mode: "verify", leadOrder: COMPASS_ORDER }
+  }
+
+  // The treasure/finish QR carries its own GPS gate. Only a genuine finishing
+  // scan is gated: the crew must have reached the compass and not yet finished.
+  if (leadId === FINISH_LEAD_ID) {
+    const finale = await getFinaleConfig()
+    if (!finale.treasureHasCoords) return { mode: "direct" }
+    const crew = await getCrewUserIds(userId)
+    if (!(await crewHasReachedCompass(crew))) return { mode: "direct" }
     if (await crewHasFinished(crew)) return { mode: "direct" }
     return { mode: "verify", leadOrder: FINISH_ORDER }
   }
@@ -609,13 +699,25 @@ export async function checkScanLocation(
   const leadId = tokenRows[0]?.leadId
   if (!leadId) return { ok: true }
 
-  // The compass (finishing QR) checks against its own configured coordinates.
-  if (leadId === FINISH_LEAD_ID) {
+  // The compass QR checks against its own configured coordinates.
+  if (leadId === COMPASS_LEAD_ID) {
     const finale = await getFinaleConfig()
     if (!finale.hasCoords || finale.lat == null || finale.lng == null) return { ok: true }
     const distanceM = Math.round(haversineMeters(lat, lng, finale.lat, finale.lng))
     if (distanceM <= finale.radiusM) return { ok: true }
     return { ok: false, distanceM, radiusM: finale.radiusM }
+  }
+
+  // The treasure/finish QR checks against the treasure coordinates.
+  if (leadId === FINISH_LEAD_ID) {
+    const finale = await getFinaleConfig()
+    if (!finale.treasureHasCoords || finale.treasureLat == null || finale.treasureLng == null)
+      return { ok: true }
+    const distanceM = Math.round(
+      haversineMeters(lat, lng, finale.treasureLat, finale.treasureLng),
+    )
+    if (distanceM <= finale.treasureRadiusM) return { ok: true }
+    return { ok: false, distanceM, radiusM: finale.treasureRadiusM }
   }
 
   const geo = await getLeadGeo(leadId)
@@ -626,7 +728,7 @@ export async function checkScanLocation(
   return { ok: false, distanceM, radiusM: geo.radiusM }
 }
 
-// ── Tokens (admin) ──────────────────────────────────────────────────────────
+// ── Tokens (admin) ───────────────────────────────────────────────���──────────
 
 export type ClueTokenRow = {
   leadOrder: number

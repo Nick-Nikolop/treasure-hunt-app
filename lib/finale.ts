@@ -1,11 +1,13 @@
 // ─────────────────────────────────────────────────────────────────────────
 //  The finale — Pytheas's hidden compass.
 //
-//  The compass is NOT a journal lead. It reuses the dedicated finishing QR
-//  (lib/hunt.ts, leadOrder = FINISH_ORDER): scanning it at the right spot marks
-//  the crew as finished and reveals the winner screen. Everything editable
-//  about the finale (the compass GPS gate + the two handwritten notes + the
-//  winner message, both languages) lives on the single `score_config` row.
+//  The finale is a TWO-QR sequence, neither of which is a journal lead:
+//    1. Compass QR  (lib/hunt.ts, leadOrder = COMPASS_ORDER) — scanned at the
+//       compass spot once every lead is solved; reveals the compass note.
+//    2. Treasure QR (lib/hunt.ts, leadOrder = FINISH_ORDER) — scanned at the
+//       treasure spot; marks the crew finished and reveals the winner screen.
+//  Everything editable about the finale (both GPS gates + the handwritten notes
+//  + the winner message, both languages) lives on the single `score_config` row.
 //
 //  These columns are added on demand with `ALTER TABLE ... ADD COLUMN IF NOT
 //  EXISTS` (this project has no drizzle-kit; tables/columns are provisioned at
@@ -44,15 +46,20 @@ const DEFAULT_WINNER_NOTE_EN =
   "Careful: you may have reached this point, but someone else may have arrived before you. If you are in the top 3 on the scoreboard, a nice sum awaits you…"
 
 export type FinaleConfig = {
-  /** Compass GPS gate. `hasCoords` is true only when both lat and lng are set. */
+  /** Compass QR GPS gate. `hasCoords` is true only when both lat and lng set. */
   hasCoords: boolean
   lat: number | null
   lng: number | null
   radiusM: number
+  /** Treasure/finish QR GPS gate. `treasureHasCoords` true only when both set. */
+  treasureHasCoords: boolean
+  treasureLat: number | null
+  treasureLng: number | null
+  treasureRadiusM: number
   /** Journal note (shown once all leads are solved). */
   note1: string
   note1En: string
-  /** Compass-scan note (shown on finishing). */
+  /** Compass-scan note (shown when the compass QR is scanned). */
   note2: string
   note2En: string
   /** Winner-screen message. */
@@ -74,6 +81,9 @@ function ensureFinaleColumns(): Promise<void> {
            ADD COLUMN IF NOT EXISTS "compassLat" double precision,
            ADD COLUMN IF NOT EXISTS "compassLng" double precision,
            ADD COLUMN IF NOT EXISTS "compassRadiusM" integer,
+           ADD COLUMN IF NOT EXISTS "treasureLat" double precision,
+           ADD COLUMN IF NOT EXISTS "treasureLng" double precision,
+           ADD COLUMN IF NOT EXISTS "treasureRadiusM" integer,
            ADD COLUMN IF NOT EXISTS "finaleNote1" text,
            ADD COLUMN IF NOT EXISTS "finaleNote1En" text,
            ADD COLUMN IF NOT EXISTS "finaleNote2" text,
@@ -114,6 +124,7 @@ export async function getFinaleConfig(): Promise<FinaleConfig> {
   await ensureFinaleColumns()
   const res = await pool.query(
     `SELECT "compassLat" AS lat, "compassLng" AS lng, "compassRadiusM" AS radius,
+            "treasureLat" AS tlat, "treasureLng" AS tlng, "treasureRadiusM" AS tradius,
             "finaleNote1" AS n1, "finaleNote1En" AS n1e,
             "finaleNote2" AS n2, "finaleNote2En" AS n2e,
             "finaleWinner" AS w, "finaleWinnerEn" AS we,
@@ -125,6 +136,9 @@ export async function getFinaleConfig(): Promise<FinaleConfig> {
         lat: number | null
         lng: number | null
         radius: number | null
+        tlat: number | null
+        tlng: number | null
+        tradius: number | null
         n1: string | null
         n1e: string | null
         n2: string | null
@@ -138,11 +152,17 @@ export async function getFinaleConfig(): Promise<FinaleConfig> {
 
   const lat = row?.lat ?? null
   const lng = row?.lng ?? null
+  const tlat = row?.tlat ?? null
+  const tlng = row?.tlng ?? null
   return {
     hasCoords: lat != null && lng != null,
     lat,
     lng,
     radiusM: row?.radius != null ? clampRadius(row.radius) : DEFAULT_GEO_RADIUS_M,
+    treasureHasCoords: tlat != null && tlng != null,
+    treasureLat: tlat,
+    treasureLng: tlng,
+    treasureRadiusM: row?.tradius != null ? clampRadius(row.tradius) : DEFAULT_GEO_RADIUS_M,
     note1: textOr(row?.n1, DEFAULT_NOTE1),
     note1En: textOr(row?.n1e, DEFAULT_NOTE1_EN),
     note2: textOr(row?.n2, DEFAULT_NOTE2),
@@ -155,10 +175,14 @@ export async function getFinaleConfig(): Promise<FinaleConfig> {
 }
 
 export type FinaleConfigInput = {
-  /** Pass null lat/lng to clear the compass GPS gate (finish becomes ungated). */
+  /** Pass null lat/lng to clear the compass GPS gate (compass becomes ungated). */
   lat: number | null
   lng: number | null
   radiusM: number | null
+  /** Pass null to clear the treasure/finish GPS gate. */
+  treasureLat: number | null
+  treasureLng: number | null
+  treasureRadiusM: number | null
   note1: string
   note1En: string
   note2: string
@@ -175,19 +199,29 @@ export async function setFinaleConfig(input: FinaleConfigInput): Promise<void> {
   const lat = input.lat != null && Number.isFinite(input.lat) ? input.lat : null
   const lng = input.lng != null && Number.isFinite(input.lng) ? input.lng : null
   const radius = input.radiusM != null ? clampRadius(input.radiusM) : DEFAULT_GEO_RADIUS_M
+  const tlat =
+    input.treasureLat != null && Number.isFinite(input.treasureLat) ? input.treasureLat : null
+  const tlng =
+    input.treasureLng != null && Number.isFinite(input.treasureLng) ? input.treasureLng : null
+  const tradius =
+    input.treasureRadiusM != null ? clampRadius(input.treasureRadiusM) : DEFAULT_GEO_RADIUS_M
   const clip = (s: string) => (typeof s === "string" ? s.slice(0, 2000) : "")
 
   // The row always exists in practice (created by the scoring/phase setters),
   // but guard with an insert-or-update so a fresh DB still works.
   await pool.query(
     `INSERT INTO "score_config" (id, "compassLat", "compassLng", "compassRadiusM",
+        "treasureLat", "treasureLng", "treasureRadiusM",
         "finaleNote1", "finaleNote1En", "finaleNote2", "finaleNote2En",
         "finaleWinner", "finaleWinnerEn", "finaleWinnerNote", "finaleWinnerNoteEn", "updatedAt")
-     VALUES ('default', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, now())
+     VALUES ('default', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, now())
      ON CONFLICT (id) DO UPDATE SET
         "compassLat" = EXCLUDED."compassLat",
         "compassLng" = EXCLUDED."compassLng",
         "compassRadiusM" = EXCLUDED."compassRadiusM",
+        "treasureLat" = EXCLUDED."treasureLat",
+        "treasureLng" = EXCLUDED."treasureLng",
+        "treasureRadiusM" = EXCLUDED."treasureRadiusM",
         "finaleNote1" = EXCLUDED."finaleNote1",
         "finaleNote1En" = EXCLUDED."finaleNote1En",
         "finaleNote2" = EXCLUDED."finaleNote2",
@@ -201,6 +235,9 @@ export async function setFinaleConfig(input: FinaleConfigInput): Promise<void> {
       lat,
       lng,
       radius,
+      tlat,
+      tlng,
+      tradius,
       clip(input.note1),
       clip(input.note1En),
       clip(input.note2),

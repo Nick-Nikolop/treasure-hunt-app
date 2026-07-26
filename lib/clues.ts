@@ -296,6 +296,16 @@ export const FIRST_LEAD_ORDER = 1
  */
 export const FINISH_ORDER = 100000
 
+/**
+ * Virtual lead order for the intermediate "compass" scan. After solving every
+ * lead the crew finds Pytheas's compass and scans its QR (this order); that
+ * reveals the compass note but does NOT finish the hunt. The separate treasure
+ * QR (FINISH_ORDER) is the real finish. Kept as its own stable sentinel ABOVE
+ * FINISH_ORDER so it is never counted as a real-lead surrogate (which are all
+ * < FINISH_ORDER) and never collides with a real position.
+ */
+export const COMPASS_ORDER = 100001
+
 /** The legacy finish sentinel used before the lead count became dynamic. */
 export const LEGACY_FINISH_ORDER = TOTAL_CLUES + 1
 

@@ -22,6 +22,7 @@ import { lead, clueToken, hint, leadContent, leadDifficulty } from "@/lib/db/sch
 import {
   CLUES,
   FINISH_ORDER,
+  COMPASS_ORDER,
   LEGACY_FINISH_ORDER,
   DEFAULT_DIFFICULTY,
   isDifficulty,
@@ -33,6 +34,10 @@ import { DEFAULT_GEO_RADIUS_M } from "@/lib/geo"
 
 /** The reserved token id for the dedicated finishing QR (no real lead row). */
 export const FINISH_LEAD_ID = "__finish__"
+
+/** The reserved token id for the compass QR — the intermediate finale step
+ *  scanned after all leads are solved, before the treasure/finish QR. */
+export const COMPASS_LEAD_ID = "__compass__"
 
 /** A fully-resolved lead: the public Clue shape plus its difficulty + geo gate. */
 export type LeadDef = Clue & {
@@ -256,6 +261,14 @@ export type ClueTokenRow = {
   token: string
   link: string
   isFinish: boolean
+  isCompass: boolean
+}
+
+/** The surrogate leadOrder a reserved (non-lead) token binds to, if any. */
+function reservedSurrogate(leadId: string): number | null {
+  if (leadId === FINISH_LEAD_ID) return FINISH_ORDER
+  if (leadId === COMPASS_LEAD_ID) return COMPASS_ORDER
+  return null
 }
 
 /** Next free surrogate leadOrder for a new clue_token row (below the finish
@@ -277,7 +290,7 @@ async function ensureTokenForLead(leadId: string): Promise<string> {
     .limit(1)
   if (found[0]) return found[0].token
   const token = freshToken()
-  const surrogate = leadId === FINISH_LEAD_ID ? FINISH_ORDER : await nextTokenSurrogate()
+  const surrogate = reservedSurrogate(leadId) ?? (await nextTokenSurrogate())
   await db
     .insert(clueToken)
     .values({ leadOrder: surrogate, leadId, token })
@@ -301,6 +314,7 @@ export async function ensureTokens(): Promise<void> {
     if (l.order < 2) continue
     await ensureTokenForLead(l.id)
   }
+  await ensureTokenForLead(COMPASS_LEAD_ID)
   await ensureTokenForLead(FINISH_LEAD_ID)
 }
 
@@ -313,6 +327,18 @@ export async function listTokens(): Promise<ClueTokenRow[]> {
   const out: ClueTokenRow[] = []
   for (const r of rows) {
     if (!r.leadId) continue
+    if (r.leadId === COMPASS_LEAD_ID) {
+      out.push({
+        leadId: COMPASS_LEAD_ID,
+        leadOrder: COMPASS_ORDER,
+        country: "Compass",
+        token: r.token,
+        link: huntLinkFor(r.token),
+        isFinish: false,
+        isCompass: true,
+      })
+      continue
+    }
     if (r.leadId === FINISH_LEAD_ID) {
       out.push({
         leadId: FINISH_LEAD_ID,
@@ -321,6 +347,7 @@ export async function listTokens(): Promise<ClueTokenRow[]> {
         token: r.token,
         link: huntLinkFor(r.token),
         isFinish: true,
+        isCompass: false,
       })
       continue
     }
@@ -333,6 +360,7 @@ export async function listTokens(): Promise<ClueTokenRow[]> {
       token: r.token,
       link: huntLinkFor(r.token),
       isFinish: false,
+      isCompass: false,
     })
   }
   return out.sort((a, b) => a.leadOrder - b.leadOrder)
@@ -349,7 +377,7 @@ export async function regenerateTokenForLead(leadId: string): Promise<string> {
   if (existing[0]) {
     await db.update(clueToken).set({ token: fresh }).where(eq(clueToken.leadId, leadId))
   } else {
-    const surrogate = leadId === FINISH_LEAD_ID ? FINISH_ORDER : await nextTokenSurrogate()
+    const surrogate = reservedSurrogate(leadId) ?? (await nextTokenSurrogate())
     await db.insert(clueToken).values({ leadOrder: surrogate, leadId, token: fresh })
   }
   return fresh
