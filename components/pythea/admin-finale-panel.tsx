@@ -191,8 +191,9 @@ export function AdminFinalePanel() {
       <Section icon={MapPin} title="4 · Treasure QR location (the finish)">
         <p className="mb-4 max-w-prose font-sans text-sm leading-relaxed text-muted-foreground">
           Where the final treasure QR is hidden. Scanning it here is the real
-          finish: it locks in the crew&rsquo;s placement (by scan order) and
-          shows the winner screen. Leave blank to remove the gate.
+          finish: it records the crew&rsquo;s finish and shows the winner screen
+          with their placement (1st, 2nd, 3rd…) by scan order. Crews keep
+          finishing after; nothing is locked. Leave blank to remove the gate.
         </p>
         <GateFields
           lat={draft.treasureLat}

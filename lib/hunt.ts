@@ -467,8 +467,9 @@ export async function unlockByToken(
   }
 
   // The treasure/finish QR: the real finish, scanned AFTER the compass. It
-  // marks the final lead as solved (so it can be scored) and locks in the
-  // crew's finishing time. No cooldown, same as the compass.
+  // marks the final lead as solved (so it can be scored) and records the
+  // crew's finish time. Placement is always derived live from finish order;
+  // nothing is locked, and crews keep finishing. No cooldown, like the compass.
   if (leadId === FINISH_LEAD_ID) {
     const crew = await getCrewUserIds(userId)
     const now = Date.now()

@@ -494,7 +494,7 @@ const el = {
     sealedNotStartedBody:
       "Το πρώτο σημάδι θα εμφανιστεί μόλις ο Πυθέας ανοίξει τον χάρτη του.",
     sealedBody: (n: string) =>
-      `Η σελίδα Νο. ${n} μένει κάτω από το κερί μέχρι να φτάσεις στο σημείο της μέσα στην πόλη. Εντόπισε τον κρυμμένο κωδικό QR στην επόμενη στάση και σάρωσέ τον: η σφραγίδα σπάει και η σελίδα χαράσσεται στο ημερολόγιό σου.`,
+      `Η σελίδα Νο. ${n} μένει κάτω απ�� το κερί μέχρι να φτάσεις στο σημείο της μέσα στην πόλη. Εντόπισε τον κρυμμένο κωδικό QR στην επόμενη στάση και σάρωσέ τον: η σφραγίδα σπάει και η σελίδα χαράσσεται στο ημερολόγιό σου.`,
     finalLabel: "ΤΕΛΟΣ ΤΟΥ ΗΜΕΡΟΛΟΓΙΟΥ",
     finalBody:
       "Όλα τα σημάδια αποκαλύφθηκαν. Ο θησαυρός περιμένει εκείνους που έμαθαν να κοιτούν την Καλαμάτα σαν εξερευνητές.",
@@ -1437,8 +1437,8 @@ const en: Dictionary = {
       `Pytheas led you to ${country}.\nThe new page has been written into your journal.`,
     finishedLabel: "JOURNEY COMPLETE",
     finishedTitle: "You reached the destination",
-    finishedBody: (country: string) =>
-      `You completed the voyage of Pytheas${country ? ` in ${country}` : ""}.\nThe final mark's points have been locked into the standings.`,
+  finishedBody: (country: string) =>
+    `You completed the voyage of Pytheas${country ? ` in ${country}` : ""}.\nYour finish has been recorded in the standings.`,
     alreadyLabel: "ALREADY YOURS",
     alreadyTitle: "This mark is already open",
     alreadyBody: "You or your team have already unlocked this page.",

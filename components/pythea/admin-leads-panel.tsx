@@ -458,7 +458,7 @@ export function AdminLeadsPanel({
           onRegenerate={regenToken}
           badge="FIN"
           title="Treasure QR (step 2 / finish)"
-          body="The treasure. Scanning this after the compass locks in everyone's finishing points and shows the winner screen."
+          body="The treasure. Scanning this after the compass records the crew's finish and shows the winner screen with their placement (1st, 2nd, 3rd…). Crews keep finishing; nothing is locked."
         />
         <p className="font-sans text-[12px] leading-relaxed text-muted-foreground">
           Set each QR&rsquo;s GPS gate and the notes shown on scan in the{" "}

@@ -248,7 +248,7 @@ function LeadQrModal({
         </h2>
         <p className="mt-1 font-sans text-sm text-muted-foreground">
           {isFinish
-            ? "Print this and hide it at the final location. Scanning it marks the last lead as solved and locks in everyone's finishing points."
+            ? "Print this and hide it at the final location. Scanning it records each crew's finish and shows their placement. Crews keep finishing; nothing is locked."
             : `Print this and hide it at the matching location. Scanning it unlocks lead ${orderLabel}.`}
         </p>
 
