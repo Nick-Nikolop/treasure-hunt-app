@@ -20,6 +20,7 @@ import {
   MapPinOff,
   ExternalLink,
   Droplets,
+  Compass,
 } from "lucide-react"
 import {
   adminSaveLead,
@@ -34,6 +35,7 @@ import {
   adminSaveLeadGeo,
   adminRegenerateToken,
   adminSetLeadBgWash,
+  getFinaleState,
 } from "@/app/admin/actions"
 import { LEAD_ICONS, type Difficulty, type LeadIcon } from "@/lib/clues"
 import type { EditableLead } from "@/lib/lead-content"
@@ -41,6 +43,9 @@ import type { ClueTokenRow } from "@/lib/hunt"
 import { DEFAULT_GEO_RADIUS_M } from "@/lib/geo"
 import { resolveLeadBackground } from "@/lib/lead-backgrounds"
 import { LeadQrBlock } from "@/components/pythea/lead-qr"
+
+/** One finale QR's GPS gate, as shown (read-only) on its card. */
+type FinaleGate = { lat: number | null; lng: number | null; radiusM: number }
 
 const errorText: Record<string, string> = {
   bad_value: "That change could not be saved.",
@@ -120,6 +125,29 @@ export function AdminLeadsPanel({
   const tokenByLeadId = new Map(tokens.map((t) => [t.leadId, t]))
   const compassToken = tokens.find((t) => t.isCompass) ?? null
   const finishToken = tokens.find((t) => t.isFinish) ?? null
+
+  // The compass + treasure GPS gates live on the finale config (edited in the
+  // Finale tab). We fetch them here purely to SHOW each finale QR's location
+  // status on its card, so the scan-time gate is visible next to the QR.
+  const [finaleGeo, setFinaleGeo] = useState<{
+    compass: FinaleGate
+    treasure: FinaleGate
+  } | null>(null)
+  useEffect(() => {
+    let alive = true
+    getFinaleState()
+      .then((c) => {
+        if (!alive) return
+        setFinaleGeo({
+          compass: { lat: c.lat, lng: c.lng, radiusM: c.radiusM },
+          treasure: { lat: c.treasureLat, lng: c.treasureLng, radiusM: c.treasureRadiusM },
+        })
+      })
+      .catch(() => {})
+    return () => {
+      alive = false
+    }
+  }, [])
 
   // Working copy (live edits) + baseline (last-saved snapshot). Seeded from
   // props once; from here on this component owns the state.
@@ -443,27 +471,67 @@ export function AdminLeadsPanel({
         ))}
       </ul>
 
-      <div className="flex flex-col gap-3">
-        <FinaleQrCard
-          token={compassToken}
-          pending={pending}
-          onRegenerate={regenToken}
-          badge="CMP"
-          title="Compass QR (step 1)"
-          body="The compass. Players scan this after solving every lead to reveal the compass note. It does NOT finish the hunt."
-        />
-        <FinaleQrCard
-          token={finishToken}
-          pending={pending}
-          onRegenerate={regenToken}
-          badge="FIN"
-          title="Treasure QR (step 2 / finish)"
-          body="The treasure. Scanning this after the compass records the crew's finish and shows the winner screen with their placement (1st, 2nd, 3rd…). Crews keep finishing; nothing is locked."
-        />
-        <p className="font-sans text-[12px] leading-relaxed text-muted-foreground">
-          Set each QR&rsquo;s GPS gate and the notes shown on scan in the{" "}
-          <span className="font-semibold text-foreground">Finale</span> tab.
+      <div className="mt-2 rounded-md border border-brass/30 bg-brass/[0.04] p-4">
+        <div className="flex items-center gap-2">
+          <Compass className="size-5 text-brass" aria-hidden />
+          <h2 className="font-serif text-lg font-black text-foreground">The endgame QRs</h2>
+        </div>
+        <p className="mt-1.5 font-sans text-[12px] leading-relaxed text-muted-foreground">
+          Two extra QRs, scanned in order after all leads are solved. They are
+          NOT leads. Each has its own GPS gate: a crew must be standing at the
+          right spot for the scan to count.
         </p>
+        <ol className="mt-3 flex flex-col gap-1.5 font-sans text-[12px] text-muted-foreground">
+          <li className="flex gap-2">
+            <span className="font-bold text-brass">0.</span>
+            <span>
+              All leads solved &rarr; the &ldquo;find my compass&rdquo; note
+              appears in the journal.
+            </span>
+          </li>
+          <li className="flex gap-2">
+            <span className="font-bold text-brass">1.</span>
+            <span>
+              Crew scans the <span className="font-semibold text-foreground">Compass QR</span> &rarr;
+              shows the compass note. Not the finish.
+            </span>
+          </li>
+          <li className="flex gap-2">
+            <span className="font-bold text-brass">2.</span>
+            <span>
+              Crew scans the <span className="font-semibold text-foreground">Treasure QR</span> &rarr;
+              the finish. Winner screen with their placement.
+            </span>
+          </li>
+        </ol>
+
+        <div className="mt-4 flex flex-col gap-3">
+          <FinaleQrCard
+            token={compassToken}
+            pending={pending}
+            onRegenerate={regenToken}
+            badge="1"
+            title="Compass QR"
+            purpose="Scanned first, once every lead is solved. Reveals the compass note. Does NOT finish the hunt."
+            gate={finaleGeo?.compass ?? null}
+            gateReady={finaleGeo !== null}
+          />
+          <FinaleQrCard
+            token={finishToken}
+            pending={pending}
+            onRegenerate={regenToken}
+            badge="2"
+            title="Treasure QR — the finish"
+            purpose="Scanned second, after the compass. Records the crew's finish and shows the winner screen with their placement (1st, 2nd, 3rd…). Crews keep finishing; nothing is locked."
+            gate={finaleGeo?.treasure ?? null}
+            gateReady={finaleGeo !== null}
+          />
+          <p className="font-sans text-[12px] leading-relaxed text-muted-foreground">
+            Edit each QR&rsquo;s GPS coordinates and the notes shown on scan in
+            the <span className="font-semibold text-foreground">Finale</span>{" "}
+            tab.
+          </p>
+        </div>
       </div>
 
       <AddLeadForm pending={pending} onAdd={addLead} />
@@ -990,27 +1058,74 @@ function FinaleQrCard({
   onRegenerate,
   badge,
   title,
-  body,
+  purpose,
+  gate,
+  gateReady,
 }: {
   token: ClueTokenRow | null
   pending: boolean
   onRegenerate: (leadOrder: number) => void
   badge: string
   title: string
-  body: string
+  purpose: string
+  /** The QR's GPS gate (from finale config), or null while still loading. */
+  gate: FinaleGate | null
+  /** True once the finale config fetch has resolved (so "not set" is truthful). */
+  gateReady: boolean
 }) {
   if (!token) return null
+  const hasCoords = gate != null && gate.lat != null && gate.lng != null
   return (
     <div className="rounded-sm border border-border bg-card/40 p-4">
-      <div className="flex items-center gap-2">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-sm bg-brass/15 font-serif text-xs font-black text-brass">
+      <div className="flex items-start gap-2">
+        <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-brass font-serif text-sm font-black text-background">
           {badge}
         </span>
         <div>
           <h3 className="font-serif text-base font-black text-foreground">{title}</h3>
-          <p className="font-sans text-[12px] leading-relaxed text-muted-foreground">{body}</p>
+          <p className="font-sans text-[12px] leading-relaxed text-muted-foreground">{purpose}</p>
         </div>
       </div>
+
+      {/* GPS gate status — read-only mirror of the Finale-tab coordinates,
+          shown so the on-scan location check is visible right by the QR. */}
+      <div className="mt-3 rounded-sm border border-border bg-background/40 p-2.5">
+        {!gateReady ? (
+          <div className="flex items-center gap-1.5 font-sans text-[12px] text-muted-foreground">
+            <Loader2 className="size-3.5 animate-spin" />
+            Checking scan location…
+          </div>
+        ) : hasCoords ? (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span className="inline-flex items-center gap-1.5 font-sans text-[12px] font-bold text-emerald-500">
+              <MapPin className="size-3.5" />
+              Scan-location check ON
+            </span>
+            <span className="font-mono text-[12px] text-foreground">
+              {gate!.lat!.toFixed(5)}, {gate!.lng!.toFixed(5)}
+            </span>
+            <span className="font-sans text-[11px] text-muted-foreground">
+              within {gate!.radiusM} m
+            </span>
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${gate!.lat},${gate!.lng}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 font-sans text-[11px] font-bold tracking-chip text-brass"
+            >
+              <ExternalLink className="size-3" />
+              Map
+            </a>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5 font-sans text-[12px] font-bold text-amber-500">
+            <MapPinOff className="size-3.5" />
+            No scan-location set — this QR scans from anywhere. Add coordinates in
+            the Finale tab.
+          </div>
+        )}
+      </div>
+
       <LeadQrBlock
         token={token}
         pending={pending}
