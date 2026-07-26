@@ -728,7 +728,7 @@ export async function checkScanLocation(
   return { ok: false, distanceM, radiusM: geo.radiusM }
 }
 
-// ── Tokens (admin) ───────────────────────────────────────────────���──────────
+// ── Tokens (admin) ──────────────────────────────────────────────────────────
 
 export type ClueTokenRow = {
   leadOrder: number
@@ -737,6 +737,7 @@ export type ClueTokenRow = {
   token: string
   link: string
   isFinish: boolean
+  isCompass: boolean
 }
 
 /**
@@ -757,6 +758,7 @@ export async function getClueTokens(): Promise<ClueTokenRow[]> {
     token: r.token,
     link: r.link,
     isFinish: r.isFinish,
+    isCompass: r.isCompass,
   }))
 }
 
@@ -766,6 +768,7 @@ export async function getClueTokens(): Promise<ClueTokenRow[]> {
  * right lead's token is rotated. Invalidates any printed QR for that lead.
  */
 export async function regenerateToken(leadOrder: number): Promise<string> {
+  if (leadOrder === COMPASS_ORDER) return regenerateTokenForLead(COMPASS_LEAD_ID)
   if (leadOrder === FINISH_ORDER) return regenerateTokenForLead(FINISH_LEAD_ID)
   const def = (await getLeadDefs()).find((d) => d.order === leadOrder)
   if (!def) throw new Error(`No lead at position ${leadOrder}`)

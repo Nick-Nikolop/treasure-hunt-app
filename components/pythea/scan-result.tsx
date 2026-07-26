@@ -16,7 +16,7 @@ import {
   Loader2,
 } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
-import { WinnerReveal } from "@/components/pythea/winner-reveal"
+import { WinnerReveal, CompassReveal } from "@/components/pythea/winner-reveal"
 import type { UnlockResult } from "@/lib/hunt"
 import { bypassCooldownScan } from "@/app/q/[token]/actions"
 import { track } from "@/lib/analytics-client"
@@ -69,9 +69,13 @@ export function ScanResult({
     )
   }
 
-  // Finishing the hunt (the compass QR) gets the full cinematic finale: the
-  // handwritten compass note, then the animated winner screen with placement.
-  // Finish is terminal, so it is read off the original (never-narrowed) result.
+  // Finale step 1: the compass QR reveals Pytheas's compass note (not the
+  // finish). Finale step 2: the treasure QR shows the animated winner screen
+  // with placement. Both are terminal, read off the original (never-narrowed)
+  // result so the cooldown-bypass narrowing on `result` doesn't hide them.
+  if (initialResult.status === "compass_reached") {
+    return <CompassReveal />
+  }
   if (initialResult.status === "finished") {
     return <WinnerReveal />
   }

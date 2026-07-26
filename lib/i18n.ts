@@ -549,10 +549,13 @@ const el = {
     noteLabel: "ΤΟ ΣΗΜΕΙΩΜΑ ΤΟΥ ΠΥΘΕΑ",
     signature: "— Πυθέας",
     close: "ΚΛΕΙΣΙΜΟ",
-    // Winner reveal (after the compass QR is scanned)
-    revealCta: "ΑΠΟΚΑΛΥΨΕ ΤΟΝ ΘΗΣΑΥΡΟ",
+    // Compass reveal (after the COMPASS QR is scanned — the note screen)
+    compassKicker: "ΒΡΗΚΑΤΕ ΤΗΝ ΠΥΞΙΔΑ",
+    compassTitle: "Η πυξίδα του Πυθέα",
+    compassHint: "Ο θησαυρός σας περιμένει. Ακολουθήστε την πυξίδα ως το τέλος.",
+    // Winner reveal (after the TREASURE QR is scanned — the finish)
     winnerKicker: "ΤΟ ΤΑΞΙΔΙ ΟΛΟΚΛΗΡΩΘΗΚΕ",
-    winnerTitle: "Βρήκατε την πυξίδα!",
+    winnerTitle: "Βρήκατε τον θησαυρό!",
     place: (n: number) => `${n}η ΘΕΣΗ`,
     finishers: (place: number, total: number) =>
       total > 1 ? `Τερματίσατε ${place}οι στους ${total}` : "Είστε οι πρώτοι που τερμάτισαν",
@@ -1406,9 +1409,11 @@ const en: Dictionary = {
     noteLabel: "A NOTE FROM PYTHEAS",
     signature: "— Pytheas",
     close: "CLOSE",
-    revealCta: "REVEAL THE TREASURE",
+    compassKicker: "YOU FOUND THE COMPASS",
+    compassTitle: "The compass of Pytheas",
+    compassHint: "The treasure awaits. Follow the compass to the very end.",
     winnerKicker: "THE VOYAGE IS COMPLETE",
-    winnerTitle: "You found the compass!",
+    winnerTitle: "You found the treasure!",
     place: (n: number) => {
       const s = ["th", "st", "nd", "rd"]
       const v = n % 100

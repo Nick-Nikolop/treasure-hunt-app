@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { motion, AnimatePresence } from "framer-motion"
-import { BookOpen, Trophy, Loader2, Sparkles } from "lucide-react"
+import { motion } from "framer-motion"
+import { BookOpen, Trophy, Loader2 } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
 import { HandwrittenNote } from "@/components/pythea/handwritten-note"
 import { CompassRose } from "@/components/pythea/compass-rose"
@@ -11,20 +11,10 @@ import { getFinaleSummary, type FinaleSummary } from "@/app/q/[token]/actions"
 import { track } from "@/lib/analytics-client"
 import { EV } from "@/lib/analytics-events"
 
-/**
- * The finale sequence shown after the compass QR is scanned (status
- * "finished"). Two beats: first Pytheas's handwritten compass note, then, when
- * the explorer reveals it, an animated winner screen with their finishing
- * placement, the (editable) winner message and the top-3 prize note.
- */
-export function WinnerReveal() {
-  const { t, locale } = useI18n()
-  const f = t.finale
-
+/** Shared loader + summary fetch for both finale screens. */
+function useFinaleSummary() {
   const [data, setData] = useState<FinaleSummary | null>(null)
   const [loading, setLoading] = useState(true)
-  const [revealed, setRevealed] = useState(false)
-
   useEffect(() => {
     let alive = true
     getFinaleSummary()
@@ -38,58 +28,106 @@ export function WinnerReveal() {
       alive = false
     }
   }, [])
+  return { data, loading }
+}
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center gap-4 py-16 text-center">
-        <Loader2 className="size-7 animate-spin text-brass" aria-hidden />
-        <p className="font-sans text-xs font-bold tracking-chip text-muted-foreground">
-          {f.loading}
-        </p>
-      </div>
-    )
-  }
+function FinaleLoader({ label }: { label: string }) {
+  return (
+    <div className="flex flex-col items-center gap-4 py-16 text-center">
+      <Loader2 className="size-7 animate-spin text-brass" aria-hidden />
+      <p className="font-sans text-xs font-bold tracking-chip text-muted-foreground">{label}</p>
+    </div>
+  )
+}
+
+/**
+ * Step 1 of the finale, shown when the COMPASS QR is scanned (status
+ * "compass_reached"). Reveals Pytheas's handwritten compass note telling the
+ * crew the treasure remains. It is NOT the finish — the treasure QR is.
+ */
+export function CompassReveal() {
+  const { t, locale } = useI18n()
+  const f = t.finale
+  const { data, loading } = useFinaleSummary()
+
+  useEffect(() => {
+    track(EV.huntFinished, { beat: "compass" }, { category: "hunt" })
+  }, [])
+
+  if (loading) return <FinaleLoader label={f.loading} />
 
   const note2 = data ? (locale === "en" ? data.note2En : data.note2) : ""
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="flex w-full max-w-xl flex-col items-center"
+    >
+      <motion.div
+        initial={{ scale: 0, rotate: -30 }}
+        animate={{ scale: 1, rotate: 0 }}
+        transition={{ type: "spring", stiffness: 140, damping: 12, delay: 0.1 }}
+        className="mb-4"
+      >
+        <CompassRose className="animate-compass-sway size-16 text-brass" />
+      </motion.div>
+
+      <p className="mb-1 font-sans text-[11px] font-bold tracking-chip text-brass">
+        {f.compassKicker}
+      </p>
+      <h2 className="mb-5 text-balance text-center font-serif text-2xl font-black text-foreground md:text-3xl">
+        {f.compassTitle}
+      </h2>
+
+      <HandwrittenNote body={note2} signature={f.signature} />
+
+      <p className="mt-6 max-w-sm text-pretty text-center font-sans text-xs leading-relaxed text-muted-foreground">
+        {f.compassHint}
+      </p>
+
+      <div className="mt-7 flex flex-col items-stretch gap-3 sm:flex-row sm:justify-center">
+        <Link
+          href="/journal"
+          className="inline-flex items-center justify-center gap-2 rounded-sm border border-border bg-background px-5 py-3 font-sans text-xs font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass"
+        >
+          <BookOpen className="size-4" />
+          {f.openJournal}
+        </Link>
+      </div>
+    </motion.div>
+  )
+}
+
+/**
+ * Step 2 of the finale, shown when the TREASURE QR is scanned (status
+ * "finished"). The animated winner screen: finishing placement, the (editable)
+ * winner message, and the top-3 prize note. Placement is decided by treasure
+ * scan order.
+ */
+export function WinnerReveal() {
+  const { t, locale } = useI18n()
+  const f = t.finale
+  const { data, loading } = useFinaleSummary()
+
+  useEffect(() => {
+    track(EV.huntFinished, { beat: "treasure" }, { category: "hunt" })
+  }, [])
+
+  if (loading) return <FinaleLoader label={f.loading} />
+
   const winnerMsg = data ? (locale === "en" ? data.winnerEn : data.winner) : ""
   const winnerNote = data ? (locale === "en" ? data.winnerNoteEn : data.winnerNote) : ""
 
   return (
     <div className="w-full max-w-xl">
-      <AnimatePresence mode="wait">
-        {!revealed ? (
-          <motion.div
-            key="note"
-            exit={{ opacity: 0, y: -20, transition: { duration: 0.4 } }}
-            className="flex flex-col items-center"
-          >
-            <p className="mb-5 font-sans text-[11px] font-bold tracking-chip text-brass">
-              {f.noteLabel}
-            </p>
-            <HandwrittenNote body={note2} signature={f.signature} />
-
-            <button
-              type="button"
-              onClick={() => {
-                track(EV.huntFinished, { beat: "reveal" }, { category: "hunt" })
-                setRevealed(true)
-              }}
-              className="mt-9 inline-flex items-center justify-center gap-2 rounded-sm bg-brass px-6 py-3 font-sans text-xs font-bold tracking-chip text-primary-foreground transition-opacity hover:opacity-90"
-            >
-              <Sparkles className="size-4" />
-              {f.revealCta}
-            </button>
-          </motion.div>
-        ) : (
-          <WinnerScreen
-            key="winner"
-            place={data?.place ?? null}
-            totalFinishers={data?.totalFinishers ?? 0}
-            message={winnerMsg}
-            prizeNote={winnerNote}
-          />
-        )}
-      </AnimatePresence>
+      <WinnerScreen
+        place={data?.place ?? null}
+        totalFinishers={data?.totalFinishers ?? 0}
+        message={winnerMsg}
+        prizeNote={winnerNote}
+      />
     </div>
   )
 }
@@ -113,7 +151,7 @@ function WinnerScreen({
       initial={{ opacity: 0, scale: 0.96 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      className="relative w-full max-w-md overflow-hidden rounded-sm border border-brass bg-card/70 px-6 py-10 text-center md:px-9 md:py-12"
+      className="relative mx-auto w-full max-w-md overflow-hidden rounded-sm border border-brass bg-card/70 px-6 py-10 text-center md:px-9 md:py-12"
     >
       {/* Radiant gold burst behind the compass. */}
       <motion.div

@@ -118,6 +118,7 @@ export function AdminLeadsPanel({
   // so a lead's QR follows it across reorders. The finish QR isn't a lead, so
   // it renders in its own card after the list.
   const tokenByLeadId = new Map(tokens.map((t) => [t.leadId, t]))
+  const compassToken = tokens.find((t) => t.isCompass) ?? null
   const finishToken = tokens.find((t) => t.isFinish) ?? null
 
   // Working copy (live edits) + baseline (last-saved snapshot). Seeded from
@@ -442,7 +443,28 @@ export function AdminLeadsPanel({
         ))}
       </ul>
 
-      <FinishQrCard token={finishToken} pending={pending} onRegenerate={regenToken} />
+      <div className="flex flex-col gap-3">
+        <FinaleQrCard
+          token={compassToken}
+          pending={pending}
+          onRegenerate={regenToken}
+          badge="CMP"
+          title="Compass QR (step 1)"
+          body="The compass. Players scan this after solving every lead to reveal the compass note. It does NOT finish the hunt."
+        />
+        <FinaleQrCard
+          token={finishToken}
+          pending={pending}
+          onRegenerate={regenToken}
+          badge="FIN"
+          title="Treasure QR (step 2 / finish)"
+          body="The treasure. Scanning this after the compass locks in everyone's finishing points and shows the winner screen."
+        />
+        <p className="font-sans text-[12px] leading-relaxed text-muted-foreground">
+          Set each QR&rsquo;s GPS gate and the notes shown on scan in the{" "}
+          <span className="font-semibold text-foreground">Finale</span> tab.
+        </p>
+      </div>
 
       <AddLeadForm pending={pending} onAdd={addLead} />
 
@@ -958,36 +980,35 @@ function LeadCard({
 }
 
 /**
- * Standalone card for the finishing QR. The finish token isn't a lead (it marks
- * the last lead solved), so it lives on its own below the list rather than in a
- * lead's editor. Reuses the same QR block as the leads.
+ * Standalone card for a finale QR (compass or treasure). Neither is a lead, so
+ * they live in their own cards below the list rather than in a lead's editor.
+ * Reuses the same QR block as the leads.
  */
-function FinishQrCard({
+function FinaleQrCard({
   token,
   pending,
   onRegenerate,
+  badge,
+  title,
+  body,
 }: {
   token: ClueTokenRow | null
   pending: boolean
   onRegenerate: (leadOrder: number) => void
+  badge: string
+  title: string
+  body: string
 }) {
   if (!token) return null
   return (
     <div className="rounded-sm border border-border bg-card/40 p-4">
       <div className="flex items-center gap-2">
         <span className="flex size-8 shrink-0 items-center justify-center rounded-sm bg-brass/15 font-serif text-xs font-black text-brass">
-          FIN
+          {badge}
         </span>
         <div>
-          <h3 className="font-serif text-base font-black text-foreground">
-            Compass QR (Finish)
-          </h3>
-          <p className="font-sans text-[12px] leading-relaxed text-muted-foreground">
-            This is the compass. Scanning it marks the last lead as solved, locks in
-            everyone&rsquo;s finishing points, and triggers the winner screen. Set its GPS gate and
-            the notes shown on scan in the <span className="font-semibold text-foreground">Finale</span>{" "}
-            tab.
-          </p>
+          <h3 className="font-serif text-base font-black text-foreground">{title}</h3>
+          <p className="font-sans text-[12px] leading-relaxed text-muted-foreground">{body}</p>
         </div>
       </div>
       <LeadQrBlock

@@ -103,6 +103,7 @@ import { put, del } from "@vercel/blob"
 import { getAnalyticsSnapshot, type AnalyticsSnapshot } from "@/lib/analytics"
 import {
   FINISH_ORDER,
+  COMPASS_ORDER,
   effectiveUnlockedCount,
   isDifficulty,
   isLeadIcon,
@@ -1256,7 +1257,8 @@ export async function adminRegenerateToken(leadOrder: number): Promise<ActionRes
   await requireAdmin()
   const order = Math.floor(leadOrder)
   const total = await getTotalLeads()
-  const valid = (order >= 2 && order <= total) || order === FINISH_ORDER
+  const valid =
+    (order >= 2 && order <= total) || order === COMPASS_ORDER || order === FINISH_ORDER
   if (!Number.isFinite(leadOrder) || !valid) {
     return { ok: false, error: "bad_value" }
   }
@@ -1595,15 +1597,46 @@ export async function getFinaleState(): Promise<FinaleConfig> {
   return getFinaleConfig()
 }
 
+/** Parse one lat/lng/radius trio from string inputs. Returns nulls when blank
+ *  (clears the gate) or an error code when a provided value is out of range. */
+function parseGate(
+  latStr: string,
+  lngStr: string,
+  radiusStr: string,
+): { lat: number | null; lng: number | null; radius: number | null } | { error: string } {
+  let lat: number | null = null
+  let lng: number | null = null
+  let radius: number | null = null
+  const la = (latStr ?? "").trim()
+  const ln = (lngStr ?? "").trim()
+  const ra = (radiusStr ?? "").trim()
+  if (la || ln) {
+    lat = Number(la)
+    lng = Number(ln)
+    if (!Number.isFinite(lat) || lat < -90 || lat > 90) return { error: "bad_lat" }
+    if (!Number.isFinite(lng) || lng < -180 || lng > 180) return { error: "bad_lng" }
+  }
+  if (ra) {
+    const r = Number(ra)
+    if (!Number.isFinite(r) || r < 10 || r > 5000) return { error: "bad_radius" }
+    radius = Math.round(r)
+  }
+  return { lat, lng, radius }
+}
+
 /**
- * Save the finale configuration: the compass GPS gate and every editable piece
- * of finale copy (journal note, compass-scan note, winner message + prize note),
- * both languages. Blank lat/lng clears the gate so the compass QR just finishes.
+ * Save the finale configuration: both GPS gates (compass QR + treasure/finish
+ * QR) and every editable piece of finale copy (journal note, compass-scan note,
+ * winner message + prize note), both languages. Blank lat/lng clears a gate so
+ * that QR is scannable from anywhere.
  */
 export async function adminSaveFinale(input: {
   lat: string
   lng: string
   radiusM: string
+  treasureLat: string
+  treasureLng: string
+  treasureRadiusM: string
   note1: string
   note1En: string
   note2: string
@@ -1615,30 +1648,18 @@ export async function adminSaveFinale(input: {
 }): Promise<ActionResult> {
   const admin = await requireAdmin()
 
-  const latStr = (input.lat ?? "").trim()
-  const lngStr = (input.lng ?? "").trim()
-  const radiusStr = (input.radiusM ?? "").trim()
-
-  let lat: number | null = null
-  let lng: number | null = null
-  let radius: number | null = null
-
-  if (latStr || lngStr) {
-    lat = Number(latStr)
-    lng = Number(lngStr)
-    if (!Number.isFinite(lat) || lat < -90 || lat > 90) return { ok: false, error: "bad_lat" }
-    if (!Number.isFinite(lng) || lng < -180 || lng > 180) return { ok: false, error: "bad_lng" }
-  }
-  if (radiusStr) {
-    const r = Number(radiusStr)
-    if (!Number.isFinite(r) || r < 10 || r > 5000) return { ok: false, error: "bad_radius" }
-    radius = Math.round(r)
-  }
+  const compass = parseGate(input.lat, input.lng, input.radiusM)
+  if ("error" in compass) return { ok: false, error: compass.error }
+  const treasure = parseGate(input.treasureLat, input.treasureLng, input.treasureRadiusM)
+  if ("error" in treasure) return { ok: false, error: treasure.error }
 
   await setFinaleConfig({
-    lat,
-    lng,
-    radiusM: radius,
+    lat: compass.lat,
+    lng: compass.lng,
+    radiusM: compass.radius,
+    treasureLat: treasure.lat,
+    treasureLng: treasure.lng,
+    treasureRadiusM: treasure.radius,
     note1: input.note1 ?? "",
     note1En: input.note1En ?? "",
     note2: input.note2 ?? "",
@@ -1653,7 +1674,7 @@ export async function adminSaveFinale(input: {
     category: "admin",
     action: "admin.finale_updated",
     ...adminActor(admin),
-    summary: `${adminActor(admin).actorName} updated the finale (compass gate and notes)`,
+    summary: `${adminActor(admin).actorName} updated the finale (compass + treasure gates and notes)`,
   })
   revalidatePath("/admin")
   revalidatePath("/journal")
