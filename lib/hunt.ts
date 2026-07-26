@@ -29,6 +29,7 @@ import {
 } from "@/lib/leads"
 import { haversineMeters } from "@/lib/geo"
 import { getScoreConfig } from "@/lib/scoring"
+import { getFinaleConfig } from "@/lib/finale"
 import { getSolveCooldownSeconds } from "@/lib/hunt-config"
 import { logActivity, resolveUserSnapshot } from "@/lib/activity"
 import { and, eq, gt, inArray } from "drizzle-orm"
@@ -482,6 +483,27 @@ export async function approveLeadUnlock(
   leadOrder: number,
 ): Promise<ApproveUnlockResult> {
   const defs = await getLeadDefs()
+
+  // Approving a proof filed against the compass (finishing QR) stamps the
+  // finish rows for the crew, mirroring the finish branch of unlockByToken.
+  if (leadOrder === FINISH_ORDER) {
+    const crew = await getCrewUserIds(userId)
+    const now = Date.now()
+    const total = defs.length
+    const last = defs[defs.length - 1]
+    if (!last) return { status: "invalid" }
+    const current = await getCrewEffectiveProgress(crew, now)
+    if (current < total) {
+      return { status: "out_of_order", required: total, current, leadOrder: FINISH_ORDER }
+    }
+    if (await crewHasFinished(crew)) {
+      return { status: "already", leadOrder: total, country: last.country, countryEn: last.countryEn }
+    }
+    await insertFinishRows(crew, new Date(now))
+    await logLeadSolved(userId, FINISH_ORDER, last.country, last.countryEn, true)
+    return { status: "unlocked", leadOrder: total, country: last.country, countryEn: last.countryEn }
+  }
+
   const clue = defs.find((c) => c.order === leadOrder)
   if (!clue) return { status: "invalid" }
 
@@ -528,7 +550,24 @@ export async function resolveScanContext(
     .where(eq(clueToken.token, token))
     .limit(1)
   const leadId = tokenRows[0]?.leadId
-  if (!leadId || leadId === FINISH_LEAD_ID) return { mode: "direct" }
+  if (!leadId) return { mode: "direct" }
+
+  // The compass (finishing QR) can carry its own GPS gate. Only a genuine
+  // finishing scan is gated: the crew must have solved every lead and not yet
+  // finished. Everything else (not there yet, already finished, or no compass
+  // coordinates configured) falls through to a direct unlock as before.
+  if (leadId === FINISH_LEAD_ID) {
+    const finale = await getFinaleConfig()
+    if (!finale.hasCoords) return { mode: "direct" }
+    const crew = await getCrewUserIds(userId)
+    const [current, total] = await Promise.all([
+      getCrewEffectiveProgress(crew, nowMs),
+      getTotalLeads(),
+    ])
+    if (current < total) return { mode: "direct" }
+    if (await crewHasFinished(crew)) return { mode: "direct" }
+    return { mode: "verify", leadOrder: FINISH_ORDER }
+  }
 
   const defs = await getLeadDefs()
   const clue = defs.find((c) => c.id === leadId)
@@ -568,7 +607,16 @@ export async function checkScanLocation(
     .where(eq(clueToken.token, token))
     .limit(1)
   const leadId = tokenRows[0]?.leadId
-  if (!leadId || leadId === FINISH_LEAD_ID) return { ok: true }
+  if (!leadId) return { ok: true }
+
+  // The compass (finishing QR) checks against its own configured coordinates.
+  if (leadId === FINISH_LEAD_ID) {
+    const finale = await getFinaleConfig()
+    if (!finale.hasCoords || finale.lat == null || finale.lng == null) return { ok: true }
+    const distanceM = Math.round(haversineMeters(lat, lng, finale.lat, finale.lng))
+    if (distanceM <= finale.radiusM) return { ok: true }
+    return { ok: false, distanceM, radiusM: finale.radiusM }
+  }
 
   const geo = await getLeadGeo(leadId)
   if (!geo.hasCoords || geo.lat == null || geo.lng == null) return { ok: true }
@@ -781,6 +829,59 @@ export async function getLeaderboard(nowMs: number = Date.now()): Promise<Leader
   })
 
   return entries
+}
+
+// ── Finish placement (the compass winner screen) ────────────────────────────
+
+export type FinishPlacement = {
+  /** Whether the signed-in explorer's crew has scanned the compass. */
+  finished: boolean
+  /** 1-based finishing position among all crews/solos, or null if not finished. */
+  place: number | null
+  /** How many crews/solos have finished so far. */
+  totalFinishers: number
+  /** Epoch ms the crew finished, or null. */
+  finishedAtMs: number | null
+}
+
+/**
+ * The signed-in explorer's finishing position, ranked by when each crew/solo
+ * scanned the compass (earliest = 1st). A team shares one finish, so all its
+ * members resolve to the same entity. Used by the winner screen after a finish.
+ */
+export async function getFinishPlacement(userId: string): Promise<FinishPlacement> {
+  const [finishRows, members] = await Promise.all([
+    db
+      .select({ userId: leadUnlock.userId, unlockedAt: leadUnlock.unlockedAt })
+      .from(leadUnlock)
+      .where(eq(leadUnlock.leadOrder, FINISH_ORDER)),
+    db.select({ userId: teamMember.userId, teamId: teamMember.teamId }).from(teamMember),
+  ])
+
+  const teamByUser = new Map(members.map((m) => [m.userId, m.teamId]))
+  const keyFor = (uid: string) => {
+    const teamId = teamByUser.get(uid)
+    return teamId ? `team:${teamId}` : `solo:${uid}`
+  }
+
+  // Earliest finish time per entity (team or solo).
+  const entityAt = new Map<string, number>()
+  for (const r of finishRows) {
+    const key = keyFor(r.userId)
+    const t = r.unlockedAt.getTime()
+    const prev = entityAt.get(key)
+    if (prev === undefined || t < prev) entityAt.set(key, t)
+  }
+
+  const ranked = [...entityAt.entries()].sort((a, b) => a[1] - b[1])
+  const myKey = keyFor(userId)
+  const idx = ranked.findIndex(([k]) => k === myKey)
+  return {
+    finished: idx >= 0,
+    place: idx >= 0 ? idx + 1 : null,
+    totalFinishers: ranked.length,
+    finishedAtMs: idx >= 0 ? ranked[idx][1] : null,
+  }
 }
 
 // Back-compat re-export of the STATIC seed count. Prefer getTotalLeads() for
