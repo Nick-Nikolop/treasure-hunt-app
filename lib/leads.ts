@@ -153,9 +153,22 @@ async function doSeed(): Promise<void> {
   }
 
   // Migrate legacy finishing unlock rows to the new stable sentinel.
+  //
+  // A blind UPDATE crashes once a user holds BOTH rows, which happens as soon as
+  // the legacy order (TOTAL_CLUES + 1) becomes a REAL lead position: the row is
+  // then genuine lead progress, not a leftover marker, and renaming it collides
+  // with the sentinel the user already owns. Skipping those users is the correct
+  // outcome twice over: the sentinel already records that they finished, and
+  // their lead row stays intact instead of being swallowed by the migration.
   if (FINISH_ORDER !== LEGACY_FINISH_ORDER) {
     await db.execute(
-      sql`UPDATE "lead_unlock" SET "leadOrder" = ${FINISH_ORDER} WHERE "leadOrder" = ${LEGACY_FINISH_ORDER}`,
+      sql`UPDATE "lead_unlock" SET "leadOrder" = ${FINISH_ORDER}
+          WHERE "leadOrder" = ${LEGACY_FINISH_ORDER}
+            AND NOT EXISTS (
+              SELECT 1 FROM "lead_unlock" existing
+              WHERE existing."userId" = "lead_unlock"."userId"
+                AND existing."leadOrder" = ${FINISH_ORDER}
+            )`,
     )
   }
 

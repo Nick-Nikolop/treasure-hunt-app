@@ -136,6 +136,20 @@ export function AdminProgressPanel({
       (m) => m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q),
     )
 
+  // Rungs collapse by default once they hold a crowd: before the hunt starts the
+  // whole field sits on lead 1, and rendering 150+ rows inline pushes the endgame
+  // rungs off the screen entirely. Small groups stay open since they are the ones
+  // worth reading at a glance.
+  const AUTO_OPEN_MAX = 12
+  const [openRungs, setOpenRungs] = useState<Record<string, boolean>>({})
+  const isRungOpen = (key: StageKey, count: number) =>
+    openRungs[String(key)] ?? count <= AUTO_OPEN_MAX
+  const toggleRung = (key: StageKey, count: number) =>
+    setOpenRungs((prev) => ({
+      ...prev,
+      [String(key)]: !(prev[String(key)] ?? count <= AUTO_OPEN_MAX),
+    }))
+
   const shown = entrants.filter(matches)
   const started = entrants.filter((e) => stageRank(stageOf(e)) > 0).length
   const finished = entrants.filter((e) => e.milestones.finished).length
@@ -185,6 +199,13 @@ export function AdminProgressPanel({
           const isEndgame =
             rung.key === "finished" || rung.key === "compass" || rung.key === "trailEnd"
 
+          const hasRows = here.length > 0
+          // A search already narrows the field, so matches stay open regardless.
+          const expanded = q !== "" || isRungOpen(rung.key, here.length)
+          // Only clickable when there is something to reveal, so empty rungs do
+          // not offer a button that does nothing.
+          const HeaderTag = hasRows ? "button" : "div"
+
           return (
             <li
               key={String(rung.key)}
@@ -192,37 +213,54 @@ export function AdminProgressPanel({
                 here.length > 0 ? "border-border bg-card/40" : "border-border/50"
               }`}
             >
-              <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 px-4 pt-3">
-                <div className="flex items-center gap-2">
-                  {rung.key === "finished" ? (
-                    <Trophy className="size-3.5 shrink-0 text-brass" />
-                  ) : rung.key === "compass" ? (
-                    <Compass className="size-3.5 shrink-0 text-brass" />
-                  ) : rung.key === "trailEnd" ? (
-                    <ScrollText className="size-3.5 shrink-0 text-brass" />
-                  ) : rung.key === 0 ? (
-                    <Hourglass className="size-3.5 shrink-0 text-muted-foreground" />
-                  ) : (
-                    <MapPin className="size-3.5 shrink-0 text-muted-foreground" />
-                  )}
-                  <span
-                    className={`font-sans text-[11px] font-bold uppercase tracking-chip ${
-                      isEndgame ? "text-brass" : "text-foreground"
-                    }`}
-                  >
-                    {rung.label}
+              <HeaderTag
+                {...(hasRows
+                  ? {
+                      type: "button" as const,
+                      onClick: () => toggleRung(rung.key, here.length),
+                      "aria-expanded": expanded,
+                      className:
+                        "w-full cursor-pointer text-left transition-colors hover:bg-card/70",
+                    }
+                  : {})}
+              >
+                <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 px-4 pt-3">
+                  <div className="flex items-center gap-2">
+                    {rung.key === "finished" ? (
+                      <Trophy className="size-3.5 shrink-0 text-brass" />
+                    ) : rung.key === "compass" ? (
+                      <Compass className="size-3.5 shrink-0 text-brass" />
+                    ) : rung.key === "trailEnd" ? (
+                      <ScrollText className="size-3.5 shrink-0 text-brass" />
+                    ) : rung.key === 0 ? (
+                      <Hourglass className="size-3.5 shrink-0 text-muted-foreground" />
+                    ) : (
+                      <MapPin className="size-3.5 shrink-0 text-muted-foreground" />
+                    )}
+                    <span
+                      className={`font-sans text-[11px] font-bold uppercase tracking-chip ${
+                        isEndgame ? "text-brass" : "text-foreground"
+                      }`}
+                    >
+                      {rung.label}
+                    </span>
+                  </div>
+                  <span className="flex items-center gap-1.5 font-sans text-[11px] text-muted-foreground">
+                    {here.length === 0 ? "nobody" : `${here.length} here`}
+                    {hasRows && (
+                      <ChevronDown
+                        className={`size-3.5 transition-transform ${expanded ? "rotate-180" : ""}`}
+                      />
+                    )}
                   </span>
                 </div>
-                <span className="font-sans text-[11px] text-muted-foreground">
-                  {here.length === 0 ? "nobody" : `${here.length} here`}
-                </span>
-              </div>
 
-              <p className="px-4 pb-2 pt-0.5 font-sans text-[11px] leading-relaxed text-muted-foreground">
-                {rung.hint}
-              </p>
+                <p className="px-4 pb-2 pt-0.5 font-sans text-[11px] leading-relaxed text-muted-foreground">
+                  {rung.hint}
+                </p>
+              </HeaderTag>
 
-              {here.length > 0 && (
+              {hasRows && expanded && (
                 <ul className="flex flex-col gap-1.5 px-3 pb-3">
                   {here.map((e) => (
                     <EntrantRow
