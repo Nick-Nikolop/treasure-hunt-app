@@ -59,7 +59,9 @@ export function LeadQrBlock({
     : token.isCompass
       ? "Compass"
       : token.isTrailEnd
-        ? "Trail end"
+        ? // The last lead's own QR, named after its place (e.g. "Finland") so the
+          // printed sheet reads as that lead's code rather than a sentinel.
+          token.country
         : `Lead ${orderLabel}`
 
   // The fixed part of the scan link, e.g. "https://…/q/". Only the last

@@ -468,7 +468,8 @@ export function AdminLeadsPanel({
           <h2 className="font-serif text-lg font-black text-foreground">The endgame</h2>
         </div>
         <p className="mt-1.5 font-sans text-[12px] leading-relaxed text-muted-foreground">
-          After the last lead there is no trail left to follow. The compass and the treasure are{" "}
+          Every lead, including the last one, has its own QR hidden at its own spot. The compass and
+          the treasure are then{" "}
           <span className="font-semibold text-foreground">each hidden wherever you like</span>, so
           each one has its own QR and its own scan location below. Neither is a lead.
         </p>
@@ -476,9 +477,13 @@ export function AdminLeadsPanel({
           <li className="flex gap-2">
             <span className="font-bold text-brass">1.</span>
             <span>
-              Last lead solved &rarr; the &ldquo;find my compass&rdquo; note appears, and the crew
-              goes looking for the <span className="font-semibold text-foreground">Compass QR</span>{" "}
-              anywhere in Kalamata.
+              Scanning the{" "}
+              <span className="font-semibold text-foreground">
+                {trailEndToken?.country ?? "final lead"}
+              </span>{" "}
+              QR at its own spot closes the paper trail &rarr; the &ldquo;find my compass&rdquo; note
+              appears, and the crew goes looking for the{" "}
+              <span className="font-semibold text-foreground">Compass QR</span> anywhere in Kalamata.
             </span>
           </li>
           <li className="flex gap-2">
@@ -502,10 +507,12 @@ export function AdminLeadsPanel({
           <FinaleQrCard
             token={trailEndToken}
             pending={pending}
-            title="The Trail End"
-            purpose="Hide this QR at the LAST lead's own spot. Every other lead's QR reveals the next page, but the last lead has no next page, so this is the QR that closes the paper trail and hands over Pytheas's first note."
+            title={trailEndToken ? `${trailEndToken.country} · the final lead` : "The final lead"}
+            purpose={`This is ${
+              trailEndToken?.country ?? "the final lead"
+            }'s own QR: hide it at that lead's real-world spot. Every other lead's QR reveals the next page, but the last lead has no next page, so this is the one that closes the paper trail and hands over Pytheas's first note.`}
             unlocks="the first note (and the compass hunt)"
-            hideAt="the last lead's spot"
+            hideAt={trailEndToken?.country ?? "the final lead's spot"}
             gate={finaleGeo?.trailEnd ?? null}
             gateReady={finaleGeo !== null}
             onSaveToken={(slug, done) => {

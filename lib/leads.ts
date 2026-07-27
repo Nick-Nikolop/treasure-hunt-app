@@ -277,7 +277,6 @@ function reservedSurrogate(leadId: string): number | null {
   if (leadId === FINISH_LEAD_ID) return FINISH_ORDER
   if (leadId === COMPASS_LEAD_ID) return COMPASS_ORDER
   if (leadId === TRAIL_END_LEAD_ID) return TRAIL_END_ORDER
-  if (leadId === TRAIL_END_LEAD_ID) return TRAIL_END_ORDER
   return null
 }
 
@@ -339,10 +338,16 @@ export async function listTokens(): Promise<ClueTokenRow[]> {
   for (const r of rows) {
     if (!r.leadId) continue
     if (r.leadId === TRAIL_END_LEAD_ID) {
+      // This IS the last lead's own QR: it is hidden at that lead's real-world
+      // spot, so it is named after the place (e.g. "Finland") rather than after
+      // the internal sentinel. Every lead now has exactly one QR sitting at its
+      // own place; only the internal key stays `__trailend__`, so the token that
+      // is already minted keeps working.
+      const last = defs[defs.length - 1]
       out.push({
         leadId: TRAIL_END_LEAD_ID,
         leadOrder: TRAIL_END_ORDER,
-        country: "Trail end",
+        country: last?.country ?? "Final lead",
         token: r.token,
         link: huntLinkFor(r.token),
         isFinish: false,
@@ -421,7 +426,11 @@ export type SetTokenResult =
 
 /** Human label for whichever QR currently owns a token, for clash messages. */
 async function tokenOwnerLabel(leadId: string | null): Promise<string> {
-  if (leadId === TRAIL_END_LEAD_ID) return "the Trail-End QR"
+  if (leadId === TRAIL_END_LEAD_ID) {
+    const defs = await getLeadDefs()
+    const last = defs[defs.length - 1]
+    return last ? `${last.country} · the final lead's QR` : "the final lead's QR"
+  }
   if (leadId === COMPASS_LEAD_ID) return "the Compass QR"
   if (leadId === FINISH_LEAD_ID) return "the Treasure QR"
   if (!leadId) return "another QR"
