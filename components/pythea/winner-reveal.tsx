@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { BookOpen, Trophy, Loader2 } from "lucide-react"
+import { BookOpen, Gem, Trophy, Loader2 } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
 import { HandwrittenNote } from "@/components/pythea/handwritten-note"
 import { CompassRose } from "@/components/pythea/compass-rose"
@@ -57,6 +57,7 @@ export function CompassReveal() {
   if (loading) return <FinaleLoader label={f.loading} />
 
   const note2 = data ? (locale === "en" ? data.note2En : data.note2) : ""
+  const note2Cta = data ? (locale === "en" ? data.note2CtaEn : data.note2Cta) : ""
 
   return (
     <motion.div
@@ -82,6 +83,21 @@ export function CompassReveal() {
       </h2>
 
       <HandwrittenNote body={note2} signature={f.signature} />
+
+      {/* The next marching order, shouted — same brass banner the journal note
+          uses, one beat later: the compass is found, the treasure is the target.
+          Sits directly under the note, above the quieter hint. */}
+      {note2Cta.trim() !== "" && (
+        <motion.p
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="mt-5 flex w-full max-w-sm items-center justify-center gap-2.5 rounded-sm border border-brass/45 bg-brass/[0.12] px-4 py-3 text-center font-sans text-[12px] font-black uppercase leading-snug tracking-chip text-brass md:text-[14px]"
+        >
+          <Gem className="size-4 shrink-0 md:size-[18px]" aria-hidden />
+          {note2Cta}
+        </motion.p>
+      )}
 
       <p className="mt-6 max-w-sm text-pretty text-center font-sans text-xs leading-relaxed text-muted-foreground">
         {f.compassHint}

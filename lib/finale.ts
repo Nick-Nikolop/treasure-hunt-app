@@ -40,6 +40,14 @@ const DEFAULT_NOTE2 =
 const DEFAULT_NOTE2_EN =
   "In the end I had not hidden it as well as I thought…\n\nCongratulations then, explorers, you found my compass.\n\nWas the compass the treasure? Of course not! Believe me, there is a treasure, but you will need to search a little more. I know, I know, I have sent you from Serbia all the way to Turkey and to a heap of other places, but this is the final trial. Use the compass and you will figure it out, I am sure - and this time you will finally reach the treasure, I promise."
 
+/**
+ * Default call-to-action stamped under the compass note. Same role as the one
+ * under note 1, one beat later: the compass is found, so the target is now the
+ * treasure itself.
+ */
+const DEFAULT_NOTE2_CTA = "ΤΩΡΑ ΠΡΕΠΕΙ ΝΑ ΒΡΕΙΣ ΤΟΝ ΘΗΣΑΥΡΟ ΜΟΥ"
+const DEFAULT_NOTE2_CTA_EN = "NOW YOU MUST FIND MY TREASURE"
+
 /** Default message shown on the winner screen (below the placement). */
 const DEFAULT_WINNER =
   "Συγχαρητήρια, τα καταφέρατε! Ο θησαυρός βέβαια δεν είναι εδώ, αλλά θα σας πούμε πως θα τον παραλάβετε. Ελάτε στην εκδήλωσή μας όπου θα ανακοινωθούν οι νικητές (διαφορετικά θα σας ενημερώσουμε, να κοιτάτε το εμαιλ σας)."
@@ -72,6 +80,9 @@ export type FinaleConfig = {
   /** Compass-scan note (shown when the compass QR is scanned). */
   note2: string
   note2En: string
+  /** Call-to-action stamped under the compass note ("now find the treasure"). */
+  note2Cta: string
+  note2CtaEn: string
   /** Winner-screen message. */
   winner: string
   winnerEn: string
@@ -100,6 +111,8 @@ function ensureFinaleColumns(): Promise<void> {
            ADD COLUMN IF NOT EXISTS "finaleNote1CtaEn" text,
            ADD COLUMN IF NOT EXISTS "finaleNote2" text,
            ADD COLUMN IF NOT EXISTS "finaleNote2En" text,
+           ADD COLUMN IF NOT EXISTS "finaleNote2Cta" text,
+           ADD COLUMN IF NOT EXISTS "finaleNote2CtaEn" text,
            ADD COLUMN IF NOT EXISTS "finaleWinner" text,
            ADD COLUMN IF NOT EXISTS "finaleWinnerEn" text,
            ADD COLUMN IF NOT EXISTS "finaleWinnerNote" text,
@@ -140,6 +153,7 @@ export async function getFinaleConfig(): Promise<FinaleConfig> {
             "finaleNote1" AS n1, "finaleNote1En" AS n1e,
             "finaleNote1Cta" AS n1c, "finaleNote1CtaEn" AS n1ce,
             "finaleNote2" AS n2, "finaleNote2En" AS n2e,
+            "finaleNote2Cta" AS n2c, "finaleNote2CtaEn" AS n2ce,
             "finaleWinner" AS w, "finaleWinnerEn" AS we,
             "finaleWinnerNote" AS wn, "finaleWinnerNoteEn" AS wne
        FROM "score_config" WHERE id = 'default' LIMIT 1`,
@@ -158,6 +172,8 @@ export async function getFinaleConfig(): Promise<FinaleConfig> {
         n1ce: string | null
         n2: string | null
         n2e: string | null
+        n2c: string | null
+        n2ce: string | null
         w: string | null
         we: string | null
         wn: string | null
@@ -184,6 +200,8 @@ export async function getFinaleConfig(): Promise<FinaleConfig> {
     note1CtaEn: textOr(row?.n1ce, DEFAULT_NOTE1_CTA_EN),
     note2: textOr(row?.n2, DEFAULT_NOTE2),
     note2En: textOr(row?.n2e, DEFAULT_NOTE2_EN),
+    note2Cta: textOr(row?.n2c, DEFAULT_NOTE2_CTA),
+    note2CtaEn: textOr(row?.n2ce, DEFAULT_NOTE2_CTA_EN),
     winner: textOr(row?.w, DEFAULT_WINNER),
     winnerEn: textOr(row?.we, DEFAULT_WINNER_EN),
     winnerNote: textOr(row?.wn, DEFAULT_WINNER_NOTE),
@@ -206,6 +224,8 @@ export type FinaleConfigInput = {
   note1CtaEn: string
   note2: string
   note2En: string
+  note2Cta: string
+  note2CtaEn: string
   winner: string
   winnerEn: string
   winnerNote: string
@@ -232,9 +252,10 @@ export async function setFinaleConfig(input: FinaleConfigInput): Promise<void> {
     `INSERT INTO "score_config" (id, "compassLat", "compassLng", "compassRadiusM",
         "treasureLat", "treasureLng", "treasureRadiusM",
         "finaleNote1", "finaleNote1En", "finaleNote1Cta", "finaleNote1CtaEn",
-        "finaleNote2", "finaleNote2En",
+        "finaleNote2", "finaleNote2En", "finaleNote2Cta", "finaleNote2CtaEn",
         "finaleWinner", "finaleWinnerEn", "finaleWinnerNote", "finaleWinnerNoteEn", "updatedAt")
-     VALUES ('default', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, now())
+     VALUES ('default', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
+        $17, $18, now())
      ON CONFLICT (id) DO UPDATE SET
         "compassLat" = EXCLUDED."compassLat",
         "compassLng" = EXCLUDED."compassLng",
@@ -248,6 +269,8 @@ export async function setFinaleConfig(input: FinaleConfigInput): Promise<void> {
         "finaleNote1CtaEn" = EXCLUDED."finaleNote1CtaEn",
         "finaleNote2" = EXCLUDED."finaleNote2",
         "finaleNote2En" = EXCLUDED."finaleNote2En",
+        "finaleNote2Cta" = EXCLUDED."finaleNote2Cta",
+        "finaleNote2CtaEn" = EXCLUDED."finaleNote2CtaEn",
         "finaleWinner" = EXCLUDED."finaleWinner",
         "finaleWinnerEn" = EXCLUDED."finaleWinnerEn",
         "finaleWinnerNote" = EXCLUDED."finaleWinnerNote",
@@ -266,6 +289,8 @@ export async function setFinaleConfig(input: FinaleConfigInput): Promise<void> {
       clip(input.note1CtaEn),
       clip(input.note2),
       clip(input.note2En),
+      clip(input.note2Cta),
+      clip(input.note2CtaEn),
       clip(input.winner),
       clip(input.winnerEn),
       clip(input.winnerNote),

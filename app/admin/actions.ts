@@ -1692,6 +1692,8 @@ export async function adminSaveFinale(input: {
   note1CtaEn: string
   note2: string
   note2En: string
+  note2Cta: string
+  note2CtaEn: string
   winner: string
   winnerEn: string
   winnerNote: string
@@ -1713,6 +1715,8 @@ export async function adminSaveFinale(input: {
     note1CtaEn: input.note1CtaEn ?? "",
     note2: input.note2 ?? "",
     note2En: input.note2En ?? "",
+    note2Cta: input.note2Cta ?? "",
+    note2CtaEn: input.note2CtaEn ?? "",
     winner: input.winner ?? "",
     winnerEn: input.winnerEn ?? "",
     winnerNote: input.winnerNote ?? "",
@@ -1761,6 +1765,8 @@ export async function adminSaveFinaleGeo(input: {
     note1CtaEn: current.note1CtaEn,
     note2: current.note2,
     note2En: current.note2En,
+    note2Cta: current.note2Cta,
+    note2CtaEn: current.note2CtaEn,
     winner: current.winner,
     winnerEn: current.winnerEn,
     winnerNote: current.winnerNote,

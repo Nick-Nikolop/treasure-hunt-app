@@ -16,6 +16,8 @@ type Draft = {
   note1CtaEn: string
   note2: string
   note2En: string
+  note2Cta: string
+  note2CtaEn: string
   winner: string
   winnerEn: string
   winnerNote: string
@@ -29,6 +31,8 @@ const EMPTY: Draft = {
   note1CtaEn: "",
   note2: "",
   note2En: "",
+  note2Cta: "",
+  note2CtaEn: "",
   winner: "",
   winnerEn: "",
   winnerNote: "",
@@ -61,6 +65,8 @@ export function AdminFinalePanel() {
           note1CtaEn: c.note1CtaEn,
           note2: c.note2,
           note2En: c.note2En,
+          note2Cta: c.note2Cta,
+          note2CtaEn: c.note2CtaEn,
           winner: c.winner,
           winnerEn: c.winnerEn,
           winnerNote: c.winnerNote,
@@ -150,33 +156,14 @@ export function AdminFinalePanel() {
             set("note1En", en)
           }}
         />
-        <div className="mt-5 border-t border-border pt-4">
-          <span className="font-sans text-xs font-bold uppercase tracking-chip text-muted-foreground">
-            Call to action
-          </span>
-          <p className="mb-3 mt-1 max-w-prose font-sans text-[13px] leading-relaxed text-muted-foreground">
-            One shouted line stamped under that note, right above its close button, so nobody leaves
-            the journal unsure what to hunt next. Keep it short.
-          </p>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <Field label="ΕΛΛΗΝΙΚΑ">
-              <input
-                value={draft.note1Cta}
-                onChange={(e) => set("note1Cta", e.target.value)}
-                placeholder="ΤΩΡΑ ΠΡΕΠΕΙ ΝΑ ΒΡΕΙΣ ΤΗΝ ΠΥΞΙΔΑ ΜΟΥ"
-                className="w-full rounded-sm border border-border bg-background px-3 py-2 font-sans text-sm font-bold tracking-chip text-foreground outline-none focus:border-brass"
-              />
-            </Field>
-            <Field label="ENGLISH">
-              <input
-                value={draft.note1CtaEn}
-                onChange={(e) => set("note1CtaEn", e.target.value)}
-                placeholder="NOW YOU MUST FIND MY COMPASS"
-                className="w-full rounded-sm border border-border bg-background px-3 py-2 font-sans text-sm font-bold tracking-chip text-foreground outline-none focus:border-brass"
-              />
-            </Field>
-          </div>
-        </div>
+        <CtaFields
+          hint="One shouted line stamped under that note, right above its close button, so nobody leaves the journal unsure what to hunt next. Keep it short."
+          el={draft.note1Cta}
+          en={draft.note1CtaEn}
+          elPlaceholder="ΤΩΡΑ ΠΡΕΠΕΙ ΝΑ ΒΡΕΙΣ ΤΗΝ ΠΥΞΙΔΑ ΜΟΥ"
+          enPlaceholder="NOW YOU MUST FIND MY COMPASS"
+          onChange={(key, value) => set(key === "el" ? "note1Cta" : "note1CtaEn", value)}
+        />
       </Section>
 
       {/* Note 2 — compass scan */}
@@ -191,6 +178,14 @@ export function AdminFinalePanel() {
             set("note2", el)
             set("note2En", en)
           }}
+        />
+        <CtaFields
+          hint="The same shouted banner as above, one beat later: the compass is in hand, so point them at the treasure itself. Shown right under the compass note."
+          el={draft.note2Cta}
+          en={draft.note2CtaEn}
+          elPlaceholder="ΤΩΡΑ ΠΡΕΠΕΙ ΝΑ ΒΡΕΙΣ ΤΟΝ ΘΗΣΑΥΡΟ ΜΟΥ"
+          enPlaceholder="NOW YOU MUST FIND MY TREASURE"
+          onChange={(key, value) => set(key === "el" ? "note2Cta" : "note2CtaEn", value)}
         />
       </Section>
 
@@ -266,6 +261,58 @@ function Section({
         </h3>
       </div>
       {children}
+    </div>
+  )
+}
+
+/**
+ * The Greek + English pair for one note's call-to-action: the shouted brass
+ * banner stamped under that note on the player side. Shared by both notes so
+ * the two editors stay identical.
+ */
+function CtaFields({
+  hint,
+  el,
+  en,
+  elPlaceholder,
+  enPlaceholder,
+  onChange,
+}: {
+  hint: string
+  el: string
+  en: string
+  elPlaceholder: string
+  enPlaceholder: string
+  onChange: (key: "el" | "en", value: string) => void
+}) {
+  const input =
+    "w-full rounded-sm border border-border bg-background px-3 py-2 font-sans text-sm font-bold tracking-chip text-foreground outline-none focus:border-brass"
+  return (
+    <div className="mt-5 border-t border-border pt-4">
+      <span className="font-sans text-xs font-bold uppercase tracking-chip text-muted-foreground">
+        Call to action
+      </span>
+      <p className="mb-3 mt-1 max-w-prose font-sans text-[13px] leading-relaxed text-muted-foreground">
+        {hint}
+      </p>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Field label="ΕΛΛΗΝΙΚΑ">
+          <input
+            value={el}
+            onChange={(e) => onChange("el", e.target.value)}
+            placeholder={elPlaceholder}
+            className={input}
+          />
+        </Field>
+        <Field label="ENGLISH">
+          <input
+            value={en}
+            onChange={(e) => onChange("en", e.target.value)}
+            placeholder={enPlaceholder}
+            className={input}
+          />
+        </Field>
+      </div>
     </div>
   )
 }

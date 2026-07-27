@@ -76,6 +76,9 @@ export type FinaleSummary = {
   /** The compass-scan note, both languages. */
   note2: string
   note2En: string
+  /** The call-to-action stamped under that note, both languages. */
+  note2Cta: string
+  note2CtaEn: string
   /** The winner-screen message, both languages. */
   winner: string
   winnerEn: string
@@ -104,6 +107,8 @@ export async function getFinaleSummary(): Promise<FinaleSummary | null> {
     totalFinishers: placement.totalFinishers,
     note2: finale.note2,
     note2En: finale.note2En,
+    note2Cta: finale.note2Cta,
+    note2CtaEn: finale.note2CtaEn,
     winner: finale.winner,
     winnerEn: finale.winnerEn,
     winnerNote: finale.winnerNote,
