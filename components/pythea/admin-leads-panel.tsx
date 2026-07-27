@@ -28,6 +28,7 @@ import {
   adminUploadLeadBackground,
   adminClearLeadBackground,
   adminSaveLeadGeo,
+  adminSetLeadToken,
   adminSetLeadBgWash,
   getFinaleState,
   adminSaveFinaleGeo,
@@ -48,6 +49,7 @@ const errorText: Record<string, string> = {
   too_large: "That image is too large (max 5 MB).",
   too_large_bg: "That background is too large (max 15 MB).",
   bad_type: "Use a PNG, JPG, WebP or AVIF image.",
+  bad_slug: "Use 4-64 letters, numbers, hyphens or underscores.",
   no_file: "Choose an image first.",
   bad_lat: "Latitude must be between -90 and 90.",
   bad_lng: "Longitude must be between -180 and 180.",
@@ -306,6 +308,27 @@ export function AdminLeadsPanel({
     })
   }
 
+  /**
+   * Persist an admin-typed QR slug. Errors come back through `done` so they can
+   * render inline under the field (a duplicate needs to be read next to the
+   * value that caused it), rather than in the shared popup.
+   */
+  function saveToken(leadId: string, slug: string, done: (error: string | null) => void) {
+    startTransition(async () => {
+      const res = await adminSetLeadToken(leadId, slug)
+      if (!res.ok) {
+        done(
+          res.error === "duplicate"
+            ? `That link is already used by ${res.takenBy ?? "another QR"}. Every QR needs its own URL.`
+            : (errorText[res.error] ?? "Could not save that link."),
+        )
+        return
+      }
+      done(null)
+      setPopup({ kind: "ok", text: `QR link updated to /q/${slug}. Reprint this QR code.` })
+    })
+  }
+
   function saveGeo(
     id: string,
     lat: string,
@@ -431,6 +454,10 @@ export function AdminLeadsPanel({
               qrGeo={hop.geo}
               qrGeoReady={hop.geoReady}
               onSaveQrGeo={hop.save}
+              onSaveQrToken={(slug, done) => {
+                if (hop.token) saveToken(hop.token.leadId, slug, done)
+                else done("This QR does not exist yet.")
+              }}
             />
           )
         })}
@@ -483,6 +510,10 @@ export function AdminLeadsPanel({
             hideAt="the compass spot"
             gate={finaleGeo?.treasure ?? null}
             gateReady={finaleGeo !== null}
+            onSaveToken={(slug, done) => {
+              if (finishToken) saveToken(finishToken.leadId, slug, done)
+              else done("This QR does not exist yet.")
+            }}
             onSaveGeo={(lat, lng, radiusM, done) =>
               saveFinaleGeo("treasure", lat, lng, radiusM, done)
             }
@@ -707,6 +738,7 @@ function LeadCard({
   qrGeo,
   qrGeoReady,
   onSaveQrGeo,
+  onSaveQrToken,
 }: {
   lead: EditableLead
   base: EditableLead | undefined
@@ -731,6 +763,7 @@ function LeadCard({
   qrGeo: { lat: number | null; lng: number | null; radiusM: number | null } | null
   qrGeoReady: boolean
   onSaveQrGeo: (lat: string, lng: string, radiusM: string, done: (ok: boolean) => void) => void
+  onSaveQrToken: (slug: string, done: (error: string | null) => void) => void
 }) {
   return (
     <li
@@ -886,6 +919,7 @@ function LeadCard({
             hideAt={lead.country}
             unlocks={qrUnlocks}
             pending={pending}
+            onSaveToken={onSaveQrToken}
           />
 
           <div className="mt-5 flex items-center justify-end gap-2">
@@ -929,6 +963,7 @@ function FinaleQrCard({
   gate,
   gateReady,
   onSaveGeo,
+  onSaveToken,
 }: {
   token: ClueTokenRow | null
   pending: boolean
@@ -936,6 +971,7 @@ function FinaleQrCard({
   purpose: string
   unlocks: string
   hideAt: string
+  onSaveToken: (slug: string, done: (error: string | null) => void) => void
   /** Scan location of the QR shown here, or null while the config loads. */
   gate: FinaleGate | null
   /** True once the finale config fetch has resolved (so the editor can seed). */
@@ -969,7 +1005,13 @@ function FinaleQrCard({
         </div>
       )}
 
-      <LeadQrBlock token={token} hideAt={hideAt} unlocks={unlocks} pending={pending} />
+      <LeadQrBlock
+        token={token}
+        hideAt={hideAt}
+        unlocks={unlocks}
+        pending={pending}
+        onSaveToken={onSaveToken}
+      />
     </div>
   )
 }

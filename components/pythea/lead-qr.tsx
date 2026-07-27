@@ -2,21 +2,24 @@
 
 import { useEffect, useState } from "react"
 import QRCodeLib from "qrcode"
-import { QrCode, Copy, Check, Download, X, Loader2, Lock } from "lucide-react"
+import { QrCode, Copy, Check, Download, X, Loader2, Lock, Pencil, AlertTriangle } from "lucide-react"
 import type { ClueTokenRow } from "@/lib/hunt"
 
 /**
  * Per-lead QR block, shown inside a lead's editor (and on the compass card).
- * Read-only by design: it shows the scan link, a downloadable QR preview and
- * copy-to-clipboard, but the token can no longer be regenerated. Tokens are
- * permanent so a printed and hidden QR can never be invalidated mid-hunt.
- * The QR image is drawn in the browser from the live link.
+ * Shows the scan link, a downloadable QR preview and copy-to-clipboard.
+ *
+ * There is NO random regeneration. The link changes only when an admin types a
+ * new slug into "Edit link", which is validated for shape and rejected if any
+ * other QR already resolves to the same URL. The QR image is drawn in the
+ * browser from the live link, so editing the slug redraws it automatically.
  */
 export function LeadQrBlock({
   token,
   hideAt,
   unlocks,
   pending,
+  onSaveToken,
 }: {
   token: ClueTokenRow | null
   /** Where this QR is physically hidden (this card's own stop). */
@@ -24,9 +27,14 @@ export function LeadQrBlock({
   /** What scanning it unlocks, e.g. "Lead 02 · Poland" or "the Compass". */
   unlocks: string
   pending: boolean
+  /** Persist an admin-typed slug. `done(null)` on success, `done(message)` on failure. */
+  onSaveToken: (slug: string, done: (error: string | null) => void) => void
 }) {
   const [qrOpen, setQrOpen] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [slug, setSlug] = useState("")
+  const [error, setError] = useState<string | null>(null)
 
   if (!token) {
     return (
@@ -46,6 +54,37 @@ export function LeadQrBlock({
       : String(token.leadOrder).padStart(2, "0")
   const title = token.isFinish ? "Treasure" : token.isCompass ? "Compass" : `Lead ${orderLabel}`
 
+  // The fixed part of the scan link, e.g. "https://…/q/". Only the last
+  // segment is editable, so the domain and route can never be broken here.
+  const prefix = token.link.slice(0, token.link.lastIndexOf("/") + 1)
+  const current = token.token
+
+  // Mirrors the server-side rule so a typo is caught before a round trip.
+  const SLUG_RE = /^[a-z0-9][a-z0-9_-]{2,62}[a-z0-9]$/
+
+  function cancel() {
+    setEditing(false)
+    setError(null)
+  }
+
+  function save() {
+    const next = slug.trim().toLowerCase()
+    if (next === current) return cancel()
+    if (!SLUG_RE.test(next)) {
+      setError(
+        "Use 4-64 characters: letters, numbers, hyphens or underscores, starting and ending with a letter or number.",
+      )
+      return
+    }
+    onSaveToken(next, (err) => {
+      if (err) setError(err)
+      else {
+        setEditing(false)
+        setError(null)
+      }
+    })
+  }
+
   async function copy() {
     if (!token) return
     try {
@@ -60,39 +99,120 @@ export function LeadQrBlock({
   return (
     <Shell>
       <Header hideAt={hideAt} unlocks={unlocks} />
-      <p className="mt-2 truncate rounded-sm border border-border bg-background px-2.5 py-1.5 font-mono text-xs text-foreground">
-        {token.link}
-      </p>
+      {editing ? (
+        <div className="mt-2">
+          <label
+            htmlFor={`${token.leadId}-slug`}
+            className="font-sans text-[11px] font-bold uppercase tracking-chip text-muted-foreground"
+          >
+            Scan link
+          </label>
+          <div className="mt-1 flex items-stretch rounded-sm border border-border bg-background focus-within:border-brass">
+            <span className="hidden shrink-0 items-center pl-2.5 font-mono text-xs text-muted-foreground sm:flex">
+              {prefix}
+            </span>
+            <input
+              id={`${token.leadId}-slug`}
+              value={slug}
+              onChange={(e) => {
+                setSlug(e.target.value)
+                setError(null)
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.nativeEvent.isComposing) save()
+                if (e.key === "Escape") cancel()
+              }}
+              disabled={pending}
+              autoComplete="off"
+              spellCheck={false}
+              placeholder="athens-01"
+              aria-invalid={error ? true : undefined}
+              className="min-w-0 flex-1 bg-transparent px-2.5 py-1.5 font-mono text-xs text-foreground outline-none placeholder:text-muted-foreground/50"
+            />
+          </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setQrOpen(true)}
-          disabled={pending}
-          className="inline-flex items-center gap-1.5 rounded-sm border border-border px-3 py-1.5 font-sans text-xs font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass disabled:opacity-40"
-        >
-          <QrCode className="size-3.5" />
-          Show QR code
-        </button>
-        <button
-          type="button"
-          onClick={copy}
-          disabled={pending}
-          className="inline-flex items-center gap-1.5 rounded-sm border border-border px-3 py-1.5 font-sans text-xs font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass disabled:opacity-40"
-        >
-          {copied ? <Check className="size-3.5 text-brass" /> : <Copy className="size-3.5" />}
-          {copied ? "Copied" : "Copy link"}
-        </button>
+          {error ? (
+            <p className="mt-1.5 flex items-start gap-1.5 font-sans text-[11px] leading-relaxed text-destructive">
+              <AlertTriangle className="mt-0.5 size-3 shrink-0" />
+              <span>{error}</span>
+            </p>
+          ) : (
+            <p className="mt-1.5 font-sans text-[11px] leading-relaxed text-muted-foreground">
+              Letters, numbers, hyphens and underscores. 4-64 characters, lowercased. Must be unique
+              across every QR.
+            </p>
+          )}
 
-      </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={save}
+              disabled={pending || !slug.trim() || slug.trim().toLowerCase() === current}
+              className="inline-flex items-center gap-1.5 rounded-sm bg-brass px-3 py-1.5 font-sans text-xs font-bold tracking-chip text-background transition-opacity hover:opacity-90 disabled:opacity-40"
+            >
+              {pending ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />}
+              Save link
+            </button>
+            <button
+              type="button"
+              onClick={cancel}
+              disabled={pending}
+              className="font-sans text-xs font-bold tracking-chip text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <p className="mt-2 truncate rounded-sm border border-border bg-background px-2.5 py-1.5 font-mono text-xs text-foreground">
+            {token.link}
+          </p>
 
-      <p className="mt-2 flex items-start gap-1.5 font-sans text-[11px] leading-relaxed text-muted-foreground">
-        <Lock className="mt-0.5 size-3 shrink-0" />
-        <span>
-          This link is permanent. It stays valid for the whole hunt, so a printed copy never stops
-          working.
-        </span>
-      </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setQrOpen(true)}
+              disabled={pending}
+              className="inline-flex items-center gap-1.5 rounded-sm border border-border px-3 py-1.5 font-sans text-xs font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass disabled:opacity-40"
+            >
+              <QrCode className="size-3.5" />
+              Show QR code
+            </button>
+            <button
+              type="button"
+              onClick={copy}
+              disabled={pending}
+              className="inline-flex items-center gap-1.5 rounded-sm border border-border px-3 py-1.5 font-sans text-xs font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass disabled:opacity-40"
+            >
+              {copied ? <Check className="size-3.5 text-brass" /> : <Copy className="size-3.5" />}
+              {copied ? "Copied" : "Copy link"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSlug(current)
+                setError(null)
+                setEditing(true)
+              }}
+              disabled={pending}
+              className="inline-flex items-center gap-1.5 rounded-sm border border-border px-3 py-1.5 font-sans text-xs font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass disabled:opacity-40"
+            >
+              <Pencil className="size-3.5" />
+              Edit link
+            </button>
+          </div>
+
+          <p className="mt-2 flex items-start gap-1.5 font-sans text-[11px] leading-relaxed text-muted-foreground">
+            <Lock className="mt-0.5 size-3 shrink-0" />
+            <span>
+              This link only changes when you edit it here. Nothing regenerates it on its own, so a
+              printed copy keeps working. Changing it does replace the QR image, so reprint and
+              re-hide it.
+            </span>
+          </p>
+        </>
+      )}
 
       <LeadQrModal
         open={qrOpen}

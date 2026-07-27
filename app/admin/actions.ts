@@ -98,6 +98,7 @@ import {
   updateLeadStamp,
   updateLeadBackground,
   updateLeadGeo,
+  setTokenForLead,
 } from "@/lib/leads"
 import { put, del } from "@vercel/blob"
 import { getAnalyticsSnapshot, type AnalyticsSnapshot } from "@/lib/analytics"
@@ -1250,6 +1251,39 @@ export async function adminResetAllProgress(): Promise<
   revalidatePath("/admin")
   revalidatePath("/journal")
   return { ok: true, cleared: affected.length }
+}
+
+/**
+ * Point one QR at an admin-chosen URL. This is the only way a scan link can
+ * change: there is no random regeneration, so a link only ever moves when an
+ * admin deliberately types the new one. Refuses a slug that another QR already
+ * uses, since two QRs on the same URL would unlock the wrong step.
+ */
+export async function adminSetLeadToken(
+  leadId: string,
+  desired: string,
+): Promise<ActionResult & { takenBy?: string }> {
+  const admin = await requireAdmin()
+  if (typeof leadId !== "string" || !leadId || typeof desired !== "string") {
+    return { ok: false, error: "bad_value" }
+  }
+
+  const res = await setTokenForLead(leadId, desired)
+  if (!res.ok) {
+    return res.reason === "duplicate"
+      ? { ok: false, error: "duplicate", takenBy: res.takenBy }
+      : { ok: false, error: "bad_slug" }
+  }
+
+  await logActivity({
+    category: "admin",
+    action: "admin.lead_token_set",
+    ...adminActor(admin),
+    summary: `${adminActor(admin).actorName} set a QR link to /q/${res.token}`,
+    metadata: { leadId, token: res.token },
+  })
+  revalidatePath("/admin")
+  return { ok: true }
 }
 
 /** Issue a fresh QR token for a lead, invalidating the old printed code. */

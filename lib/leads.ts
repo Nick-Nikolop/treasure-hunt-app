@@ -366,6 +366,76 @@ export async function listTokens(): Promise<ClueTokenRow[]> {
   return out.sort((a, b) => a.leadOrder - b.leadOrder)
 }
 
+/**
+ * Shape a hand-typed QR slug into its canonical form. Accepts either a bare
+ * slug ("athens-01") or a full pasted scan link, keeping only the last path
+ * segment. Always lowercased: `/q/<token>` is matched with an exact,
+ * case-sensitive comparison, so allowing mixed case would let two visually
+ * identical printed codes resolve differently.
+ */
+export function normalizeTokenSlug(input: string): string {
+  const noQuery = input.trim().split(/[?#]/)[0]
+  const last = noQuery.replace(/\/+$/, "").split("/").pop() ?? ""
+  return last.toLowerCase()
+}
+
+/**
+ * A slug must start and end alphanumeric, may contain hyphens/underscores
+ * between, and is 4-64 characters long. This keeps links clean, unambiguous to
+ * read off a printed card, and safe as a URL path segment.
+ */
+const TOKEN_SLUG_RE = /^[a-z0-9][a-z0-9_-]{2,62}[a-z0-9]$/
+
+export type SetTokenResult =
+  | { ok: true; token: string }
+  | { ok: false; reason: "bad_slug" }
+  /** Another QR already resolves to this URL; `takenBy` labels which one. */
+  | { ok: false; reason: "duplicate"; takenBy: string }
+
+/** Human label for whichever QR currently owns a token, for clash messages. */
+async function tokenOwnerLabel(leadId: string | null): Promise<string> {
+  if (leadId === COMPASS_LEAD_ID) return "the Compass QR"
+  if (leadId === FINISH_LEAD_ID) return "the Treasure QR"
+  if (!leadId) return "another QR"
+  const def = (await getLeadDefs()).find((l) => l.id === leadId)
+  return def ? `Lead ${String(def.order).padStart(2, "0")} · ${def.country}` : "another QR"
+}
+
+/**
+ * Point a lead's QR at an admin-chosen URL slug. Rejects malformed slugs and,
+ * critically, any slug already used by a different QR — two QRs resolving to
+ * the same URL would silently unlock the wrong step. The DB also has a UNIQUE
+ * index on `token`, so a race still fails closed rather than duplicating.
+ */
+export async function setTokenForLead(leadId: string, desired: string): Promise<SetTokenResult> {
+  const slug = normalizeTokenSlug(desired)
+  if (!TOKEN_SLUG_RE.test(slug)) return { ok: false, reason: "bad_slug" }
+
+  const clash = await db
+    .select({ leadId: clueToken.leadId })
+    .from(clueToken)
+    .where(eq(clueToken.token, slug))
+    .limit(1)
+  if (clash[0] && clash[0].leadId !== leadId) {
+    return { ok: false, reason: "duplicate", takenBy: await tokenOwnerLabel(clash[0].leadId) }
+  }
+  // Already pointing here: nothing to write, but report success.
+  if (clash[0]) return { ok: true, token: slug }
+
+  const existing = await db
+    .select({ leadOrder: clueToken.leadOrder })
+    .from(clueToken)
+    .where(eq(clueToken.leadId, leadId))
+    .limit(1)
+  if (existing[0]) {
+    await db.update(clueToken).set({ token: slug }).where(eq(clueToken.leadId, leadId))
+  } else {
+    const surrogate = reservedSurrogate(leadId) ?? (await nextTokenSurrogate())
+    await db.insert(clueToken).values({ leadOrder: surrogate, leadId, token: slug })
+  }
+  return { ok: true, token: slug }
+}
+
 /** Replace a lead's token with a fresh one. Invalidates any printed QR. */
 export async function regenerateTokenForLead(leadId: string): Promise<string> {
   const fresh = freshToken()
