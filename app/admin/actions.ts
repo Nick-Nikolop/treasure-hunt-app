@@ -35,6 +35,7 @@ import {
   approveLeadUnlock,
   getCrewUserIds,
   type ClueTokenRow,
+  type ProgressStage,
 } from "@/lib/hunt"
 import {
   getPendingProofs,
@@ -1119,6 +1120,7 @@ async function uniqueInviteCode(): Promise<string> {
 export async function adminSetUserProgress(
   targetUserId: string,
   targetLead: number,
+  stage: ProgressStage = "lead",
 ): Promise<ActionResult> {
   const admin = await requireAdmin()
 
@@ -1139,24 +1141,27 @@ export async function adminSetUserProgress(
     .limit(1)
   if (exists.length === 0) return { ok: false, error: "not_found" }
 
-  const lead = Math.floor(targetLead)
+  const compass = stage === "compass"
+  const lead = compass ? total : Math.floor(targetLead)
   // Move the whole crew together (solo players resolve to just themselves).
   const crew = await getCrewUserIds(targetUserId)
-  await setProgressForUsers(crew, lead)
+  await setProgressForUsers(crew, lead, "admin", stage)
 
   const targetName = actorLabel(exists[0])
+  const reset = !compass && lead === 0
   await logActivity({
     category: "admin",
-    action: lead === 0 ? "admin.progress_reset" : "admin.progress_set",
+    action: reset ? "admin.progress_reset" : "admin.progress_set",
     ...adminActor(admin),
     targetUserId,
     targetUserName: targetName,
-    leadOrder: lead || null,
-    summary:
-      lead === 0
-        ? `${adminActor(admin).actorName} reset ${targetName}'s progress to the start`
+    leadOrder: compass ? null : lead || null,
+    summary: reset
+      ? `${adminActor(admin).actorName} reset ${targetName}'s progress to the start`
+      : compass
+        ? `${adminActor(admin).actorName} set ${targetName}'s progress to the compass`
         : `${adminActor(admin).actorName} set ${targetName}'s progress to lead No. ${String(lead).padStart(2, "0")}`,
-    metadata: { lead, crewSize: crew.length },
+    metadata: { lead, stage, crewSize: crew.length },
   })
 
   revalidatePath("/admin")
@@ -1171,6 +1176,7 @@ export async function adminSetUserProgress(
 export async function adminSetTeamProgress(
   teamId: string,
   targetLead: number,
+  stage: ProgressStage = "lead",
 ): Promise<ActionResult> {
   const admin = await requireAdmin()
 
@@ -1189,25 +1195,30 @@ export async function adminSetTeamProgress(
     .from(team)
     .where(eq(team.id, teamId))
     .limit(1)
-  const lead = Math.floor(targetLead)
+  const compass = stage === "compass"
+  const lead = compass ? total : Math.floor(targetLead)
   await setProgressForUsers(
     memberRows.map((m) => m.userId),
     lead,
+    "admin",
+    stage,
   )
 
   const teamName = teamRows[0]?.name ?? "?"
+  const reset = !compass && lead === 0
   await logActivity({
     category: "admin",
-    action: lead === 0 ? "admin.team_progress_reset" : "admin.team_progress_set",
+    action: reset ? "admin.team_progress_reset" : "admin.team_progress_set",
     ...adminActor(admin),
     teamId,
     teamName: teamRows[0]?.name ?? null,
-    leadOrder: lead || null,
-    summary:
-      lead === 0
-        ? `${adminActor(admin).actorName} reset team "${teamName}" to the start`
+    leadOrder: compass ? null : lead || null,
+    summary: reset
+      ? `${adminActor(admin).actorName} reset team "${teamName}" to the start`
+      : compass
+        ? `${adminActor(admin).actorName} set team "${teamName}" to the compass`
         : `${adminActor(admin).actorName} set team "${teamName}" to lead No. ${String(lead).padStart(2, "0")}`,
-    metadata: { lead, memberCount: memberRows.length },
+    metadata: { lead, stage, memberCount: memberRows.length },
   })
 
   revalidatePath("/admin")

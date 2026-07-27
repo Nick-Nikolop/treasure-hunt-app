@@ -248,19 +248,38 @@ async function trimAbove(userIds: string[], targetLead: number): Promise<void> {
 }
 
 /**
- * Set the stored progress for a set of users to exactly `targetLead`
- * (0..TOTAL_CLUES). Used by admin tools. Adds missing leads and trims any
- * above the target. Lead 1 is time-global and never stored, so a target of 0
- * or 1 simply means "no QR leads held".
+ * Where in the hunt an admin is placing a crew. "lead" is one of the numbered
+ * stops; "compass" is the finale step after every lead is solved. Finishing
+ * (the treasure) is deliberately NOT settable by hand — it is earned by scanning
+ * the treasure QR, and it decides the winner placement.
+ */
+export type ProgressStage = "lead" | "compass"
+
+/**
+ * Set the stored progress for a set of users. Used by admin tools. Adds missing
+ * leads and trims any above the target.
+ *
+ * For stage "lead", `targetLead` is the stop the crew sits on (0..TOTAL_CLUES).
+ * Lead 1 is time-global and never stored, so a target of 0 or 1 both simply mean
+ * "no QR leads held".
+ *
+ * For stage "compass", the crew is placed at the finale step: every lead is
+ * marked solved and the compass row is stamped. `trimAbove` runs first and
+ * clears the sentinel rows above the lead range, so this also removes any
+ * existing finish row — correct, since the compass comes before the treasure.
  */
 export async function setProgressForUsers(
   userIds: string[],
   targetLead: number,
   source = "admin",
+  stage: ProgressStage = "lead",
 ): Promise<void> {
-  const target = clampProgress(targetLead, await getTotalLeads())
+  const total = await getTotalLeads()
+  const target = stage === "compass" ? total : clampProgress(targetLead, total)
+  const at = new Date()
   await trimAbove(userIds, target)
-  await ensureUpTo(userIds, target, source, new Date())
+  await ensureUpTo(userIds, target, source, at)
+  if (stage === "compass") await insertCompassRows(userIds, at)
 }
 
 export type UnlockResult =

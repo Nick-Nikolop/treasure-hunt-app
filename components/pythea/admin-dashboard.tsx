@@ -124,7 +124,9 @@ export function AdminDashboard({
     | { kind: "team"; id: string; label: string; current: number }
     | null
   >(null)
-  const [progressValue, setProgressValue] = useState(0)
+  // Either a lead number as a string ("1".."10") or "compass" for the finale
+  // step. Lead 0 is not a real stop, so the lowest selectable value is 1.
+  const [progressValue, setProgressValue] = useState("1")
   // Activity log: server-seeded first page, plus optional per-entity drill-down.
   // `activityKey` forces the panel to remount (reset its internal list) whenever
   // the seed changes.
@@ -357,7 +359,7 @@ export function AdminDashboard({
                     current: u.progress,
                     teamName: u.teamName ?? null,
                   })
-                  setProgressValue(u.progress)
+                  setProgressValue(String(Math.max(1, u.progress)))
                 }}
                 onResetProgress={() =>
                   setConfirm({
@@ -433,7 +435,7 @@ export function AdminDashboard({
                 }}
                 onSetProgress={() => {
                   setProgressTarget({ kind: "team", id: tm.id, label: tm.name, current: tm.progress })
-                  setProgressValue(tm.progress)
+                  setProgressValue(String(Math.max(1, tm.progress)))
                 }}
                 onViewActivity={() => openActivity({ kind: "team", id: tm.id, label: tm.name })}
                 onResetProgress={() =>
@@ -732,12 +734,15 @@ export function AdminDashboard({
             e.preventDefault()
             if (!progressTarget) return
             const { kind, id } = progressTarget
-            const value = progressValue
+            // "compass" is the finale step, so it implies every lead is solved.
+            const compass = progressValue === "compass"
+            const lead = compass ? data.totalLeads : Number(progressValue)
+            const stage = compass ? "compass" : "lead"
             runAction(
               () =>
                 kind === "team"
-                  ? adminSetTeamProgress(id, value)
-                  : adminSetUserProgress(id, value),
+                  ? adminSetTeamProgress(id, lead, stage)
+                  : adminSetUserProgress(id, lead, stage),
               "Progress updated.",
             )
             setProgressTarget(null)
@@ -748,22 +753,33 @@ export function AdminDashboard({
             htmlFor="progress-value"
             className="font-sans text-xs font-bold tracking-chip text-muted-foreground"
           >
-            LEAD (0 = START, {data.totalLeads} = FINISHED)
+            STAGE
           </label>
           <select
             id="progress-value"
             value={progressValue}
-            onChange={(e) => setProgressValue(Number(e.target.value))}
+            onChange={(e) => setProgressValue(e.target.value)}
             className="mt-1.5 w-full rounded-sm border border-border bg-background px-3 py-2.5 font-sans text-sm text-foreground outline-none transition-colors focus:border-brass"
           >
-            {Array.from({ length: data.totalLeads + 1 }, (_, i) => (
-              <option key={i} value={i}>
-                {i === 0
-                  ? "0 — Not started"
-                  : `Lead ${String(i).padStart(2, "0")}${i === data.totalLeads ? " — Finished" : ""}`}
-              </option>
-            ))}
+            {Array.from({ length: data.totalLeads }, (_, i) => {
+              const n = i + 1
+              return (
+                <option key={n} value={n}>
+                  Lead {String(n).padStart(2, "0")}
+                </option>
+              )
+            })}
+            <option value="compass">The Compass (all leads solved)</option>
           </select>
+          <p className="mt-2 font-sans text-xs leading-relaxed text-muted-foreground">
+            {progressValue === "compass"
+              ? "Marks every lead as solved and reveals the compass. This does not finish the hunt: only scanning the treasure QR does that."
+              : Number(progressValue) >= data.totalLeads
+                ? "The stop they are on now. They will be hunting for the Compass QR next."
+                : `The stop they are on now. They will be hunting for Lead ${String(
+                    Number(progressValue) + 1,
+                  ).padStart(2, "0")}'s QR next.`}
+          </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row-reverse">
             <button
               type="submit"
