@@ -6,10 +6,6 @@ import {
   ChevronDown,
   Save,
   RotateCcw,
-  ArrowUp,
-  ArrowDown,
-  Plus,
-  Trash2,
   Upload,
   ImageOff,
   ImageIcon,
@@ -23,19 +19,15 @@ import {
   Compass,
   Timer,
   QrCode,
+  Lock,
 } from "lucide-react"
 import {
   adminSaveLead,
-  adminAddLead,
-  adminRemoveLead,
-  adminReorderLeads,
   adminUploadLeadStamp,
   adminClearLeadStamp,
   adminUploadLeadBackground,
   adminClearLeadBackground,
-  adminResetAllProgress,
   adminSaveLeadGeo,
-  adminRegenerateToken,
   adminSetLeadBgWash,
   getFinaleState,
   adminSaveFinaleGeo,
@@ -53,13 +45,10 @@ type FinaleGate = { lat: number | null; lng: number | null; radiusM: number }
 const errorText: Record<string, string> = {
   bad_value: "That change could not be saved.",
   not_found: "That lead no longer exists.",
-  too_short: "Both country names are required.",
   too_large: "That image is too large (max 5 MB).",
   too_large_bg: "That background is too large (max 15 MB).",
   bad_type: "Use a PNG, JPG, WebP or AVIF image.",
   no_file: "Choose an image first.",
-  first_lead: "The opening lead can't be removed.",
-  last_lead: "A hunt needs at least one lead.",
   bad_lat: "Latitude must be between -90 and 90.",
   bad_lng: "Longitude must be between -180 and 180.",
   bad_radius: "Radius must be between 10 and 5000 metres.",
@@ -70,8 +59,8 @@ const DIFFICULTIES: Difficulty[] = ["easy", "medium", "hard"]
 // Suggested stamp ratios. 2:3 portrait is the house style for the γραμματόσημα.
 const ASPECTS = ["2:3", "3:2", "1:1"] as const
 
-// The fields that make up a lead's editable copy. Reorder + stamp are handled
-// separately; these are what a per-lead content save writes.
+// The fields that make up a lead's editable copy. Stamp, artwork and the scan
+// location are handled separately; these are what a per-lead content save writes.
 const CONTENT_FIELDS = [
   "country",
   "countryEn",
@@ -83,9 +72,7 @@ const CONTENT_FIELDS = [
   "difficulty",
 ] as const
 
-// "reset-offer" is shown after a structural change (reorder/add/remove) and
-// carries a button to reset every crew back to Lead 1.
-type Popup = { kind: "ok" | "err" | "reset-offer"; text: string }
+type Popup = { kind: "ok" | "err"; text: string }
 
 const clone = (arr: EditableLead[]): EditableLead[] => arr.map((l) => ({ ...l }))
 
@@ -94,18 +81,20 @@ function contentDiffers(a: EditableLead, b: EditableLead): boolean {
 }
 
 /**
- * The Leads tab of the admin dashboard: a full manager for the hunt's stops.
+ * The Leads tab of the admin dashboard: a content editor for the hunt's stops.
  *
- * All editing happens LOCALLY — reordering and copy edits mutate an in-memory
- * working copy and never hit the server on their own. A single "Save all
- * changes" bar commits everything at once and shows a confirmation popup, so
- * the admin is never interrupted or bounced out mid-edit. State is owned by
- * this component (seeded from props once), so a server action's revalidation
- * never reshuffles the list under the admin's cursor.
+ * The ROUTE IS DELIBERATELY FROZEN. Leads cannot be added, removed or
+ * reordered, and QR tokens cannot be regenerated, because every one of those
+ * actions can disturb progress that crews have already earned (progress is
+ * tracked by position) or invalidate a QR that is already printed and hidden in
+ * the field. What stays editable is everything safe: copy, difficulty, icon,
+ * stamp, page artwork and each QR's scan location.
  *
- * Adding, removing and stamp uploads are their own immediate actions (they
- * touch files or structure) but they update the local list in place instead of
- * triggering a full refresh, so the view stays put.
+ * Copy edits happen LOCALLY — they mutate an in-memory working copy and never
+ * hit the server on their own. A single "Save all changes" bar commits them at
+ * once, so the admin is never interrupted mid-edit. Stamp/artwork uploads and
+ * scan-location saves are immediate (they touch files or gates) but patch the
+ * local list in place instead of forcing a refresh, so the view stays put.
  */
 export function AdminLeadsPanel({
   leads,
@@ -191,14 +180,13 @@ export function AdminLeadsPanel({
   const [baseline, setBaseline] = useState<EditableLead[]>(() => clone(leads))
 
   const baseById = new Map(baseline.map((l) => [l.id, l]))
-  const orderDirty = items.map((l) => l.id).join("|") !== baseline.map((l) => l.id).join("|")
   const dirtyIds = items
     .filter((it) => {
       const b = baseById.get(it.id)
       return b ? contentDiffers(it, b) : false
     })
     .map((it) => it.id)
-  const anyDirty = orderDirty || dirtyIds.length > 0
+  const anyDirty = dirtyIds.length > 0
 
   // Auto-dismiss the success popup; keep error popups until acknowledged.
   useEffect(() => {
@@ -216,16 +204,6 @@ export function AdminLeadsPanel({
     if (b) setItems((prev) => prev.map((l) => (l.id === id ? { ...b } : l)))
   }
 
-  function move(index: number, dir: -1 | 1) {
-    const next = index + dir
-    if (next < 0 || next >= items.length) return
-    setItems((prev) => {
-      const copy = [...prev]
-      ;[copy[index], copy[next]] = [copy[next], copy[index]]
-      return copy
-    })
-  }
-
   function discardAll() {
     setItems(clone(baseline))
   }
@@ -233,16 +211,8 @@ export function AdminLeadsPanel({
   function saveAll() {
     if (!anyDirty || pending) return
     startTransition(async () => {
-      // 1. Persist the new order first (positions), if it changed.
-      if (orderDirty) {
-        const res = await adminReorderLeads(items.map((l) => l.id))
-        if (!res.ok) {
-          setPopup({ kind: "err", text: errorText[res.error] ?? "Could not save the new order." })
-          return
-        }
-      }
-
-      // 2. Persist each lead whose copy changed.
+      // Persist each lead whose copy changed. The sequence itself is frozen, so
+      // there are no positions to write here.
       const failedIds: string[] = []
       const failedNames: string[] = []
       for (const it of items) {
@@ -276,66 +246,9 @@ export function AdminLeadsPanel({
           kind: "err",
           text: `Saved your changes, except: ${failedNames.join(", ")}. Please try those again.`,
         })
-      } else if (orderDirty) {
-        // The sequence changed. Since progress is tracked by position, offer to
-        // reset every crew to Lead 1 so nobody is stranded on a moved lead.
-        setPopup({
-          kind: "reset-offer",
-          text: "The lead order changed. Progress is tracked by position, so crews may now sit on a different lead. Do you want to reset every account back to Lead 1?",
-        })
       } else {
         setPopup({ kind: "ok", text: "All your changes have been saved." })
       }
-    })
-  }
-
-  function addLead(country: string, countryEn: string, done: () => void) {
-    startTransition(async () => {
-      const res = await adminAddLead({ country, countryEn })
-      if (!res.ok) {
-        setPopup({ kind: "err", text: errorText[res.error] ?? "Could not add that lead." })
-        return
-      }
-      const fresh: EditableLead = {
-        id: res.id,
-        order: items.length + 1,
-        country,
-        countryEn,
-        icon: "Landmark",
-        subtitle: "",
-        subtitleEn: "",
-        body: "",
-        bodyEn: "",
-        stampImageUrl: null,
-        stampAspect: "2:3",
-        backgroundImageUrl: null,
-        difficulty: "easy",
-        lat: null,
-        lng: null,
-        geoRadiusM: null,
-      }
-      setItems((prev) => [...prev, fresh])
-      setBaseline((prev) => [...prev, { ...fresh }])
-      setOpenId(res.id)
-      done()
-      setPopup({ kind: "ok", text: `Added ${country}. Fill in its copy and stamp, then Save all.` })
-    })
-  }
-
-  function removeLead(id: string, country: string) {
-    startTransition(async () => {
-      const res = await adminRemoveLead(id)
-      if (!res.ok) {
-        setPopup({ kind: "err", text: errorText[res.error] ?? "Could not remove that lead." })
-        return
-      }
-      setItems((prev) => prev.filter((l) => l.id !== id))
-      setBaseline((prev) => prev.filter((l) => l.id !== id))
-      if (openId === id) setOpenId(null)
-      setPopup({
-        kind: "reset-offer",
-        text: `Removed ${country}. The remaining leads shifted up a position, so crews may now sit on a different lead. Do you want to reset every account back to Lead 1?`,
-      })
     })
   }
 
@@ -393,18 +306,6 @@ export function AdminLeadsPanel({
     })
   }
 
-  function regenToken(leadOrder: number) {
-    startTransition(async () => {
-      const res = await adminRegenerateToken(leadOrder)
-      if (!res.ok) {
-        setPopup({ kind: "err", text: errorText[res.error] ?? "Could not regenerate the QR link." })
-        return
-      }
-      // The action revalidates /admin, so the fresh token flows back via props.
-      setPopup({ kind: "ok", text: "New QR link generated. Reprint the QR code." })
-    })
-  }
-
   function saveGeo(
     id: string,
     lat: string,
@@ -434,23 +335,6 @@ export function AdminLeadsPanel({
     })
   }
 
-  function resetAllProgress() {
-    startTransition(async () => {
-      const res = await adminResetAllProgress()
-      if (!res.ok) {
-        setPopup({ kind: "err", text: "Could not reset progress. Please try again." })
-        return
-      }
-      setPopup({
-        kind: "ok",
-        text:
-          res.cleared > 0
-            ? `Done. ${res.cleared} crew${res.cleared > 1 ? "s were" : " was"} reset to Lead 1.`
-            : "Done. Everyone is at Lead 1 (no crews had progress to clear).",
-      })
-    })
-  }
-
   return (
     <div className="flex flex-col gap-4 pb-24">
       <div className="rounded-sm border border-border bg-card/40 p-4">
@@ -459,9 +343,9 @@ export function AdminLeadsPanel({
           <h2 className="font-serif text-lg font-black text-foreground">Leads</h2>
         </div>
         <p className="mt-1 font-sans text-[13px] leading-relaxed text-muted-foreground">
-          Manage the hunt&rsquo;s stops: reorder the sequence, add or remove leads, rewrite each
-          one&rsquo;s copy in Greek and English, and upload its γραμματόσημο (stamp). Edits stay on
-          this screen until you press <span className="font-bold text-foreground">Save all changes</span>.
+          Edit each stop&rsquo;s copy in Greek and English, its γραμματόσημο (stamp) and page
+          artwork, and the scan location of the QR it holds. Copy edits stay on this screen until you
+          press <span className="font-bold text-foreground">Save all changes</span>.
         </p>
         <p className="mt-2 flex items-start gap-2 rounded-sm border border-brass/30 bg-brass/[0.06] px-3 py-2 font-sans text-[12px] leading-relaxed text-foreground/90">
           <QrCode className="mt-0.5 size-3.5 shrink-0 text-brass" />
@@ -473,11 +357,12 @@ export function AdminLeadsPanel({
             sets that QR&rsquo;s scan location.
           </span>
         </p>
-        <p className="mt-2 flex items-start gap-2 rounded-sm border border-amber-500/30 bg-amber-500/10 px-3 py-2 font-sans text-[12px] leading-relaxed text-amber-200/90">
-          <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
+        <p className="mt-2 flex items-start gap-2 rounded-sm border border-border bg-background/40 px-3 py-2 font-sans text-[12px] leading-relaxed text-muted-foreground">
+          <Lock className="mt-0.5 size-3.5 shrink-0 text-brass" />
           <span>
-            Reordering or removing leads is a setup action. Progress is tracked by position, so
-            changing the sequence after crews have started can shift who is ahead.
+            The route is <span className="font-bold text-foreground">locked</span>. Leads can&rsquo;t
+            be added, removed or reordered, and QR links can&rsquo;t be regenerated, so nothing here
+            can disturb a crew&rsquo;s progress or invalidate a QR you have already hidden.
           </span>
         </p>
       </div>
@@ -529,17 +414,12 @@ export function AdminLeadsPanel({
               lead={lead}
               base={baseById.get(lead.id)}
               position={index + 1}
-              index={index}
-              count={items.length}
               open={openId === lead.id}
               pending={pending}
               dirty={dirtyIds.includes(lead.id)}
               onToggle={() => setOpenId((o) => (o === lead.id ? null : lead.id))}
-              onMoveUp={() => move(index, -1)}
-              onMoveDown={() => move(index, 1)}
               onChange={(patch) => patchItem(lead.id, patch)}
               onRevert={() => revertItem(lead.id)}
-              onRemove={() => removeLead(lead.id, lead.country)}
               onUpload={(fd) => uploadStamp(lead.id, fd)}
               onClearStamp={() => clearStamp(lead.id)}
               onUploadBackground={(fd) => uploadBackground(lead.id, fd)}
@@ -551,7 +431,6 @@ export function AdminLeadsPanel({
               qrGeo={hop.geo}
               qrGeoReady={hop.geoReady}
               onSaveQrGeo={hop.save}
-              onRegenerateToken={(order) => regenToken(order)}
             />
           )
         })}
@@ -598,11 +477,9 @@ export function AdminLeadsPanel({
           <FinaleQrCard
             token={finishToken}
             pending={pending}
-            onRegenerate={regenToken}
             title="The Compass"
             purpose="Explorers stand here after scanning the compass, so this card holds the Treasure QR and the spot where you hide it."
             unlocks="the Treasure (the finish)"
-            unlocksShort="Treasure"
             hideAt="the compass spot"
             gate={finaleGeo?.treasure ?? null}
             gateReady={finaleGeo !== null}
@@ -617,11 +494,8 @@ export function AdminLeadsPanel({
         </div>
       </div>
 
-      <AddLeadForm pending={pending} onAdd={addLead} />
-
       {anyDirty && (
         <SaveBar
-          orderDirty={orderDirty}
           dirtyCount={dirtyIds.length}
           pending={pending}
           onSave={saveAll}
@@ -629,14 +503,7 @@ export function AdminLeadsPanel({
         />
       )}
 
-      {popup && (
-        <PopupDialog
-          popup={popup}
-          pending={pending}
-          onReset={resetAllProgress}
-          onClose={() => setPopup(null)}
-        />
-      )}
+      {popup && <PopupDialog popup={popup} onClose={() => setPopup(null)} />}
     </div>
   )
 }
@@ -737,28 +604,24 @@ function WashControl({ initial }: { initial: number }) {
 
 /** Sticky action bar that commits all local edits in one go. */
 function SaveBar({
-  orderDirty,
   dirtyCount,
   pending,
   onSave,
   onDiscard,
 }: {
-  orderDirty: boolean
   dirtyCount: number
   pending: boolean
   onSave: () => void
   onDiscard: () => void
 }) {
-  const parts: string[] = []
-  if (orderDirty) parts.push("new order")
-  if (dirtyCount > 0) parts.push(`${dirtyCount} lead${dirtyCount > 1 ? "s" : ""} edited`)
-
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
       <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3">
         <p className="min-w-0 font-sans text-[13px] text-muted-foreground">
           <span className="font-bold text-foreground">Unsaved changes:</span>{" "}
-          <span className="truncate">{parts.join(" · ")}</span>
+          <span className="truncate">
+            {dirtyCount} lead{dirtyCount > 1 ? "s" : ""} edited
+          </span>
         </p>
         <div className="flex shrink-0 items-center gap-2">
           <button
@@ -785,24 +648,10 @@ function SaveBar({
   )
 }
 
-/**
- * Centered popup. Success auto-dismisses; errors wait for OK. A "reset-offer"
- * (shown after a structural change) adds a button to reset every crew to Lead 1.
- */
-function PopupDialog({
-  popup,
-  pending,
-  onReset,
-  onClose,
-}: {
-  popup: Popup
-  pending: boolean
-  onReset: () => void
-  onClose: () => void
-}) {
+/** Centered popup. Success auto-dismisses; errors wait for OK. */
+function PopupDialog({ popup, onClose }: { popup: Popup; onClose: () => void }) {
   const ok = popup.kind === "ok"
-  const offer = popup.kind === "reset-offer"
-  const heading = ok ? "Saved" : offer ? "Sequence changed" : "Something went wrong"
+  const heading = ok ? "Saved" : "Something went wrong"
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
       <button
@@ -816,9 +665,7 @@ function PopupDialog({
           {ok ? (
             <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-brass" />
           ) : (
-            <AlertTriangle
-              className={`mt-0.5 size-5 shrink-0 ${offer ? "text-amber-400" : "text-destructive"}`}
-            />
+            <AlertTriangle className="mt-0.5 size-5 shrink-0 text-destructive" />
           )}
           <div className="min-w-0">
             <h3 className="font-serif text-base font-black text-foreground">{heading}</h3>
@@ -826,35 +673,13 @@ function PopupDialog({
           </div>
         </div>
         <div className="mt-4 flex justify-end gap-2">
-          {offer ? (
-            <>
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={pending}
-                className="inline-flex items-center gap-1.5 rounded-sm border border-border px-4 py-2 font-sans text-xs font-bold tracking-chip text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
-              >
-                Keep progress
-              </button>
-              <button
-                type="button"
-                onClick={onReset}
-                disabled={pending}
-                className="inline-flex items-center gap-1.5 rounded-sm bg-destructive px-4 py-2 font-sans text-xs font-bold tracking-chip text-destructive-foreground transition-opacity hover:opacity-90 disabled:opacity-40"
-              >
-                {pending ? <Loader2 className="size-3.5 animate-spin" /> : <RotateCcw className="size-3.5" />}
-                Reset all crews to Lead 1
-              </button>
-            </>
-          ) : (
-            <button
-              type="button"
-              onClick={onClose}
-              className="inline-flex items-center gap-1.5 rounded-sm bg-brass px-4 py-2 font-sans text-xs font-bold tracking-chip text-background transition-opacity hover:opacity-90"
-            >
-              OK
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex items-center gap-1.5 rounded-sm bg-brass px-4 py-2 font-sans text-xs font-bold tracking-chip text-background transition-opacity hover:opacity-90"
+          >
+            OK
+          </button>
         </div>
       </div>
     </div>
@@ -865,17 +690,12 @@ function LeadCard({
   lead,
   base,
   position,
-  index,
-  count,
   open,
   pending,
   dirty,
   onToggle,
-  onMoveUp,
-  onMoveDown,
   onChange,
   onRevert,
-  onRemove,
   onUpload,
   onClearStamp,
   onUploadBackground,
@@ -887,22 +707,16 @@ function LeadCard({
   qrGeo,
   qrGeoReady,
   onSaveQrGeo,
-  onRegenerateToken,
 }: {
   lead: EditableLead
   base: EditableLead | undefined
   position: number
-  index: number
-  count: number
   open: boolean
   pending: boolean
   dirty: boolean
   onToggle: () => void
-  onMoveUp: () => void
-  onMoveDown: () => void
   onChange: (patch: Partial<EditableLead>) => void
   onRevert: () => void
-  onRemove: () => void
   onUpload: (formData: FormData) => void
   onClearStamp: () => void
   onUploadBackground: (formData: FormData) => void
@@ -917,10 +731,7 @@ function LeadCard({
   qrGeo: { lat: number | null; lng: number | null; radiusM: number | null } | null
   qrGeoReady: boolean
   onSaveQrGeo: (lat: string, lng: string, radiusM: string, done: (ok: boolean) => void) => void
-  onRegenerateToken: (leadOrder: number) => void
 }) {
-  const [confirmRemove, setConfirmRemove] = useState(false)
-
   return (
     <li
       className={`overflow-hidden rounded-sm border bg-card/40 ${
@@ -929,27 +740,6 @@ function LeadCard({
     >
       <div className="flex items-center justify-between gap-3 px-3 py-2.5">
         <div className="flex min-w-0 items-center gap-2.5">
-          <div className="flex flex-col">
-            <button
-              type="button"
-              onClick={onMoveUp}
-              disabled={pending || index === 0}
-              aria-label="Move lead up"
-              className="text-muted-foreground transition-colors hover:text-brass disabled:opacity-25"
-            >
-              <ArrowUp className="size-3.5" />
-            </button>
-            <button
-              type="button"
-              onClick={onMoveDown}
-              disabled={pending || index === count - 1}
-              aria-label="Move lead down"
-              className="text-muted-foreground transition-colors hover:text-brass disabled:opacity-25"
-            >
-              <ArrowDown className="size-3.5" />
-            </button>
-          </div>
-
           <StampThumb url={lead.stampImageUrl} aspect={lead.stampAspect} country={lead.country} />
 
           <button
@@ -1095,52 +885,10 @@ function LeadCard({
             token={qrToken}
             hideAt={lead.country}
             unlocks={qrUnlocks}
-            unlocksShort={qrUnlocksShort}
             pending={pending}
-            onRegenerate={() => {
-              if (qrToken) onRegenerateToken(qrToken.leadOrder)
-            }}
           />
 
-          <div className="mt-5 flex items-center justify-between gap-2">
-            <div>
-              {position === 1 ? (
-                <span className="font-sans text-[11px] text-muted-foreground/60">
-                  Opening lead — can&rsquo;t be removed.
-                </span>
-              ) : confirmRemove ? (
-                <span className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={onRemove}
-                    disabled={pending}
-                    className="inline-flex items-center gap-1.5 rounded-sm bg-destructive px-3 py-2 font-sans text-xs font-bold tracking-chip text-destructive-foreground transition-opacity hover:opacity-90 disabled:opacity-40"
-                  >
-                    <Trash2 className="size-3.5" />
-                    Confirm remove
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setConfirmRemove(false)}
-                    disabled={pending}
-                    className="font-sans text-xs font-bold tracking-chip text-muted-foreground hover:text-foreground"
-                  >
-                    Cancel
-                  </button>
-                </span>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setConfirmRemove(true)}
-                  disabled={pending}
-                  className="inline-flex items-center gap-1.5 rounded-sm border border-destructive/40 px-3 py-2 font-sans text-xs font-bold tracking-chip text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-40"
-                >
-                  <Trash2 className="size-3.5" />
-                  Remove lead
-                </button>
-              )}
-            </div>
-
+          <div className="mt-5 flex items-center justify-end gap-2">
             {dirty && (
               <button
                 type="button"
@@ -1174,11 +922,9 @@ function LeadCard({
 function FinaleQrCard({
   token,
   pending,
-  onRegenerate,
   title,
   purpose,
   unlocks,
-  unlocksShort,
   hideAt,
   gate,
   gateReady,
@@ -1186,11 +932,9 @@ function FinaleQrCard({
 }: {
   token: ClueTokenRow | null
   pending: boolean
-  onRegenerate: (leadOrder: number) => void
   title: string
   purpose: string
   unlocks: string
-  unlocksShort: string
   hideAt: string
   /** Scan location of the QR shown here, or null while the config loads. */
   gate: FinaleGate | null
@@ -1225,14 +969,7 @@ function FinaleQrCard({
         </div>
       )}
 
-      <LeadQrBlock
-        token={token}
-        hideAt={hideAt}
-        unlocks={unlocks}
-        unlocksShort={unlocksShort}
-        pending={pending}
-        onRegenerate={() => onRegenerate(token.leadOrder)}
-      />
+      <LeadQrBlock token={token} hideAt={hideAt} unlocks={unlocks} pending={pending} />
     </div>
   )
 }
@@ -1925,90 +1662,6 @@ function LangColumn({
           Blank line between paragraphs.
         </span>
       </label>
-    </div>
-  )
-}
-
-function AddLeadForm({
-  pending,
-  onAdd,
-}: {
-  pending: boolean
-  onAdd: (country: string, countryEn: string, done: () => void) => void
-}) {
-  const [open, setOpen] = useState(false)
-  const [country, setCountry] = useState("")
-  const [countryEn, setCountryEn] = useState("")
-
-  function reset() {
-    setCountry("")
-    setCountryEn("")
-    setOpen(false)
-  }
-
-  if (!open) {
-    return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="inline-flex items-center justify-center gap-2 rounded-sm border border-dashed border-border px-4 py-3 font-sans text-sm font-bold tracking-chip text-muted-foreground transition-colors hover:border-brass hover:text-brass"
-      >
-        <Plus className="size-4" />
-        Add a lead
-      </button>
-    )
-  }
-
-  return (
-    <div className="rounded-sm border border-border bg-card/40 p-4">
-      <h3 className="font-serif text-base font-black text-foreground">New lead</h3>
-      <p className="mt-1 font-sans text-[12px] text-muted-foreground">
-        Added to the end of the sequence with a fresh QR code. Fill in the copy and stamp
-        afterwards.
-      </p>
-      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <label className="flex flex-col gap-1.5">
-          <span className="font-sans text-[11px] font-bold uppercase tracking-chip text-muted-foreground">
-            Country (Ελληνικά)
-          </span>
-          <input
-            value={country}
-            onChange={(e) => setCountry(e.target.value)}
-            placeholder="π.χ. Ιαπωνία"
-            className="w-full rounded-sm border border-border bg-background px-3 py-2 font-serif text-sm text-foreground outline-none focus:border-brass"
-          />
-        </label>
-        <label className="flex flex-col gap-1.5">
-          <span className="font-sans text-[11px] font-bold uppercase tracking-chip text-muted-foreground">
-            Country (English)
-          </span>
-          <input
-            value={countryEn}
-            onChange={(e) => setCountryEn(e.target.value)}
-            placeholder="e.g. Japan"
-            className="w-full rounded-sm border border-border bg-background px-3 py-2 font-serif text-sm text-foreground outline-none focus:border-brass"
-          />
-        </label>
-      </div>
-      <div className="mt-3 flex items-center justify-end gap-2">
-        <button
-          type="button"
-          onClick={reset}
-          disabled={pending}
-          className="font-sans text-xs font-bold tracking-chip text-muted-foreground hover:text-foreground disabled:opacity-40"
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          onClick={() => onAdd(country.trim(), countryEn.trim(), reset)}
-          disabled={pending || country.trim().length < 1 || countryEn.trim().length < 1}
-          className="inline-flex items-center gap-2 rounded-sm bg-brass px-4 py-2 font-sans text-xs font-bold tracking-chip text-background transition-opacity hover:opacity-90 disabled:opacity-40"
-        >
-          {pending ? <Loader2 className="size-3.5 animate-spin" /> : <Plus className="size-3.5" />}
-          Add lead
-        </button>
-      </div>
     </div>
   )
 }

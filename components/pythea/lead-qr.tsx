@@ -2,37 +2,31 @@
 
 import { useEffect, useState } from "react"
 import QRCodeLib from "qrcode"
-import { QrCode, Copy, Check, RefreshCw, Download, X, Loader2 } from "lucide-react"
+import { QrCode, Copy, Check, Download, X, Loader2, Lock } from "lucide-react"
 import type { ClueTokenRow } from "@/lib/hunt"
 
 /**
- * Per-lead QR block, shown inside a lead's editor (and as the standalone finish
- * card). Surfaces everything the old QR codes tab did — the scan link, a
- * downloadable QR preview, copy-to-clipboard, and regenerate — scoped to one
- * lead. The QR image is drawn in the browser from the live link, so it always
- * matches the current (possibly regenerated) token.
+ * Per-lead QR block, shown inside a lead's editor (and on the compass card).
+ * Read-only by design: it shows the scan link, a downloadable QR preview and
+ * copy-to-clipboard, but the token can no longer be regenerated. Tokens are
+ * permanent so a printed and hidden QR can never be invalidated mid-hunt.
+ * The QR image is drawn in the browser from the live link.
  */
 export function LeadQrBlock({
   token,
   hideAt,
   unlocks,
-  unlocksShort,
   pending,
-  onRegenerate,
 }: {
   token: ClueTokenRow | null
   /** Where this QR is physically hidden (this card's own stop). */
   hideAt: string
   /** What scanning it unlocks, e.g. "Lead 02 · Poland" or "the Compass". */
   unlocks: string
-  /** Short form of the same, used on the regenerate button. */
-  unlocksShort: string
   pending: boolean
-  onRegenerate: () => void
 }) {
   const [qrOpen, setQrOpen] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [confirmRegen, setConfirmRegen] = useState(false)
 
   if (!token) {
     return (
@@ -90,48 +84,15 @@ export function LeadQrBlock({
           {copied ? "Copied" : "Copy link"}
         </button>
 
-        {confirmRegen ? (
-          <span className="inline-flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setConfirmRegen(false)
-                onRegenerate()
-              }}
-              disabled={pending}
-              className="inline-flex items-center gap-1.5 rounded-sm bg-destructive px-3 py-1.5 font-sans text-xs font-bold tracking-chip text-destructive-foreground transition-opacity hover:opacity-90 disabled:opacity-40"
-            >
-              <RefreshCw className="size-3.5" />
-              Confirm
-            </button>
-            <button
-              type="button"
-              onClick={() => setConfirmRegen(false)}
-              className="font-sans text-xs font-bold tracking-chip text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Cancel
-            </button>
-          </span>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setConfirmRegen(true)}
-            disabled={pending}
-            className="inline-flex items-center gap-1.5 rounded-sm border border-destructive/50 px-3 py-1.5 font-sans text-xs font-bold tracking-chip text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-40"
-          >
-            <RefreshCw className="size-3.5" />
-            Regenerate {unlocksShort} QR
-          </button>
-        )}
       </div>
 
-      {confirmRegen && (
-        <p className="mt-2 font-sans text-[11px] leading-relaxed text-muted-foreground">
-          This replaces the <span className="font-bold text-foreground">{unlocksShort}</span> QR
-          link. Any copy already printed from the old one stops working, so you would need to reprint
-          and re-hide it.
-        </p>
-      )}
+      <p className="mt-2 flex items-start gap-1.5 font-sans text-[11px] leading-relaxed text-muted-foreground">
+        <Lock className="mt-0.5 size-3 shrink-0" />
+        <span>
+          This link is permanent. It stays valid for the whole hunt, so a printed copy never stops
+          working.
+        </span>
+      </p>
 
       <LeadQrModal
         open={qrOpen}
