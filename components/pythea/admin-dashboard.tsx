@@ -773,12 +773,16 @@ export function AdminDashboard({
           </select>
           <p className="mt-2 font-sans text-xs leading-relaxed text-muted-foreground">
             {progressValue === "compass"
-              ? "Marks every lead as solved and reveals the compass. This does not finish the hunt: only scanning the treasure QR does that."
-              : Number(progressValue) >= data.totalLeads
-                ? "The stop they are on now. They will be hunting for the Compass QR next."
-                : `The stop they are on now. They will be hunting for Lead ${String(
-                    Number(progressValue) + 1,
-                  ).padStart(2, "0")}'s QR next.`}
+              ? "Every lead is solved and the compass is revealed. They now need to find the Compass QR. This does not finish the hunt: only that scan does."
+              : (() => {
+                  // The QR hidden AT a lead unlocks the NEXT step, so a crew sitting
+                  // on lead N hunts lead N's own QR to reach lead N+1.
+                  const n = Number(progressValue)
+                  const here = String(n).padStart(2, "0")
+                  const next =
+                    n >= data.totalLeads ? "the Compass" : `Lead ${String(n + 1).padStart(2, "0")}`
+                  return `They are at Lead ${here} and need to find Lead ${here}'s QR to reach ${next}.`
+                })()}
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row-reverse">
             <button
