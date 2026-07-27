@@ -384,9 +384,10 @@ export function AdminLeadsPanel({
             Each card holds the QR you hide{" "}
             <span className="font-bold">at that lead&rsquo;s location</span>, which is the one that
             unlocks the <span className="font-bold">next</span> lead. So Lead 01&rsquo;s card holds
-            Lead 02&rsquo;s QR, and each card also sets that QR&rsquo;s scan location. The{" "}
-            <span className="font-bold">last lead hides nothing</span>: from there the compass and
-            the treasure each get their own hiding place, set in{" "}
+            Lead 02&rsquo;s QR, and each card also sets that QR&rsquo;s scan location. The last lead
+            works the same way, except its QR has no next page to reveal:{" "}
+            <span className="font-bold">it hands over Pytheas&rsquo;s first note</span> and starts the
+            compass hunt. Only the compass and the treasure sit outside the leads, in{" "}
             <span className="font-bold">The endgame</span> below.
           </span>
         </p>
@@ -402,22 +403,26 @@ export function AdminLeadsPanel({
 
       <WashControl initial={leadBgWashPct} />
 
-      <MissingCoordsAlert leads={items} onJump={(id) => setOpenId(id)} />
+      <MissingCoordsAlert
+        leads={items}
+        trailEndGate={finaleGeo?.trailEnd ?? null}
+        onJump={(id) => setOpenId(id)}
+      />
 
       <MissingFinaleCoordsAlert geo={finaleGeo} />
 
       <ul className="flex flex-col gap-2.5">
         {items.map((lead, index) => {
-          // Each card holds the QR explorers FIND at this lead's spot, which is
-          // the one that unlocks the NEXT lead. The scan location travels with
-          // the QR, so the coordinates edited here gate the QR pictured on this
-          // same card. Lead 1 opens on a timer, so its own QR does not exist.
+          // Each card holds the QR explorers FIND at this lead's spot, plus that
+          // QR's scan location, so everything about one hiding place lives on one
+          // card. For every lead but the last, that QR unlocks the NEXT lead, so
+          // its gate is the next lead's own coordinates. Lead 1 opens on a timer,
+          // so its own QR does not exist.
           //
-          // The LAST lead hides nothing at all: the paper trail goes cold there
-          // and Pytheas's first note sends the crew hunting for the compass,
-          // which is "hidden very well, somewhere in Kalamata" and so needs its
-          // own hiding place rather than sitting on the last lead's spot. The
-          // compass and the treasure are each set on their own card below.
+          // The LAST lead works exactly the same way, it just has no next page:
+          // its QR is the trail-end one, which closes the paper trail and hands
+          // over Pytheas's first note. Its gate lives in the finale config rather
+          // than on a lead row, hence the separate save and the ready flag.
           const next = index === items.length - 1 ? null : items[index + 1]
           const hop = next
             ? {
@@ -425,10 +430,21 @@ export function AdminLeadsPanel({
                 unlocks: `Lead ${String(index + 2).padStart(2, "0")} · ${next.country}`,
                 unlocksShort: `Lead ${String(index + 2).padStart(2, "0")}`,
                 geo: { lat: next.lat, lng: next.lng, radiusM: next.geoRadiusM },
+                ready: true,
                 save: (lat: string, lng: string, r: string, done: (ok: boolean) => void) =>
                   saveGeo(next.id, lat, lng, r, done),
               }
-            : null
+            : trailEndToken
+              ? {
+                  token: trailEndToken,
+                  unlocks: "the first note (and the compass hunt)",
+                  unlocksShort: "first note",
+                  geo: finaleGeo?.trailEnd ?? null,
+                  ready: finaleGeo !== null,
+                  save: (lat: string, lng: string, r: string, done: (ok: boolean) => void) =>
+                    saveFinaleGeo("trailEnd", lat, lng, r, done),
+                }
+              : null
 
           return (
             <LeadCard
@@ -447,11 +463,11 @@ export function AdminLeadsPanel({
               onUploadBackground={(fd) => uploadBackground(lead.id, fd)}
               onClearBackground={() => clearBackground(lead.id)}
               opensOnTimer={index === 0}
-              endsTheTrail={hop === null}
               qrToken={hop?.token ?? null}
               qrUnlocks={hop?.unlocks ?? ""}
               qrUnlocksShort={hop?.unlocksShort ?? ""}
               qrGeo={hop?.geo ?? null}
+              qrGeoReady={hop?.ready ?? true}
               onSaveQrGeo={hop?.save ?? (() => {})}
               onSaveQrToken={(slug, done) => {
                 if (hop?.token) saveToken(hop.token.leadId, slug, done)
@@ -468,21 +484,22 @@ export function AdminLeadsPanel({
           <h2 className="font-serif text-lg font-black text-foreground">The endgame</h2>
         </div>
         <p className="mt-1.5 font-sans text-[12px] leading-relaxed text-muted-foreground">
-          Every lead, including the last one, has its own QR hidden at its own spot. The compass and
-          the treasure are then{" "}
-          <span className="font-semibold text-foreground">each hidden wherever you like</span>, so
-          each one has its own QR and its own scan location below. Neither is a lead.
+          Every lead, including the last one, keeps its QR on its own card above. The compass and the
+          treasure are the exception: they are{" "}
+          <span className="font-semibold text-foreground">each hidden wherever you like</span> rather
+          than at a lead, so each one has its own QR and its own scan location here. Neither is a
+          lead.
         </p>
         <ol className="mt-3 flex flex-col gap-1.5 font-sans text-[12px] text-muted-foreground">
           <li className="flex gap-2">
             <span className="font-bold text-brass">1.</span>
             <span>
-              Scanning the{" "}
+              Scanning the last lead&rsquo;s own QR (set on{" "}
               <span className="font-semibold text-foreground">
-                {trailEndToken?.country ?? "final lead"}
-              </span>{" "}
-              QR at its own spot closes the paper trail &rarr; the &ldquo;find my compass&rdquo; note
-              appears, and the crew goes looking for the{" "}
+                {trailEndToken?.country ?? "the final lead"}
+              </span>
+              &rsquo;s card above) closes the paper trail &rarr; the &ldquo;find my compass&rdquo;
+              note appears, and the crew goes looking for the{" "}
               <span className="font-semibold text-foreground">Compass QR</span> anywhere in Kalamata.
             </span>
           </li>
@@ -504,25 +521,6 @@ export function AdminLeadsPanel({
         </ol>
 
         <div className="mt-4 flex flex-col gap-3">
-          <FinaleQrCard
-            token={trailEndToken}
-            pending={pending}
-            title={trailEndToken ? `${trailEndToken.country} · the final lead` : "The final lead"}
-            purpose={`This is ${
-              trailEndToken?.country ?? "the final lead"
-            }'s own QR: hide it at that lead's real-world spot. Every other lead's QR reveals the next page, but the last lead has no next page, so this is the one that closes the paper trail and hands over Pytheas's first note.`}
-            unlocks="the first note (and the compass hunt)"
-            hideAt={trailEndToken?.country ?? "the final lead's spot"}
-            gate={finaleGeo?.trailEnd ?? null}
-            gateReady={finaleGeo !== null}
-            onSaveToken={(slug, done) => {
-              if (trailEndToken) saveToken(trailEndToken.leadId, slug, done)
-              else done("This QR does not exist yet.")
-            }}
-            onSaveGeo={(lat, lng, radiusM, done) =>
-              saveFinaleGeo("trailEnd", lat, lng, radiusM, done)
-            }
-          />
           <FinaleQrCard
             token={compassToken}
             pending={pending}
@@ -771,11 +769,11 @@ function LeadCard({
   onUploadBackground,
   onClearBackground,
   opensOnTimer,
-  endsTheTrail,
   qrToken,
   qrUnlocks,
   qrUnlocksShort,
   qrGeo,
+  qrGeoReady,
   onSaveQrGeo,
   onSaveQrToken,
 }: {
@@ -795,17 +793,17 @@ function LeadCard({
   /** True for the opening lead, which starts on a timer with nothing to scan. */
   opensOnTimer: boolean
   /**
-   * True for the final lead, which hides no QR at all: the trail goes cold and
-   * the first note sends the crew after the compass instead. The QR props below
-   * are unused in that case.
+   * The QR hidden AT this lead's spot. For every lead but the last it unlocks the
+   * next lead; on the last lead it is the trail-end QR that hands over the first
+   * note. Either way it is not the QR that unlocked this lead.
    */
-  endsTheTrail: boolean
-  /** The QR hidden AT this lead's spot. It unlocks the next lead, not this one. */
   qrToken: ClueTokenRow | null
   qrUnlocks: string
   qrUnlocksShort: string
-  /** Scan location of the QR above (that is, the next lead's own coordinates). */
+  /** Scan location of the QR above, or null while the last lead's gate loads. */
   qrGeo: { lat: number | null; lng: number | null; radiusM: number | null } | null
+  /** False only while the last lead's gate is still being fetched. */
+  qrGeoReady: boolean
   onSaveQrGeo: (lat: string, lng: string, radiusM: string, done: (ok: boolean) => void) => void
   onSaveQrToken: (slug: string, done: (error: string | null) => void) => void
 }) {
@@ -942,36 +940,31 @@ function LeadCard({
             </p>
           )}
 
-          {endsTheTrail ? (
-            <p className="mt-4 flex items-start gap-2 rounded-sm border border-brass/30 bg-brass/[0.06] px-3 py-2 font-sans text-[11px] leading-relaxed text-foreground/90">
-              <Compass className="mt-0.5 size-3.5 shrink-0 text-brass" />
-              <span>
-                Nothing is hidden at this stop, so there is no QR or scan location to set here. Once
-                this lead is solved the journal shows Pytheas&rsquo;s note and the crew goes hunting
-                for the <span className="font-bold">Compass</span>, which has its own hiding place in{" "}
-                <span className="font-bold">The endgame</span> below.
-              </span>
-            </p>
+          {qrGeoReady ? (
+            <GeoEditor
+              lat={qrGeo?.lat ?? null}
+              lng={qrGeo?.lng ?? null}
+              radiusM={qrGeo?.radiusM ?? null}
+              unlocks={qrUnlocks}
+              pending={pending}
+              onSaveGeo={onSaveQrGeo}
+            />
           ) : (
-            <>
-              <GeoEditor
-                lat={qrGeo?.lat ?? null}
-                lng={qrGeo?.lng ?? null}
-                radiusM={qrGeo?.radiusM ?? null}
-                unlocks={qrUnlocks}
-                pending={pending}
-                onSaveGeo={onSaveQrGeo}
-              />
-
-              <LeadQrBlock
-                token={qrToken}
-                hideAt={lead.country}
-                unlocks={qrUnlocks}
-                pending={pending}
-                onSaveToken={onSaveQrToken}
-              />
-            </>
+            // Only the last lead can land here: its gate comes from the finale
+            // config, so the editor waits for that fetch instead of seeding blank.
+            <div className="mt-4 flex items-center gap-1.5 rounded-sm border border-border bg-background/40 p-3.5 font-sans text-[11px] text-muted-foreground">
+              <Loader2 className="size-3.5 animate-spin" />
+              Loading scan location…
+            </div>
           )}
+
+          <LeadQrBlock
+            token={qrToken}
+            hideAt={lead.country}
+            unlocks={qrUnlocks}
+            pending={pending}
+            onSaveToken={onSaveQrToken}
+          />
 
           <div className="mt-5 flex items-center justify-end gap-2">
             {dirty && (
@@ -1000,9 +993,9 @@ function LeadCard({
 }
 
 /**
- * Card for the compass stop. Like a lead card, it holds the QR explorers find
- * once they are standing here (the treasure QR) plus the spot where it is
- * hidden. The compass QR itself lives on the last lead's card.
+ * Card for a stop that is not a lead: the compass and the treasure. Unlike a lead
+ * card, the QR shown here is the one hidden AT this stop and the coordinates are
+ * that same stop's, because neither has a "next lead" to hand off to.
  */
 function FinaleQrCard({
   token,
@@ -1075,22 +1068,43 @@ function FinaleQrCard({
  */
 function MissingCoordsAlert({
   leads,
+  trailEndGate,
   onJump,
 }: {
   leads: EditableLead[]
+  /** Gate of the last lead's own QR, or null while the finale config loads. */
+  trailEndGate: FinaleGate | null
   onJump: (id: string) => void
 }) {
-  const missing = leads
+  const missing: {
+    id: string
+    label: string
+    hostId: string
+    hostCountry: string
+  }[] = leads
     .map((l, i) => ({
       id: l.id,
-      country: l.country,
-      position: i + 1,
+      label: `Lead ${String(i + 1).padStart(2, "0")} · ${l.country} QR`,
       lat: l.lat,
       lng: l.lng,
       hostId: i > 0 ? leads[i - 1].id : null,
       hostCountry: i > 0 ? leads[i - 1].country : null,
     }))
     .filter((l) => l.hostId != null && (l.lat == null || l.lng == null))
+    .map((l) => ({ ...l, hostId: l.hostId!, hostCountry: l.hostCountry! }))
+
+  // The last lead's own QR is checked here too, even though its gate lives in
+  // the finale config: it is hidden at a lead like every other QR, so it belongs
+  // in the same warning rather than in the endgame one.
+  const last = leads[leads.length - 1]
+  if (last && trailEndGate && (trailEndGate.lat == null || trailEndGate.lng == null)) {
+    missing.push({
+      id: "trail-end",
+      label: "First note QR",
+      hostId: last.id,
+      hostCountry: last.country,
+    })
+  }
   if (missing.length === 0) return null
 
   return (
@@ -1110,11 +1124,11 @@ function MissingCoordsAlert({
           <button
             key={l.id}
             type="button"
-            onClick={() => onJump(l.hostId!)}
+            onClick={() => onJump(l.hostId)}
             className="inline-flex items-center gap-1.5 rounded-sm border border-rose-400/60 bg-rose-500/20 px-2.5 py-1 font-sans text-[12px] font-bold text-rose-50 transition-colors hover:bg-rose-500/30"
           >
             <MapPin className="size-3" />
-            Lead {String(l.position).padStart(2, "0")} · {l.country} QR
+            {l.label}
             <span className="font-normal text-rose-100/70">on {l.hostCountry}</span>
           </button>
         ))}
