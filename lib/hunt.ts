@@ -13,6 +13,7 @@ import { clueToken, leadUnlock, teamMember, team, user } from "@/lib/db/schema"
 import {
   FINISH_ORDER,
   COMPASS_ORDER,
+  TRAIL_END_ORDER,
   clampProgress,
   effectiveUnlockedCount,
   isLeadOneOpen,
@@ -28,6 +29,7 @@ import {
   getLeadGeo,
   FINISH_LEAD_ID,
   COMPASS_LEAD_ID,
+  TRAIL_END_LEAD_ID,
 } from "@/lib/leads"
 import { haversineMeters } from "@/lib/geo"
 import { getScoreConfig } from "@/lib/scoring"
@@ -294,6 +296,7 @@ export type UnlockResult =
   | { status: "out_of_order"; required: number; current: number; leadOrder: number }
   // The compass QR was scanned (after every lead is solved). Reveals the
   // compass note; the crew is NOT finished yet — the treasure QR does that.
+  | { status: "trail_end_reached" }
   | { status: "compass_reached" }
   | { status: "finished"; country: string; countryEn: string }
   // The scan is valid and in order, but the crew solved their previous lead too
@@ -364,6 +367,40 @@ async function insertFinishRows(userIds: string[], at: Date): Promise<void> {
       id: randomUUID(),
       userId: uid,
       leadOrder: FINISH_ORDER,
+      source: "qr",
+      unlockedAt: at,
+    }))
+  if (values.length > 0) {
+    await db.insert(leadUnlock).values(values).onConflictDoNothing()
+  }
+}
+
+/** Whether any member of the crew has scanned the trail-end QR (the QR at the
+ *  last lead's own spot), which is what closes the paper trail. */
+async function crewHasReachedTrailEnd(userIds: string[]): Promise<boolean> {
+  if (userIds.length === 0) return false
+  const rows = await db
+    .select({ id: leadUnlock.id })
+    .from(leadUnlock)
+    .where(and(inArray(leadUnlock.userId, userIds), eq(leadUnlock.leadOrder, TRAIL_END_ORDER)))
+    .limit(1)
+  return rows.length > 0
+}
+
+/** Stamp the trail-end row for every crew member that doesn't have one yet. */
+async function insertTrailEndRows(userIds: string[], at: Date): Promise<void> {
+  if (userIds.length === 0) return
+  const existing = await db
+    .select({ userId: leadUnlock.userId })
+    .from(leadUnlock)
+    .where(and(inArray(leadUnlock.userId, userIds), eq(leadUnlock.leadOrder, TRAIL_END_ORDER)))
+  const have = new Set(existing.map((r) => r.userId))
+  const values = userIds
+    .filter((uid) => !have.has(uid))
+    .map((uid) => ({
+      id: randomUUID(),
+      userId: uid,
+      leadOrder: TRAIL_END_ORDER,
       source: "qr",
       unlockedAt: at,
     }))
@@ -471,6 +508,27 @@ export async function unlockByToken(
   const defs = await getLeadDefs()
   const total = defs.length
 
+  // The trail-end QR: hidden at the LAST lead's own spot, so it is the scan that
+  // actually closes the paper trail. Every lead is already revealed by the time
+  // it is found (the previous lead's QR revealed the last page), so it only
+  // requires full progress. It releases Pytheas's first note. Idempotent, and no
+  // cooldown: like the rest of the finale this is narrative, not a lead grab.
+  if (leadId === TRAIL_END_LEAD_ID) {
+    const crew = await getCrewUserIds(userId)
+    const now = Date.now()
+    const current = await getCrewEffectiveProgress(crew, now)
+    const last = defs[defs.length - 1]
+    if (!last) return { status: "invalid" }
+    if (current < total) {
+      return { status: "out_of_order", required: total, current, leadOrder: TRAIL_END_ORDER }
+    }
+    if (!(await crewHasReachedTrailEnd(crew))) {
+      await insertTrailEndRows(crew, new Date(now))
+      await logLeadSolved(userId, TRAIL_END_ORDER, last.country, last.countryEn, true)
+    }
+    return { status: "trail_end_reached" }
+  }
+
   // The compass QR: the first finale step, scanned once every lead is solved.
   // It reveals the compass note but does not finish the hunt. No cooldown — the
   // finale is a narrative two-step, not a competitive lead grab. Re-scanning
@@ -482,6 +540,10 @@ export async function unlockByToken(
     const last = defs[defs.length - 1]
     if (!last) return { status: "invalid" }
     if (current < total) {
+      return { status: "out_of_order", required: total, current, leadOrder: COMPASS_ORDER }
+    }
+    // Must close the paper trail first: the trail-end QR is the step before.
+    if (!(await crewHasReachedTrailEnd(crew))) {
       return { status: "out_of_order", required: total, current, leadOrder: COMPASS_ORDER }
     }
     if (!(await crewHasReachedCompass(crew))) {
@@ -569,6 +631,25 @@ export async function approveLeadUnlock(
 ): Promise<ApproveUnlockResult> {
   const defs = await getLeadDefs()
 
+  // Approving a proof filed against the trail-end QR stamps the trail-end row.
+  if (leadOrder === TRAIL_END_ORDER) {
+    const crew = await getCrewUserIds(userId)
+    const now = Date.now()
+    const total = defs.length
+    const last = defs[defs.length - 1]
+    if (!last) return { status: "invalid" }
+    const current = await getCrewEffectiveProgress(crew, now)
+    if (current < total) {
+      return { status: "out_of_order", required: total, current, leadOrder: TRAIL_END_ORDER }
+    }
+    if (await crewHasReachedTrailEnd(crew)) {
+      return { status: "already", leadOrder: total, country: last.country, countryEn: last.countryEn }
+    }
+    await insertTrailEndRows(crew, new Date(now))
+    await logLeadSolved(userId, TRAIL_END_ORDER, last.country, last.countryEn, true)
+    return { status: "unlocked", leadOrder: total, country: last.country, countryEn: last.countryEn }
+  }
+
   // Approving a proof filed against the compass QR stamps the compass row.
   if (leadOrder === COMPASS_ORDER) {
     const crew = await getCrewUserIds(userId)
@@ -577,7 +658,7 @@ export async function approveLeadUnlock(
     const last = defs[defs.length - 1]
     if (!last) return { status: "invalid" }
     const current = await getCrewEffectiveProgress(crew, now)
-    if (current < total) {
+    if (current < total || !(await crewHasReachedTrailEnd(crew))) {
       return { status: "out_of_order", required: total, current, leadOrder: COMPASS_ORDER }
     }
     if (await crewHasReachedCompass(crew)) {
@@ -657,6 +738,22 @@ export async function resolveScanContext(
   const leadId = tokenRows[0]?.leadId
   if (!leadId) return { mode: "direct" }
 
+  // The trail-end QR carries its own GPS gate: crews must actually stand at the
+  // last lead's spot. Only a genuine closing scan is gated (every lead revealed,
+  // trail not yet closed); anything else falls through to a direct unlock.
+  if (leadId === TRAIL_END_LEAD_ID) {
+    const finale = await getFinaleConfig()
+    if (!finale.trailEndHasCoords) return { mode: "direct" }
+    const crew = await getCrewUserIds(userId)
+    const [current, total] = await Promise.all([
+      getCrewEffectiveProgress(crew, nowMs),
+      getTotalLeads(),
+    ])
+    if (current < total) return { mode: "direct" }
+    if (await crewHasReachedTrailEnd(crew)) return { mode: "direct" }
+    return { mode: "verify", leadOrder: TRAIL_END_ORDER }
+  }
+
   // The compass QR can carry its own GPS gate. Only a genuine compass scan is
   // gated: the crew must have solved every lead and not yet reached the
   // compass. Everything else falls through to a direct unlock (which just
@@ -724,6 +821,16 @@ export async function checkScanLocation(
     .limit(1)
   const leadId = tokenRows[0]?.leadId
   if (!leadId) return { ok: true }
+
+  // The trail-end QR checks against the last lead's own configured coordinates.
+  if (leadId === TRAIL_END_LEAD_ID) {
+    const finale = await getFinaleConfig()
+    if (!finale.trailEndHasCoords || finale.trailEndLat == null || finale.trailEndLng == null)
+      return { ok: true }
+    const distanceM = Math.round(haversineMeters(lat, lng, finale.trailEndLat, finale.trailEndLng))
+    if (distanceM <= finale.trailEndRadiusM) return { ok: true }
+    return { ok: false, distanceM, radiusM: finale.trailEndRadiusM }
+  }
 
   // The compass QR checks against its own configured coordinates.
   if (leadId === COMPASS_LEAD_ID) {
@@ -794,6 +901,7 @@ export async function getClueTokens(): Promise<ClueTokenRow[]> {
  * right lead's token is rotated. Invalidates any printed QR for that lead.
  */
 export async function regenerateToken(leadOrder: number): Promise<string> {
+  if (leadOrder === TRAIL_END_ORDER) return regenerateTokenForLead(TRAIL_END_LEAD_ID)
   if (leadOrder === COMPASS_ORDER) return regenerateTokenForLead(COMPASS_LEAD_ID)
   if (leadOrder === FINISH_ORDER) return regenerateTokenForLead(FINISH_LEAD_ID)
   const def = (await getLeadDefs()).find((d) => d.order === leadOrder)

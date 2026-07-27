@@ -66,6 +66,11 @@ export type FinaleConfig = {
   lat: number | null
   lng: number | null
   radiusM: number
+  /** Trail-end QR GPS gate (the QR at the LAST lead's own spot). */
+  trailEndHasCoords: boolean
+  trailEndLat: number | null
+  trailEndLng: number | null
+  trailEndRadiusM: number
   /** Treasure/finish QR GPS gate. `treasureHasCoords` true only when both set. */
   treasureHasCoords: boolean
   treasureLat: number | null
@@ -102,6 +107,9 @@ function ensureFinaleColumns(): Promise<void> {
            ADD COLUMN IF NOT EXISTS "compassLat" double precision,
            ADD COLUMN IF NOT EXISTS "compassLng" double precision,
            ADD COLUMN IF NOT EXISTS "compassRadiusM" integer,
+           ADD COLUMN IF NOT EXISTS "trailEndLat" double precision,
+           ADD COLUMN IF NOT EXISTS "trailEndLng" double precision,
+           ADD COLUMN IF NOT EXISTS "trailEndRadiusM" integer,
            ADD COLUMN IF NOT EXISTS "treasureLat" double precision,
            ADD COLUMN IF NOT EXISTS "treasureLng" double precision,
            ADD COLUMN IF NOT EXISTS "treasureRadiusM" integer,
@@ -149,6 +157,7 @@ export async function getFinaleConfig(): Promise<FinaleConfig> {
   await ensureFinaleColumns()
   const res = await pool.query(
     `SELECT "compassLat" AS lat, "compassLng" AS lng, "compassRadiusM" AS radius,
+            "trailEndLat" AS elat, "trailEndLng" AS elng, "trailEndRadiusM" AS eradius,
             "treasureLat" AS tlat, "treasureLng" AS tlng, "treasureRadiusM" AS tradius,
             "finaleNote1" AS n1, "finaleNote1En" AS n1e,
             "finaleNote1Cta" AS n1c, "finaleNote1CtaEn" AS n1ce,
@@ -163,6 +172,9 @@ export async function getFinaleConfig(): Promise<FinaleConfig> {
         lat: number | null
         lng: number | null
         radius: number | null
+        elat: number | null
+        elng: number | null
+        eradius: number | null
         tlat: number | null
         tlng: number | null
         tradius: number | null
@@ -185,11 +197,17 @@ export async function getFinaleConfig(): Promise<FinaleConfig> {
   const lng = row?.lng ?? null
   const tlat = row?.tlat ?? null
   const tlng = row?.tlng ?? null
+  const elat = row?.elat ?? null
+  const elng = row?.elng ?? null
   return {
     hasCoords: lat != null && lng != null,
     lat,
     lng,
     radiusM: row?.radius != null ? clampRadius(row.radius) : DEFAULT_GEO_RADIUS_M,
+    trailEndHasCoords: elat != null && elng != null,
+    trailEndLat: elat,
+    trailEndLng: elng,
+    trailEndRadiusM: row?.eradius != null ? clampRadius(row.eradius) : DEFAULT_GEO_RADIUS_M,
     treasureHasCoords: tlat != null && tlng != null,
     treasureLat: tlat,
     treasureLng: tlng,
@@ -214,6 +232,10 @@ export type FinaleConfigInput = {
   lat: number | null
   lng: number | null
   radiusM: number | null
+  /** Pass null to clear the trail-end GPS gate. */
+  trailEndLat: number | null
+  trailEndLng: number | null
+  trailEndRadiusM: number | null
   /** Pass null to clear the treasure/finish GPS gate. */
   treasureLat: number | null
   treasureLng: number | null
@@ -244,6 +266,12 @@ export async function setFinaleConfig(input: FinaleConfigInput): Promise<void> {
     input.treasureLng != null && Number.isFinite(input.treasureLng) ? input.treasureLng : null
   const tradius =
     input.treasureRadiusM != null ? clampRadius(input.treasureRadiusM) : DEFAULT_GEO_RADIUS_M
+  const elat =
+    input.trailEndLat != null && Number.isFinite(input.trailEndLat) ? input.trailEndLat : null
+  const elng =
+    input.trailEndLng != null && Number.isFinite(input.trailEndLng) ? input.trailEndLng : null
+  const eradius =
+    input.trailEndRadiusM != null ? clampRadius(input.trailEndRadiusM) : DEFAULT_GEO_RADIUS_M
   const clip = (s: string) => (typeof s === "string" ? s.slice(0, 2000) : "")
 
   // The row always exists in practice (created by the scoring/phase setters),
@@ -253,9 +281,10 @@ export async function setFinaleConfig(input: FinaleConfigInput): Promise<void> {
         "treasureLat", "treasureLng", "treasureRadiusM",
         "finaleNote1", "finaleNote1En", "finaleNote1Cta", "finaleNote1CtaEn",
         "finaleNote2", "finaleNote2En", "finaleNote2Cta", "finaleNote2CtaEn",
-        "finaleWinner", "finaleWinnerEn", "finaleWinnerNote", "finaleWinnerNoteEn", "updatedAt")
+        "finaleWinner", "finaleWinnerEn", "finaleWinnerNote", "finaleWinnerNoteEn",
+        "trailEndLat", "trailEndLng", "trailEndRadiusM", "updatedAt")
      VALUES ('default', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
-        $17, $18, now())
+        $17, $18, $19, $20, $21, now())
      ON CONFLICT (id) DO UPDATE SET
         "compassLat" = EXCLUDED."compassLat",
         "compassLng" = EXCLUDED."compassLng",
@@ -275,6 +304,9 @@ export async function setFinaleConfig(input: FinaleConfigInput): Promise<void> {
         "finaleWinnerEn" = EXCLUDED."finaleWinnerEn",
         "finaleWinnerNote" = EXCLUDED."finaleWinnerNote",
         "finaleWinnerNoteEn" = EXCLUDED."finaleWinnerNoteEn",
+        "trailEndLat" = EXCLUDED."trailEndLat",
+        "trailEndLng" = EXCLUDED."trailEndLng",
+        "trailEndRadiusM" = EXCLUDED."trailEndRadiusM",
         "updatedAt" = now()`,
     [
       lat,
@@ -295,6 +327,9 @@ export async function setFinaleConfig(input: FinaleConfigInput): Promise<void> {
       clip(input.winnerEn),
       clip(input.winnerNote),
       clip(input.winnerNoteEn),
+      elat,
+      elng,
+      eradius,
     ],
   )
 }

@@ -73,6 +73,12 @@ export type FinaleSummary = {
   place: number | null
   /** How many crews/solos have finished so far. */
   totalFinishers: number
+  /** The trail-end note (Pytheas's first note), both languages. */
+  note1: string
+  note1En: string
+  /** The call-to-action stamped under the first note, both languages. */
+  note1Cta: string
+  note1CtaEn: string
   /** The compass-scan note, both languages. */
   note2: string
   note2En: string
@@ -105,6 +111,10 @@ export async function getFinaleSummary(): Promise<FinaleSummary | null> {
   return {
     place: placement.place,
     totalFinishers: placement.totalFinishers,
+    note1: finale.note1,
+    note1En: finale.note1En,
+    note1Cta: finale.note1Cta,
+    note1CtaEn: finale.note1CtaEn,
     note2: finale.note2,
     note2En: finale.note2En,
     note2Cta: finale.note2Cta,

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { BookOpen, Gem, Trophy, Loader2 } from "lucide-react"
+import { BookOpen, Compass, Gem, ScrollText, Trophy, Loader2 } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
 import { HandwrittenNote } from "@/components/pythea/handwritten-note"
 import { CompassRose } from "@/components/pythea/compass-rose"
@@ -37,6 +37,82 @@ function FinaleLoader({ label }: { label: string }) {
       <Loader2 className="size-7 animate-spin text-brass" aria-hidden />
       <p className="font-sans text-xs font-bold tracking-chip text-muted-foreground">{label}</p>
     </div>
+  )
+}
+
+/**
+ * Step 0 of the finale, shown when the TRAIL-END QR is scanned (status
+ * "trail_end_reached"): the QR hidden at the last lead's own spot. Closing the
+ * paper trail is what releases Pytheas's FIRST note, which sends the crew off
+ * after the compass. The note stays re-readable in the journal afterwards.
+ */
+export function TrailEndReveal() {
+  const { t, locale } = useI18n()
+  const f = t.finale
+  const { data, loading } = useFinaleSummary()
+
+  useEffect(() => {
+    track(EV.huntFinished, { beat: "trail_end" }, { category: "hunt" })
+  }, [])
+
+  if (loading) return <FinaleLoader label={f.loading} />
+
+  const note1 = data ? (locale === "en" ? data.note1En : data.note1) : ""
+  const note1Cta = data ? (locale === "en" ? data.note1CtaEn : data.note1Cta) : ""
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="flex w-full max-w-xl flex-col items-center"
+    >
+      <motion.div
+        initial={{ scale: 0, rotate: -30 }}
+        animate={{ scale: 1, rotate: 0 }}
+        transition={{ type: "spring", stiffness: 140, damping: 12, delay: 0.1 }}
+        className="mb-4"
+      >
+        <ScrollText className="size-14 text-brass" aria-hidden />
+      </motion.div>
+
+      <p className="mb-1 font-sans text-[11px] font-bold tracking-chip text-brass">
+        {f.trailEndKicker}
+      </p>
+      <h2 className="mb-5 text-balance text-center font-serif text-2xl font-black text-foreground md:text-3xl">
+        {f.trailEndTitle}
+      </h2>
+
+      <HandwrittenNote body={note1} signature={f.signature} />
+
+      {/* Same brass banner as the other two beats. Here the target is the
+          compass, so it carries the compass icon. */}
+      {note1Cta.trim() !== "" && (
+        <motion.p
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="mt-5 flex w-full max-w-sm items-center justify-center gap-2.5 rounded-sm border border-brass/45 bg-brass/[0.12] px-4 py-3 text-center font-sans text-[12px] font-black uppercase leading-snug tracking-chip text-brass md:text-[14px]"
+        >
+          <Compass className="size-4 shrink-0 md:size-[18px]" aria-hidden />
+          {note1Cta}
+        </motion.p>
+      )}
+
+      <p className="mt-6 max-w-sm text-pretty text-center font-sans text-xs leading-relaxed text-muted-foreground">
+        {f.trailEndHint}
+      </p>
+
+      <div className="mt-7 flex flex-col items-stretch gap-3 sm:flex-row sm:justify-center">
+        <Link
+          href="/journal"
+          className="inline-flex items-center justify-center gap-2 rounded-sm border border-border bg-background px-5 py-3 font-sans text-xs font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass"
+        >
+          <BookOpen className="size-4" />
+          {f.openJournal}
+        </Link>
+      </div>
+    </motion.div>
   )
 }
 

@@ -306,6 +306,19 @@ export const FINISH_ORDER = 100000
  */
 export const COMPASS_ORDER = 100001
 
+/**
+ * Virtual lead order for the "trail end" scan: the QR hidden at the LAST lead's
+ * own spot. Every other lead's QR sits at that lead's spot and unlocks the next
+ * one, but the last lead has no next lead, so its QR gets this sentinel instead.
+ * Scanning it is what closes the paper trail and releases Pytheas's first note;
+ * only then does the compass QR become scannable.
+ *
+ * Another stable sentinel above FINISH_ORDER, for the same reasons as
+ * COMPASS_ORDER. The numbers are identities, not a sequence: the play order is
+ * trail end -> compass -> treasure (finish).
+ */
+export const TRAIL_END_ORDER = 100002
+
 /** The legacy finish sentinel used before the lead count became dynamic. */
 export const LEGACY_FINISH_ORDER = TOTAL_CLUES + 1
 

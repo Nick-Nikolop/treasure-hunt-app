@@ -16,7 +16,7 @@ import {
   Loader2,
 } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
-import { WinnerReveal, CompassReveal } from "@/components/pythea/winner-reveal"
+import { WinnerReveal, CompassReveal, TrailEndReveal } from "@/components/pythea/winner-reveal"
 import type { UnlockResult } from "@/lib/hunt"
 import { bypassCooldownScan } from "@/app/q/[token]/actions"
 import { track } from "@/lib/analytics-client"
@@ -73,6 +73,9 @@ export function ScanResult({
   // finish). Finale step 2: the treasure QR shows the animated winner screen
   // with placement. Both are terminal, read off the original (never-narrowed)
   // result so the cooldown-bypass narrowing on `result` doesn't hide them.
+  if (initialResult.status === "trail_end_reached") {
+    return <TrailEndReveal />
+  }
   if (initialResult.status === "compass_reached") {
     return <CompassReveal />
   }

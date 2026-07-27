@@ -23,6 +23,7 @@ import {
   CLUES,
   FINISH_ORDER,
   COMPASS_ORDER,
+  TRAIL_END_ORDER,
   LEGACY_FINISH_ORDER,
   DEFAULT_DIFFICULTY,
   isDifficulty,
@@ -38,6 +39,11 @@ export const FINISH_LEAD_ID = "__finish__"
 /** The reserved token id for the compass QR — the intermediate finale step
  *  scanned after all leads are solved, before the treasure/finish QR. */
 export const COMPASS_LEAD_ID = "__compass__"
+
+/** The reserved token id for the trail-end QR — the one hidden at the LAST
+ *  lead's own spot. Scanning it closes the paper trail and releases the first
+ *  note; it is the step before the compass QR. */
+export const TRAIL_END_LEAD_ID = "__trailend__"
 
 /** A fully-resolved lead: the public Clue shape plus its difficulty + geo gate. */
 export type LeadDef = Clue & {
@@ -262,12 +268,16 @@ export type ClueTokenRow = {
   link: string
   isFinish: boolean
   isCompass: boolean
+  /** The QR hidden at the LAST lead's own spot, which closes the paper trail. */
+  isTrailEnd: boolean
 }
 
 /** The surrogate leadOrder a reserved (non-lead) token binds to, if any. */
 function reservedSurrogate(leadId: string): number | null {
   if (leadId === FINISH_LEAD_ID) return FINISH_ORDER
   if (leadId === COMPASS_LEAD_ID) return COMPASS_ORDER
+  if (leadId === TRAIL_END_LEAD_ID) return TRAIL_END_ORDER
+  if (leadId === TRAIL_END_LEAD_ID) return TRAIL_END_ORDER
   return null
 }
 
@@ -314,6 +324,7 @@ export async function ensureTokens(): Promise<void> {
     if (l.order < 2) continue
     await ensureTokenForLead(l.id)
   }
+  await ensureTokenForLead(TRAIL_END_LEAD_ID)
   await ensureTokenForLead(COMPASS_LEAD_ID)
   await ensureTokenForLead(FINISH_LEAD_ID)
 }
@@ -327,6 +338,19 @@ export async function listTokens(): Promise<ClueTokenRow[]> {
   const out: ClueTokenRow[] = []
   for (const r of rows) {
     if (!r.leadId) continue
+    if (r.leadId === TRAIL_END_LEAD_ID) {
+      out.push({
+        leadId: TRAIL_END_LEAD_ID,
+        leadOrder: TRAIL_END_ORDER,
+        country: "Trail end",
+        token: r.token,
+        link: huntLinkFor(r.token),
+        isFinish: false,
+        isCompass: false,
+        isTrailEnd: true,
+      })
+      continue
+    }
     if (r.leadId === COMPASS_LEAD_ID) {
       out.push({
         leadId: COMPASS_LEAD_ID,
@@ -336,6 +360,7 @@ export async function listTokens(): Promise<ClueTokenRow[]> {
         link: huntLinkFor(r.token),
         isFinish: false,
         isCompass: true,
+        isTrailEnd: false,
       })
       continue
     }
@@ -348,6 +373,7 @@ export async function listTokens(): Promise<ClueTokenRow[]> {
         link: huntLinkFor(r.token),
         isFinish: true,
         isCompass: false,
+        isTrailEnd: false,
       })
       continue
     }
@@ -361,6 +387,7 @@ export async function listTokens(): Promise<ClueTokenRow[]> {
       link: huntLinkFor(r.token),
       isFinish: false,
       isCompass: false,
+      isTrailEnd: false,
     })
   }
   return out.sort((a, b) => a.leadOrder - b.leadOrder)
@@ -394,6 +421,7 @@ export type SetTokenResult =
 
 /** Human label for whichever QR currently owns a token, for clash messages. */
 async function tokenOwnerLabel(leadId: string | null): Promise<string> {
+  if (leadId === TRAIL_END_LEAD_ID) return "the Trail-End QR"
   if (leadId === COMPASS_LEAD_ID) return "the Compass QR"
   if (leadId === FINISH_LEAD_ID) return "the Treasure QR"
   if (!leadId) return "another QR"
