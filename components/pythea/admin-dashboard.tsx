@@ -30,8 +30,10 @@ import {
   MapPin,
   Compass,
   Camera,
+  Gauge,
 } from "lucide-react"
 import { AdminProofsPanel } from "@/components/pythea/admin-proofs-panel"
+import { AdminProgressPanel } from "@/components/pythea/admin-progress-panel"
 import { ModalShell } from "@/components/pythea/modal-shell"
 import { ConfirmDialog } from "@/components/pythea/confirm-dialog"
 import { AdminPasswordDialog } from "@/components/pythea/admin-password-dialog"
@@ -67,6 +69,7 @@ import type { Difficulty, ScoreConfig } from "@/lib/clues"
 import type { ActivityPage } from "@/lib/activity"
 
 type Tab =
+  | "progress"
   | "users"
   | "teams"
   | "hints"
@@ -104,7 +107,8 @@ export function AdminDashboard({
   isBootstrap?: boolean
 }) {
   const router = useRouter()
-  const [tab, setTab] = useState<Tab>("users")
+  // Progress opens first: it is the "where is everyone" view admins want mid-hunt.
+  const [tab, setTab] = useState<Tab>("progress")
   const [query, setQuery] = useState("")
   const [pending, startTransition] = useTransition()
   const [banner, setBanner] = useState<{ kind: "ok" | "err"; text: string } | null>(null)
@@ -265,6 +269,9 @@ export function AdminDashboard({
 
       {/* Tab bar */}
       <div className="mt-6 flex flex-wrap gap-1 rounded-sm border border-border p-1">
+        <TabButton active={tab === "progress"} onClick={() => setTab("progress")} icon={Gauge}>
+          Progress
+        </TabButton>
         <TabButton active={tab === "users"} onClick={() => setTab("users")} icon={Users}>
           Users
         </TabButton>
@@ -339,7 +346,14 @@ export function AdminDashboard({
 
       {/* Content */}
       <div className="mt-5">
-        {tab === "users" ? (
+        {tab === "progress" ? (
+          <AdminProgressPanel
+            users={data.users}
+            teams={data.teams}
+            totalLeads={data.totalLeads}
+            leadOptions={data.leadOptions}
+          />
+        ) : tab === "users" ? (
           <ul className="flex flex-col gap-2.5">
             {filteredUsers.map((u) => (
               <UserCard

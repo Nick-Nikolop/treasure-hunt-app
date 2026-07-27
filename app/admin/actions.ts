@@ -106,6 +106,7 @@ import { getAnalyticsSnapshot, type AnalyticsSnapshot } from "@/lib/analytics"
 import {
   FINISH_ORDER,
   COMPASS_ORDER,
+  TRAIL_END_ORDER,
   effectiveUnlockedCount,
   isDifficulty,
   isLeadIcon,
@@ -163,6 +164,22 @@ export type AdminUserRow = {
   teamRole: string | null
   /** Effective unlocked-lead count for this user (stored + lead-1 time gate). */
   progress: number
+  /** Endgame steps reached, each stamped by its own QR scan. */
+  milestones: Milestones
+}
+
+/**
+ * The three endgame steps that live outside the lead count, so the Progress tab
+ * can tell "solved every lead" apart from "actually finished". Each is stamped by
+ * its own QR scan and stored as a sentinel row in `lead_unlock`.
+ */
+export type Milestones = {
+  /** Scanned the last lead's own QR, so the first note is in hand. */
+  trailEnd: boolean
+  /** Scanned the compass QR, so the treasure hunt is on. */
+  compass: boolean
+  /** Scanned the treasure QR. Done. */
+  finished: boolean
 }
 
 export type AdminTeamRow = {
@@ -173,11 +190,15 @@ export type AdminTeamRow = {
   createdAt: Date
   /** Furthest lead any member of the team has reached. */
   progress: number
+  /** Endgame steps the crew has reached (any member counts, like progress). */
+  milestones: Milestones
   members: {
     userId: string
     name: string
     email: string
     role: string
+    /** This member's own effective lead count, to spot a carried teammate. */
+    progress: number
   }[]
 }
 
@@ -269,12 +290,27 @@ export async function getAdminData(): Promise<AdminData> {
     .select({ userId: leadUnlock.userId, leadOrder: leadUnlock.leadOrder })
     .from(leadUnlock)
   const storedByUser = new Map<string, number>()
+  // The endgame steps are stored as sentinel rows far above any real position, so
+  // they are tracked separately rather than being folded into the max below (the
+  // max is clamped to the lead total anyway, but keeping them apart is what lets
+  // "10/10 leads" be told apart from "actually finished").
+  const trailEndUsers = new Set<string>()
+  const compassUsers = new Set<string>()
+  const finishedUsers = new Set<string>()
   for (const row of unlocks) {
-    storedByUser.set(row.userId, Math.max(storedByUser.get(row.userId) ?? 0, row.leadOrder))
+    if (row.leadOrder === TRAIL_END_ORDER) trailEndUsers.add(row.userId)
+    else if (row.leadOrder === COMPASS_ORDER) compassUsers.add(row.userId)
+    else if (row.leadOrder === FINISH_ORDER) finishedUsers.add(row.userId)
+    else storedByUser.set(row.userId, Math.max(storedByUser.get(row.userId) ?? 0, row.leadOrder))
   }
   const liveTotal = editableLeads.length
   const progressOf = (userId: string) =>
     effectiveUnlockedCount(storedByUser.get(userId) ?? 0, now, liveTotal)
+  const milestonesOf = (userId: string): Milestones => ({
+    trailEnd: trailEndUsers.has(userId),
+    compass: compassUsers.has(userId),
+    finished: finishedUsers.has(userId),
+  })
 
   const teamsWithMembers: AdminTeamRow[] = teams.map((tm) => {
     const memberRows = allMembers.filter((m) => m.teamId === tm.id)
@@ -287,11 +323,18 @@ export async function getAdminData(): Promise<AdminData> {
       inviteCode: tm.inviteCode,
       createdAt: tm.createdAt,
       progress: teamProgress,
+      // A crew shares its progress, so any member reaching a step counts for all.
+      milestones: {
+        trailEnd: memberRows.some((m) => trailEndUsers.has(m.userId)),
+        compass: memberRows.some((m) => compassUsers.has(m.userId)),
+        finished: memberRows.some((m) => finishedUsers.has(m.userId)),
+      },
       members: memberRows.map((m) => ({
         userId: m.userId,
         name: m.name ?? "",
         email: m.email ?? "",
         role: m.role,
+        progress: progressOf(m.userId),
       })),
     }
   })
@@ -310,6 +353,7 @@ export async function getAdminData(): Promise<AdminData> {
       teamName: u.teamName,
       teamRole: u.teamRole,
       progress: progressOf(u.id),
+      milestones: milestonesOf(u.id),
     })),
     teams: teamsWithMembers,
     superadminCount: await superadminCount(),
