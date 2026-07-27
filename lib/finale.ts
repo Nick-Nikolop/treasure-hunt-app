@@ -27,6 +27,13 @@ const DEFAULT_NOTE1 =
 const DEFAULT_NOTE1_EN =
   'This is roughly where my journal ends. So you will wonder, "well then, where is this treasure of Pytheas?". Do not worry, the treasure is not the journey this time, as you know from the usual cliches.\n\nTo be able to find the treasure, though, you will need my compass. I have hidden it very well.\n\nMy compass is only for those who know how to observe, and not merely to look. For those who do not rush, but pay attention and piece together even the smallest detail of their journey. I leave it to you. I believe you will find my compass; somewhere inside Kalamata it lies, after all.'
 
+/**
+ * Default call-to-action stamped under the first note, above its close button.
+ * Short and shouted, so the crew leaves the journal knowing what to hunt next.
+ */
+const DEFAULT_NOTE1_CTA = "ΤΩΡΑ ΠΡΕΠΕΙ ΝΑ ΒΡΕΙΣ ΤΗΝ ΠΥΞΙΔΑ ΜΟΥ"
+const DEFAULT_NOTE1_CTA_EN = "NOW YOU MUST FIND MY COMPASS"
+
 /** Default note revealed the moment the compass QR is scanned. */
 const DEFAULT_NOTE2 =
   "Τελικα δεν την είχα κρύψει όσο καλά νόμιζα…\n\nΣυγχαρητήρια λοιπόν εξερευνητές, βρήκατε την πυξίδα μου.\n\nΉταν η πυξιδα ο θησαυρός; Προφανώς και όχι! Πιστέψτε με, υπαρχει θησαυρός, αλλά θα χρειαστεί να ψάξετε λίγο ακόμα. Ξέρω, Ξέρω, σας έχω στείλει από τη Σερβία μέχρι την Τουρκία και από ένα σωρό άλλα μέρη, αλλά αυτή είναι η τελευταία δοκιμασία. Χρησιμοποιήστε την πυξίδα και θα βγάλετε άκρη, είμαι σίγουρος - και αυτή τη φορά θα φτασετε επιτέλους στον θησαυρό, υπόσχομαι."
@@ -59,6 +66,9 @@ export type FinaleConfig = {
   /** Journal note (shown once all leads are solved). */
   note1: string
   note1En: string
+  /** Call-to-action stamped under that note, above its close button. */
+  note1Cta: string
+  note1CtaEn: string
   /** Compass-scan note (shown when the compass QR is scanned). */
   note2: string
   note2En: string
@@ -86,6 +96,8 @@ function ensureFinaleColumns(): Promise<void> {
            ADD COLUMN IF NOT EXISTS "treasureRadiusM" integer,
            ADD COLUMN IF NOT EXISTS "finaleNote1" text,
            ADD COLUMN IF NOT EXISTS "finaleNote1En" text,
+           ADD COLUMN IF NOT EXISTS "finaleNote1Cta" text,
+           ADD COLUMN IF NOT EXISTS "finaleNote1CtaEn" text,
            ADD COLUMN IF NOT EXISTS "finaleNote2" text,
            ADD COLUMN IF NOT EXISTS "finaleNote2En" text,
            ADD COLUMN IF NOT EXISTS "finaleWinner" text,
@@ -126,6 +138,7 @@ export async function getFinaleConfig(): Promise<FinaleConfig> {
     `SELECT "compassLat" AS lat, "compassLng" AS lng, "compassRadiusM" AS radius,
             "treasureLat" AS tlat, "treasureLng" AS tlng, "treasureRadiusM" AS tradius,
             "finaleNote1" AS n1, "finaleNote1En" AS n1e,
+            "finaleNote1Cta" AS n1c, "finaleNote1CtaEn" AS n1ce,
             "finaleNote2" AS n2, "finaleNote2En" AS n2e,
             "finaleWinner" AS w, "finaleWinnerEn" AS we,
             "finaleWinnerNote" AS wn, "finaleWinnerNoteEn" AS wne
@@ -141,6 +154,8 @@ export async function getFinaleConfig(): Promise<FinaleConfig> {
         tradius: number | null
         n1: string | null
         n1e: string | null
+        n1c: string | null
+        n1ce: string | null
         n2: string | null
         n2e: string | null
         w: string | null
@@ -165,6 +180,8 @@ export async function getFinaleConfig(): Promise<FinaleConfig> {
     treasureRadiusM: row?.tradius != null ? clampRadius(row.tradius) : DEFAULT_GEO_RADIUS_M,
     note1: textOr(row?.n1, DEFAULT_NOTE1),
     note1En: textOr(row?.n1e, DEFAULT_NOTE1_EN),
+    note1Cta: textOr(row?.n1c, DEFAULT_NOTE1_CTA),
+    note1CtaEn: textOr(row?.n1ce, DEFAULT_NOTE1_CTA_EN),
     note2: textOr(row?.n2, DEFAULT_NOTE2),
     note2En: textOr(row?.n2e, DEFAULT_NOTE2_EN),
     winner: textOr(row?.w, DEFAULT_WINNER),
@@ -185,6 +202,8 @@ export type FinaleConfigInput = {
   treasureRadiusM: number | null
   note1: string
   note1En: string
+  note1Cta: string
+  note1CtaEn: string
   note2: string
   note2En: string
   winner: string
@@ -212,9 +231,10 @@ export async function setFinaleConfig(input: FinaleConfigInput): Promise<void> {
   await pool.query(
     `INSERT INTO "score_config" (id, "compassLat", "compassLng", "compassRadiusM",
         "treasureLat", "treasureLng", "treasureRadiusM",
-        "finaleNote1", "finaleNote1En", "finaleNote2", "finaleNote2En",
+        "finaleNote1", "finaleNote1En", "finaleNote1Cta", "finaleNote1CtaEn",
+        "finaleNote2", "finaleNote2En",
         "finaleWinner", "finaleWinnerEn", "finaleWinnerNote", "finaleWinnerNoteEn", "updatedAt")
-     VALUES ('default', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, now())
+     VALUES ('default', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, now())
      ON CONFLICT (id) DO UPDATE SET
         "compassLat" = EXCLUDED."compassLat",
         "compassLng" = EXCLUDED."compassLng",
@@ -224,6 +244,8 @@ export async function setFinaleConfig(input: FinaleConfigInput): Promise<void> {
         "treasureRadiusM" = EXCLUDED."treasureRadiusM",
         "finaleNote1" = EXCLUDED."finaleNote1",
         "finaleNote1En" = EXCLUDED."finaleNote1En",
+        "finaleNote1Cta" = EXCLUDED."finaleNote1Cta",
+        "finaleNote1CtaEn" = EXCLUDED."finaleNote1CtaEn",
         "finaleNote2" = EXCLUDED."finaleNote2",
         "finaleNote2En" = EXCLUDED."finaleNote2En",
         "finaleWinner" = EXCLUDED."finaleWinner",
@@ -240,6 +262,8 @@ export async function setFinaleConfig(input: FinaleConfigInput): Promise<void> {
       tradius,
       clip(input.note1),
       clip(input.note1En),
+      clip(input.note1Cta),
+      clip(input.note1CtaEn),
       clip(input.note2),
       clip(input.note2En),
       clip(input.winner),

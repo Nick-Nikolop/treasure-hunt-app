@@ -1670,20 +1670,16 @@ function parseGate(
 }
 
 /**
- * Save the finale configuration: both GPS gates (compass QR + treasure/finish
- * QR) and every editable piece of finale copy (journal note, compass-scan note,
- * winner message + prize note), both languages. Blank lat/lng clears a gate so
- * that QR is scannable from anywhere.
+ * Save the finale COPY only: the journal note plus its call-to-action, the
+ * compass-scan note and the winner message + prize note, in both languages.
+ * The two GPS gates live on their own finale QR cards in the Leads tab, so this
+ * is a read-modify-write over the shared row that preserves both of them.
  */
 export async function adminSaveFinale(input: {
-  lat: string
-  lng: string
-  radiusM: string
-  treasureLat: string
-  treasureLng: string
-  treasureRadiusM: string
   note1: string
   note1En: string
+  note1Cta: string
+  note1CtaEn: string
   note2: string
   note2En: string
   winner: string
@@ -1693,20 +1689,18 @@ export async function adminSaveFinale(input: {
 }): Promise<ActionResult> {
   const admin = await requireAdmin()
 
-  const compass = parseGate(input.lat, input.lng, input.radiusM)
-  if ("error" in compass) return { ok: false, error: compass.error }
-  const treasure = parseGate(input.treasureLat, input.treasureLng, input.treasureRadiusM)
-  if ("error" in treasure) return { ok: false, error: treasure.error }
-
+  const current = await getFinaleConfig()
   await setFinaleConfig({
-    lat: compass.lat,
-    lng: compass.lng,
-    radiusM: compass.radius,
-    treasureLat: treasure.lat,
-    treasureLng: treasure.lng,
-    treasureRadiusM: treasure.radius,
+    lat: current.lat,
+    lng: current.lng,
+    radiusM: current.radiusM,
+    treasureLat: current.treasureLat,
+    treasureLng: current.treasureLng,
+    treasureRadiusM: current.treasureRadiusM,
     note1: input.note1 ?? "",
     note1En: input.note1En ?? "",
+    note1Cta: input.note1Cta ?? "",
+    note1CtaEn: input.note1CtaEn ?? "",
     note2: input.note2 ?? "",
     note2En: input.note2En ?? "",
     winner: input.winner ?? "",
@@ -1719,7 +1713,7 @@ export async function adminSaveFinale(input: {
     category: "admin",
     action: "admin.finale_updated",
     ...adminActor(admin),
-    summary: `${adminActor(admin).actorName} updated the finale (compass + treasure gates and notes)`,
+    summary: `${adminActor(admin).actorName} updated the finale notes`,
   })
   revalidatePath("/admin")
   revalidatePath("/journal")
