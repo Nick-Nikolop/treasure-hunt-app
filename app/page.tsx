@@ -84,7 +84,10 @@ export default async function Page() {
         {/* Welcome / join panel first, then the path (9 countries / 9 leads),
             then the "Ι. Ο ΘΡΥΛΟΣ" legend. The path links down to the legend for
             anyone who wants the backstory. */}
-        <Register isInTeam={isInTeam} />
+        <Register
+          isInTeam={isInTeam}
+          rostersLocked={!phaseCtx.isSuperadmin && phaseCtx.phase === 3}
+        />
         <PrizePool />
         <Journey
           unlockedCount={publicCount}

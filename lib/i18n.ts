@@ -385,8 +385,16 @@ const el = {
     joinPageFull: "Αυτή η ομάδα είναι γεμάτη.",
     joinPageBack: "ΠΙΣΩ ΣΤΗΝ ΑΡΧΙΚΗ",
     goToCrew: "ΔΕΣ ΤΗΝ ΟΜΑΔΑ ΣΟΥ",
+    // Rosters frozen (from phase 3, when the hunt goes live).
+    lockedBadge: "ΟΙ ΟΜΑΔΕΣ ΚΛΕΙΔΩΣΑΝ",
+    lockedTitle: "Το κυνήγι ξεκίνησε.",
+    lockedEmptyBody:
+      "Οι ομάδες κλείδωσαν όταν άνοιξε το κυνήγι, οπότε δεν μπορείς πια να φτιάξεις ομάδα ή να μπεις σε μία. Εξερεύνησε μόνος σου, το ημερολόγιο σε περιμένει.",
+    lockedCrewNote:
+      "Οι ομάδες κλείδωσαν όταν άνοιξε το κυνήγι. Θα το τελειώσεις με αυτό το πλήρωμα.",
     // Error messages (shared).
     errors: {
+      rosters_locked: "Οι ομάδες κλείδωσαν, το κυνήγι έχει ήδη ξεκινήσει.",
       already_in_team: "Είσαι ήδη σε άλλη ομάδα. Φύγε πρώτα από εκείνη.",
       already_member: "Είσαι ήδη σε αυτή την ομάδα.",
       full: "Η ομάδα είναι γεμάτη.",
@@ -494,7 +502,7 @@ const el = {
     sealedNotStartedBody:
       "Το πρώτο σημάδι θα εμφανιστεί μόλις ο Πυθέας ανοίξει τον χάρτη του.",
     sealedBody: (n: string) =>
-      `Η σελίδα Νο. ${n} μένει κάτω απ�� το κερί μέχρι να φτάσεις στο σημείο της μέσα στην πόλη. Εντόπισε τον κρυμμένο κωδικό QR στην επόμενη στάση και σάρωσέ τον: η σφραγίδα σπάει και η σελίδα χαράσσεται στο ημερολόγιό σου.`,
+      `Η σελίδα Νο. ${n} μένει κάτω από το κερί μέχρι να φτάσεις στο σημείο της μέσα στην πόλη. Εντόπισε τον κρυμμένο κωδικό QR στην επόμενη στάση και σάρωσέ τον: η σφραγίδα σπάει και η σελίδα χαράσσεται στο ημερολόγιό σου.`,
     finalLabel: "ΤΕΛΟΣ ΤΟΥ ΗΜΕΡΟΛΟΓΙΟΥ",
     finalBody:
       "Όλα τα σημάδια αποκαλύφθηκαν. Ο θησαυρός περιμένει εκείνους που έμαθαν να κοιτούν την Καλαμάτα σαν εξερευνητές.",
@@ -1247,7 +1255,13 @@ const en: Dictionary = {
     joinPageFull: "This team is full.",
     joinPageBack: "BACK TO HOME",
     goToCrew: "VIEW YOUR TEAM",
+    lockedBadge: "TEAMS ARE LOCKED",
+    lockedTitle: "The hunt has begun.",
+    lockedEmptyBody:
+      "Teams locked when the hunt opened, so you can no longer create one or join one. Explore solo, the journal is waiting for you.",
+    lockedCrewNote: "Teams locked when the hunt opened. You'll finish it with this crew.",
     errors: {
+      rosters_locked: "Teams are locked, the hunt has already begun.",
       already_in_team: "You're already in another team. Leave it first.",
       already_member: "You're already in this team.",
       full: "The team is full.",

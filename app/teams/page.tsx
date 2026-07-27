@@ -8,6 +8,7 @@ import { SiteHeader } from "@/components/pythea/site-header"
 import { SiteFooter } from "@/components/pythea/site-footer"
 import { TeamsView } from "@/components/pythea/teams-view"
 import { MAX_CREW_SIZE } from "@/lib/teams"
+import { areRostersLocked } from "@/lib/phase-guard"
 
 export const dynamic = "force-dynamic"
 
@@ -21,7 +22,7 @@ export default async function TeamsPage() {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) redirect("/sign-in?redirect=/teams")
 
-  const crew = await getMyCrew()
+  const [crew, rostersLocked] = await Promise.all([getMyCrew(), areRostersLocked()])
 
   // Server-resolved user for a flash-free header on first paint.
   const initialUser = {
@@ -37,7 +38,7 @@ export default async function TeamsPage() {
       <Atmosphere />
       <SiteHeader initialUser={initialUser} />
       <div className="flex min-h-screen flex-col">
-        <TeamsView crew={crew} maxSize={MAX_CREW_SIZE} />
+        <TeamsView crew={crew} maxSize={MAX_CREW_SIZE} rostersLocked={rostersLocked} />
         <SiteFooter />
       </div>
     </>

@@ -41,6 +41,22 @@ export async function getPublicPhase(nowMs = Date.now()): Promise<Phase> {
   }
 }
 
+/**
+ * True when team set-up is frozen for THIS viewer. From phase 3 the hunt is
+ * live, so rosters are sealed: no creating, joining, inviting, leaving or
+ * removing. Whoever you are with when phase 3 begins is who you finish with,
+ * which keeps leaderboard rosters stable and stops anyone being stranded solo
+ * mid-hunt with no way back in. Renaming stays open (purely cosmetic).
+ *
+ * Superadmins bypass it, exactly like every other phase gate, so a crew can
+ * still be repaired on the day.
+ */
+export async function areRostersLocked(): Promise<boolean> {
+  const [admin, settings] = await Promise.all([getAdminUser(), getPhaseSettings()])
+  if (admin) return false
+  return computeEffectivePhase(settings, Date.now()) === 3
+}
+
 export async function getPhaseContext(): Promise<PhaseContext> {
   const nowMs = Date.now()
   const [admin, settings] = await Promise.all([getAdminUser(), getPhaseSettings()])

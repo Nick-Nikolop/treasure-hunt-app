@@ -1,11 +1,13 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import Link from "next/link"
 import { motion } from "framer-motion"
 import {
   Anchor,
   Compass,
   Crown,
+  Lock,
   LogOut,
   Pencil,
   Plus,
@@ -30,6 +32,12 @@ import { EV } from "@/lib/analytics-events"
 type Props = {
   crew: Crew | null
   maxSize: number
+  /**
+   * True from phase 3 on: the hunt is live and rosters are frozen, so every
+   * set-up control (create, join, invite, leave, remove) is hidden. Resolved on
+   * the server, and re-checked there on every mutation.
+   */
+  rostersLocked: boolean
 }
 
 function displayName(m: Crew["members"][number]) {
@@ -37,17 +45,59 @@ function displayName(m: Crew["members"][number]) {
   return full || m.name || "—"
 }
 
-export function TeamsView({ crew, maxSize }: Props) {
-  const { t } = useI18n()
-
+export function TeamsView({ crew, maxSize, rostersLocked }: Props) {
   return (
     <main className="relative mx-auto w-full max-w-3xl flex-1 px-5 pb-24 pt-28 md:px-8 md:pt-32">
       {crew ? (
-        <CrewPanel crew={crew} maxSize={maxSize} displayName={displayName} />
+        <CrewPanel
+          crew={crew}
+          maxSize={maxSize}
+          displayName={displayName}
+          rostersLocked={rostersLocked}
+        />
+      ) : rostersLocked ? (
+        <LockedEmptyPanel />
       ) : (
         <EmptyPanel />
       )}
     </main>
+  )
+}
+
+/* ── No crew, and too late to get one ──────────────────────────────────── */
+
+/**
+ * Shown to a solo explorer who arrives after rosters froze. The create and join
+ * forms are gone entirely rather than disabled: there is no action left to take
+ * here, so offering greyed-out inputs would just invite pointless attempts.
+ */
+function LockedEmptyPanel() {
+  const { t } = useI18n()
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+      className="mt-10"
+    >
+      <span className="inline-flex items-center gap-2 font-sans text-xs font-bold tracking-chip text-brass">
+        <Lock className="size-3.5" />
+        {t.teams.lockedBadge}
+      </span>
+      <h1 className="mt-4 text-balance font-serif text-4xl font-black leading-tight text-foreground md:text-5xl">
+        {t.teams.lockedTitle}
+      </h1>
+      <p className="mt-4 max-w-lg text-pretty font-serif text-lg leading-relaxed text-muted-foreground">
+        {t.teams.lockedEmptyBody}
+      </p>
+      <Link
+        href="/journal"
+        className="mt-8 inline-flex items-center justify-center gap-2 rounded-sm bg-brass px-6 py-3 font-sans text-sm font-bold tracking-chip text-primary-foreground transition-transform hover:-translate-y-0.5"
+      >
+        <Compass className="size-4" />
+        {t.nav.journal}
+      </Link>
+    </motion.div>
   )
 }
 
@@ -185,10 +235,12 @@ function CrewPanel({
   crew,
   maxSize,
   displayName,
+  rostersLocked,
 }: {
   crew: Crew
   maxSize: number
   displayName: (m: Crew["members"][number]) => string
+  rostersLocked: boolean
 }) {
   const { t } = useI18n()
   const [inviteOpen, setInviteOpen] = useState(false)
@@ -248,7 +300,7 @@ function CrewPanel({
           </p>
         </div>
 
-        {crew.isOwner && (
+        {crew.isOwner && !rostersLocked && (
           <button
             type="button"
             onClick={() => setInviteOpen(true)}
@@ -260,10 +312,19 @@ function CrewPanel({
         )}
       </div>
 
-      {isFull && (
-        <p className="mt-4 font-sans text-xs font-bold tracking-chip text-muted-foreground">
-          {t.teams.fullNote}
+      {/* Once frozen, the roster note replaces the "team is full" note: being
+          full no longer matters when nobody can join regardless. */}
+      {rostersLocked ? (
+        <p className="mt-4 flex items-start gap-2 font-sans text-xs font-bold leading-relaxed tracking-chip text-muted-foreground">
+          <Lock className="mt-px size-3.5 shrink-0 text-brass" aria-hidden />
+          {t.teams.lockedCrewNote}
         </p>
+      ) : (
+        isFull && (
+          <p className="mt-4 font-sans text-xs font-bold tracking-chip text-muted-foreground">
+            {t.teams.fullNote}
+          </p>
+        )
       )}
 
       {/* Roster */}
@@ -302,8 +363,8 @@ function CrewPanel({
               </div>
             </div>
 
-            {/* Owner can remove other members */}
-            {crew.isOwner && !m.isYou && (
+            {/* Owner can remove other members, until rosters freeze */}
+            {crew.isOwner && !m.isYou && !rostersLocked && (
               <button
                 type="button"
                 onClick={() => setRemoveTarget(m)}
@@ -317,17 +378,19 @@ function CrewPanel({
         ))}
       </ul>
 
-      {/* Leave */}
-      <div className="mt-8 border-t border-border pt-6">
-        <button
-          type="button"
-          onClick={() => setLeaveOpen(true)}
-          className="inline-flex items-center gap-2 font-sans text-xs font-bold tracking-chip text-muted-foreground transition-colors hover:text-destructive"
-        >
-          <LogOut className="size-4" />
-          {t.teams.leaveCta}
-        </button>
-      </div>
+      {/* Leave — gone once frozen, since rejoining would be impossible */}
+      {!rostersLocked && (
+        <div className="mt-8 border-t border-border pt-6">
+          <button
+            type="button"
+            onClick={() => setLeaveOpen(true)}
+            className="inline-flex items-center gap-2 font-sans text-xs font-bold tracking-chip text-muted-foreground transition-colors hover:text-destructive"
+          >
+            <LogOut className="size-4" />
+            {t.teams.leaveCta}
+          </button>
+        </div>
+      )}
 
       {/* Dialogs */}
       <InviteDialog

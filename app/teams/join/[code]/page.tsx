@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth"
 import { getCrewPreviewByCode, getMyCrew } from "@/app/teams/actions"
 import { Atmosphere } from "@/components/pythea/atmosphere"
 import { JoinView } from "@/components/pythea/join-view"
+import { areRostersLocked } from "@/lib/phase-guard"
 
 export const dynamic = "force-dynamic"
 
@@ -26,9 +27,10 @@ export default async function JoinPage({
     redirect(`/sign-in?redirect=/teams/join/${encodeURIComponent(code)}`)
   }
 
-  const [preview, myCrew] = await Promise.all([
+  const [preview, myCrew, rostersLocked] = await Promise.all([
     getCrewPreviewByCode(code),
     getMyCrew(),
+    areRostersLocked(),
   ])
 
   // Already in this exact crew? Send them to the crew page.
@@ -43,6 +45,7 @@ export default async function JoinPage({
           crewName={preview?.name ?? null}
           isFull={preview?.isFull ?? false}
           alreadyInOtherCrew={Boolean(myCrew)}
+          rostersLocked={rostersLocked}
         />
       </div>
     </>

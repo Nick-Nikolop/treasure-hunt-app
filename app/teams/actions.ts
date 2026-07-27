@@ -9,6 +9,7 @@ import { revalidatePath } from "next/cache"
 import { randomUUID } from "node:crypto"
 import { MAX_CREW_SIZE, generateInviteCode, type Crew } from "@/lib/teams"
 import { logActivity, resolveUserSnapshot } from "@/lib/activity"
+import { areRostersLocked } from "@/lib/phase-guard"
 
 async function getUserId() {
   const session = await auth.api.getSession({ headers: await headers() })
@@ -86,10 +87,18 @@ export async function getMyCrew(): Promise<Crew | null> {
 
 export type ActionResult = { ok: true } | { ok: false; error: string }
 
+/**
+ * The roster freeze, re-checked server-side on every mutation. The UI hides
+ * these controls from phase 3 on, but a stale tab (or a hand-rolled request)
+ * could still fire them, so this is the real enforcement point.
+ */
+const ROSTERS_LOCKED: ActionResult = { ok: false, error: "rosters_locked" }
+
 /** Create a new crew with the current user as owner. Fails if the user is
- *  already in a team (one-team-per-user). */
+ *  already in a team (one-team-per-user), or once rosters are frozen. */
 export async function createCrew(name: string): Promise<ActionResult> {
   const userId = await getUserId()
+  if (await areRostersLocked()) return ROSTERS_LOCKED
 
   const trimmed = name.trim()
   if (trimmed.length < 2) return { ok: false, error: "too_short" }
@@ -136,10 +145,11 @@ export async function createCrew(name: string): Promise<ActionResult> {
   return { ok: true }
 }
 
-/** Join an existing crew by invite code. Enforces capacity and the
- *  one-team-per-user rule. */
+/** Join an existing crew by invite code. Enforces capacity, the
+ *  one-team-per-user rule, and the roster freeze. */
 export async function joinCrewByCode(code: string): Promise<ActionResult> {
   const userId = await getUserId()
+  if (await areRostersLocked()) return ROSTERS_LOCKED
   const normalized = code.trim().toUpperCase()
   if (!normalized) return { ok: false, error: "not_found" }
 
@@ -197,9 +207,12 @@ export async function joinCrewByCode(code: string): Promise<ActionResult> {
 }
 
 /** Leave the current crew. If the owner leaves, ownership transfers to the
- *  next-oldest member; if they were the last member, the team is deleted. */
+ *  next-oldest member; if they were the last member, the team is deleted.
+ *  Blocked once rosters are frozen: rejoining is impossible by then, so
+ *  leaving would strand the explorer solo for the rest of the hunt. */
 export async function leaveCrew(): Promise<ActionResult> {
   const userId = await getUserId()
+  if (await areRostersLocked()) return ROSTERS_LOCKED
 
   const membership = await db
     .select()
@@ -281,10 +294,12 @@ export async function leaveCrew(): Promise<ActionResult> {
   return { ok: true }
 }
 
-/** Owner removes another member from the crew. */
+/** Owner removes another member from the crew. Blocked once rosters are frozen,
+ *  so nobody can be kicked out mid-hunt with no way to rejoin. */
 export async function removeMember(targetUserId: string): Promise<ActionResult> {
   const userId = await getUserId()
   if (targetUserId === userId) return { ok: false, error: "cannot_remove_self" }
+  if (await areRostersLocked()) return ROSTERS_LOCKED
 
   const membership = await db
     .select()
@@ -363,9 +378,11 @@ export async function renameCrew(name: string): Promise<ActionResult> {
   return { ok: true }
 }
 
-/** Owner regenerates the invite code, invalidating the old link. */
+/** Owner regenerates the invite code, invalidating the old link. Pointless once
+ *  rosters are frozen (no link can be redeemed), so it is blocked too. */
 export async function regenerateInvite(): Promise<ActionResult> {
   const userId = await getUserId()
+  if (await areRostersLocked()) return ROSTERS_LOCKED
 
   const membership = await db
     .select()

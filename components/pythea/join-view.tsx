@@ -4,25 +4,28 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTransition, useState } from "react"
 import { motion } from "framer-motion"
-import { Anchor, ArrowLeft, Users } from "lucide-react"
+import { Anchor, ArrowLeft, Lock, Users } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
 import { joinCrewByCode } from "@/app/teams/actions"
 
 /**
  * Confirm-and-join card shown to a signed-in visitor who opened an invite
- * link. Handles the invalid/full states and the "already in another team"
- * case, otherwise lets them join with one tap.
+ * link. Handles the invalid/full/frozen states and the "already in another
+ * team" case, otherwise lets them join with one tap.
  */
 export function JoinView({
   code,
   crewName,
   isFull,
   alreadyInOtherCrew,
+  rostersLocked,
 }: {
   code: string
   crewName: string | null
   isFull: boolean
   alreadyInOtherCrew: boolean
+  /** True from phase 3 on: the hunt is live, so this link can't be redeemed. */
+  rostersLocked: boolean
 }) {
   const { t } = useI18n()
   const router = useRouter()
@@ -82,7 +85,14 @@ export function JoinView({
             </p>
           )}
 
-          {isFull ? (
+          {/* Frozen first: it outranks "full" and "already in another team",
+              since none of those can be resolved once rosters are sealed. */}
+          {rostersLocked ? (
+            <p className="mt-6 flex items-start gap-2 rounded-sm border border-border bg-background/50 px-4 py-3 text-left font-sans text-sm font-bold leading-relaxed tracking-chip text-muted-foreground">
+              <Lock className="mt-px size-4 shrink-0 text-brass" aria-hidden />
+              {t.teams.errors.rosters_locked}
+            </p>
+          ) : isFull ? (
             <p className="mt-6 rounded-sm border border-border bg-background/50 px-4 py-3 font-sans text-sm font-bold tracking-chip text-muted-foreground">
               {t.teams.joinPageFull}
             </p>

@@ -14,7 +14,14 @@ const PERK_ICONS = [Compass, Users, Mail]
  * of an account, signed-in explorers get a personal welcome and a path into
  * the journal. Keeps the #register anchor used by the nav and floating CTA.
  */
-export function Register({ isInTeam = false }: { isInTeam?: boolean }) {
+export function Register({
+  isInTeam = false,
+  rostersLocked = false,
+}: {
+  isInTeam?: boolean
+  /** True from phase 3 on, when teams are frozen and this CTA leads nowhere. */
+  rostersLocked?: boolean
+}) {
   const { t } = useI18n()
   const { data: session, isPending } = useSession()
 
@@ -30,8 +37,11 @@ export function Register({ isInTeam = false }: { isInTeam?: boolean }) {
   const signedIn = !isPending && !!session?.user
 
   // A signed-in explorer who already has a team has nothing to do here: the
-  // "join the team" section is redundant, so hide it entirely for them.
-  if (signedIn && isInTeam) return null
+  // "join the team" section is redundant, so hide it entirely for them. Same
+  // once rosters freeze — this whole band is a "last step: build your team"
+  // pitch, and from phase 3 that step no longer exists, so showing it would
+  // send a teamless explorer to a page that can only tell them "too late".
+  if (signedIn && (isInTeam || rostersLocked)) return null
 
   return (
     <section
