@@ -1,18 +1,19 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react"
-import { Compass, MapPin, ExternalLink, Save, Loader2, Check, ScrollText, Trophy } from "lucide-react"
+import { Compass, MapPin, Save, Loader2, Check, ScrollText, Trophy } from "lucide-react"
 import { getFinaleState, adminSaveFinale } from "@/app/admin/actions"
 
+/**
+ * Finale COPY only. The two QR locations are deliberately absent: each one is
+ * edited on its own QR card in the Leads tab, so a QR and the spot it is hidden
+ * at always travel together.
+ */
 type Draft = {
-  lat: string
-  lng: string
-  radiusM: string
-  treasureLat: string
-  treasureLng: string
-  treasureRadiusM: string
   note1: string
   note1En: string
+  note1Cta: string
+  note1CtaEn: string
   note2: string
   note2En: string
   winner: string
@@ -22,14 +23,10 @@ type Draft = {
 }
 
 const EMPTY: Draft = {
-  lat: "",
-  lng: "",
-  radiusM: "",
-  treasureLat: "",
-  treasureLng: "",
-  treasureRadiusM: "",
   note1: "",
   note1En: "",
+  note1Cta: "",
+  note1CtaEn: "",
   note2: "",
   note2En: "",
   winner: "",
@@ -38,17 +35,11 @@ const EMPTY: Draft = {
   winnerNoteEn: "",
 }
 
-const ERRORS: Record<string, string> = {
-  bad_lat: "Latitude must be between -90 and 90.",
-  bad_lng: "Longitude must be between -180 and 180.",
-  bad_radius: "Radius must be between 10 and 5000 meters.",
-}
-
 /**
- * Founder-only editor for the compass finale: the GPS gate on the compass QR
- * plus every editable piece of finale copy (the journal "find my compass"
- * note, the compass-scan note, and the winner-screen message + prize note),
- * each in Greek and English. Self-contained: it loads and saves its own state.
+ * Founder-only editor for every editable piece of finale copy: the journal
+ * "find my compass" note plus its call-to-action, the compass-scan note, and
+ * the winner-screen message + prize note, each in Greek and English.
+ * Self-contained: it loads and saves its own state.
  */
 export function AdminFinalePanel() {
   const [draft, setDraft] = useState<Draft>(EMPTY)
@@ -64,14 +55,10 @@ export function AdminFinalePanel() {
       .then((c) => {
         if (!alive) return
         setDraft({
-          lat: c.lat != null ? String(c.lat) : "",
-          lng: c.lng != null ? String(c.lng) : "",
-          radiusM: c.radiusM != null ? String(c.radiusM) : "",
-          treasureLat: c.treasureLat != null ? String(c.treasureLat) : "",
-          treasureLng: c.treasureLng != null ? String(c.treasureLng) : "",
-          treasureRadiusM: c.treasureRadiusM != null ? String(c.treasureRadiusM) : "",
           note1: c.note1,
           note1En: c.note1En,
+          note1Cta: c.note1Cta,
+          note1CtaEn: c.note1CtaEn,
           note2: c.note2,
           note2En: c.note2En,
           winner: c.winner,
@@ -107,7 +94,7 @@ export function AdminFinalePanel() {
         if (savedTimer.current) clearTimeout(savedTimer.current)
         savedTimer.current = setTimeout(() => setSaved(false), 2500)
       } else {
-        setError(ERRORS[res.error] ?? "Could not save. Check the values and try again.")
+        setError("Could not save. Please try again.")
       }
     })
   }
@@ -135,8 +122,17 @@ export function AdminFinalePanel() {
           <strong className="text-foreground">compass QR</strong> and scan it to
           reveal the compass note, then find the{" "}
           <strong className="text-foreground">treasure QR</strong> and scan it for
-          the animated winner screen. Two separate physical QRs, each with its own
-          location below. Every piece of text here is editable.
+          the animated winner screen.
+        </p>
+        <p className="mt-3 flex items-start gap-2 rounded-sm border border-brass/30 bg-brass/[0.06] px-3 py-2 font-sans text-[13px] leading-relaxed text-foreground/90">
+          <MapPin className="mt-0.5 size-4 shrink-0 text-brass" aria-hidden />
+          <span>
+            This tab is <strong className="text-foreground">text only</strong>. Where those two QRs
+            are hidden is set on their own cards in the{" "}
+            <strong className="text-foreground">Leads</strong> tab, under{" "}
+            <strong className="text-foreground">The endgame</strong>, so each QR and its hiding place
+            stay together.
+          </span>
         </p>
       </div>
 
@@ -144,7 +140,8 @@ export function AdminFinalePanel() {
       <Section icon={ScrollText} title="1 · Journal note (find my compass)">
         <p className="mb-4 max-w-prose font-sans text-sm leading-relaxed text-muted-foreground">
           Auto-shown on the back of the last journal page once every lead is
-          solved. It sends players after the compass.
+          solved, and re-openable from the top of the journal afterwards. It sends
+          players after the compass.
         </p>
         <BilingualNote
           value={{ el: draft.note1, en: draft.note1En }}
@@ -153,27 +150,37 @@ export function AdminFinalePanel() {
             set("note1En", en)
           }}
         />
-      </Section>
-
-      {/* Compass GPS gate */}
-      <Section icon={MapPin} title="2 · Compass QR location">
-        <p className="mb-4 max-w-prose font-sans text-sm leading-relaxed text-muted-foreground">
-          Where the physical compass QR is hidden. Players must be within the
-          radius to scan it. Leave latitude and longitude blank to remove the
-          gate (the compass QR then scans from anywhere).
-        </p>
-        <GateFields
-          lat={draft.lat}
-          lng={draft.lng}
-          radiusM={draft.radiusM}
-          onLat={(v) => set("lat", v)}
-          onLng={(v) => set("lng", v)}
-          onRadius={(v) => set("radiusM", v)}
-        />
+        <div className="mt-5 border-t border-border pt-4">
+          <span className="font-sans text-xs font-bold uppercase tracking-chip text-muted-foreground">
+            Call to action
+          </span>
+          <p className="mb-3 mt-1 max-w-prose font-sans text-[13px] leading-relaxed text-muted-foreground">
+            One shouted line stamped under that note, right above its close button, so nobody leaves
+            the journal unsure what to hunt next. Keep it short.
+          </p>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <Field label="ΕΛΛΗΝΙΚΑ">
+              <input
+                value={draft.note1Cta}
+                onChange={(e) => set("note1Cta", e.target.value)}
+                placeholder="ΤΩΡΑ ΠΡΕΠΕΙ ΝΑ ΒΡΕΙΣ ΤΗΝ ΠΥΞΙΔΑ ΜΟΥ"
+                className="w-full rounded-sm border border-border bg-background px-3 py-2 font-sans text-sm font-bold tracking-chip text-foreground outline-none focus:border-brass"
+              />
+            </Field>
+            <Field label="ENGLISH">
+              <input
+                value={draft.note1CtaEn}
+                onChange={(e) => set("note1CtaEn", e.target.value)}
+                placeholder="NOW YOU MUST FIND MY COMPASS"
+                className="w-full rounded-sm border border-border bg-background px-3 py-2 font-sans text-sm font-bold tracking-chip text-foreground outline-none focus:border-brass"
+              />
+            </Field>
+          </div>
+        </div>
       </Section>
 
       {/* Note 2 — compass scan */}
-      <Section icon={ScrollText} title="3 · Compass note (on compass scan)">
+      <Section icon={ScrollText} title="2 · Compass note (on compass scan)">
         <p className="mb-4 max-w-prose font-sans text-sm leading-relaxed text-muted-foreground">
           Shown the moment the compass QR is scanned. It tells players the
           treasure still remains, sending them to the final QR.
@@ -187,26 +194,8 @@ export function AdminFinalePanel() {
         />
       </Section>
 
-      {/* Treasure GPS gate */}
-      <Section icon={MapPin} title="4 · Treasure QR location (the finish)">
-        <p className="mb-4 max-w-prose font-sans text-sm leading-relaxed text-muted-foreground">
-          Where the final treasure QR is hidden. Scanning it here is the real
-          finish: it records the crew&rsquo;s finish and shows the winner screen
-          with their placement (1st, 2nd, 3rd…) by scan order. Crews keep
-          finishing after; nothing is locked. Leave blank to remove the gate.
-        </p>
-        <GateFields
-          lat={draft.treasureLat}
-          lng={draft.treasureLng}
-          radiusM={draft.treasureRadiusM}
-          onLat={(v) => set("treasureLat", v)}
-          onLng={(v) => set("treasureLng", v)}
-          onRadius={(v) => set("treasureRadiusM", v)}
-        />
-      </Section>
-
       {/* Winner screen */}
-      <Section icon={Trophy} title="5 · Winner screen (on treasure scan)">
+      <Section icon={Trophy} title="3 · Winner screen (on treasure scan)">
         <p className="mb-4 max-w-prose font-sans text-sm leading-relaxed text-muted-foreground">
           The celebration message and the fine-print about the top-3 prize.
           Placement (1st, 2nd, 3rd…) is added automatically from finish order.
@@ -242,7 +231,7 @@ export function AdminFinalePanel() {
               <Check className="size-3.5" /> Saved
             </span>
           ) : (
-            "Changes apply to the journal and compass QR immediately."
+            "Changes appear in the journal and on the finale screens immediately."
           )}
         </span>
         <button
@@ -256,69 +245,6 @@ export function AdminFinalePanel() {
         </button>
       </div>
     </div>
-  )
-}
-
-/** A lat / lng / radius trio plus a Google-Maps preview link for one QR gate. */
-function GateFields({
-  lat,
-  lng,
-  radiusM,
-  onLat,
-  onLng,
-  onRadius,
-}: {
-  lat: string
-  lng: string
-  radiusM: string
-  onLat: (v: string) => void
-  onLng: (v: string) => void
-  onRadius: (v: string) => void
-}) {
-  const hasCoords = lat.trim() !== "" && lng.trim() !== ""
-  return (
-    <>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Field label="Latitude">
-          <input
-            inputMode="decimal"
-            value={lat}
-            onChange={(e) => onLat(e.target.value)}
-            placeholder="37.0384"
-            className="w-full rounded-sm border border-border bg-background px-3 py-2 font-mono text-sm text-foreground outline-none focus:border-brass"
-          />
-        </Field>
-        <Field label="Longitude">
-          <input
-            inputMode="decimal"
-            value={lng}
-            onChange={(e) => onLng(e.target.value)}
-            placeholder="22.1142"
-            className="w-full rounded-sm border border-border bg-background px-3 py-2 font-mono text-sm text-foreground outline-none focus:border-brass"
-          />
-        </Field>
-        <Field label="Radius (m)">
-          <input
-            inputMode="numeric"
-            value={radiusM}
-            onChange={(e) => onRadius(e.target.value)}
-            placeholder="default"
-            className="w-full rounded-sm border border-border bg-background px-3 py-2 font-mono text-sm text-foreground outline-none focus:border-brass"
-          />
-        </Field>
-      </div>
-      {hasCoords && (
-        <a
-          href={`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-3 inline-flex items-center gap-1.5 font-sans text-xs font-bold tracking-chip text-brass"
-        >
-          <ExternalLink className="size-3.5" />
-          Preview on Google Maps
-        </a>
-      )}
-    </>
   )
 }
 

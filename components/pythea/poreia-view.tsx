@@ -1048,7 +1048,7 @@ function SealedPageBody({
   )
 }
 
-type Note1 = { note1: string; note1En: string }
+type Note1 = { note1: string; note1En: string; note1Cta: string; note1CtaEn: string }
 
 /** Marks the first note as read, so the final page stops auto-opening it once
  *  the explorer has seen it from either entry point. */
@@ -1065,8 +1065,8 @@ function loadNote1(): Promise<Note1 | null> {
   return note1Request
 }
 
-/** Fetches Pytheas's first note once and returns the body for the active locale. */
-function useNote1(): { note: Note1 | null; body: string } {
+/** Fetches Pytheas's first note once and picks the active locale's wording. */
+function useNote1(): { note: Note1 | null; body: string; cta: string } {
   const { locale } = useI18n()
   const [note, setNote] = useState<Note1 | null>(null)
 
@@ -1080,11 +1080,24 @@ function useNote1(): { note: Note1 | null; body: string } {
     }
   }, [])
 
-  return { note, body: note ? (locale === "en" ? note.note1En : note.note1) : "" }
+  const en = locale === "en"
+  return {
+    note,
+    body: note ? (en ? note.note1En : note.note1) : "",
+    cta: note ? (en ? note.note1CtaEn : note.note1Cta) : "",
+  }
 }
 
 /** The note itself, opened as a lightbox over the whole page. */
-function Note1Overlay({ body, onClose }: { body: string; onClose: () => void }) {
+function Note1Overlay({
+  body,
+  cta,
+  onClose,
+}: {
+  body: string
+  cta: string
+  onClose: () => void
+}) {
   const { t } = useI18n()
 
   // Escape closes it, like any other dialog.
@@ -1109,7 +1122,17 @@ function Note1Overlay({ body, onClose }: { body: string; onClose: () => void }) 
           {t.finale.noteLabel}
         </p>
         <HandwrittenNote body={body} signature={t.finale.signature} />
-        <div className="mt-5 flex justify-center">
+
+        {/* The marching order, shouted. Sits between the note and the close
+            button so the journal cannot be dismissed without seeing it. */}
+        {cta.trim() !== "" && (
+          <p className="mt-5 flex items-center justify-center gap-2.5 rounded-sm border border-brass/45 bg-brass/[0.12] px-4 py-3 text-center font-sans text-[12px] font-black uppercase leading-snug tracking-chip text-brass md:text-[14px]">
+            <Compass className="size-4 shrink-0 md:size-[18px]" aria-hidden />
+            {cta}
+          </p>
+        )}
+
+        <div className="mt-4 flex justify-center">
           <button
             type="button"
             onClick={onClose}
@@ -1130,7 +1153,7 @@ function Note1Overlay({ body, onClose }: { body: string; onClose: () => void }) 
  */
 function Note1Button() {
   const { t } = useI18n()
-  const { note, body } = useNote1()
+  const { note, body, cta } = useNote1()
   const [open, setOpen] = useState(false)
 
   const close = useCallback(() => {
@@ -1150,7 +1173,7 @@ function Note1Button() {
         <ScrollText className="size-3.5 transition-transform group-hover:-rotate-6" />
         {t.finale.openNote}
       </button>
-      {open && <Note1Overlay body={body} onClose={close} />}
+      {open && <Note1Overlay body={body} cta={cta} onClose={close} />}
     </>
   )
 }
@@ -1160,7 +1183,7 @@ function FinalPageBody({ stamps }: { stamps: MapStop[] }) {
 
   // Pytheas's closing note lives on the back of this last page. It is
   // auto-revealed once on arrival, then stays re-openable via the pill below.
-  const { note, body: noteText } = useNote1()
+  const { note, body: noteText, cta: noteCta } = useNote1()
   const [noteOpen, setNoteOpen] = useState(false)
   const autoShown = useRef(false)
 
@@ -1200,7 +1223,9 @@ function FinalPageBody({ stamps }: { stamps: MapStop[] }) {
         </button>
       )}
 
-      {noteOpen && note && <Note1Overlay body={noteText} onClose={closeNote} />}
+      {noteOpen && note && (
+        <Note1Overlay body={noteText} cta={noteCta} onClose={closeNote} />
+      )}
 
       {/* The complete stamp collection, fanned out like keepsakes */}
       <p className="mt-8 font-sans text-[10px] font-bold tracking-chip text-ink/45">

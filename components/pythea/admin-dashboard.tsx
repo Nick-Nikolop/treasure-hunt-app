@@ -734,10 +734,11 @@ export function AdminDashboard({
             e.preventDefault()
             if (!progressTarget) return
             const { kind, id } = progressTarget
-            // "compass" is the finale step, so it implies every lead is solved.
-            const compass = progressValue === "compass"
-            const lead = compass ? data.totalLeads : Number(progressValue)
-            const stage = compass ? "compass" : "lead"
+            // Both finale stages imply every lead is solved, so they pin the
+            // lead number to the last one and let the stage carry the rest.
+            const finale = progressValue === "compass" || progressValue === "treasure"
+            const lead = finale ? data.totalLeads : Number(progressValue)
+            const stage = finale ? (progressValue as "compass" | "treasure") : "lead"
             runAction(
               () =>
                 kind === "team"
@@ -770,19 +771,24 @@ export function AdminDashboard({
               )
             })}
             <option value="compass">The Compass (all leads solved)</option>
+            <option value="treasure">The Treasure (finished)</option>
           </select>
           <p className="mt-2 font-sans text-xs leading-relaxed text-muted-foreground">
-            {progressValue === "compass"
-              ? "Every lead is solved and the compass is revealed. They now need to find the Compass QR. This does not finish the hunt: only that scan does."
-              : (() => {
-                  // The QR hidden AT a lead unlocks the NEXT step, so a crew sitting
-                  // on lead N hunts lead N's own QR to reach lead N+1.
-                  const n = Number(progressValue)
-                  const here = String(n).padStart(2, "0")
-                  const next =
-                    n >= data.totalLeads ? "the Compass" : `Lead ${String(n + 1).padStart(2, "0")}`
-                  return `They are at Lead ${here} and need to find Lead ${here}'s QR to reach ${next}.`
-                })()}
+            {progressValue === "treasure"
+              ? "Counts as finished, exactly like scanning the Treasure QR: it takes their place in the winner order by finish time."
+              : progressValue === "compass"
+                ? "Every lead is solved and the compass is revealed. They now need to find the Compass QR. This does not finish the hunt: only that scan does."
+                : (() => {
+                    // The QR hidden AT a lead unlocks the NEXT lead, so a crew
+                    // sitting on lead N hunts lead N's own QR to reach N+1.
+                    const n = Number(progressValue)
+                    const here = String(n).padStart(2, "0")
+                    const next =
+                      n >= data.totalLeads
+                        ? "the Compass"
+                        : `Lead ${String(n + 1).padStart(2, "0")}`
+                    return `They are at Lead ${here} and need to find Lead ${here}'s QR to reach ${next}.`
+                  })()}
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row-reverse">
             <button

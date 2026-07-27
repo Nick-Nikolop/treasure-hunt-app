@@ -249,11 +249,10 @@ async function trimAbove(userIds: string[], targetLead: number): Promise<void> {
 
 /**
  * Where in the hunt an admin is placing a crew. "lead" is one of the numbered
- * stops; "compass" is the finale step after every lead is solved. Finishing
- * (the treasure) is deliberately NOT settable by hand — it is earned by scanning
- * the treasure QR, and it decides the winner placement.
+ * stops; "compass" is the finale step after every lead is solved; "treasure" is
+ * the finish itself, which also grants a winner placement by finish order.
  */
-export type ProgressStage = "lead" | "compass"
+export type ProgressStage = "lead" | "compass" | "treasure"
 
 /**
  * Set the stored progress for a set of users. Used by admin tools. Adds missing
@@ -267,6 +266,11 @@ export type ProgressStage = "lead" | "compass"
  * marked solved and the compass row is stamped. `trimAbove` runs first and
  * clears the sentinel rows above the lead range, so this also removes any
  * existing finish row — correct, since the compass comes before the treasure.
+ *
+ * For stage "treasure", the crew is finished: every lead solved, the compass
+ * stamped (you cannot reach the treasure without it) and the finish row stamped,
+ * which is what earns their placement in the winner order. This is the same end
+ * state a real treasure scan produces.
  */
 export async function setProgressForUsers(
   userIds: string[],
@@ -275,11 +279,13 @@ export async function setProgressForUsers(
   stage: ProgressStage = "lead",
 ): Promise<void> {
   const total = await getTotalLeads()
-  const target = stage === "compass" ? total : clampProgress(targetLead, total)
+  const finale = stage === "compass" || stage === "treasure"
+  const target = finale ? total : clampProgress(targetLead, total)
   const at = new Date()
   await trimAbove(userIds, target)
   await ensureUpTo(userIds, target, source, at)
-  if (stage === "compass") await insertCompassRows(userIds, at)
+  if (finale) await insertCompassRows(userIds, at)
+  if (stage === "treasure") await insertFinishRows(userIds, at)
 }
 
 export type UnlockResult =

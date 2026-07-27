@@ -1141,26 +1141,31 @@ export async function adminSetUserProgress(
     .limit(1)
   if (exists.length === 0) return { ok: false, error: "not_found" }
 
-  const compass = stage === "compass"
-  const lead = compass ? total : Math.floor(targetLead)
+  // Both finale stages sit past the last lead, so they pin the target there.
+  const finale = stage === "compass" || stage === "treasure"
+  const lead = finale ? total : Math.floor(targetLead)
   // Move the whole crew together (solo players resolve to just themselves).
   const crew = await getCrewUserIds(targetUserId)
   await setProgressForUsers(crew, lead, "admin", stage)
 
   const targetName = actorLabel(exists[0])
-  const reset = !compass && lead === 0
+  const reset = !finale && lead === 0
+  const where =
+    stage === "treasure"
+      ? "the treasure (finished)"
+      : stage === "compass"
+        ? "the compass"
+        : `lead No. ${String(lead).padStart(2, "0")}`
   await logActivity({
     category: "admin",
     action: reset ? "admin.progress_reset" : "admin.progress_set",
     ...adminActor(admin),
     targetUserId,
     targetUserName: targetName,
-    leadOrder: compass ? null : lead || null,
+    leadOrder: finale ? null : lead || null,
     summary: reset
       ? `${adminActor(admin).actorName} reset ${targetName}'s progress to the start`
-      : compass
-        ? `${adminActor(admin).actorName} set ${targetName}'s progress to the compass`
-        : `${adminActor(admin).actorName} set ${targetName}'s progress to lead No. ${String(lead).padStart(2, "0")}`,
+      : `${adminActor(admin).actorName} set ${targetName}'s progress to ${where}`,
     metadata: { lead, stage, crewSize: crew.length },
   })
 
@@ -1195,8 +1200,9 @@ export async function adminSetTeamProgress(
     .from(team)
     .where(eq(team.id, teamId))
     .limit(1)
-  const compass = stage === "compass"
-  const lead = compass ? total : Math.floor(targetLead)
+  // Both finale stages sit past the last lead, so they pin the target there.
+  const finale = stage === "compass" || stage === "treasure"
+  const lead = finale ? total : Math.floor(targetLead)
   await setProgressForUsers(
     memberRows.map((m) => m.userId),
     lead,
@@ -1205,19 +1211,23 @@ export async function adminSetTeamProgress(
   )
 
   const teamName = teamRows[0]?.name ?? "?"
-  const reset = !compass && lead === 0
+  const reset = !finale && lead === 0
+  const where =
+    stage === "treasure"
+      ? "the treasure (finished)"
+      : stage === "compass"
+        ? "the compass"
+        : `lead No. ${String(lead).padStart(2, "0")}`
   await logActivity({
     category: "admin",
     action: reset ? "admin.team_progress_reset" : "admin.team_progress_set",
     ...adminActor(admin),
     teamId,
     teamName: teamRows[0]?.name ?? null,
-    leadOrder: compass ? null : lead || null,
+    leadOrder: finale ? null : lead || null,
     summary: reset
       ? `${adminActor(admin).actorName} reset team "${teamName}" to the start`
-      : compass
-        ? `${adminActor(admin).actorName} set team "${teamName}" to the compass`
-        : `${adminActor(admin).actorName} set team "${teamName}" to lead No. ${String(lead).padStart(2, "0")}`,
+      : `${adminActor(admin).actorName} set team "${teamName}" to ${where}`,
     metadata: { lead, stage, memberCount: memberRows.length },
   })
 
@@ -1747,6 +1757,8 @@ export async function adminSaveFinaleGeo(input: {
     treasureRadiusM: input.which === "treasure" ? gate.radius : current.treasureRadiusM,
     note1: current.note1,
     note1En: current.note1En,
+    note1Cta: current.note1Cta,
+    note1CtaEn: current.note1CtaEn,
     note2: current.note2,
     note2En: current.note2En,
     winner: current.winner,
