@@ -14,3 +14,8 @@ node_modules
 .next/
 .DS_Store
 .vercel
+
+# Migration dumps. The scripts in migration/ are safe to commit; their output
+# never is - it holds live session tokens, password hashes and personal data
+# copied verbatim out of the database.
+migration/out/
