@@ -76,7 +76,9 @@ export function TrailEndReveal() {
         <ScrollText className="size-14 text-brass" aria-hidden />
       </motion.div>
 
-      <p className="mb-1 font-sans text-[11px] font-bold tracking-chip text-brass">
+      {/* Long enough to wrap on narrow screens, so it is balanced and centred
+          like the heading under it rather than going ragged-left. */}
+      <p className="mb-1 text-balance text-center font-sans text-[11px] font-bold leading-relaxed tracking-chip text-brass">
         {f.trailEndKicker}
       </p>
       <h2 className="mb-5 text-balance text-center font-serif text-2xl font-black text-foreground md:text-3xl">

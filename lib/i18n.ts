@@ -568,7 +568,7 @@ const el = {
     adminNote2Hint:
       "Το βλέπεις μόνο εσύ, ως admin. Οι κανονικοί εξερευνητές δεν βλέπουν ποτέ το δεύτερο σημείωμα στο ημερολόγιο πριν από την ώρα του. Τους εμφανίζεται μόνο αφού σκανάρουν το QR της πυξίδας, και είναι αυτό που τους στέλνει στον θησαυρό.",
     // Compass reveal (after the COMPASS QR is scanned — the note screen)
-    trailEndKicker: "ΤΟ ΙΧΝΟΣ ΤΕΛΕΙΩΝΕΙ ΕΔΩ",
+    trailEndKicker: "ΒΡΗΚΑΤΕ ΕΝΑ ΣΗΜΕΙΩΜΑ ΣΤΟ ΤΕΛΟΣ ΤΟΥ ΗΜΕΡΟΛΟΓΙΟΥ",
     trailEndTitle: "Το πρώτο σημείωμα του Πυθέα",
     trailEndHint: "Το ταξίδι στον χάρτη ολοκληρώθηκε. Τώρα ψάξτε την πυξίδα στην Καλαμάτα.",
     compassKicker: "ΒΡΗΚΑΤΕ ΤΗΝ ΠΥΞΙΔΑ",
@@ -1444,7 +1444,7 @@ const en: Dictionary = {
       "Only you can see this, as an admin. For ordinary explorers this button does not exist at all. It appears for them only when they scan the final lead's QR at its own spot: that scan closes the trail and unlocks the first note, which sends them to the compass.",
     adminNote2Hint:
       "Only you can see this, as an admin. Ordinary explorers never see the second note in the journal before its time. It appears for them only after they scan the compass QR, and it is the one that sends them to the treasure.",
-    trailEndKicker: "THE TRAIL ENDS HERE",
+    trailEndKicker: "YOU FOUND A NOTE AT THE END OF THE JOURNAL",
     trailEndTitle: "The first note of Pytheas",
     trailEndHint: "The journey across the map is complete. Now hunt for the compass in Kalamata.",
     compassKicker: "YOU FOUND THE COMPASS",
