@@ -1,0 +1,1731 @@
+{
+  "schema": "public",
+  "tables": [
+    {
+      "name": "account",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "accountId",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "providerId",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "userId",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "accessToken",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "refreshToken",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "idToken",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "accessTokenExpiresAt",
+          "type": "timestamp without time zone",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "refreshTokenExpiresAt",
+          "type": "timestamp without time zone",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "scope",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "password",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp without time zone",
+          "not_null": true,
+          "default_expr": "now()"
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp without time zone",
+          "not_null": true,
+          "default_expr": "now()"
+        }
+      ],
+      "constraints": [
+        {
+          "name": "account_pkey",
+          "type": "p",
+          "def": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "account_userId_fkey",
+          "type": "f",
+          "def": "FOREIGN KEY (\"userId\") REFERENCES \"user\"(id) ON DELETE CASCADE"
+        }
+      ],
+      "indexes": [],
+      "rows": 211
+    },
+    {
+      "name": "activity_log",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp without time zone",
+          "not_null": true,
+          "default_expr": "now()"
+        },
+        {
+          "name": "category",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "action",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "actorId",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "actorName",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "actorRole",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "targetUserId",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "targetUserName",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "teamId",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "teamName",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "leadOrder",
+          "type": "integer",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "summary",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "metadata",
+          "type": "jsonb",
+          "not_null": false,
+          "default_expr": null
+        }
+      ],
+      "constraints": [
+        {
+          "name": "activity_log_pkey",
+          "type": "p",
+          "def": "PRIMARY KEY (id)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "activity_log_category_idx",
+          "def": "CREATE INDEX activity_log_category_idx ON public.activity_log USING btree (category)"
+        },
+        {
+          "name": "activity_log_createdAt_idx",
+          "def": "CREATE INDEX \"activity_log_createdAt_idx\" ON public.activity_log USING btree (\"createdAt\")"
+        },
+        {
+          "name": "activity_log_targetUser_idx",
+          "def": "CREATE INDEX \"activity_log_targetUser_idx\" ON public.activity_log USING btree (\"targetUserId\")"
+        },
+        {
+          "name": "activity_log_team_idx",
+          "def": "CREATE INDEX activity_log_team_idx ON public.activity_log USING btree (\"teamId\")"
+        }
+      ],
+      "rows": 915
+    },
+    {
+      "name": "analytics_event",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "category",
+          "type": "text",
+          "not_null": true,
+          "default_expr": "'general'::text"
+        },
+        {
+          "name": "userId",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "anonId",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "sessionId",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "path",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "referrer",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "device",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "browser",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "os",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "durationMs",
+          "type": "integer",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "props",
+          "type": "jsonb",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp without time zone",
+          "not_null": true,
+          "default_expr": "now()"
+        }
+      ],
+      "constraints": [
+        {
+          "name": "analytics_event_pkey",
+          "type": "p",
+          "def": "PRIMARY KEY (id)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "analytics_event_category_idx",
+          "def": "CREATE INDEX analytics_event_category_idx ON public.analytics_event USING btree (category)"
+        },
+        {
+          "name": "analytics_event_createdat_idx",
+          "def": "CREATE INDEX analytics_event_createdat_idx ON public.analytics_event USING btree (\"createdAt\")"
+        },
+        {
+          "name": "analytics_event_name_idx",
+          "def": "CREATE INDEX analytics_event_name_idx ON public.analytics_event USING btree (name)"
+        },
+        {
+          "name": "analytics_event_userid_idx",
+          "def": "CREATE INDEX analytics_event_userid_idx ON public.analytics_event USING btree (\"userId\")"
+        }
+      ],
+      "rows": 29980
+    },
+    {
+      "name": "campaign_link",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "token",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "label",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp without time zone",
+          "not_null": true,
+          "default_expr": "now()"
+        }
+      ],
+      "constraints": [
+        {
+          "name": "campaign_link_pkey",
+          "type": "p",
+          "def": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "campaign_link_token_key",
+          "type": "u",
+          "def": "UNIQUE (token)"
+        }
+      ],
+      "indexes": [],
+      "rows": 9
+    },
+    {
+      "name": "campaign_visit",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "linkId",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "visitorId",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "isUnique",
+          "type": "boolean",
+          "not_null": true,
+          "default_expr": "false"
+        },
+        {
+          "name": "userAgent",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "referrer",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp without time zone",
+          "not_null": true,
+          "default_expr": "now()"
+        }
+      ],
+      "constraints": [
+        {
+          "name": "campaign_visit_pkey",
+          "type": "p",
+          "def": "PRIMARY KEY (id)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "campaign_visit_createdat_idx",
+          "def": "CREATE INDEX campaign_visit_createdat_idx ON public.campaign_visit USING btree (\"createdAt\")"
+        },
+        {
+          "name": "campaign_visit_linkid_idx",
+          "def": "CREATE INDEX campaign_visit_linkid_idx ON public.campaign_visit USING btree (\"linkId\")"
+        }
+      ],
+      "rows": 6011
+    },
+    {
+      "name": "clue_token",
+      "columns": [
+        {
+          "name": "leadOrder",
+          "type": "integer",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "token",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp without time zone",
+          "not_null": true,
+          "default_expr": "now()"
+        },
+        {
+          "name": "leadId",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        }
+      ],
+      "constraints": [
+        {
+          "name": "clue_token_pkey",
+          "type": "p",
+          "def": "PRIMARY KEY (\"leadOrder\")"
+        },
+        {
+          "name": "clue_token_token_key",
+          "type": "u",
+          "def": "UNIQUE (token)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "clue_token_leadId_key",
+          "def": "CREATE UNIQUE INDEX \"clue_token_leadId_key\" ON public.clue_token USING btree (\"leadId\")"
+        }
+      ],
+      "rows": 13
+    },
+    {
+      "name": "cookie_consent",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "anonId",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "userId",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "decision",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "analytics",
+          "type": "boolean",
+          "not_null": true,
+          "default_expr": "false"
+        },
+        {
+          "name": "policyVersion",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "locale",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "path",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "userAgent",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp without time zone",
+          "not_null": true,
+          "default_expr": "now()"
+        }
+      ],
+      "constraints": [
+        {
+          "name": "cookie_consent_pkey",
+          "type": "p",
+          "def": "PRIMARY KEY (id)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "cookie_consent_anonId_idx",
+          "def": "CREATE INDEX \"cookie_consent_anonId_idx\" ON public.cookie_consent USING btree (\"anonId\")"
+        },
+        {
+          "name": "cookie_consent_createdAt_idx",
+          "def": "CREATE INDEX \"cookie_consent_createdAt_idx\" ON public.cookie_consent USING btree (\"createdAt\")"
+        },
+        {
+          "name": "cookie_consent_userId_idx",
+          "def": "CREATE INDEX \"cookie_consent_userId_idx\" ON public.cookie_consent USING btree (\"userId\")"
+        }
+      ],
+      "rows": 1327
+    },
+    {
+      "name": "hint",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "token",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "title",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "body",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "leadOrder",
+          "type": "integer",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp without time zone",
+          "not_null": true,
+          "default_expr": "now()"
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp without time zone",
+          "not_null": true,
+          "default_expr": "now()"
+        },
+        {
+          "name": "leadId",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        }
+      ],
+      "constraints": [
+        {
+          "name": "hint_pkey",
+          "type": "p",
+          "def": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "hint_token_key",
+          "type": "u",
+          "def": "UNIQUE (token)"
+        }
+      ],
+      "indexes": [],
+      "rows": 3
+    },
+    {
+      "name": "lead",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "position",
+          "type": "integer",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "country",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "countryEn",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "subtitle",
+          "type": "text",
+          "not_null": true,
+          "default_expr": "''::text"
+        },
+        {
+          "name": "subtitleEn",
+          "type": "text",
+          "not_null": true,
+          "default_expr": "''::text"
+        },
+        {
+          "name": "icon",
+          "type": "text",
+          "not_null": true,
+          "default_expr": "'Landmark'::text"
+        },
+        {
+          "name": "body",
+          "type": "text",
+          "not_null": true,
+          "default_expr": "''::text"
+        },
+        {
+          "name": "bodyEn",
+          "type": "text",
+          "not_null": true,
+          "default_expr": "''::text"
+        },
+        {
+          "name": "stampImageUrl",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "stampAspect",
+          "type": "text",
+          "not_null": true,
+          "default_expr": "'2:3'::text"
+        },
+        {
+          "name": "difficulty",
+          "type": "text",
+          "not_null": true,
+          "default_expr": "'easy'::text"
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp without time zone",
+          "not_null": true,
+          "default_expr": "now()"
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp without time zone",
+          "not_null": true,
+          "default_expr": "now()"
+        },
+        {
+          "name": "lat",
+          "type": "double precision",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "lng",
+          "type": "double precision",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "geoRadiusM",
+          "type": "integer",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "backgroundImageUrl",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        }
+      ],
+      "constraints": [
+        {
+          "name": "lead_pkey",
+          "type": "p",
+          "def": "PRIMARY KEY (id)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "lead_position_idx",
+          "def": "CREATE INDEX lead_position_idx ON public.lead USING btree (\"position\")"
+        }
+      ],
+      "rows": 10
+    },
+    {
+      "name": "lead_content",
+      "columns": [
+        {
+          "name": "leadOrder",
+          "type": "integer",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "subtitle",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "subtitleEn",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "body",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "bodyEn",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp without time zone",
+          "not_null": true,
+          "default_expr": "now()"
+        }
+      ],
+      "constraints": [
+        {
+          "name": "lead_content_pkey",
+          "type": "p",
+          "def": "PRIMARY KEY (\"leadOrder\")"
+        }
+      ],
+      "indexes": [],
+      "rows": 3
+    },
+    {
+      "name": "lead_difficulty",
+      "columns": [
+        {
+          "name": "leadOrder",
+          "type": "integer",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "difficulty",
+          "type": "text",
+          "not_null": true,
+          "default_expr": "'easy'::text"
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp without time zone",
+          "not_null": true,
+          "default_expr": "now()"
+        }
+      ],
+      "constraints": [
+        {
+          "name": "lead_difficulty_pkey",
+          "type": "p",
+          "def": "PRIMARY KEY (\"leadOrder\")"
+        }
+      ],
+      "indexes": [],
+      "rows": 0
+    },
+    {
+      "name": "lead_unlock",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "userId",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "leadOrder",
+          "type": "integer",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "unlockedAt",
+          "type": "timestamp without time zone",
+          "not_null": true,
+          "default_expr": "now()"
+        },
+        {
+          "name": "source",
+          "type": "text",
+          "not_null": true,
+          "default_expr": "'qr'::text"
+        }
+      ],
+      "constraints": [
+        {
+          "name": "lead_unlock_pkey",
+          "type": "p",
+          "def": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "lead_unlock_user_lead_unique",
+          "type": "u",
+          "def": "UNIQUE (\"userId\", \"leadOrder\")"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "lead_unlock_user_idx",
+          "def": "CREATE INDEX lead_unlock_user_idx ON public.lead_unlock USING btree (\"userId\")"
+        }
+      ],
+      "rows": 21
+    },
+    {
+      "name": "location_ping",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "token",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "lat",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "lng",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "accuracy",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "userAgent",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp without time zone",
+          "not_null": true,
+          "default_expr": "now()"
+        }
+      ],
+      "constraints": [
+        {
+          "name": "location_ping_pkey",
+          "type": "p",
+          "def": "PRIMARY KEY (id)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "location_ping_token_createdAt_idx",
+          "def": "CREATE INDEX \"location_ping_token_createdAt_idx\" ON public.location_ping USING btree (token, \"createdAt\")"
+        },
+        {
+          "name": "location_ping_token_idx",
+          "def": "CREATE INDEX location_ping_token_idx ON public.location_ping USING btree (token)"
+        }
+      ],
+      "rows": 4
+    },
+    {
+      "name": "location_qr",
+      "columns": [
+        {
+          "name": "token",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "label",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "createdBy",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp without time zone",
+          "not_null": true,
+          "default_expr": "now()"
+        }
+      ],
+      "constraints": [
+        {
+          "name": "location_qr_pkey",
+          "type": "p",
+          "def": "PRIMARY KEY (token)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "location_qr_createdAt_idx",
+          "def": "CREATE INDEX \"location_qr_createdAt_idx\" ON public.location_qr USING btree (\"createdAt\")"
+        }
+      ],
+      "rows": 1
+    },
+    {
+      "name": "phase_lead",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "email",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp without time zone",
+          "not_null": true,
+          "default_expr": "now()"
+        },
+        {
+          "name": "termsVersion",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "acceptedTermsAt",
+          "type": "timestamp without time zone",
+          "not_null": false,
+          "default_expr": null
+        }
+      ],
+      "constraints": [
+        {
+          "name": "phase_lead_pkey",
+          "type": "p",
+          "def": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "phase_lead_email_key",
+          "type": "u",
+          "def": "UNIQUE (email)"
+        }
+      ],
+      "indexes": [],
+      "rows": 34
+    },
+    {
+      "name": "proof_submission",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "userId",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "userName",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "leadOrder",
+          "type": "integer",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "leadId",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "token",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "context",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "photoUrls",
+          "type": "jsonb",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "note",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "not_null": true,
+          "default_expr": "'pending'::text"
+        },
+        {
+          "name": "reason",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "reviewerId",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "reviewerName",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "decidedAt",
+          "type": "timestamp without time zone",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "acknowledgedAt",
+          "type": "timestamp without time zone",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp without time zone",
+          "not_null": true,
+          "default_expr": "now()"
+        }
+      ],
+      "constraints": [
+        {
+          "name": "proof_submission_pkey",
+          "type": "p",
+          "def": "PRIMARY KEY (id)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "proof_submission_createdat_idx",
+          "def": "CREATE INDEX proof_submission_createdat_idx ON public.proof_submission USING btree (\"createdAt\")"
+        },
+        {
+          "name": "proof_submission_status_idx",
+          "def": "CREATE INDEX proof_submission_status_idx ON public.proof_submission USING btree (status)"
+        },
+        {
+          "name": "proof_submission_userid_idx",
+          "def": "CREATE INDEX proof_submission_userid_idx ON public.proof_submission USING btree (\"userId\")"
+        }
+      ],
+      "rows": 0
+    },
+    {
+      "name": "score_config",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "not_null": true,
+          "default_expr": "'default'::text"
+        },
+        {
+          "name": "firstPoints",
+          "type": "integer",
+          "not_null": true,
+          "default_expr": "100"
+        },
+        {
+          "name": "secondPoints",
+          "type": "integer",
+          "not_null": true,
+          "default_expr": "70"
+        },
+        {
+          "name": "thirdPoints",
+          "type": "integer",
+          "not_null": true,
+          "default_expr": "50"
+        },
+        {
+          "name": "restPoints",
+          "type": "integer",
+          "not_null": true,
+          "default_expr": "30"
+        },
+        {
+          "name": "mediumBonus",
+          "type": "integer",
+          "not_null": true,
+          "default_expr": "50"
+        },
+        {
+          "name": "hardBonus",
+          "type": "integer",
+          "not_null": true,
+          "default_expr": "150"
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp without time zone",
+          "not_null": true,
+          "default_expr": "now()"
+        },
+        {
+          "name": "solveCooldownSeconds",
+          "type": "integer",
+          "not_null": true,
+          "default_expr": "900"
+        },
+        {
+          "name": "phaseOverride",
+          "type": "text",
+          "not_null": true,
+          "default_expr": "'auto'::text"
+        },
+        {
+          "name": "phase2UnlockAt",
+          "type": "timestamp without time zone",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "journalUnlockAt",
+          "type": "timestamp without time zone",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "leadBgWashPct",
+          "type": "integer",
+          "not_null": true,
+          "default_expr": "72"
+        },
+        {
+          "name": "compassLat",
+          "type": "double precision",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "compassLng",
+          "type": "double precision",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "compassRadiusM",
+          "type": "integer",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "finaleNote1",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "finaleNote1En",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "finaleNote2",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "finaleNote2En",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "finaleWinner",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "finaleWinnerEn",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "finaleWinnerNote",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "finaleWinnerNoteEn",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "treasureLat",
+          "type": "double precision",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "treasureLng",
+          "type": "double precision",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "treasureRadiusM",
+          "type": "integer",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "finaleNote2Cta",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "finaleNote2CtaEn",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "finaleNote1Cta",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "finaleNote1CtaEn",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "trailEndLat",
+          "type": "double precision",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "trailEndLng",
+          "type": "double precision",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "trailEndRadiusM",
+          "type": "integer",
+          "not_null": false,
+          "default_expr": null
+        }
+      ],
+      "constraints": [
+        {
+          "name": "score_config_pkey",
+          "type": "p",
+          "def": "PRIMARY KEY (id)"
+        }
+      ],
+      "indexes": [],
+      "rows": 1
+    },
+    {
+      "name": "session",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "expiresAt",
+          "type": "timestamp without time zone",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "token",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp without time zone",
+          "not_null": true,
+          "default_expr": "now()"
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp without time zone",
+          "not_null": true,
+          "default_expr": "now()"
+        },
+        {
+          "name": "ipAddress",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "userAgent",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "userId",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        }
+      ],
+      "constraints": [
+        {
+          "name": "session_pkey",
+          "type": "p",
+          "def": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "session_token_key",
+          "type": "u",
+          "def": "UNIQUE (token)"
+        },
+        {
+          "name": "session_userId_fkey",
+          "type": "f",
+          "def": "FOREIGN KEY (\"userId\") REFERENCES \"user\"(id) ON DELETE CASCADE"
+        }
+      ],
+      "indexes": [],
+      "rows": 317
+    },
+    {
+      "name": "team",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "ownerId",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "inviteCode",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp without time zone",
+          "not_null": true,
+          "default_expr": "now()"
+        }
+      ],
+      "constraints": [
+        {
+          "name": "team_pkey",
+          "type": "p",
+          "def": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "team_inviteCode_key",
+          "type": "u",
+          "def": "UNIQUE (\"inviteCode\")"
+        }
+      ],
+      "indexes": [],
+      "rows": 54
+    },
+    {
+      "name": "team_member",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "teamId",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "userId",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "role",
+          "type": "text",
+          "not_null": true,
+          "default_expr": "'member'::text"
+        },
+        {
+          "name": "joinedAt",
+          "type": "timestamp without time zone",
+          "not_null": true,
+          "default_expr": "now()"
+        }
+      ],
+      "constraints": [
+        {
+          "name": "team_member_pkey",
+          "type": "p",
+          "def": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "team_member_userId_key",
+          "type": "u",
+          "def": "UNIQUE (\"userId\")"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "team_member_teamId_idx",
+          "def": "CREATE INDEX \"team_member_teamId_idx\" ON public.team_member USING btree (\"teamId\")"
+        }
+      ],
+      "rows": 112
+    },
+    {
+      "name": "user",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "email",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "emailVerified",
+          "type": "boolean",
+          "not_null": true,
+          "default_expr": "false"
+        },
+        {
+          "name": "image",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "firstName",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "lastName",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "yearOfBirth",
+          "type": "integer",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp without time zone",
+          "not_null": true,
+          "default_expr": "now()"
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp without time zone",
+          "not_null": true,
+          "default_expr": "now()"
+        },
+        {
+          "name": "role",
+          "type": "text",
+          "not_null": true,
+          "default_expr": "'user'::text"
+        },
+        {
+          "name": "acceptedTermsAt",
+          "type": "timestamp without time zone",
+          "not_null": false,
+          "default_expr": null
+        },
+        {
+          "name": "termsVersion",
+          "type": "text",
+          "not_null": false,
+          "default_expr": null
+        }
+      ],
+      "constraints": [
+        {
+          "name": "user_pkey",
+          "type": "p",
+          "def": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "user_email_key",
+          "type": "u",
+          "def": "UNIQUE (email)"
+        }
+      ],
+      "indexes": [],
+      "rows": 211
+    },
+    {
+      "name": "verification",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "identifier",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "value",
+          "type": "text",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "expiresAt",
+          "type": "timestamp without time zone",
+          "not_null": true,
+          "default_expr": null
+        },
+        {
+          "name": "createdAt",
+          "type": "timestamp without time zone",
+          "not_null": false,
+          "default_expr": "now()"
+        },
+        {
+          "name": "updatedAt",
+          "type": "timestamp without time zone",
+          "not_null": false,
+          "default_expr": "now()"
+        }
+      ],
+      "constraints": [
+        {
+          "name": "verification_pkey",
+          "type": "p",
+          "def": "PRIMARY KEY (id)"
+        }
+      ],
+      "indexes": [],
+      "rows": 0
+    }
+  ]
+}
