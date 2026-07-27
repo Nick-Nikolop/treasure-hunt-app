@@ -57,6 +57,10 @@ type Props = {
   unlocked: Clue[]
   locked: LockedClue[]
   unlockedCount: number
+  /** True once the crew scanned the trail-end QR at the LAST lead's own spot.
+   *  That scan is what closes the paper trail and releases Pytheas's first
+   *  note, so the note stays sealed until it lands. */
+  trailEndReached: boolean
   total: number
   startMs: number
   /** The single next sealed lead the player is working towards, or null. */
@@ -78,7 +82,7 @@ type Page =
   | { kind: "map"; stops: MapStop[]; total: number; allDone: boolean }
   | { kind: "clue"; clue: Clue }
   | { kind: "sealed"; gate: "time" | "qr"; unlockMs?: number; notStarted: boolean; order: number }
-  | { kind: "final"; stamps: MapStop[] }
+  | { kind: "final"; stamps: MapStop[]; trailEndReached: boolean }
 
 const FLIP_DURATION = 1.5
 
@@ -90,6 +94,7 @@ export function PoreiaView({
   unlocked,
   locked,
   unlockedCount,
+  trailEndReached,
   total,
   next,
   standings,
@@ -142,9 +147,9 @@ export function PoreiaView({
         order: next.order,
       })
     }
-    if (allDone) list.push({ kind: "final", stamps: stops })
+    if (allDone) list.push({ kind: "final", stamps: stops, trailEndReached })
     return list
-  }, [unlocked, next, notStarted, allDone, total])
+  }, [unlocked, next, notStarted, allDone, total, trailEndReached])
 
   // Deep link: /journal?page=N opens directly on that page (used by the
   // "open" cards on the home page). Initialised lazily so we land on the
@@ -326,10 +331,11 @@ export function PoreiaView({
         {t.journal.lead}
       </motion.p>
 
-      {/* Once every lead is solved the explorer is at the compass, so Pytheas's
-          first note is kept within reach here at the top of the journal. It can
-          otherwise only be re-read by flipping all the way to the last page. */}
-      {allDone && (
+      {/* Pytheas's first note is released by the trail-end QR at the last lead's
+          own spot, not merely by the last page being revealed. Once earned it is
+          kept within reach here, so it need not be re-read by flipping all the
+          way to the last page. */}
+      {trailEndReached && (
         <motion.div
           initial={lite ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -744,7 +750,9 @@ function JournalPage({
             onDone={onCountdownDone}
           />
         )}
-        {page.kind === "final" && <FinalPageBody stamps={page.stamps} />}
+        {page.kind === "final" && (
+          <FinalPageBody stamps={page.stamps} trailEndReached={page.trailEndReached} />
+        )}
       </div>
 
       {/* Page number footer */}
@@ -1178,7 +1186,13 @@ function Note1Button() {
   )
 }
 
-function FinalPageBody({ stamps }: { stamps: MapStop[] }) {
+function FinalPageBody({
+  stamps,
+  trailEndReached,
+}: {
+  stamps: MapStop[]
+  trailEndReached: boolean
+}) {
   const { t, locale } = useI18n()
 
   // Pytheas's closing note lives on the back of this last page. It is
@@ -1188,13 +1202,13 @@ function FinalPageBody({ stamps }: { stamps: MapStop[] }) {
   const autoShown = useRef(false)
 
   useEffect(() => {
-    if (!note || autoShown.current) return
+    if (!note || autoShown.current || !trailEndReached) return
     const seen = typeof window !== "undefined" && localStorage.getItem(NOTE1_SEEN_KEY)
     if (!seen) {
       autoShown.current = true
       setNoteOpen(true)
     }
-  }, [note])
+  }, [note, trailEndReached])
 
   const openNote = useCallback(() => setNoteOpen(true), [])
   const closeNote = useCallback(() => {
@@ -1212,7 +1226,7 @@ function FinalPageBody({ stamps }: { stamps: MapStop[] }) {
         {t.journal.finalBody}
       </p>
 
-      {note && (
+      {note && trailEndReached && (
         <button
           type="button"
           onClick={openNote}
@@ -1223,7 +1237,7 @@ function FinalPageBody({ stamps }: { stamps: MapStop[] }) {
         </button>
       )}
 
-      {noteOpen && note && (
+      {noteOpen && note && trailEndReached && (
         <Note1Overlay body={noteText} cta={noteCta} onClose={closeNote} />
       )}
 

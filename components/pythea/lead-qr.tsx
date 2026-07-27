@@ -51,8 +51,16 @@ export function LeadQrBlock({
     ? "FIN"
     : token.isCompass
       ? "CMP"
-      : String(token.leadOrder).padStart(2, "0")
-  const title = token.isFinish ? "Treasure" : token.isCompass ? "Compass" : `Lead ${orderLabel}`
+      : token.isTrailEnd
+        ? "END"
+        : String(token.leadOrder).padStart(2, "0")
+  const title = token.isFinish
+    ? "Treasure"
+    : token.isCompass
+      ? "Compass"
+      : token.isTrailEnd
+        ? "Trail end"
+        : `Lead ${orderLabel}`
 
   // The fixed part of the scan link, e.g. "https://…/q/". Only the last
   // segment is editable, so the domain and route can never be broken here.

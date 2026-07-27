@@ -8,7 +8,13 @@ import { PoreiaView } from "@/components/pythea/poreia-view"
 import { SiteFooter } from "@/components/pythea/site-footer"
 import { ClueControls } from "@/components/pythea/clue-controls"
 import { buildClueState, isOverrideAuthorized, PREVIEW_COOKIE } from "@/lib/clues"
-import { getCrewUserIds, getCrewEffectiveProgress, getUserScore, getStandingsSummary } from "@/lib/hunt"
+import {
+  getCrewUserIds,
+  getCrewEffectiveProgress,
+  getUserScore,
+  getStandingsSummary,
+  hasReachedTrailEnd,
+} from "@/lib/hunt"
 import { getLeadDefs } from "@/lib/leads"
 import { getLeadBgWashPct } from "@/lib/hunt-config"
 import { getPhaseContext } from "@/lib/phase-guard"
@@ -80,6 +86,14 @@ export default async function PoreiaPage() {
   // and how many other teams / solo players share the user's current lead.
   const standings = await getStandingsSummary(session.user.id, state.total, now)
 
+  // Pytheas's first note is released by the trail-end QR hidden at the LAST
+  // lead's own spot, not merely by the last page being revealed. Under the
+  // superadmin progress override there is no real scan to read, so the faked
+  // progress stands in for it and the preview keeps working.
+  const trailEndReached = overrideActive
+    ? state.unlockedCount >= state.total
+    : await hasReachedTrailEnd(session.user.id)
+
   const currentClue = unlocked[unlocked.length - 1] ?? null
   const current = currentClue
     ? { order: currentClue.order, country: currentClue.country, countryEn: currentClue.countryEn }
@@ -97,6 +111,7 @@ export default async function PoreiaPage() {
           unlocked={unlocked}
           locked={state.locked}
           unlockedCount={state.unlockedCount}
+          trailEndReached={trailEndReached}
           total={state.total}
           startMs={state.startMs}
           next={state.next}

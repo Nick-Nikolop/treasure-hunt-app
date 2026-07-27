@@ -375,6 +375,16 @@ async function insertFinishRows(userIds: string[], at: Date): Promise<void> {
   }
 }
 
+/**
+ * Whether the signed-in user's crew has closed the paper trail, i.e. scanned the
+ * trail-end QR at the last lead's own spot. Server pages use this to decide
+ * whether Pytheas's first note has been earned yet.
+ */
+export async function hasReachedTrailEnd(userId: string): Promise<boolean> {
+  const crew = await getCrewUserIds(userId)
+  return crewHasReachedTrailEnd(crew)
+}
+
 /** Whether any member of the crew has scanned the trail-end QR (the QR at the
  *  last lead's own spot), which is what closes the paper trail. */
 async function crewHasReachedTrailEnd(userIds: string[]): Promise<boolean> {
@@ -871,6 +881,8 @@ export type ClueTokenRow = {
   link: string
   isFinish: boolean
   isCompass: boolean
+  /** The QR hidden at the LAST lead's own spot, which closes the paper trail. */
+  isTrailEnd: boolean
 }
 
 /**
@@ -892,6 +904,7 @@ export async function getClueTokens(): Promise<ClueTokenRow[]> {
     link: r.link,
     isFinish: r.isFinish,
     isCompass: r.isCompass,
+    isTrailEnd: r.isTrailEnd,
   }))
 }
 

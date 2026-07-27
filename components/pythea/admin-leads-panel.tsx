@@ -117,6 +117,7 @@ export function AdminLeadsPanel({
   // so a lead's QR follows it across reorders. The finish QR isn't a lead, so
   // it renders in its own card after the list.
   const tokenByLeadId = new Map(tokens.map((t) => [t.leadId, t]))
+  const trailEndToken = tokens.find((t) => t.isTrailEnd) ?? null
   const compassToken = tokens.find((t) => t.isCompass) ?? null
   const finishToken = tokens.find((t) => t.isFinish) ?? null
 
@@ -124,6 +125,7 @@ export function AdminLeadsPanel({
   // here so each finale QR card can EDIT its own scan-location inline, exactly
   // like a lead QR, instead of sending admins to the Finale tab.
   const [finaleGeo, setFinaleGeo] = useState<{
+    trailEnd: FinaleGate
     compass: FinaleGate
     treasure: FinaleGate
   } | null>(null)
@@ -133,6 +135,7 @@ export function AdminLeadsPanel({
       .then((c) => {
         if (!alive) return
         setFinaleGeo({
+          trailEnd: { lat: c.trailEndLat, lng: c.trailEndLng, radiusM: c.trailEndRadiusM },
           compass: { lat: c.lat, lng: c.lng, radiusM: c.radiusM },
           treasure: { lat: c.treasureLat, lng: c.treasureLng, radiusM: c.treasureRadiusM },
         })
@@ -146,7 +149,7 @@ export function AdminLeadsPanel({
   // Save one finale QR's GPS gate inline, then reflect it in local state so the
   // card updates without a full reload.
   function saveFinaleGeo(
-    which: "compass" | "treasure",
+    which: "compass" | "treasure" | "trailEnd",
     lat: string,
     lng: string,
     radiusM: string,
@@ -158,6 +161,11 @@ export function AdminLeadsPanel({
         const fresh = await getFinaleState().catch(() => null)
         if (fresh) {
           setFinaleGeo({
+            trailEnd: {
+              lat: fresh.trailEndLat,
+              lng: fresh.trailEndLng,
+              radiusM: fresh.trailEndRadiusM,
+            },
             compass: { lat: fresh.lat, lng: fresh.lng, radiusM: fresh.radiusM },
             treasure: {
               lat: fresh.treasureLat,
@@ -491,6 +499,23 @@ export function AdminLeadsPanel({
         </ol>
 
         <div className="mt-4 flex flex-col gap-3">
+          <FinaleQrCard
+            token={trailEndToken}
+            pending={pending}
+            title="The Trail End"
+            purpose="Hide this QR at the LAST lead's own spot. Every other lead's QR reveals the next page, but the last lead has no next page, so this is the QR that closes the paper trail and hands over Pytheas's first note."
+            unlocks="the first note (and the compass hunt)"
+            hideAt="the last lead's spot"
+            gate={finaleGeo?.trailEnd ?? null}
+            gateReady={finaleGeo !== null}
+            onSaveToken={(slug, done) => {
+              if (trailEndToken) saveToken(trailEndToken.leadId, slug, done)
+              else done("This QR does not exist yet.")
+            }}
+            onSaveGeo={(lat, lng, radiusM, done) =>
+              saveFinaleGeo("trailEnd", lat, lng, radiusM, done)
+            }
+          />
           <FinaleQrCard
             token={compassToken}
             pending={pending}

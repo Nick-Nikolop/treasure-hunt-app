@@ -1709,6 +1709,9 @@ export async function adminSaveFinale(input: {
     treasureLat: current.treasureLat,
     treasureLng: current.treasureLng,
     treasureRadiusM: current.treasureRadiusM,
+    trailEndLat: current.trailEndLat,
+    trailEndLng: current.trailEndLng,
+    trailEndRadiusM: current.trailEndRadiusM,
     note1: input.note1 ?? "",
     note1En: input.note1En ?? "",
     note1Cta: input.note1Cta ?? "",
@@ -1741,7 +1744,7 @@ export async function adminSaveFinale(input: {
  * the shared `score_config` row so the other finale fields are preserved.
  */
 export async function adminSaveFinaleGeo(input: {
-  which: "compass" | "treasure"
+  which: "compass" | "treasure" | "trailEnd"
   lat: string
   lng: string
   radiusM: string
@@ -1759,6 +1762,9 @@ export async function adminSaveFinaleGeo(input: {
     treasureLat: input.which === "treasure" ? gate.lat : current.treasureLat,
     treasureLng: input.which === "treasure" ? gate.lng : current.treasureLng,
     treasureRadiusM: input.which === "treasure" ? gate.radius : current.treasureRadiusM,
+    trailEndLat: input.which === "trailEnd" ? gate.lat : current.trailEndLat,
+    trailEndLng: input.which === "trailEnd" ? gate.lng : current.trailEndLng,
+    trailEndRadiusM: input.which === "trailEnd" ? gate.radius : current.trailEndRadiusM,
     note1: current.note1,
     note1En: current.note1En,
     note1Cta: current.note1Cta,
