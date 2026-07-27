@@ -14,12 +14,19 @@ import type { ClueTokenRow } from "@/lib/hunt"
  */
 export function LeadQrBlock({
   token,
-  isTimerLead = false,
+  hideAt,
+  unlocks,
+  unlocksShort,
   pending,
   onRegenerate,
 }: {
   token: ClueTokenRow | null
-  isTimerLead?: boolean
+  /** Where this QR is physically hidden (this card's own stop). */
+  hideAt: string
+  /** What scanning it unlocks, e.g. "Lead 02 · Poland" or "the Compass". */
+  unlocks: string
+  /** Short form of the same, used on the regenerate button. */
+  unlocksShort: string
   pending: boolean
   onRegenerate: () => void
 }) {
@@ -27,31 +34,23 @@ export function LeadQrBlock({
   const [copied, setCopied] = useState(false)
   const [confirmRegen, setConfirmRegen] = useState(false)
 
-  // The opening lead unlocks on a timer, so it never gets a QR code.
-  if (isTimerLead) {
-    return (
-      <Shell>
-        <Header />
-        <p className="mt-1.5 font-sans text-[11px] leading-relaxed text-muted-foreground">
-          The opening lead unlocks on a timer, so it has no QR code.
-        </p>
-      </Shell>
-    )
-  }
-
   if (!token) {
     return (
       <Shell>
-        <Header />
+        <Header hideAt={hideAt} unlocks={unlocks} />
         <p className="mt-1.5 font-sans text-[11px] leading-relaxed text-muted-foreground">
-          No QR link has been generated for this lead yet.
+          No QR link has been generated for {unlocks} yet.
         </p>
       </Shell>
     )
   }
 
-  const orderLabel = token.isFinish ? "FIN" : String(token.leadOrder).padStart(2, "0")
-  const title = token.isFinish ? "Finish" : `Lead ${orderLabel}`
+  const orderLabel = token.isFinish
+    ? "FIN"
+    : token.isCompass
+      ? "CMP"
+      : String(token.leadOrder).padStart(2, "0")
+  const title = token.isFinish ? "Treasure" : token.isCompass ? "Compass" : `Lead ${orderLabel}`
 
   async function copy() {
     if (!token) return
@@ -66,7 +65,7 @@ export function LeadQrBlock({
 
   return (
     <Shell>
-      <Header />
+      <Header hideAt={hideAt} unlocks={unlocks} />
       <p className="mt-2 truncate rounded-sm border border-border bg-background px-2.5 py-1.5 font-mono text-xs text-foreground">
         {token.link}
       </p>
@@ -121,14 +120,16 @@ export function LeadQrBlock({
             className="inline-flex items-center gap-1.5 rounded-sm border border-destructive/50 px-3 py-1.5 font-sans text-xs font-bold tracking-chip text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-40"
           >
             <RefreshCw className="size-3.5" />
-            Regenerate
+            Regenerate {unlocksShort} QR
           </button>
         )}
       </div>
 
       {confirmRegen && (
         <p className="mt-2 font-sans text-[11px] leading-relaxed text-muted-foreground">
-          Issuing a fresh link invalidates any QR code already printed from the old one.
+          This replaces the <span className="font-bold text-foreground">{unlocksShort}</span> QR
+          link. Any copy already printed from the old one stops working, so you would need to reprint
+          and re-hide it.
         </p>
       )}
 
@@ -139,6 +140,8 @@ export function LeadQrBlock({
         orderLabel={orderLabel}
         title={title}
         isFinish={token.isFinish}
+        hideAt={hideAt}
+        unlocks={unlocks}
       />
     </Shell>
   )
@@ -148,13 +151,19 @@ function Shell({ children }: { children: React.ReactNode }) {
   return <div className="mt-4 rounded-sm border border-border bg-background/40 p-3.5">{children}</div>
 }
 
-function Header() {
+function Header({ hideAt, unlocks }: { hideAt: string; unlocks: string }) {
   return (
-    <div className="flex items-center gap-2">
-      <QrCode className="size-4 text-brass" />
-      <span className="font-sans text-[11px] font-bold uppercase tracking-chip text-foreground">
-        QR scan code
-      </span>
+    <div>
+      <div className="flex items-center gap-2">
+        <QrCode className="size-4 text-brass" />
+        <span className="font-sans text-[11px] font-bold uppercase tracking-chip text-foreground">
+          QR to hide here
+        </span>
+      </div>
+      <p className="mt-1.5 font-sans text-[11px] leading-relaxed text-muted-foreground">
+        Print this and hide it at <span className="font-bold text-foreground">{hideAt}</span>.
+        Scanning it unlocks <span className="font-bold text-foreground">{unlocks}</span>.
+      </p>
     </div>
   )
 }
@@ -167,6 +176,8 @@ function LeadQrModal({
   orderLabel,
   title,
   isFinish,
+  hideAt,
+  unlocks,
 }: {
   open: boolean
   onClose: () => void
@@ -174,6 +185,8 @@ function LeadQrModal({
   orderLabel: string
   title: string
   isFinish: boolean
+  hideAt: string
+  unlocks: string
 }) {
   const [dataUrl, setDataUrl] = useState<string | null>(null)
 
@@ -247,9 +260,11 @@ function LeadQrModal({
           {title} QR code
         </h2>
         <p className="mt-1 font-sans text-sm text-muted-foreground">
+          Print this and hide it at <span className="font-bold text-foreground">{hideAt}</span>.
+          Scanning it unlocks <span className="font-bold text-foreground">{unlocks}</span>.
           {isFinish
-            ? "Print this and hide it at the final location. Scanning it records each crew's finish and shows their placement. Crews keep finishing; nothing is locked."
-            : `Print this and hide it at the matching location. Scanning it unlocks lead ${orderLabel}.`}
+            ? " That is the finish: it records each crew's placement, and crews keep finishing after."
+            : ""}
         </p>
 
         <div className="mt-6 flex justify-center">

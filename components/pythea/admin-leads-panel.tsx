@@ -21,6 +21,8 @@ import {
   ExternalLink,
   Droplets,
   Compass,
+  Timer,
+  QrCode,
 } from "lucide-react"
 import {
   adminSaveLead,
@@ -45,7 +47,7 @@ import { DEFAULT_GEO_RADIUS_M } from "@/lib/geo"
 import { resolveLeadBackground } from "@/lib/lead-backgrounds"
 import { LeadQrBlock } from "@/components/pythea/lead-qr"
 
-/** One finale QR's GPS gate, as shown (read-only) on its card. */
+/** One finale QR's GPS gate (compass or treasure), edited on its card. */
 type FinaleGate = { lat: number | null; lng: number | null; radiusM: number }
 
 const errorText: Record<string, string> = {
@@ -460,7 +462,16 @@ export function AdminLeadsPanel({
           Manage the hunt&rsquo;s stops: reorder the sequence, add or remove leads, rewrite each
           one&rsquo;s copy in Greek and English, and upload its γραμματόσημο (stamp). Edits stay on
           this screen until you press <span className="font-bold text-foreground">Save all changes</span>.
-          Each lead keeps its own QR code wherever it sits in the order.
+        </p>
+        <p className="mt-2 flex items-start gap-2 rounded-sm border border-brass/30 bg-brass/[0.06] px-3 py-2 font-sans text-[12px] leading-relaxed text-foreground/90">
+          <QrCode className="mt-0.5 size-3.5 shrink-0 text-brass" />
+          <span>
+            Each card holds the QR you hide{" "}
+            <span className="font-bold">at that lead&rsquo;s location</span>, which is the one that
+            unlocks the <span className="font-bold">next</span> step. So Lead 01&rsquo;s card holds
+            Lead 02&rsquo;s QR, and the last lead&rsquo;s card holds the Compass QR. Each card also
+            sets that QR&rsquo;s scan location.
+          </span>
         </p>
         <p className="mt-2 flex items-start gap-2 rounded-sm border border-amber-500/30 bg-amber-500/10 px-3 py-2 font-sans text-[12px] leading-relaxed text-amber-200/90">
           <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
@@ -476,90 +487,121 @@ export function AdminLeadsPanel({
       <MissingCoordsAlert leads={items} onJump={(id) => setOpenId(id)} />
 
       <ul className="flex flex-col gap-2.5">
-        {items.map((lead, index) => (
-          <LeadCard
-            key={lead.id}
-            lead={lead}
-            base={baseById.get(lead.id)}
-            position={index + 1}
-            index={index}
-            count={items.length}
-            open={openId === lead.id}
-            pending={pending}
-            dirty={dirtyIds.includes(lead.id)}
-            onToggle={() => setOpenId((o) => (o === lead.id ? null : lead.id))}
-            onMoveUp={() => move(index, -1)}
-            onMoveDown={() => move(index, 1)}
-            onChange={(patch) => patchItem(lead.id, patch)}
-            onRevert={() => revertItem(lead.id)}
-            onRemove={() => removeLead(lead.id, lead.country)}
-            onUpload={(fd) => uploadStamp(lead.id, fd)}
-            onClearStamp={() => clearStamp(lead.id)}
-            onUploadBackground={(fd) => uploadBackground(lead.id, fd)}
-            onClearBackground={() => clearBackground(lead.id)}
-            onSaveGeo={(lat, lng, r, done) => saveGeo(lead.id, lat, lng, r, done)}
-            token={tokenByLeadId.get(lead.id) ?? null}
-            isTimerLead={index === 0}
-            onRegenerateToken={(order) => regenToken(order)}
-          />
-        ))}
+        {items.map((lead, index) => {
+          // Each card holds the QR explorers FIND at this lead's spot, which is
+          // the one that unlocks the NEXT step. The last lead hands over the
+          // compass. Lead 1 opens on a timer, so its own QR does not exist.
+          // The scan location travels with the QR, so the coordinates edited
+          // here are the ones that gate the QR pictured on this same card.
+          const isLastLead = index === items.length - 1
+          const next = isLastLead ? null : items[index + 1]
+          const hop = isLastLead
+            ? {
+                token: compassToken,
+                unlocks: "the Compass",
+                unlocksShort: "Compass",
+                geo: finaleGeo
+                  ? {
+                      lat: finaleGeo.compass.lat,
+                      lng: finaleGeo.compass.lng,
+                      radiusM: finaleGeo.compass.radiusM,
+                    }
+                  : null,
+                geoReady: finaleGeo !== null,
+                save: (lat: string, lng: string, r: string, done: (ok: boolean) => void) =>
+                  saveFinaleGeo("compass", lat, lng, r, done),
+              }
+            : {
+                token: tokenByLeadId.get(next!.id) ?? null,
+                unlocks: `Lead ${String(index + 2).padStart(2, "0")} · ${next!.country}`,
+                unlocksShort: `Lead ${String(index + 2).padStart(2, "0")}`,
+                geo: { lat: next!.lat, lng: next!.lng, radiusM: next!.geoRadiusM },
+                geoReady: true,
+                save: (lat: string, lng: string, r: string, done: (ok: boolean) => void) =>
+                  saveGeo(next!.id, lat, lng, r, done),
+              }
+
+          return (
+            <LeadCard
+              key={lead.id}
+              lead={lead}
+              base={baseById.get(lead.id)}
+              position={index + 1}
+              index={index}
+              count={items.length}
+              open={openId === lead.id}
+              pending={pending}
+              dirty={dirtyIds.includes(lead.id)}
+              onToggle={() => setOpenId((o) => (o === lead.id ? null : lead.id))}
+              onMoveUp={() => move(index, -1)}
+              onMoveDown={() => move(index, 1)}
+              onChange={(patch) => patchItem(lead.id, patch)}
+              onRevert={() => revertItem(lead.id)}
+              onRemove={() => removeLead(lead.id, lead.country)}
+              onUpload={(fd) => uploadStamp(lead.id, fd)}
+              onClearStamp={() => clearStamp(lead.id)}
+              onUploadBackground={(fd) => uploadBackground(lead.id, fd)}
+              onClearBackground={() => clearBackground(lead.id)}
+              opensOnTimer={index === 0}
+              qrToken={hop.token}
+              qrUnlocks={hop.unlocks}
+              qrUnlocksShort={hop.unlocksShort}
+              qrGeo={hop.geo}
+              qrGeoReady={hop.geoReady}
+              onSaveQrGeo={hop.save}
+              onRegenerateToken={(order) => regenToken(order)}
+            />
+          )
+        })}
       </ul>
 
       <div className="mt-2 rounded-md border border-brass/30 bg-brass/[0.04] p-4">
         <div className="flex items-center gap-2">
           <Compass className="size-5 text-brass" aria-hidden />
-          <h2 className="font-serif text-lg font-black text-foreground">The endgame QRs</h2>
+          <h2 className="font-serif text-lg font-black text-foreground">The endgame</h2>
         </div>
         <p className="mt-1.5 font-sans text-[12px] leading-relaxed text-muted-foreground">
-          Two extra QRs, scanned in order after all leads are solved. They are
-          NOT leads. Each has its own GPS gate: a crew must be standing at the
-          right spot for the scan to count.
+          Every QR is hidden one stop{" "}
+          <span className="font-semibold text-foreground">before</span> the step it unlocks. So the
+          last lead&rsquo;s card holds the Compass QR, and the card below holds the Treasure QR.
+          Neither the compass nor the treasure is a lead.
         </p>
         <ol className="mt-3 flex flex-col gap-1.5 font-sans text-[12px] text-muted-foreground">
           <li className="flex gap-2">
-            <span className="font-bold text-brass">0.</span>
-            <span>
-              All leads solved &rarr; the &ldquo;find my compass&rdquo; note
-              appears in the journal.
-            </span>
-          </li>
-          <li className="flex gap-2">
             <span className="font-bold text-brass">1.</span>
             <span>
-              Crew scans the <span className="font-semibold text-foreground">Compass QR</span> &rarr;
-              shows the compass note. Not the finish.
+              Last lead solved &rarr; the &ldquo;find my compass&rdquo; note appears, and the crew
+              looks for the <span className="font-semibold text-foreground">Compass QR</span> you
+              hid at that last lead.
             </span>
           </li>
           <li className="flex gap-2">
             <span className="font-bold text-brass">2.</span>
             <span>
-              Crew scans the <span className="font-semibold text-foreground">Treasure QR</span> &rarr;
-              the finish. Winner screen with their placement.
+              Scanning the compass shows the compass note. This is{" "}
+              <span className="font-semibold text-foreground">not</span> the finish, it points them
+              to the treasure.
+            </span>
+          </li>
+          <li className="flex gap-2">
+            <span className="font-bold text-brass">3.</span>
+            <span>
+              Scanning the <span className="font-semibold text-foreground">Treasure QR</span>, hidden
+              at the compass spot below, is the finish: the winner screen with their placement.
             </span>
           </li>
         </ol>
 
         <div className="mt-4 flex flex-col gap-3">
           <FinaleQrCard
-            token={compassToken}
-            pending={pending}
-            onRegenerate={regenToken}
-            badge="1"
-            title="Compass QR"
-            purpose="Scanned first, once every lead is solved. Reveals the compass note. Does NOT finish the hunt."
-            gate={finaleGeo?.compass ?? null}
-            gateReady={finaleGeo !== null}
-            onSaveGeo={(lat, lng, radiusM, done) =>
-              saveFinaleGeo("compass", lat, lng, radiusM, done)
-            }
-          />
-          <FinaleQrCard
             token={finishToken}
             pending={pending}
             onRegenerate={regenToken}
-            badge="2"
-            title="Treasure QR — the finish"
-            purpose="Scanned second, after the compass. Records the crew's finish and shows the winner screen with their placement (1st, 2nd, 3rd…). Crews keep finishing; nothing is locked."
+            title="The Compass"
+            purpose="Explorers stand here after scanning the compass, so this card holds the Treasure QR and the spot where you hide it."
+            unlocks="the Treasure (the finish)"
+            unlocksShort="Treasure"
+            hideAt="the compass spot"
             gate={finaleGeo?.treasure ?? null}
             gateReady={finaleGeo !== null}
             onSaveGeo={(lat, lng, radiusM, done) =>
@@ -567,7 +609,7 @@ export function AdminLeadsPanel({
             }
           />
           <p className="font-sans text-[12px] leading-relaxed text-muted-foreground">
-            The notes shown when each QR is scanned are edited in the{" "}
+            The notes shown when the compass and the treasure are scanned are edited in the{" "}
             <span className="font-semibold text-foreground">Finale</span> tab.
           </p>
         </div>
@@ -836,9 +878,13 @@ function LeadCard({
   onClearStamp,
   onUploadBackground,
   onClearBackground,
-  onSaveGeo,
-  token,
-  isTimerLead,
+  opensOnTimer,
+  qrToken,
+  qrUnlocks,
+  qrUnlocksShort,
+  qrGeo,
+  qrGeoReady,
+  onSaveQrGeo,
   onRegenerateToken,
 }: {
   lead: EditableLead
@@ -859,9 +905,16 @@ function LeadCard({
   onClearStamp: () => void
   onUploadBackground: (formData: FormData) => void
   onClearBackground: () => void
-  onSaveGeo: (lat: string, lng: string, radiusM: string, done: (ok: boolean) => void) => void
-  token: ClueTokenRow | null
-  isTimerLead: boolean
+  /** True for the opening lead, which starts on a timer with nothing to scan. */
+  opensOnTimer: boolean
+  /** The QR hidden AT this lead's spot. It unlocks the next step, not this one. */
+  qrToken: ClueTokenRow | null
+  qrUnlocks: string
+  qrUnlocksShort: string
+  /** Scan location of the QR above, or null while the finale config loads. */
+  qrGeo: { lat: number | null; lng: number | null; radiusM: number | null } | null
+  qrGeoReady: boolean
+  onSaveQrGeo: (lat: string, lng: string, radiusM: string, done: (ok: boolean) => void) => void
   onRegenerateToken: (leadOrder: number) => void
 }) {
   const [confirmRemove, setConfirmRemove] = useState(false)
@@ -916,13 +969,13 @@ function LeadCard({
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          {lead.lat != null && lead.lng != null && (
+          {qrGeo?.lat != null && qrGeo.lng != null && (
             <span
-              title="Scan radius"
+              title={`Scan radius of the ${qrUnlocksShort} QR hidden here`}
               className="hidden items-center gap-1 rounded-sm border border-border px-2 py-0.5 font-sans text-[10px] font-bold tracking-chip text-muted-foreground sm:inline-flex"
             >
               <MapPin className="size-3 text-brass" />
-              {lead.geoRadiusM ?? DEFAULT_GEO_RADIUS_M} m
+              {qrGeo.radiusM ?? DEFAULT_GEO_RADIUS_M} m
             </span>
           )}
           {dirty && (
@@ -1011,14 +1064,39 @@ function LeadCard({
             </label>
           </div>
 
-          <GeoEditor lead={lead} pending={pending} onSaveGeo={onSaveGeo} />
+          {opensOnTimer && (
+            <p className="mt-4 flex items-start gap-2 rounded-sm border border-border bg-background/40 px-3 py-2 font-sans text-[11px] leading-relaxed text-muted-foreground">
+              <Timer className="mt-0.5 size-3.5 shrink-0 text-brass" />
+              <span>
+                This opening lead unlocks on a timer, so there is nothing to scan to start it.
+              </span>
+            </p>
+          )}
+
+          {qrGeoReady ? (
+            <GeoEditor
+              lat={qrGeo?.lat ?? null}
+              lng={qrGeo?.lng ?? null}
+              radiusM={qrGeo?.radiusM ?? null}
+              unlocks={qrUnlocks}
+              pending={pending}
+              onSaveGeo={onSaveQrGeo}
+            />
+          ) : (
+            <div className="mt-4 flex items-center gap-1.5 rounded-sm border border-border bg-background/40 p-3.5 font-sans text-[11px] text-muted-foreground">
+              <Loader2 className="size-3.5 animate-spin" />
+              Loading scan location…
+            </div>
+          )}
 
           <LeadQrBlock
-            token={token}
-            isTimerLead={isTimerLead}
+            token={qrToken}
+            hideAt={lead.country}
+            unlocks={qrUnlocks}
+            unlocksShort={qrUnlocksShort}
             pending={pending}
             onRegenerate={() => {
-              if (token) onRegenerateToken(token.leadOrder)
+              if (qrToken) onRegenerateToken(qrToken.leadOrder)
             }}
           />
 
@@ -1087,17 +1165,19 @@ function LeadCard({
 }
 
 /**
- * Standalone card for a finale QR (compass or treasure). Neither is a lead, so
- * they live in their own cards below the list rather than in a lead's editor.
- * Reuses the same QR block as the leads.
+ * Card for the compass stop. Like a lead card, it holds the QR explorers find
+ * once they are standing here (the treasure QR) plus the spot where it is
+ * hidden. The compass QR itself lives on the last lead's card.
  */
 function FinaleQrCard({
   token,
   pending,
   onRegenerate,
-  badge,
   title,
   purpose,
+  unlocks,
+  unlocksShort,
+  hideAt,
   gate,
   gateReady,
   onSaveGeo,
@@ -1105,10 +1185,12 @@ function FinaleQrCard({
   token: ClueTokenRow | null
   pending: boolean
   onRegenerate: (leadOrder: number) => void
-  badge: string
   title: string
   purpose: string
-  /** The QR's GPS gate (from finale config), or null while still loading. */
+  unlocks: string
+  unlocksShort: string
+  hideAt: string
+  /** Scan location of the QR shown here, or null while the config loads. */
   gate: FinaleGate | null
   /** True once the finale config fetch has resolved (so the editor can seed). */
   gateReady: boolean
@@ -1118,28 +1200,34 @@ function FinaleQrCard({
   return (
     <div className="rounded-sm border border-border bg-card/40 p-4">
       <div className="flex items-start gap-2">
-        <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-brass font-serif text-sm font-black text-background">
-          {badge}
-        </span>
+        <Compass className="mt-0.5 size-5 shrink-0 text-brass" aria-hidden />
         <div>
           <h3 className="font-serif text-base font-black text-foreground">{title}</h3>
           <p className="font-sans text-[12px] leading-relaxed text-muted-foreground">{purpose}</p>
         </div>
       </div>
 
-      {/* Inline GPS gate editor — same lat/lng/radius controls a lead QR has,
-          saving to the finale config so this QR's on-scan check is set here. */}
-      {!gateReady ? (
-        <div className="mt-3 flex items-center gap-1.5 rounded-sm border border-border bg-background/40 p-3 font-sans text-[12px] text-muted-foreground">
+      {gateReady ? (
+        <GeoEditor
+          lat={gate?.lat ?? null}
+          lng={gate?.lng ?? null}
+          radiusM={gate?.radiusM ?? null}
+          unlocks={unlocks}
+          pending={pending}
+          onSaveGeo={onSaveGeo}
+        />
+      ) : (
+        <div className="mt-4 flex items-center gap-1.5 rounded-sm border border-border bg-background/40 p-3.5 font-sans text-[11px] text-muted-foreground">
           <Loader2 className="size-3.5 animate-spin" />
           Loading scan location…
         </div>
-      ) : (
-        <FinaleGeoEditor gate={gate} pending={pending} onSaveGeo={onSaveGeo} />
       )}
 
       <LeadQrBlock
         token={token}
+        hideAt={hideAt}
+        unlocks={unlocks}
+        unlocksShort={unlocksShort}
         pending={pending}
         onRegenerate={() => onRegenerate(token.leadOrder)}
       />
@@ -1148,174 +1236,10 @@ function FinaleQrCard({
 }
 
 /**
- * Inline GPS gate editor for a finale QR (compass/treasure). Mirrors the
- * per-lead GeoEditor: lat/lng/radius, Save, Clear, and a Maps preview. Blank
- * lat + lng disables the on-scan location check for that QR.
- */
-function FinaleGeoEditor({
-  gate,
-  pending,
-  onSaveGeo,
-}: {
-  gate: FinaleGate | null
-  pending: boolean
-  onSaveGeo: (lat: string, lng: string, radiusM: string, done: (ok: boolean) => void) => void
-}) {
-  const savedLat = gate?.lat != null ? String(gate.lat) : ""
-  const savedLng = gate?.lng != null ? String(gate.lng) : ""
-  const savedRadius = gate?.radiusM != null ? String(gate.radiusM) : ""
-
-  const [lat, setLat] = useState(savedLat)
-  const [lng, setLng] = useState(savedLng)
-  const [radius, setRadius] = useState(savedRadius)
-  const [saving, setSaving] = useState(false)
-
-  // Re-seed the inputs whenever the saved gate changes (e.g. after a save
-  // refetch or the async config load resolves).
-  useEffect(() => {
-    setLat(savedLat)
-    setLng(savedLng)
-    setRadius(savedRadius)
-  }, [savedLat, savedLng, savedRadius])
-
-  const hasCoords = gate != null && gate.lat != null && gate.lng != null
-  const dirty = lat !== savedLat || lng !== savedLng || radius !== savedRadius
-
-  const latNum = Number(lat.trim())
-  const lngNum = Number(lng.trim())
-  const previewCoords =
-    lat.trim() !== "" &&
-    lng.trim() !== "" &&
-    Number.isFinite(latNum) &&
-    latNum >= -90 &&
-    latNum <= 90 &&
-    Number.isFinite(lngNum) &&
-    lngNum >= -180 &&
-    lngNum <= 180
-      ? { lat: latNum, lng: lngNum }
-      : null
-
-  function save() {
-    if (saving || pending) return
-    setSaving(true)
-    onSaveGeo(lat, lng, radius, () => setSaving(false))
-  }
-
-  function clear() {
-    setLat("")
-    setLng("")
-    setRadius("")
-    setSaving(true)
-    onSaveGeo("", "", "", () => setSaving(false))
-  }
-
-  return (
-    <div
-      className={`mt-3 rounded-sm border p-3.5 ${
-        hasCoords ? "border-border bg-background/40" : "border-amber-500/50 bg-amber-500/10"
-      }`}
-    >
-      <div className="flex items-center gap-2">
-        {hasCoords ? (
-          <MapPin className="size-4 text-brass" />
-        ) : (
-          <MapPinOff className="size-4 text-amber-400" />
-        )}
-        <span className="font-sans text-[11px] font-bold uppercase tracking-chip text-foreground">
-          Scan location
-        </span>
-        {!hasCoords && (
-          <span className="rounded-sm bg-amber-500/25 px-2 py-0.5 font-sans text-[10px] font-bold uppercase tracking-chip text-amber-100">
-            Not set
-          </span>
-        )}
-      </div>
-      <p className="mt-1.5 font-sans text-[11px] leading-relaxed text-muted-foreground">
-        The physical spot of this QR. When set, a scan requires the crew to be
-        within the radius. Leave latitude and longitude blank to scan from
-        anywhere.
-      </p>
-
-      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <label className="flex flex-col gap-1">
-          <span className="font-sans text-[10px] font-bold uppercase tracking-chip text-muted-foreground">
-            Latitude
-          </span>
-          <input
-            value={lat}
-            onChange={(e) => setLat(e.target.value)}
-            inputMode="decimal"
-            placeholder="37.0412903"
-            className="w-full rounded-sm border border-border bg-background px-2.5 py-1.5 font-mono text-xs text-foreground outline-none focus:border-brass"
-          />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className="font-sans text-[10px] font-bold uppercase tracking-chip text-muted-foreground">
-            Longitude
-          </span>
-          <input
-            value={lng}
-            onChange={(e) => setLng(e.target.value)}
-            inputMode="decimal"
-            placeholder="22.1122364"
-            className="w-full rounded-sm border border-border bg-background px-2.5 py-1.5 font-mono text-xs text-foreground outline-none focus:border-brass"
-          />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className="font-sans text-[10px] font-bold uppercase tracking-chip text-muted-foreground">
-            Radius (m)
-          </span>
-          <input
-            value={radius}
-            onChange={(e) => setRadius(e.target.value)}
-            inputMode="numeric"
-            placeholder={String(DEFAULT_GEO_RADIUS_M)}
-            className="w-full rounded-sm border border-border bg-background px-2.5 py-1.5 font-mono text-xs text-foreground outline-none focus:border-brass"
-          />
-        </label>
-      </div>
-
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={save}
-          disabled={!dirty || saving || pending}
-          className="inline-flex items-center gap-1.5 rounded-sm bg-brass px-3 py-1.5 font-sans text-xs font-bold tracking-chip text-background transition-opacity hover:opacity-90 disabled:opacity-40"
-        >
-          {saving ? <Loader2 className="size-3.5 animate-spin" /> : <MapPin className="size-3.5" />}
-          Save location
-        </button>
-        {previewCoords && (
-          <a
-            href={`https://www.google.com/maps/search/?api=1&query=${previewCoords.lat},${previewCoords.lng}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-sm border border-border px-3 py-1.5 font-sans text-xs font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass"
-          >
-            <ExternalLink className="size-3.5" />
-            Show in Google Maps
-          </a>
-        )}
-        {hasCoords && (
-          <button
-            type="button"
-            onClick={clear}
-            disabled={saving || pending}
-            className="inline-flex items-center gap-1.5 rounded-sm border border-border px-3 py-1.5 font-sans text-xs font-bold tracking-chip text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
-          >
-            <MapPinOff className="size-3.5" />
-            Clear
-          </button>
-        )}
-      </div>
-    </div>
-  )
-}
-
-/**
- * Bright, high-visibility banner listing every lead that still has no GPS
- * coordinates. These leads cannot enforce the on-site scan check, so they need
- * the admin's attention. Clicking a chip jumps straight to that lead's editor.
+ * Bright, high-visibility banner listing every lead QR that still has no GPS
+ * coordinates, so it would unlock from anywhere. A lead's coordinates gate the
+ * QR hidden at the PREVIOUS stop, so each chip jumps to that hosting card. The
+ * opening lead is skipped: it starts on a timer, so its coordinates gate nothing.
  */
 function MissingCoordsAlert({
   leads,
@@ -1325,8 +1249,16 @@ function MissingCoordsAlert({
   onJump: (id: string) => void
 }) {
   const missing = leads
-    .map((l, i) => ({ ...l, position: i + 1 }))
-    .filter((l) => l.lat == null || l.lng == null)
+    .map((l, i) => ({
+      id: l.id,
+      country: l.country,
+      position: i + 1,
+      lat: l.lat,
+      lng: l.lng,
+      hostId: i > 0 ? leads[i - 1].id : null,
+      hostCountry: i > 0 ? leads[i - 1].country : null,
+    }))
+    .filter((l) => l.hostId != null && (l.lat == null || l.lng == null))
   if (missing.length === 0) return null
 
   return (
@@ -1334,23 +1266,24 @@ function MissingCoordsAlert({
       <div className="flex items-center gap-2">
         <MapPinOff className="size-5 shrink-0 text-rose-300" />
         <h3 className="font-serif text-base font-black text-rose-100">
-          {missing.length} lead{missing.length > 1 ? "s" : ""} without a location
+          {missing.length} QR{missing.length > 1 ? "s" : ""} without a scan location
         </h3>
       </div>
       <p className="mt-1.5 font-sans text-[13px] leading-relaxed text-rose-100/90">
-        These leads have no GPS coordinates, so their QR codes will unlock without any on-site
-        check. Add coordinates below to enforce the &ldquo;be at the mark&rdquo; scan.
+        These QR codes will unlock from anywhere. Each one is set on the card of the lead where it is
+        hidden, which is the stop just before it.
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
         {missing.map((l) => (
           <button
             key={l.id}
             type="button"
-            onClick={() => onJump(l.id)}
+            onClick={() => onJump(l.hostId!)}
             className="inline-flex items-center gap-1.5 rounded-sm border border-rose-400/60 bg-rose-500/20 px-2.5 py-1 font-sans text-[12px] font-bold text-rose-50 transition-colors hover:bg-rose-500/30"
           >
             <MapPin className="size-3" />
-            Lead {String(l.position).padStart(2, "0")} · {l.country}
+            Lead {String(l.position).padStart(2, "0")} · {l.country} QR
+            <span className="font-normal text-rose-100/70">on {l.hostCountry}</span>
           </button>
         ))}
       </div>
@@ -1364,24 +1297,40 @@ function MissingCoordsAlert({
  * clears the gate. Radius is optional and falls back to the global default.
  */
 function GeoEditor({
-  lead,
+  lat: savedLatVal,
+  lng: savedLngVal,
+  radiusM: savedRadiusVal,
+  unlocks,
   pending,
   onSaveGeo,
 }: {
-  lead: EditableLead
+  lat: number | null
+  lng: number | null
+  radiusM: number | null
+  /** What the QR hidden at this spot unlocks, used in the copy. */
+  unlocks: string
   pending: boolean
   onSaveGeo: (lat: string, lng: string, radiusM: string, done: (ok: boolean) => void) => void
 }) {
-  const [lat, setLat] = useState(lead.lat != null ? String(lead.lat) : "")
-  const [lng, setLng] = useState(lead.lng != null ? String(lead.lng) : "")
-  const [radius, setRadius] = useState(lead.geoRadiusM != null ? String(lead.geoRadiusM) : "")
+  const savedLat = savedLatVal != null ? String(savedLatVal) : ""
+  const savedLng = savedLngVal != null ? String(savedLngVal) : ""
+  const savedRadius = savedRadiusVal != null ? String(savedRadiusVal) : ""
+
+  const [lat, setLat] = useState(savedLat)
+  const [lng, setLng] = useState(savedLng)
+  const [radius, setRadius] = useState(savedRadius)
   const [saving, setSaving] = useState(false)
 
-  const hasCoords = lead.lat != null && lead.lng != null
-  const dirty =
-    lat !== (lead.lat != null ? String(lead.lat) : "") ||
-    lng !== (lead.lng != null ? String(lead.lng) : "") ||
-    radius !== (lead.geoRadiusM != null ? String(lead.geoRadiusM) : "")
+  // Re-seed the inputs when the saved values change: after a save, after a
+  // reorder, or when the async finale config resolves.
+  useEffect(() => {
+    setLat(savedLat)
+    setLng(savedLng)
+    setRadius(savedRadius)
+  }, [savedLat, savedLng, savedRadius])
+
+  const hasCoords = savedLatVal != null && savedLngVal != null
+  const dirty = lat !== savedLat || lng !== savedLng || radius !== savedRadius
 
   // Link target from the CURRENT inputs (so it reflects unsaved edits too),
   // only when both parse to valid WGS84 coordinates.
@@ -1443,8 +1392,10 @@ function GeoEditor({
         )}
       </div>
       <p className="mt-1.5 font-sans text-[11px] leading-relaxed text-muted-foreground">
-        The physical spot of this QR. When set, a scan requires the explorer to be within the radius.
-        Leave latitude and longitude blank to disable the check.
+        Where you hide the QR that unlocks{" "}
+        <span className="font-semibold text-foreground">{unlocks}</span>. When set, that scan only
+        counts if the explorer is inside the radius. Leave latitude and longitude blank to let it
+        scan from anywhere.
       </p>
 
       <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
