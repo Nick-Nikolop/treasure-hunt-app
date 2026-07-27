@@ -486,6 +486,8 @@ export function AdminLeadsPanel({
 
       <MissingCoordsAlert leads={items} onJump={(id) => setOpenId(id)} />
 
+      <MissingFinaleCoordsAlert geo={finaleGeo} />
+
       <ul className="flex flex-col gap-2.5">
         {items.map((lead, index) => {
           // Each card holds the QR explorers FIND at this lead's spot, which is
@@ -1285,6 +1287,55 @@ function MissingCoordsAlert({
             Lead {String(l.position).padStart(2, "0")} · {l.country} QR
             <span className="font-normal text-rose-100/70">on {l.hostCountry}</span>
           </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Same warning as MissingCoordsAlert, but for the two endgame QRs. Their gates
+ * live in the finale config rather than on a lead row, so they are checked
+ * separately. Renders nothing until the config has loaded, to avoid flashing a
+ * false "not set" warning while the fetch is in flight.
+ */
+function MissingFinaleCoordsAlert({
+  geo,
+}: {
+  geo: { compass: FinaleGate; treasure: FinaleGate } | null
+}) {
+  if (!geo) return null
+
+  const missing = [
+    { key: "compass", label: "Compass QR", hostLabel: "the last lead", gate: geo.compass },
+    { key: "treasure", label: "Treasure QR", hostLabel: "the Compass card", gate: geo.treasure },
+  ].filter((m) => m.gate.lat == null || m.gate.lng == null)
+  if (missing.length === 0) return null
+
+  return (
+    <div className="rounded-sm border-2 border-amber-500/70 bg-amber-500/15 p-4 shadow-[0_0_24px_-6px_rgba(245,158,11,0.55)]">
+      <div className="flex items-center gap-2">
+        <MapPinOff className="size-5 shrink-0 text-amber-300" />
+        <h3 className="font-serif text-base font-black text-amber-100">
+          The endgame {missing.length > 1 ? "QRs have" : "QR has"} no scan location
+        </h3>
+      </div>
+      <p className="mt-1.5 font-sans text-[13px] leading-relaxed text-amber-100/90">
+        {missing.map((m) => m.label).join(" and ")} will unlock from anywhere, so a crew could
+        finish without standing at the right spot. Set{" "}
+        {missing.length > 1 ? "each one" : "it"} on {missing.map((m) => m.hostLabel).join(" and ")}{" "}
+        below.
+      </p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {missing.map((m) => (
+          <span
+            key={m.key}
+            className="inline-flex items-center gap-1.5 rounded-sm border border-amber-400/60 bg-amber-500/20 px-2.5 py-1 font-sans text-[12px] font-bold text-amber-50"
+          >
+            <MapPin className="size-3" />
+            {m.label}
+            <span className="font-normal text-amber-100/70">on {m.hostLabel}</span>
+          </span>
         ))}
       </div>
     </div>
