@@ -326,6 +326,20 @@ export function PoreiaView({
         {t.journal.lead}
       </motion.p>
 
+      {/* Once every lead is solved the explorer is at the compass, so Pytheas's
+          first note is kept within reach here at the top of the journal. It can
+          otherwise only be re-read by flipping all the way to the last page. */}
+      {allDone && (
+        <motion.div
+          initial={lite ? false : { opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.15 }}
+          className="mb-7 -mt-4 md:mb-9 md:-mt-5"
+        >
+          <Note1Button />
+        </motion.div>
+      )}
+
       {/* The book, centered. Pages are bound on the left; a turned page rotates
           around the spine and tucks behind the journal. The stage clips at the
           spine so the leaf slips behind instead of floating away on the left. */}
@@ -1034,40 +1048,136 @@ function SealedPageBody({
   )
 }
 
-function FinalPageBody({ stamps }: { stamps: MapStop[] }) {
-  const { t, locale } = useI18n()
+type Note1 = { note1: string; note1En: string }
 
-  // Pytheas's closing note lives on the back of this last page. It is fetched
-  // on demand (only this page can mount it) and auto-revealed once, then stays
-  // re-openable via the tucked corner below.
-  const [note, setNote] = useState<{ note1: string; note1En: string } | null>(null)
-  const [noteOpen, setNoteOpen] = useState(false)
-  const autoShown = useRef(false)
+/** Marks the first note as read, so the final page stops auto-opening it once
+ *  the explorer has seen it from either entry point. */
+const NOTE1_SEEN_KEY = "pythea:note1-seen"
+
+/**
+ * A single shared request for the note. Both entry points (the button above the
+ * book and the final page itself) are mounted at once when every lead is
+ * solved, so without this they would each fetch their own copy.
+ */
+let note1Request: Promise<Note1 | null> | null = null
+function loadNote1(): Promise<Note1 | null> {
+  note1Request ??= getFinaleNote1()
+  return note1Request
+}
+
+/** Fetches Pytheas's first note once and returns the body for the active locale. */
+function useNote1(): { note: Note1 | null; body: string } {
+  const { locale } = useI18n()
+  const [note, setNote] = useState<Note1 | null>(null)
 
   useEffect(() => {
     let alive = true
-    getFinaleNote1().then((n) => {
-      if (!alive || !n) return
-      setNote(n)
-      // Auto-open the note the first time the explorer reaches this page.
-      const seen = typeof window !== "undefined" && localStorage.getItem("pythea:note1-seen")
-      if (!seen && !autoShown.current) {
-        autoShown.current = true
-        setNoteOpen(true)
-      }
+    loadNote1().then((n) => {
+      if (alive && n) setNote(n)
     })
     return () => {
       alive = false
     }
   }, [])
 
+  return { note, body: note ? (locale === "en" ? note.note1En : note.note1) : "" }
+}
+
+/** The note itself, opened as a lightbox over the whole page. */
+function Note1Overlay({ body, onClose }: { body: string; onClose: () => void }) {
+  const { t } = useI18n()
+
+  // Escape closes it, like any other dialog.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose()
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [onClose])
+
+  return (
+    <div
+      className="fixed inset-0 z-[80] flex items-center justify-center overflow-y-auto bg-black/55 p-4 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-label={t.finale.noteLabel}
+      onClick={onClose}
+    >
+      <div className="my-auto w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+        <p className="mb-3 text-center font-sans text-[11px] font-bold tracking-chip text-[oklch(0.92_0.03_86)]">
+          {t.finale.noteLabel}
+        </p>
+        <HandwrittenNote body={body} signature={t.finale.signature} />
+        <div className="mt-5 flex justify-center">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-white/30 bg-white/10 px-6 py-2 font-sans text-[11px] font-bold tracking-chip text-white transition-colors hover:bg-white/20"
+          >
+            {t.finale.close}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * The "read the note" pill shown above the book once every lead is solved, so
+ * the note can be re-read any number of times without flipping to the last
+ * page. Renders nothing until the note has loaded.
+ */
+function Note1Button() {
+  const { t } = useI18n()
+  const { note, body } = useNote1()
+  const [open, setOpen] = useState(false)
+
+  const close = useCallback(() => {
+    setOpen(false)
+    if (typeof window !== "undefined") localStorage.setItem(NOTE1_SEEN_KEY, "1")
+  }, [])
+
+  if (!note) return null
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="group inline-flex items-center gap-2 rounded-full border border-brass/40 bg-brass/[0.07] px-4 py-2 font-sans text-[11px] font-bold tracking-chip text-brass transition-colors hover:border-brass/70 hover:bg-brass/15"
+      >
+        <ScrollText className="size-3.5 transition-transform group-hover:-rotate-6" />
+        {t.finale.openNote}
+      </button>
+      {open && <Note1Overlay body={body} onClose={close} />}
+    </>
+  )
+}
+
+function FinalPageBody({ stamps }: { stamps: MapStop[] }) {
+  const { t, locale } = useI18n()
+
+  // Pytheas's closing note lives on the back of this last page. It is
+  // auto-revealed once on arrival, then stays re-openable via the pill below.
+  const { note, body: noteText } = useNote1()
+  const [noteOpen, setNoteOpen] = useState(false)
+  const autoShown = useRef(false)
+
+  useEffect(() => {
+    if (!note || autoShown.current) return
+    const seen = typeof window !== "undefined" && localStorage.getItem(NOTE1_SEEN_KEY)
+    if (!seen) {
+      autoShown.current = true
+      setNoteOpen(true)
+    }
+  }, [note])
+
   const openNote = useCallback(() => setNoteOpen(true), [])
   const closeNote = useCallback(() => {
     setNoteOpen(false)
-    if (typeof window !== "undefined") localStorage.setItem("pythea:note1-seen", "1")
+    if (typeof window !== "undefined") localStorage.setItem(NOTE1_SEEN_KEY, "1")
   }, [])
-
-  const noteText = note ? (locale === "en" ? note.note1En : note.note1) : ""
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center text-center">
@@ -1090,31 +1200,7 @@ function FinalPageBody({ stamps }: { stamps: MapStop[] }) {
         </button>
       )}
 
-      {noteOpen && note && (
-        <div
-          className="fixed inset-0 z-[80] flex items-center justify-center overflow-y-auto bg-black/55 p-4 backdrop-blur-sm"
-          role="dialog"
-          aria-modal="true"
-          aria-label={t.finale.noteLabel}
-          onClick={closeNote}
-        >
-          <div className="my-auto w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
-            <p className="mb-3 text-center font-sans text-[11px] font-bold tracking-chip text-[oklch(0.92_0.03_86)]">
-              {t.finale.noteLabel}
-            </p>
-            <HandwrittenNote body={noteText} signature={t.finale.signature} />
-            <div className="mt-5 flex justify-center">
-              <button
-                type="button"
-                onClick={closeNote}
-                className="rounded-full border border-white/30 bg-white/10 px-6 py-2 font-sans text-[11px] font-bold tracking-chip text-white transition-colors hover:bg-white/20"
-              >
-                {t.finale.close}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {noteOpen && note && <Note1Overlay body={noteText} onClose={closeNote} />}
 
       {/* The complete stamp collection, fanned out like keepsakes */}
       <p className="mt-8 font-sans text-[10px] font-bold tracking-chip text-ink/45">
