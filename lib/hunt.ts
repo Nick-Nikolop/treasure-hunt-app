@@ -385,6 +385,16 @@ export async function hasReachedTrailEnd(userId: string): Promise<boolean> {
   return crewHasReachedTrailEnd(crew)
 }
 
+/**
+ * Whether the signed-in user's crew has scanned the compass QR, which is what
+ * releases Pytheas's second note. Server pages use this to decide whether that
+ * note has been earned yet.
+ */
+export async function hasReachedCompass(userId: string): Promise<boolean> {
+  const crew = await getCrewUserIds(userId)
+  return crewHasReachedCompass(crew)
+}
+
 /** Whether any member of the crew has scanned the trail-end QR (the QR at the
  *  last lead's own spot), which is what closes the paper trail. */
 async function crewHasReachedTrailEnd(userIds: string[]): Promise<boolean> {

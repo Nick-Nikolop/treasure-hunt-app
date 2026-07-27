@@ -14,7 +14,9 @@ import {
   getUserScore,
   getStandingsSummary,
   hasReachedTrailEnd,
+  hasReachedCompass,
 } from "@/lib/hunt"
+import { getAdminUser } from "@/lib/admin"
 import { getLeadDefs } from "@/lib/leads"
 import { getLeadBgWashPct } from "@/lib/hunt-config"
 import { getPhaseContext } from "@/lib/phase-guard"
@@ -94,6 +96,14 @@ export default async function PoreiaPage() {
     ? state.unlockedCount >= state.total
     : await hasReachedTrailEnd(session.user.id)
 
+  // The second note is released by the compass QR. Superadmins see both notes in
+  // the journal at all times (marked admin-only while still sealed) so the
+  // finale can be proofread without planting fake scans.
+  const compassReached = overrideActive
+    ? state.unlockedCount >= state.total
+    : await hasReachedCompass(session.user.id)
+  const isAdmin = (await getAdminUser()) !== null
+
   const currentClue = unlocked[unlocked.length - 1] ?? null
   const current = currentClue
     ? { order: currentClue.order, country: currentClue.country, countryEn: currentClue.countryEn }
@@ -112,6 +122,8 @@ export default async function PoreiaPage() {
           locked={state.locked}
           unlockedCount={state.unlockedCount}
           trailEndReached={trailEndReached}
+          compassReached={compassReached}
+          isAdmin={isAdmin}
           total={state.total}
           startMs={state.startMs}
           next={state.next}

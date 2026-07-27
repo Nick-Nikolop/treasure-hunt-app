@@ -557,6 +557,16 @@ const el = {
     noteLabel: "ΤΟ ΣΗΜΕΙΩΜΑ ΤΟΥ ΠΥΘΕΑ",
     signature: "— Πυθέας",
     close: "ΚΛΕΙΣΙΜΟ",
+    // Short labels used when both notes sit side by side (admin view)
+    note1Short: "ΠΡΩΤΟ ΣΗΜΕΙΩΜΑ",
+    note2Short: "ΔΕΥΤΕΡΟ ΣΗΜΕΙΩΜΑ",
+    note2Label: "ΤΟ ΔΕΥΤΕΡΟ ΣΗΜΕΙΩΜΑ ΤΟΥ ΠΥΘΕΑ",
+    // Shown only to superadmins, on a note they have not actually earned yet
+    adminOnly: "ΜΟΝΟ ΓΙΑ ADMIN",
+    adminNote1Hint:
+      "Το βλέπεις μόνο εσύ, ως admin. Για τους κανονικούς εξερευνητές αυτό το κουμπί δεν υπάρχει καθόλου. Τους εμφανίζεται μόνο όταν σκανάρουν το QR του τελευταίου στοιχείου, στο σημείο του: εκείνο το σκανάρισμα κλείνει το ίχνος και ξεκλειδώνει το πρώτο σημείωμα, που τους στέλνει στην πυξίδα.",
+    adminNote2Hint:
+      "Το βλέπεις μόνο εσύ, ως admin. Οι κανονικοί εξερευνητές δεν βλέπουν ποτέ το δεύτερο σημείωμα στο ημερολόγιο πριν από την ώρα του. Τους εμφανίζεται μόνο αφού σκανάρουν το QR της πυξίδας, και είναι αυτό που τους στέλνει στον θησαυρό.",
     // Compass reveal (after the COMPASS QR is scanned — the note screen)
     trailEndKicker: "ΤΟ ΙΧΝΟΣ ΤΕΛΕΙΩΝΕΙ ΕΔΩ",
     trailEndTitle: "Το πρώτο σημείωμα του Πυθέα",
@@ -1426,6 +1436,14 @@ const en: Dictionary = {
     noteLabel: "A NOTE FROM PYTHEAS",
     signature: "— Pytheas",
     close: "CLOSE",
+    note1Short: "FIRST NOTE",
+    note2Short: "SECOND NOTE",
+    note2Label: "THE SECOND NOTE FROM PYTHEAS",
+    adminOnly: "ADMIN ONLY",
+    adminNote1Hint:
+      "Only you can see this, as an admin. For ordinary explorers this button does not exist at all. It appears for them only when they scan the final lead's QR at its own spot: that scan closes the trail and unlocks the first note, which sends them to the compass.",
+    adminNote2Hint:
+      "Only you can see this, as an admin. Ordinary explorers never see the second note in the journal before its time. It appears for them only after they scan the compass QR, and it is the one that sends them to the treasure.",
     trailEndKicker: "THE TRAIL ENDS HERE",
     trailEndTitle: "The first note of Pytheas",
     trailEndHint: "The journey across the map is complete. Now hunt for the compass in Kalamata.",

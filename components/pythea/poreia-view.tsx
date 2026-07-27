@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { resolveLeadBackground } from "@/lib/lead-backgrounds"
-import { getFinaleNote1 } from "@/app/journal/actions"
+import { getFinaleNotes, type FinaleNote } from "@/app/journal/actions"
 import { HandwrittenNote } from "@/components/pythea/handwritten-note"
 import { motion } from "framer-motion"
 import {
@@ -16,6 +16,8 @@ import {
   Keyboard,
   Zap,
   ScrollText,
+  Gem,
+  EyeOff,
 } from "lucide-react"
 import type { Clue, LockedClue } from "@/lib/clues"
 import { buildVoyageRoute, TREASURE_XY } from "@/lib/voyage-map"
@@ -61,6 +63,11 @@ type Props = {
    *  That scan is what closes the paper trail and releases Pytheas's first
    *  note, so the note stays sealed until it lands. */
   trailEndReached: boolean
+  /** True once the crew scanned the compass QR, which releases the second note. */
+  compassReached: boolean
+  /** Superadmins see both notes here at all times, so the finale can be
+   *  proofread from the journal without planting fake scans. */
+  isAdmin: boolean
   total: number
   startMs: number
   /** The single next sealed lead the player is working towards, or null. */
@@ -95,6 +102,8 @@ export function PoreiaView({
   locked,
   unlockedCount,
   trailEndReached,
+  compassReached,
+  isAdmin,
   total,
   next,
   standings,
@@ -335,14 +344,18 @@ export function PoreiaView({
           own spot, not merely by the last page being revealed. Once earned it is
           kept within reach here, so it need not be re-read by flipping all the
           way to the last page. */}
-      {trailEndReached && (
+      {(trailEndReached || compassReached || isAdmin) && (
         <motion.div
           initial={lite ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.15 }}
           className="mb-7 -mt-4 md:mb-9 md:-mt-5"
         >
-          <Note1Button />
+          <FinaleNoteBar
+            trailEndReached={trailEndReached}
+            compassReached={compassReached}
+            isAdmin={isAdmin}
+          />
         </motion.div>
       )}
 
@@ -1056,32 +1069,38 @@ function SealedPageBody({
   )
 }
 
-type Note1 = { note1: string; note1En: string; note1Cta: string; note1CtaEn: string }
+type FinaleNotes = { note1: FinaleNote | null; note2: FinaleNote | null }
+/** A note already resolved to the reader's language. */
+type LocalNote = { body: string; cta: string }
 
 /** Marks the first note as read, so the final page stops auto-opening it once
  *  the explorer has seen it from either entry point. */
 const NOTE1_SEEN_KEY = "pythea:note1-seen"
 
 /**
- * A single shared request for the note. Both entry points (the button above the
- * book and the final page itself) are mounted at once when every lead is
- * solved, so without this they would each fetch their own copy.
+ * A single shared request for the notes. Several entry points (the bar above the
+ * book and the final page itself) can be mounted at once, so without this they
+ * would each fetch their own copy.
  */
-let note1Request: Promise<Note1 | null> | null = null
-function loadNote1(): Promise<Note1 | null> {
-  note1Request ??= getFinaleNote1()
-  return note1Request
+let notesRequest: Promise<FinaleNotes | null> | null = null
+function loadNotes(): Promise<FinaleNotes | null> {
+  notesRequest ??= getFinaleNotes()
+  return notesRequest
 }
 
-/** Fetches Pytheas's first note once and picks the active locale's wording. */
-function useNote1(): { note: Note1 | null; body: string; cta: string } {
+/**
+ * Fetches Pytheas's notes once and picks the active locale's wording. Either one
+ * comes back null while it is still sealed: the server refuses to send a note
+ * that has not been earned, so there is nothing to leak into the page.
+ */
+function useFinaleNotes(): { note1: LocalNote | null; note2: LocalNote | null } {
   const { locale } = useI18n()
-  const [note, setNote] = useState<Note1 | null>(null)
+  const [notes, setNotes] = useState<FinaleNotes | null>(null)
 
   useEffect(() => {
     let alive = true
-    loadNote1().then((n) => {
-      if (alive && n) setNote(n)
+    loadNotes().then((n) => {
+      if (alive && n) setNotes(n)
     })
     return () => {
       alive = false
@@ -1089,21 +1108,28 @@ function useNote1(): { note: Note1 | null; body: string; cta: string } {
   }, [])
 
   const en = locale === "en"
-  return {
-    note,
-    body: note ? (en ? note.note1En : note.note1) : "",
-    cta: note ? (en ? note.note1CtaEn : note.note1Cta) : "",
-  }
+  const pick = (n: FinaleNote | null | undefined): LocalNote | null =>
+    n ? { body: en ? n.bodyEn : n.body, cta: en ? n.ctaEn : n.cta } : null
+
+  return { note1: pick(notes?.note1), note2: pick(notes?.note2) }
 }
 
-/** The note itself, opened as a lightbox over the whole page. */
-function Note1Overlay({
+/**
+ * A note itself, opened as a lightbox over the whole page. Shared by both notes:
+ * only the heading and the icon stamped on the call-to-action differ (the first
+ * note sends the crew to the compass, the second one to the treasure).
+ */
+function NoteOverlay({
   body,
   cta,
+  label,
+  ctaIcon: CtaIcon,
   onClose,
 }: {
   body: string
   cta: string
+  label: string
+  ctaIcon: typeof Compass
   onClose: () => void
 }) {
   const { t } = useI18n()
@@ -1122,12 +1148,12 @@ function Note1Overlay({
       className="fixed inset-0 z-[80] flex items-center justify-center overflow-y-auto bg-black/55 p-4 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
-      aria-label={t.finale.noteLabel}
+      aria-label={label}
       onClick={onClose}
     >
       <div className="my-auto w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
         <p className="mb-3 text-center font-sans text-[11px] font-bold tracking-chip text-[oklch(0.92_0.03_86)]">
-          {t.finale.noteLabel}
+          {label}
         </p>
         <HandwrittenNote body={body} signature={t.finale.signature} />
 
@@ -1135,7 +1161,7 @@ function Note1Overlay({
             button so the journal cannot be dismissed without seeing it. */}
         {cta.trim() !== "" && (
           <p className="mt-5 flex items-center justify-center gap-2.5 rounded-sm border border-brass/45 bg-brass/[0.12] px-4 py-3 text-center font-sans text-[12px] font-black uppercase leading-snug tracking-chip text-brass md:text-[14px]">
-            <Compass className="size-4 shrink-0 md:size-[18px]" aria-hidden />
+            <CtaIcon className="size-4 shrink-0 md:size-[18px]" aria-hidden />
             {cta}
           </p>
         )}
@@ -1155,33 +1181,140 @@ function Note1Overlay({
 }
 
 /**
- * The "read the note" pill shown above the book once every lead is solved, so
- * the note can be re-read any number of times without flipping to the last
- * page. Renders nothing until the note has loaded.
+ * One "read the note" pill. When `locked` it is a superadmin-only preview of a
+ * note the crew has not actually earned: ordinary explorers do not see the pill
+ * at all, so it is drawn dashed and muted and spells out on hover which scan
+ * releases it for everyone else.
  */
-function Note1Button() {
+function NotePill({
+  label,
+  icon: Icon,
+  locked,
+  hint,
+  onClick,
+}: {
+  label: string
+  icon: typeof Compass
+  locked: boolean
+  hint: string
+  onClick: () => void
+}) {
   const { t } = useI18n()
-  const { note, body, cta } = useNote1()
-  const [open, setOpen] = useState(false)
 
-  const close = useCallback(() => {
-    setOpen(false)
+  if (!locked) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="group inline-flex items-center gap-2 rounded-full border border-brass/40 bg-brass/[0.07] px-4 py-2 font-sans text-[11px] font-bold tracking-chip text-brass transition-colors hover:border-brass/70 hover:bg-brass/15"
+      >
+        <Icon className="size-3.5 transition-transform group-hover:-rotate-6" />
+        {label}
+      </button>
+    )
+  }
+
+  return (
+    // `group` + `focus-within` so the explanation opens on hover AND on keyboard
+    // focus, since the pill is a real button.
+    <span className="group relative inline-flex">
+      <button
+        type="button"
+        onClick={onClick}
+        className="inline-flex items-center gap-2 rounded-full border border-dashed border-muted-foreground/45 bg-muted-foreground/[0.06] px-4 py-2 font-sans text-[11px] font-bold tracking-chip text-muted-foreground transition-colors hover:border-muted-foreground/70 hover:text-foreground"
+      >
+        <Icon className="size-3.5" />
+        {label}
+        <span className="ml-0.5 inline-flex items-center gap-1 rounded-full border border-muted-foreground/40 px-1.5 py-0.5 text-[9px] leading-none text-muted-foreground/90">
+          <EyeOff className="size-2.5" aria-hidden />
+          {t.finale.adminOnly}
+        </span>
+      </button>
+
+      <span
+        role="tooltip"
+        className="pointer-events-none absolute bottom-[calc(100%+0.5rem)] left-1/2 z-30 w-[19rem] -translate-x-1/2 rounded-sm border border-brass/35 bg-[oklch(0.19_0.02_60)] px-3 py-2.5 text-left font-sans text-[11px] font-medium normal-case leading-relaxed tracking-normal text-[oklch(0.9_0.02_86)] opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100"
+      >
+        {hint}
+      </span>
+    </span>
+  )
+}
+
+/**
+ * The note pills shown above the book, so a note can be re-read any number of
+ * times without flipping to the last page. Each note appears once it has been
+ * earned; superadmins always get both, marked as admin-only while still sealed.
+ */
+function FinaleNoteBar({
+  trailEndReached,
+  compassReached,
+  isAdmin,
+}: {
+  trailEndReached: boolean
+  compassReached: boolean
+  isAdmin: boolean
+}) {
+  const { t } = useI18n()
+  const { note1, note2 } = useFinaleNotes()
+  const [open, setOpen] = useState<null | 1 | 2>(null)
+
+  // Only closing the FIRST note marks it as read. Closing the second one must
+  // not, or an admin previewing note 2 early would suppress the final page's
+  // one-time auto-reveal of note 1 for themselves.
+  const closeNote1 = useCallback(() => {
+    setOpen(null)
     if (typeof window !== "undefined") localStorage.setItem(NOTE1_SEEN_KEY, "1")
   }, [])
+  const closeNote2 = useCallback(() => setOpen(null), [])
 
-  if (!note) return null
+  // A pill is shown when the note has been earned, or to an admin previewing it.
+  // The note body itself is only ever present when the server chose to send it.
+  const show1 = note1 !== null && (trailEndReached || isAdmin)
+  const show2 = note2 !== null && (compassReached || isAdmin)
+  if (!show1 && !show2) return null
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="group inline-flex items-center gap-2 rounded-full border border-brass/40 bg-brass/[0.07] px-4 py-2 font-sans text-[11px] font-bold tracking-chip text-brass transition-colors hover:border-brass/70 hover:bg-brass/15"
-      >
-        <ScrollText className="size-3.5 transition-transform group-hover:-rotate-6" />
-        {t.finale.openNote}
-      </button>
-      {open && <Note1Overlay body={body} cta={cta} onClose={close} />}
+      <div className="flex flex-wrap items-center justify-center gap-2.5">
+        {show1 && (
+          <NotePill
+            label={show2 ? t.finale.note1Short : t.finale.openNote}
+            icon={ScrollText}
+            locked={!trailEndReached}
+            hint={t.finale.adminNote1Hint}
+            onClick={() => setOpen(1)}
+          />
+        )}
+        {show2 && (
+          <NotePill
+            label={t.finale.note2Short}
+            icon={Gem}
+            locked={!compassReached}
+            hint={t.finale.adminNote2Hint}
+            onClick={() => setOpen(2)}
+          />
+        )}
+      </div>
+
+      {open === 1 && note1 && (
+        <NoteOverlay
+          body={note1.body}
+          cta={note1.cta}
+          label={t.finale.noteLabel}
+          ctaIcon={Compass}
+          onClose={closeNote1}
+        />
+      )}
+      {open === 2 && note2 && (
+        <NoteOverlay
+          body={note2.body}
+          cta={note2.cta}
+          label={t.finale.note2Label}
+          ctaIcon={Gem}
+          onClose={closeNote2}
+        />
+      )}
     </>
   )
 }
@@ -1197,7 +1330,7 @@ function FinalPageBody({
 
   // Pytheas's closing note lives on the back of this last page. It is
   // auto-revealed once on arrival, then stays re-openable via the pill below.
-  const { note, body: noteText, cta: noteCta } = useNote1()
+  const { note1: note } = useFinaleNotes()
   const [noteOpen, setNoteOpen] = useState(false)
   const autoShown = useRef(false)
 
@@ -1238,7 +1371,13 @@ function FinalPageBody({
       )}
 
       {noteOpen && note && trailEndReached && (
-        <Note1Overlay body={noteText} cta={noteCta} onClose={closeNote} />
+        <NoteOverlay
+          body={note.body}
+          cta={note.cta}
+          label={t.finale.noteLabel}
+          ctaIcon={Compass}
+          onClose={closeNote}
+        />
       )}
 
       {/* The complete stamp collection, fanned out like keepsakes */}
