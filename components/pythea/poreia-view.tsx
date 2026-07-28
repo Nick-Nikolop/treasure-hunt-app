@@ -1,7 +1,16 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react"
 import { resolveLeadBackground } from "@/lib/lead-backgrounds"
 import { COMPASS_SRC, DEFAULT_COMPASS_OPACITY_PCT } from "@/lib/compass"
 import { getFinaleNotes, type FinaleNote } from "@/app/journal/actions"
@@ -226,6 +235,39 @@ export function PoreiaView({
     }
   }, [index, flip, pages])
 
+  // Admin "locked entry" notice. Raised when the book settles on a lead the crew
+  // has not unlocked yet, and remembered per lead order so paging back and forth
+  // through a long preview run does not re-nag for entries already acknowledged.
+  const [lockedNotice, setLockedNotice] = useState<number | null>(null)
+  const acknowledgedLocks = useRef<Set<number>>(new Set())
+  useEffect(() => {
+    if (flip) return
+    const page = pages[index]
+    const locked = page?.kind === "clue" && page.adminLocked === true
+    // Anything other than a fresh locked lead clears the notice, so it can never
+    // outlive the page it describes (paging on with the dialog still open used to
+    // leave it explaining the entry you had just left).
+    if (!locked || acknowledgedLocks.current.has(page.clue.order)) {
+      setLockedNotice(null)
+      return
+    }
+    setLockedNotice(page.clue.order)
+  }, [index, flip, pages])
+
+  const closeLockedNotice = useCallback(() => {
+    setLockedNotice((order) => {
+      if (order !== null) acknowledgedLocks.current.add(order)
+      return null
+    })
+  }, [])
+
+  // Re-opening from the ADMIN ONLY badge reads the lead off the current page, so
+  // it works even after the notice was dismissed.
+  const showLockedNotice = useCallback(() => {
+    const page = pages[index]
+    if (page?.kind === "clue" && page.adminLocked) setLockedNotice(page.clue.order)
+  }, [pages, index])
+
   const bookRef = useRef<HTMLDivElement>(null)
 
   const go = useCallback(
@@ -320,7 +362,8 @@ export function PoreiaView({
   const endAngle = flip?.dir === 1 ? -180 : 0
 
   return (
-    <main className="relative mx-auto w-full max-w-4xl flex-1 px-3 pb-16 pt-24 md:px-4 md:pb-28 md:pt-32">
+    <AdminNoticeContext.Provider value={showLockedNotice}>
+      <main className="relative mx-auto w-full max-w-4xl flex-1 px-3 pb-16 pt-24 md:px-4 md:pb-28 md:pt-32">
       {/* Preload every unlocked stamp up front so flipping pages never shows
           a late pop-in. Rendered off-screen, not announced to screen readers. */}
       <div aria-hidden className="pointer-events-none absolute size-0 overflow-hidden opacity-0">
@@ -663,9 +706,14 @@ export function PoreiaView({
         </span>
       </div>
 
-      {/* Leaderboard preview + "who is at your port" widgets */}
-      <JournalWidgets standings={standings} />
-    </main>
+        {/* Leaderboard preview + "who is at your port" widgets */}
+        <JournalWidgets standings={standings} />
+
+        {lockedNotice !== null && (
+          <AdminLockedOverlay order={lockedNotice} onClose={closeLockedNotice} />
+        )}
+      </main>
+    </AdminNoticeContext.Provider>
   )
 }
 
@@ -906,28 +954,21 @@ function CoverPage({ fill }: { fill?: boolean }) {
 }
 
 function CluePageBody({ clue, adminLocked }: { clue: Clue; adminLocked?: boolean }) {
+  // Pulled from context rather than threaded as a prop: the page face that
+  // renders this body is instantiated in five places, and none of the others
+  // care about the admin notice.
+  const onShowNotice = useContext(AdminNoticeContext)
   const { t, locale } = useI18n()
   const country = locale === "en" ? clue.countryEn : clue.country
   const subtitle = locale === "en" ? clue.subtitleEn : clue.subtitle
   const body = locale === "en" ? clue.bodyEn : clue.body
   return (
     <div>
-      {/* Superadmin-only notice on a lead the crew has not unlocked yet. Drawn
-          dashed and muted (the same language as the locked note pills) so an
-          admin can never mistake a preview page for a genuinely earned entry. */}
-      {adminLocked && (
-        <div className="mb-5 flex items-start gap-3 rounded-sm border border-dashed border-ink/35 bg-ink/[0.05] px-3.5 py-3 md:mb-6">
-          <Lock className="mt-0.5 size-4 shrink-0 text-ink/60" aria-hidden />
-          <div className="min-w-0">
-            <p className="font-sans text-[11px] font-bold tracking-chip text-ink/70">
-              {t.journal.adminLockedTitle}
-            </p>
-            <p className="mt-1 font-serif text-[0.9rem] leading-6 text-ink/70">
-              {t.journal.adminLockedBody}
-            </p>
-          </div>
-        </div>
-      )}
+      {/* The "locked entry" explanation used to sit here as a static block. It is
+          now a dismissible overlay raised by PoreiaView on arrival, so it does not
+          permanently displace the entry it is describing. The dashed ADMIN ONLY
+          badge below stays as the persistent marker, and doubles as the way to
+          read the notice again. */}
 
       {/* Entry header with a real vintage stamp affixed to the page */}
       <div className="flex items-start justify-between gap-3 sm:gap-4">
@@ -937,10 +978,15 @@ function CluePageBody({ clue, adminLocked }: { clue: Clue; adminLocked?: boolean
               {t.journal.entryNo} {String(clue.order).padStart(2, "0")}
             </span>
             {adminLocked && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-dashed border-ink/40 px-1.5 py-0.5 text-[9px] leading-none text-ink/60">
+              <button
+                type="button"
+                onClick={() => onShowNotice?.()}
+                title={t.journal.adminLockedTitle}
+                className="inline-flex items-center gap-1 rounded-full border border-dashed border-ink/40 px-1.5 py-0.5 text-[9px] leading-none text-ink/60 transition-colors hover:border-ink/70 hover:text-ink/80"
+              >
                 <EyeOff className="size-2.5" aria-hidden />
                 {t.journal.adminLockedBadge}
-              </span>
+              </button>
             )}
           </p>
           <h2 className="mt-1 text-balance font-serif text-3xl font-black leading-none text-ink md:text-5xl">
@@ -1252,6 +1298,85 @@ function NoteOverlay({
             className="rounded-full border border-white/30 bg-white/10 px-6 py-2 font-sans text-[11px] font-bold tracking-chip text-white transition-colors hover:bg-white/20"
           >
             {t.finale.close}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Lets the ADMIN ONLY badge deep inside a page face re-open the "locked entry"
+ * overlay without threading a callback through every page-face call site.
+ */
+const AdminNoticeContext = createContext<(() => void) | null>(null)
+
+/**
+ * Superadmin-only explanation shown when the book lands on a lead the crew has
+ * not unlocked yet. This used to be a static block pinned above the entry, which
+ * pushed the actual lead down the page on every preview; as a dialog it says its
+ * piece once and then gets out of the way.
+ *
+ * Rendered from PoreiaView rather than from the page body on purpose: the
+ * turning leaf uses 3D transforms, and a transformed ancestor becomes the
+ * containing block for `fixed` children, which would trap the overlay inside the
+ * book instead of covering the viewport.
+ */
+function AdminLockedOverlay({ order, onClose }: { order: number; onClose: () => void }) {
+  const { t } = useI18n()
+
+  // Escape closes it, matching NoteOverlay above.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose()
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [onClose])
+
+  return (
+    <div
+      className="fixed inset-0 z-[80] flex items-center justify-center overflow-y-auto bg-black/55 p-4 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-label={t.journal.adminLockedTitle}
+      onClick={onClose}
+    >
+      <div
+        className="my-auto w-full max-w-md rounded-sm border border-dashed border-brass/45 bg-[oklch(0.19_0.015_60)] p-5 shadow-2xl md:p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-sm border border-dashed border-brass/50 bg-brass/10">
+            <Lock className="size-4 text-brass" aria-hidden />
+          </span>
+          <div className="min-w-0">
+            <p className="font-sans text-[11px] font-bold tracking-chip text-brass">
+              {t.journal.adminLockedBadge}
+            </p>
+            <h2 className="mt-1 font-serif text-xl font-black leading-tight text-parchment md:text-2xl">
+              {t.journal.adminLockedTitle}
+            </h2>
+          </div>
+        </div>
+
+        {/* Which entry this is about, so the notice still makes sense if an admin
+            pages on before dismissing it. */}
+        <p className="mt-4 font-sans text-[11px] font-bold tracking-chip text-parchment/45">
+          {t.journal.entryNo} {String(order).padStart(2, "0")}
+        </p>
+        <p className="mt-2 font-serif text-[0.95rem] leading-7 text-parchment/80">
+          {t.journal.adminLockedBody}
+        </p>
+
+        <div className="mt-5 flex justify-end">
+          <button
+            type="button"
+            autoFocus
+            onClick={onClose}
+            className="rounded-full border border-brass/50 bg-brass/15 px-5 py-2 font-sans text-[11px] font-bold tracking-chip text-brass transition-colors hover:bg-brass/25"
+          >
+            {t.journal.adminLockedClose}
           </button>
         </div>
       </div>
