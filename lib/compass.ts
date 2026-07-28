@@ -13,6 +13,13 @@ export type CompassVariant = (typeof COMPASS_VARIANTS)[number]
 
 export const DEFAULT_COMPASS_VARIANT: CompassVariant = "s-to-n"
 
+/**
+ * Default visibility (%) of the compass on journal lead pages, used until an
+ * admin moves the slider. Lives here rather than in lib/hunt-config.ts so client
+ * components can import it without pulling in the database layer.
+ */
+export const DEFAULT_COMPASS_OPACITY_PCT = 90
+
 /** Bundled square (1024x1024) artwork, trimmed to the compass itself. */
 export const COMPASS_SRC: Record<CompassVariant, string> = {
   "s-to-n": "/compass/s-to-n.png",

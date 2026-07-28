@@ -29,6 +29,7 @@ import {
   adminUploadLeadBackground,
   adminClearLeadBackground,
   adminSetLeadCompassVariant,
+  adminSetCompassOpacity,
   adminSaveLeadGeo,
   adminSetLeadToken,
   adminSetLeadBgWash,
@@ -44,6 +45,8 @@ import {
   COMPASS_LABELS,
   COMPASS_SRC,
   COMPASS_VARIANTS,
+  DEFAULT_COMPASS_OPACITY_PCT,
+  DEFAULT_COMPASS_VARIANT,
   normalizeCompassVariant,
   type CompassVariant,
 } from "@/lib/compass"
@@ -159,11 +162,14 @@ export function AdminLeadsPanel({
   leads,
   tokens,
   leadBgWashPct,
+  compassOpacityPct,
 }: {
   leads: EditableLead[]
   tokens: ClueTokenRow[]
   /** Global parchment-wash strength (%) over every lead page's landmark art. */
   leadBgWashPct: number
+  /** Global visibility (%) of the compass on every lead page. */
+  compassOpacityPct: number
 }) {
   const [pending, startTransition] = useTransition()
   const [popup, setPopup] = useState<Popup | null>(null)
@@ -494,6 +500,8 @@ export function AdminLeadsPanel({
 
       <WashControl initial={leadBgWashPct} />
 
+      <CompassOpacityControl initial={compassOpacityPct} />
+
       <MissingCoordsAlert
         leads={items}
         trailEndGate={finaleGeo?.trailEnd ?? null}
@@ -752,6 +760,111 @@ function WashControl({ initial }: { initial: number }) {
           {pending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
           Save wash
         </button>
+        {done && (
+          <span className="inline-flex items-center gap-1 font-sans text-[13px] text-emerald-300">
+            <CheckCircle2 className="size-4" /> Saved
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Global compass visibility control: one slider that sets how strongly the
+ * compass in the bottom-right corner of every journal lead page shows through.
+ * 0 hides it entirely; 100 is fully opaque. Saved independently of the per-lead
+ * "Save all changes" bar and applies to every lead at once.
+ */
+function CompassOpacityControl({ initial }: { initial: number }) {
+  const [pct, setPct] = useState(initial)
+  const [saved, setSaved] = useState(initial)
+  const [pending, startTransition] = useTransition()
+  const [done, setDone] = useState(false)
+  const dirty = pct !== saved
+
+  useEffect(() => {
+    if (!done) return
+    const t = setTimeout(() => setDone(false), 2500)
+    return () => clearTimeout(t)
+  }, [done])
+
+  function save() {
+    startTransition(async () => {
+      const res = await adminSetCompassOpacity(pct)
+      if (res.ok) {
+        setSaved(pct)
+        setDone(true)
+      }
+    })
+  }
+
+  return (
+    <div className="rounded-sm border border-border bg-card/40 p-4">
+      <div className="flex items-center gap-2">
+        <Compass className="size-4 text-brass" />
+        <h3 className="font-serif text-base font-black text-foreground">Compass visibility</h3>
+      </div>
+      <p className="mt-1 font-sans text-[13px] leading-relaxed text-muted-foreground">
+        One global setting for every lead page. The needle direction is part of the final puzzle, so
+        keep it high enough for explorers to read. Lower makes it a faint watermark.
+      </p>
+      <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
+        {/* Live preview: the real compass art over a parchment-toned page corner */}
+        <div className="relative h-16 w-full shrink-0 overflow-hidden rounded-sm border border-border bg-[#e8dfc8] sm:w-40">
+          <div className="absolute inset-0 flex items-end justify-end p-1.5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={COMPASS_SRC[DEFAULT_COMPASS_VARIANT] || "/placeholder.svg"}
+              alt=""
+              className="h-full w-auto object-contain"
+              style={{ opacity: pct / 100 }}
+            />
+          </div>
+        </div>
+        <div className="flex flex-1 items-center gap-3">
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={1}
+            value={pct}
+            onChange={(e) => setPct(Number(e.target.value))}
+            className="h-1.5 flex-1 cursor-pointer accent-brass"
+            aria-label="Compass visibility"
+          />
+          <div className="flex items-center gap-1">
+            <input
+              type="number"
+              min={0}
+              max={100}
+              value={pct}
+              onChange={(e) => setPct(Math.max(0, Math.min(100, Number(e.target.value) || 0)))}
+              className="w-16 rounded-sm border border-border bg-background px-2 py-1 text-right font-mono text-sm text-foreground"
+            />
+            <span className="font-mono text-sm text-muted-foreground">%</span>
+          </div>
+        </div>
+      </div>
+      <div className="mt-3 flex items-center gap-3">
+        <button
+          type="button"
+          onClick={save}
+          disabled={pending || !dirty}
+          className="inline-flex items-center gap-2 rounded-sm border border-brass/50 bg-brass/15 px-3 py-1.5 font-sans text-sm font-bold text-brass transition hover:bg-brass/25 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {pending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+          Save visibility
+        </button>
+        {pct !== DEFAULT_COMPASS_OPACITY_PCT && (
+          <button
+            type="button"
+            onClick={() => setPct(DEFAULT_COMPASS_OPACITY_PCT)}
+            className="font-sans text-[13px] text-muted-foreground underline decoration-dotted transition hover:text-foreground"
+          >
+            Reset to {DEFAULT_COMPASS_OPACITY_PCT}%
+          </button>
+        )}
         {done && (
           <span className="inline-flex items-center gap-1 font-sans text-[13px] text-emerald-300">
             <CheckCircle2 className="size-4" /> Saved

@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { resolveLeadBackground } from "@/lib/lead-backgrounds"
-import { COMPASS_SRC } from "@/lib/compass"
+import { COMPASS_SRC, DEFAULT_COMPASS_OPACITY_PCT } from "@/lib/compass"
 import { getFinaleNotes, type FinaleNote } from "@/app/journal/actions"
 import { HandwrittenNote } from "@/components/pythea/handwritten-note"
 import { motion } from "framer-motion"
@@ -83,6 +83,8 @@ type Props = {
   standings: StandingsSummary
   /** Global parchment-wash strength (0..100) over lead-page landmark art. */
   washPct?: number
+  /** Global visibility (0..100) of the compass on lead pages. */
+  compassOpacityPct?: number
 }
 
 // A stop drawn on the voyage chart. Built only from already-unlocked clues,
@@ -118,6 +120,7 @@ export function PoreiaView({
   next,
   standings,
   washPct = 72,
+  compassOpacityPct = DEFAULT_COMPASS_OPACITY_PCT,
 }: Props) {
   const { t } = useI18n()
 
@@ -129,10 +132,14 @@ export function PoreiaView({
   const washBase = Math.max(0, Math.min(100, washPct))
   const washStrong = Math.min(100, washBase + 10)
   const washSoft = Math.round(washBase * 0.55)
+  // The compass opacity rides along on the same stage vars, so a single admin
+  // setting reaches every lead page without threading a prop through each one.
+  const compassOpacity = Math.max(0, Math.min(100, compassOpacityPct)) / 100
   const washVars = {
     "--lead-wash-base": `${washBase}%`,
     "--lead-wash-strong": `${washStrong}%`,
     "--lead-wash-soft": `${washSoft}%`,
+    "--lead-compass-opacity": String(compassOpacity),
   } as CSSProperties
   const { lite, toggle: toggleLite } = useLiteMode()
   const isMobile = useIsMobile()
@@ -753,7 +760,12 @@ function JournalPage({
           <img
             src={COMPASS_SRC[page.clue.compassVariant] || "/placeholder.svg"}
             alt=""
-            className="aspect-square w-[min(33cqw,29cqh,196px)] object-contain opacity-90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.18)] md:w-[min(38cqw,34cqh,196px)]"
+            className="aspect-square w-[min(33cqw,29cqh,196px)] object-contain drop-shadow-[0_1px_2px_rgba(0,0,0,0.18)] md:w-[min(38cqw,34cqh,196px)]"
+            // Driven by the admin "Compass visibility" slider via a stage-level
+            // CSS var, with the default as a fallback if the var is ever absent.
+            style={{
+              opacity: `var(--lead-compass-opacity, ${DEFAULT_COMPASS_OPACITY_PCT / 100})`,
+            }}
             loading="lazy"
             decoding="async"
           />

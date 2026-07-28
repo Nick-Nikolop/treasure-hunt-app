@@ -66,6 +66,8 @@ import {
   setSolveCooldownSeconds,
   getLeadBgWashPct,
   setLeadBgWashPct,
+  getCompassOpacityPct,
+  setCompassOpacityPct,
   getPhaseSettings,
   setPhaseOverride,
   setPhaseUnlockTimes,
@@ -228,6 +230,8 @@ export type AdminData = {
   solveCooldownSeconds: number
   /** Global parchment-wash strength (%) over journal lead-page landmark art. */
   leadBgWashPct: number
+  /** Global visibility (%) of the compass on journal lead pages. */
+  compassOpacityPct: number
   /** Difficulty per lead order (1..TOTAL_CLUES). */
   leadDifficulties: { order: number; difficulty: Difficulty }[]
   /** Editable lead copy (subtitle + body, per language) with defaults merged. */
@@ -375,6 +379,7 @@ export async function getAdminData(): Promise<AdminData> {
     scoreConfig: await getScoreConfig(),
     solveCooldownSeconds: await getSolveCooldownSeconds(),
     leadBgWashPct: await getLeadBgWashPct(),
+    compassOpacityPct: await getCompassOpacityPct(),
     leadDifficulties: editableLeads.map((c) => ({
       order: c.order,
       difficulty: c.difficulty,
@@ -683,6 +688,32 @@ export async function adminSaveLead(input: {
     ...adminActor(admin),
     leadOrder: existing.order,
     summary: `${adminActor(admin).actorName} edited lead No. ${String(existing.order).padStart(2, "0")} (${country})`,
+  })
+
+  revalidatePath("/admin")
+  revalidatePath("/journal")
+  return { ok: true }
+}
+
+/**
+ * Set how visible the compass is on every journal lead page (0..100). 0 hides
+ * it entirely, 100 is fully opaque. One global value shared by all leads, since
+ * the needle direction is part of the finale puzzle. Superadmin only.
+ */
+export async function adminSetCompassOpacity(pct: number): Promise<ActionResult> {
+  const admin = await requireAdmin()
+
+  if (!Number.isFinite(pct)) return { ok: false, error: "bad_value" }
+  const value = Math.max(0, Math.min(100, Math.round(pct)))
+
+  await setCompassOpacityPct(value)
+
+  await logActivity({
+    category: "admin",
+    action: "admin.compass_opacity",
+    ...adminActor(admin),
+    summary: `${adminActor(admin).actorName} set the journal compass visibility to ${value}%`,
+    metadata: { compassOpacityPct: value },
   })
 
   revalidatePath("/admin")

@@ -18,7 +18,7 @@ import {
 } from "@/lib/hunt"
 import { getAdminUser } from "@/lib/admin"
 import { getLeadDefs } from "@/lib/leads"
-import { getLeadBgWashPct } from "@/lib/hunt-config"
+import { getLeadBgWashPct, getCompassOpacityPct } from "@/lib/hunt-config"
 import { getPhaseContext } from "@/lib/phase-guard"
 
 // Recompute against the live server clock, the player's stored progress, and
@@ -75,6 +75,9 @@ export default async function PoreiaPage() {
 
   // Global wash strength applied to every lead page's landmark background.
   const leadBgWashPct = await getLeadBgWashPct()
+
+  // Global visibility of the compass in each lead page's bottom-right corner.
+  const compassOpacityPct = await getCompassOpacityPct()
 
   // The unlocked slice already carries full live content (country, body,
   // stamp), so it is used directly.
@@ -136,6 +139,7 @@ export default async function PoreiaPage() {
           next={state.next}
           standings={standings}
           washPct={leadBgWashPct}
+          compassOpacityPct={compassOpacityPct}
         />
         <SiteFooter />
       </div>

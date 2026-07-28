@@ -7,6 +7,7 @@
 import { db } from "@/lib/db"
 import { scoreConfig, phaseLead } from "@/lib/db/schema"
 import { DEFAULT_COOLDOWN_SECONDS } from "@/lib/clues"
+import { DEFAULT_COMPASS_OPACITY_PCT } from "@/lib/compass"
 import {
   DEFAULT_JOURNAL_UNLOCK_MS,
   DEFAULT_PHASE2_UNLOCK_MS,
@@ -95,13 +96,6 @@ export async function setLeadBgWashPct(pct: number): Promise<void> {
 // ─────────────────────────────────────────────────────────────────────────
 //  Journal compass visibility (also on the single `score_config` row).
 // ─────────────────────────────────────────────────────────────────────────
-
-/**
- * Default opacity (%) of the compass on every journal lead page. Matches the
- * value the renderer previously hardcoded, so adding this knob changed nothing
- * visually until an admin moves the slider.
- */
-export const DEFAULT_COMPASS_OPACITY_PCT = 90
 
 /** Clamp a raw compass opacity to a whole percentage in the 0..100 range. */
 function clampCompassOpacity(value: number): number {
