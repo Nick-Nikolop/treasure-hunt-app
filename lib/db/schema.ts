@@ -202,6 +202,11 @@ export const scoreConfig = pgTable("score_config", {
   // journal lead page (0 = art fully visible, 100 = art fully hidden). One
   // global knob for all leads.
   leadBgWashPct: integer("leadBgWashPct").notNull().default(72),
+  // How visible the compass in the bottom-right corner of every journal lead
+  // page is (0 = invisible, 100 = fully opaque). One global knob for all leads.
+  // Defaults high on purpose: the needle direction is part of the finale puzzle,
+  // so it has to stay readable rather than be a faint watermark.
+  compassOpacityPct: integer("compassOpacityPct").notNull().default(90),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 })
 

@@ -93,6 +93,51 @@ export async function setLeadBgWashPct(pct: number): Promise<void> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
+//  Journal compass visibility (also on the single `score_config` row).
+// ─────────────────────────────────────────────────────────────────────────
+
+/**
+ * Default opacity (%) of the compass on every journal lead page. Matches the
+ * value the renderer previously hardcoded, so adding this knob changed nothing
+ * visually until an admin moves the slider.
+ */
+export const DEFAULT_COMPASS_OPACITY_PCT = 90
+
+/** Clamp a raw compass opacity to a whole percentage in the 0..100 range. */
+function clampCompassOpacity(value: number): number {
+  if (!Number.isFinite(value)) return DEFAULT_COMPASS_OPACITY_PCT
+  return Math.max(0, Math.min(100, Math.round(value)))
+}
+
+/**
+ * How visible the compass is on every journal lead page (0 = invisible,
+ * 100 = fully opaque). A single global setting shared by all leads. Falls back
+ * to the default when no settings row exists yet.
+ */
+export async function getCompassOpacityPct(): Promise<number> {
+  const rows = await db
+    .select({ pct: scoreConfig.compassOpacityPct })
+    .from(scoreConfig)
+    .where(eq(scoreConfig.id, "default"))
+    .limit(1)
+  const row = rows[0]
+  if (!row) return DEFAULT_COMPASS_OPACITY_PCT
+  return clampCompassOpacity(row.pct)
+}
+
+/** Upsert the journal compass visibility (%) onto the settings row. */
+export async function setCompassOpacityPct(pct: number): Promise<void> {
+  const value = clampCompassOpacity(pct)
+  await db
+    .insert(scoreConfig)
+    .values({ id: "default", compassOpacityPct: value, updatedAt: new Date() })
+    .onConflictDoUpdate({
+      target: scoreConfig.id,
+      set: { compassOpacityPct: value, updatedAt: new Date() },
+    })
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 //  Phased rollout settings (also live on the single `score_config` row).
 // ─────────────────────────────────────────────────────────────────────────
 
