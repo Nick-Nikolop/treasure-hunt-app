@@ -849,10 +849,15 @@ function JournalPage({
         }}
       />
       {/* Red margin line */}
-      <div className="pointer-events-none absolute inset-y-0 left-14 w-px bg-[oklch(0.55_0.17_28_/_0.45)] md:left-20" />
+      {/* Ruled margin line. On phones it now sits just right of the binding rings
+          (which are only 40px wide there) instead of at 56px. The old gap left the
+          text column about 275px on a 360px screen, wrapping entries into far more
+          lines than needed and making pages tall enough to push the compass in the
+          bottom corner off screen. Desktop spacing is unchanged. */}
+      <div className="pointer-events-none absolute inset-y-0 left-11 w-px bg-[oklch(0.55_0.17_28_/_0.45)] md:left-20" />
 
       <div
-        className={`relative flex flex-col py-8 pl-16 pr-5 md:py-12 md:pl-24 md:pr-12 ${
+        className={`relative flex flex-col py-6 pl-[3.25rem] pr-4 md:py-12 md:pl-24 md:pr-12 ${
           fill ? "h-full" : PAGE_HEIGHT
         }`}
       >
@@ -1009,7 +1014,10 @@ function CluePageBody({ clue, adminLocked }: { clue: Clue; adminLocked?: boolean
         <JournalStamp clue={clue} />
       </div>
 
-      <div className="mt-6 flex flex-col gap-4 md:mt-7">
+        {/* Stanza gap is tighter on phones (12px vs 16px). With eight or nine
+            stanzas that reclaims real height on the longest entries without
+            touching the clue's own type size or leading, which stay as-is. */}
+        <div className="mt-4 flex flex-col gap-3 md:mt-7 md:gap-4">
         {body.map((p, idx) => (
           <p
             key={idx}
@@ -1025,7 +1033,7 @@ function CluePageBody({ clue, adminLocked }: { clue: Clue; adminLocked?: boolean
       </div>
 
       {/* signature flourish */}
-      <div className="mt-8 flex items-center gap-3">
+        <div className="mt-5 flex items-center gap-3 md:mt-8">
         <span className="h-px w-12 bg-ink/25" />
         <span className="font-serif text-base italic text-ink/55">{t.journal.signature}</span>
       </div>
