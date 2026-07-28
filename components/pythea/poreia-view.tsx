@@ -720,20 +720,22 @@ function JournalPage({
         </div>
           )
         })()}
-      {/* Compass watermark. Sits above the landmark art but under the ink, so it
-          reads as part of the page rather than decoration on top of the text.
-          Sized against BOTH page axes (and capped in px) so the whole compass is
-          always fully visible, never cropped, on any viewport. */}
+      {/* Compass, parked in the bottom-right corner: the stamp owns the top-right
+          and the page number owns the bottom-centre, so this corner is free.
+          Deliberately legible rather than a faint wash, because the needle
+          direction is part of the final puzzle. Sized against BOTH page axes (and
+          capped in px) so the whole compass is always fully visible, never
+          cropped, on any viewport. */}
       {page.kind === "clue" && (
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden rounded-l-sm rounded-r-lg [container-type:size]"
+          className="pointer-events-none absolute inset-0 flex items-end justify-end overflow-hidden rounded-l-sm rounded-r-lg pb-7 pr-3.5 [container-type:size] md:pb-11 md:pr-12"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={COMPASS_SRC[page.clue.compassVariant] || "/placeholder.svg"}
             alt=""
-            className="aspect-square w-[min(58cqw,52cqh,320px)] object-contain opacity-[0.13] mix-blend-multiply"
+            className="aspect-square w-[min(33cqw,29cqh,196px)] object-contain opacity-90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.18)] md:w-[min(38cqw,34cqh,196px)]"
             loading="lazy"
             decoding="async"
           />
