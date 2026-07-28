@@ -394,7 +394,7 @@ export function PoreiaView({
         initial={lite ? false : { opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="mb-2 flex items-center gap-2.5 md:mb-3 md:gap-4"
+        className="mb-1 flex items-center gap-2.5 md:mb-3 md:gap-4"
       >
         <Feather className="size-4 shrink-0 text-brass md:size-5" />
         <span className="font-sans text-[11px] font-bold tracking-chip text-brass md:text-xs">
@@ -411,7 +411,7 @@ export function PoreiaView({
         initial={lite ? false : { opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.1 }}
-        className="mb-4 max-w-xl text-pretty font-serif text-base italic leading-relaxed text-muted-foreground md:mb-9 md:text-lg"
+        className="mb-3 max-w-xl text-pretty font-serif text-base italic leading-relaxed text-muted-foreground md:mb-9 md:text-lg"
       >
         {t.journal.lead}
       </motion.p>
@@ -425,7 +425,7 @@ export function PoreiaView({
           initial={lite ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.15 }}
-          className="mb-4 -mt-2 md:mb-9 md:-mt-5"
+          className="mb-2 -mt-1 md:mb-9 md:-mt-5"
         >
           <FinaleNoteBar
             trailEndReached={trailEndReached}
