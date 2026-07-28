@@ -28,6 +28,7 @@ import {
   adminClearLeadStamp,
   adminUploadLeadBackground,
   adminClearLeadBackground,
+  adminSetLeadCompassVariant,
   adminSaveLeadGeo,
   adminSetLeadToken,
   adminSetLeadBgWash,
@@ -39,6 +40,13 @@ import type { EditableLead } from "@/lib/lead-content"
 import type { ClueTokenRow } from "@/lib/hunt"
 import { DEFAULT_GEO_RADIUS_M } from "@/lib/geo"
 import { resolveLeadBackground } from "@/lib/lead-backgrounds"
+import {
+  COMPASS_LABELS,
+  COMPASS_SRC,
+  COMPASS_VARIANTS,
+  normalizeCompassVariant,
+  type CompassVariant,
+} from "@/lib/compass"
 import { LeadQrBlock } from "@/components/pythea/lead-qr"
 
 /** One finale QR's GPS gate (compass or treasure), edited on its card. */
@@ -377,6 +385,29 @@ export function AdminLeadsPanel({
   }
 
   /**
+   * Swap a lead's compass watermark. Applied optimistically so the picker reacts
+   * instantly, then rolled back to the previous variant if the save fails.
+   */
+  function setCompassVariant(id: string, variant: CompassVariant) {
+    const previous = items.find((l) => l.id === id)?.compassVariant
+    const apply = (value: CompassVariant | undefined) => {
+      if (!value) return
+      setItems((prev) => prev.map((l) => (l.id === id ? { ...l, compassVariant: value } : l)))
+      setBaseline((prev) => prev.map((l) => (l.id === id ? { ...l, compassVariant: value } : l)))
+    }
+    apply(variant)
+    startTransition(async () => {
+      const res = await adminSetLeadCompassVariant(id, variant)
+      if (!res.ok) {
+        apply(previous)
+        setPopup({ kind: "err", text: errorText[res.error] ?? "Could not change that compass." })
+        return
+      }
+      setPopup({ kind: "ok", text: `Compass set to ${COMPASS_LABELS[variant]}.` })
+    })
+  }
+
+  /**
    * Persist an admin-typed QR slug. Errors come back through `done` so they can
    * render inline under the field (a duplicate needs to be read next to the
    * value that caused it), rather than in the shared popup.
@@ -522,6 +553,7 @@ export function AdminLeadsPanel({
               onClearStamp={() => clearStamp(lead.id)}
               onUploadBackground={(fd) => uploadBackground(lead.id, fd)}
               onClearBackground={() => clearBackground(lead.id)}
+              onSelectCompass={(variant) => setCompassVariant(lead.id, variant)}
               opensOnTimer={index === 0}
               qrToken={hop?.token ?? null}
               qrUnlocks={hop?.unlocks ?? ""}
@@ -828,6 +860,7 @@ function LeadCard({
   onClearStamp,
   onUploadBackground,
   onClearBackground,
+  onSelectCompass,
   opensOnTimer,
   qrToken,
   qrUnlocks,
@@ -850,6 +883,7 @@ function LeadCard({
   onClearStamp: () => void
   onUploadBackground: (formData: FormData) => void
   onClearBackground: () => void
+  onSelectCompass: (variant: CompassVariant) => void
   /** True for the opening lead, which starts on a timer with nothing to scan. */
   opensOnTimer: boolean
   /**
@@ -933,6 +967,10 @@ function LeadCard({
                 onUpload={onUploadBackground}
                 onClear={onClearBackground}
               />
+            </div>
+
+            <div className="mt-3">
+              <CompassEditor lead={lead} pending={pending} onSelect={onSelectCompass} />
             </div>
 
           <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
@@ -1770,6 +1808,85 @@ function BackgroundEditor({
             )}
           </div>
         </div>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Pick which of the two bundled compass watermarks sits behind this lead's
+ * journal text. Both options are always shown, so the choice is one click.
+ */
+function CompassEditor({
+  lead,
+  pending,
+  onSelect,
+}: {
+  lead: EditableLead
+  pending: boolean
+  onSelect: (variant: CompassVariant) => void
+}) {
+  const current = normalizeCompassVariant(lead.compassVariant)
+
+  return (
+    <div className="rounded-sm border border-border bg-background/40 p-3">
+      <div>
+        <h4 className="flex items-center gap-1.5 font-sans text-[11px] font-bold uppercase tracking-chip text-brass">
+          <Compass className="size-3.5" aria-hidden />
+          Compass watermark
+        </h4>
+        <p className="mt-1 font-sans text-[12px] leading-relaxed text-muted-foreground">
+          The faded compass behind this lead&rsquo;s journal text. Choose which way the needle
+          points.
+        </p>
+      </div>
+
+      <div
+        role="radiogroup"
+        aria-label="Compass watermark"
+        className="mt-3 flex flex-wrap gap-2"
+      >
+        {COMPASS_VARIANTS.map((variant) => {
+          const active = current === variant
+          return (
+            <button
+              key={variant}
+              type="button"
+              role="radio"
+              aria-checked={active}
+              onClick={() => {
+                if (!active) onSelect(variant)
+              }}
+              disabled={pending}
+              className={`flex items-center gap-2.5 rounded-sm border px-3 py-2 text-left transition-colors disabled:opacity-40 ${
+                active
+                  ? "border-brass bg-brass/10"
+                  : "border-border hover:border-brass/60"
+              }`}
+            >
+              <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-sm border border-border bg-background">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={COMPASS_SRC[variant] || "/placeholder.svg"}
+                  alt=""
+                  className="size-8 object-contain"
+                />
+              </span>
+              <span className="min-w-0">
+                <span
+                  className={`block font-sans text-xs font-bold tracking-chip ${
+                    active ? "text-brass" : "text-foreground"
+                  }`}
+                >
+                  {COMPASS_LABELS[variant]}
+                </span>
+                <span className="block font-sans text-[10px] uppercase tracking-chip text-muted-foreground">
+                  {active ? "In use" : "Use this"}
+                </span>
+              </span>
+            </button>
+          )
+        })}
       </div>
     </div>
   )

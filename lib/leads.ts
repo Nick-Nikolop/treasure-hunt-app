@@ -32,6 +32,11 @@ import {
 } from "@/lib/clues"
 import { huntLinkFor } from "@/lib/site-url"
 import { DEFAULT_GEO_RADIUS_M } from "@/lib/geo"
+import {
+  DEFAULT_COMPASS_VARIANT,
+  normalizeCompassVariant,
+  type CompassVariant,
+} from "@/lib/compass"
 
 /** The reserved token id for the dedicated finishing QR (no real lead row). */
 export const FINISH_LEAD_ID = "__finish__"
@@ -125,6 +130,7 @@ async function doSeed(): Promise<void> {
         stampImageUrl: c.stampImageUrl,
         stampAspect: c.stampAspect,
         backgroundImageUrl: c.backgroundImageUrl,
+        compassVariant: c.compassVariant,
         difficulty: normalizeDifficulty(diffById.get(c.order)),
         createdAt: now,
         updatedAt: now,
@@ -206,6 +212,7 @@ export const getLeadDefs = cache(async (): Promise<LeadDef[]> => {
     stampImageUrl: r.stampImageUrl,
     stampAspect: r.stampAspect || "2:3",
     backgroundImageUrl: r.backgroundImageUrl,
+    compassVariant: normalizeCompassVariant(r.compassVariant),
     difficulty: normalizeDifficulty(r.difficulty),
     lat: r.lat,
     lng: r.lng,
@@ -542,6 +549,7 @@ export async function createLead(
     stampImageUrl: null,
     stampAspect: "2:3",
     backgroundImageUrl: null,
+    compassVariant: DEFAULT_COMPASS_VARIANT,
     difficulty: normalizeDifficulty(input.difficulty ?? "easy"),
     createdAt: now,
     updatedAt: now,
@@ -564,6 +572,7 @@ export async function createLead(
     stampImageUrl: r.stampImageUrl,
     stampAspect: r.stampAspect || "2:3",
     backgroundImageUrl: r.backgroundImageUrl,
+    compassVariant: normalizeCompassVariant(r.compassVariant),
     difficulty: normalizeDifficulty(r.difficulty),
     lat: r.lat,
     lng: r.lng,
@@ -611,6 +620,18 @@ export async function updateLeadBackground(
   await db
     .update(lead)
     .set({ backgroundImageUrl, updatedAt: new Date() })
+    .where(eq(lead.id, id))
+  invalidate()
+}
+
+/** Update just which bundled compass watermark a lead shows. */
+export async function updateLeadCompassVariant(
+  id: string,
+  compassVariant: CompassVariant,
+): Promise<void> {
+  await db
+    .update(lead)
+    .set({ compassVariant, updatedAt: new Date() })
     .where(eq(lead.id, id))
   invalidate()
 }

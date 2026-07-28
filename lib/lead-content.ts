@@ -41,6 +41,7 @@ export async function applyLeadContent(clues: Clue[]): Promise<Clue[]> {
       stampImageUrl: d.stampImageUrl,
       stampAspect: d.stampAspect,
       backgroundImageUrl: d.backgroundImageUrl,
+      compassVariant: d.compassVariant,
     }
   })
 }
@@ -64,6 +65,7 @@ export async function getEditableLeads() {
     stampImageUrl: d.stampImageUrl,
     stampAspect: d.stampAspect,
     backgroundImageUrl: d.backgroundImageUrl,
+    compassVariant: d.compassVariant,
     difficulty: d.difficulty,
     lat: d.lat,
     lng: d.lng,

@@ -90,6 +90,11 @@ import {
 } from "@/lib/campaigns"
 import { getEditableLeads, type EditableLead } from "@/lib/lead-content"
 import {
+  COMPASS_LABELS,
+  COMPASS_VARIANTS,
+  type CompassVariant,
+} from "@/lib/compass"
+import {
   getLeadDefs,
   getTotalLeads,
   createLead,
@@ -98,6 +103,7 @@ import {
   updateLeadContent,
   updateLeadStamp,
   updateLeadBackground,
+  updateLeadCompassVariant,
   updateLeadGeo,
   setTokenForLead,
 } from "@/lib/leads"
@@ -1634,6 +1640,35 @@ export async function adminClearLeadBackground(id: string): Promise<ActionResult
     ...adminActor(admin),
     leadOrder: target.order,
     summary: `${adminActor(admin).actorName} cleared the page background for lead "${target.country}"`,
+  })
+  revalidatePath("/admin")
+  revalidatePath("/journal")
+  return { ok: true }
+}
+
+/** Pick which bundled compass watermark a lead's journal page shows. */
+export async function adminSetLeadCompassVariant(
+  id: string,
+  variant: string,
+): Promise<ActionResult> {
+  const admin = await requireAdmin()
+  const leadId = (id ?? "").trim()
+  if (!leadId) return { ok: false, error: "bad_value" }
+  if (!COMPASS_VARIANTS.includes(variant as CompassVariant)) {
+    return { ok: false, error: "bad_value" }
+  }
+
+  const defs = await getLeadDefs()
+  const target = defs.find((d) => d.id === leadId)
+  if (!target) return { ok: false, error: "not_found" }
+
+  await updateLeadCompassVariant(leadId, variant as CompassVariant)
+  await logActivity({
+    category: "admin",
+    action: "admin.lead_compass_set",
+    ...adminActor(admin),
+    leadOrder: target.order,
+    summary: `${adminActor(admin).actorName} set the compass to ${COMPASS_LABELS[variant as CompassVariant]} for lead "${target.country}"`,
   })
   revalidatePath("/admin")
   revalidatePath("/journal")

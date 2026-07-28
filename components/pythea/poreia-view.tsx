@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { resolveLeadBackground } from "@/lib/lead-backgrounds"
+import { COMPASS_SRC } from "@/lib/compass"
 import { getFinaleNotes, type FinaleNote } from "@/app/journal/actions"
 import { HandwrittenNote } from "@/components/pythea/handwritten-note"
 import { motion } from "framer-motion"
@@ -719,6 +720,25 @@ function JournalPage({
         </div>
           )
         })()}
+      {/* Compass watermark. Sits above the landmark art but under the ink, so it
+          reads as part of the page rather than decoration on top of the text.
+          Sized against BOTH page axes (and capped in px) so the whole compass is
+          always fully visible, never cropped, on any viewport. */}
+      {page.kind === "clue" && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden rounded-l-sm rounded-r-lg [container-type:size]"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={COMPASS_SRC[page.clue.compassVariant] || "/placeholder.svg"}
+            alt=""
+            className="aspect-square w-[min(58cqw,52cqh,320px)] object-contain opacity-[0.13] mix-blend-multiply"
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+      )}
       {/* Spiral binding rings on the left */}
       <BindingRings />
       {/* Paper fiber grain */}

@@ -47,6 +47,8 @@ export const LEAD_ICONS = [
 
 export type LeadIcon = (typeof LEAD_ICONS)[number]
 
+import { DEFAULT_COMPASS_VARIANT, type CompassVariant } from "@/lib/compass"
+
 /** Type guard for a valid lead icon name. */
 export function isLeadIcon(value: unknown): value is LeadIcon {
   return typeof value === "string" && (LEAD_ICONS as readonly string[]).includes(value)
@@ -66,6 +68,8 @@ export type Clue = {
   /** Full-bleed landmark art shown behind this lead's journal page. Uploaded by
    *  an admin; when null the journal falls back to bundled art by order. */
   backgroundImageUrl: string | null
+  /** Which bundled compass watermark sits behind the journal narrative. */
+  compassVariant: CompassVariant
   /** The country this stop represents (Greek; also the canonical stamp key) */
   country: string
   /** The country name in English */
@@ -82,7 +86,10 @@ export type Clue = {
   bodyEn: string[]
 }
 
-const RAW_CLUES: Omit<Clue, "id" | "stampImageUrl" | "stampAspect" | "backgroundImageUrl">[] = [
+const RAW_CLUES: Omit<
+  Clue,
+  "id" | "stampImageUrl" | "stampAspect" | "backgroundImageUrl" | "compassVariant"
+>[] = [
   {
     order: 1,
     country: "Κίνα",
@@ -275,6 +282,7 @@ export const CLUES: Clue[] = RAW_CLUES.map((c) => ({
   stampImageUrl: SEED_META[c.order].stamp,
   stampAspect: SEED_META[c.order].aspect,
   backgroundImageUrl: SEED_META[c.order].bg,
+  compassVariant: DEFAULT_COMPASS_VARIANT,
 }))
 
 /** Count of seed leads. Runtime total is dynamic — see lib/leads.ts. */

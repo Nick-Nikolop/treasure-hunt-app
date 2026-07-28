@@ -126,6 +126,9 @@ export const lead = pgTable(
     // Full-bleed background art shown behind this lead's journal page. Uploaded
     // to Blob by an admin; falls back to a bundled landmark image when null.
     backgroundImageUrl: text("backgroundImageUrl"),
+    // Which bundled compass watermark sits behind the journal text.
+    // One of the keys in lib/compass.ts `COMPASS_VARIANTS`.
+    compassVariant: text("compassVariant").notNull().default("s-to-n"),
     difficulty: text("difficulty").notNull().default("easy"),
     // GPS gate for scans: the physical spot the QR lives at. When both lat and
     // lng are set, a scan requires the explorer to be within `geoRadiusM`
