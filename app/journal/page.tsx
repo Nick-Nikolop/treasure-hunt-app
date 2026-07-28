@@ -104,6 +104,12 @@ export default async function PoreiaPage() {
     : await hasReachedCompass(session.user.id)
   const isAdmin = (await getAdminUser()) !== null
 
+  // Superadmins can page through leads the crew has not unlocked yet, so the
+  // finale can be proofread end to end without faking scans. The full content
+  // of sealed leads is attached ONLY for admins: for everyone else this stays an
+  // empty array, so locked countries still never reach the browser.
+  const adminPreview = isAdmin ? leadDefs.slice(state.unlockedCount) : []
+
   const currentClue = unlocked[unlocked.length - 1] ?? null
   const current = currentClue
     ? { order: currentClue.order, country: currentClue.country, countryEn: currentClue.countryEn }
@@ -120,6 +126,7 @@ export default async function PoreiaPage() {
         <PoreiaView
           unlocked={unlocked}
           locked={state.locked}
+          adminPreview={adminPreview}
           unlockedCount={state.unlockedCount}
           trailEndReached={trailEndReached}
           compassReached={compassReached}

@@ -493,6 +493,12 @@ const el = {
       "Ημερολόγιο ενός ταξιδιού γύρω από τον κόσμο, κρυμμένο μέσα σε μία πόλη.",
     coverFlip: "ΓΥΡΙΣΕ ΣΕΛΙΔΑ ΓΙΑ ΝΑ ΞΕΚΙΝΗΣΕΙΣ",
     entryNo: "ΚΑΤΑΧΩΡΗΣΗ Νο.",
+    // Superadmin-only: browsing a lead the crew has not unlocked yet
+    adminLockedBadge: "ΜΟΝΟ ΓΙΑ ADMIN",
+    adminLockedTitle: "Κλειδωμένη καταχώρηση",
+    adminLockedBody:
+      "Τη βλέπεις μόνο εσύ, ως admin. Οι κανονικοί εξερευνητές δεν φτάνουν σε αυτή τη σελίδα: για εκείνους παραμένει σφραγισμένη μέχρι να σκανάρουν το QR του προηγούμενου στοιχείου. Η περιήγηση εδώ δεν αλλάζει την πρόοδο κανενός.",
+    adminLockedClose: "ΚΑΤΑΛΑΒΑ",
     stampAlt: (country: string) => `Γραμματόσημο από ${country}`,
     signature: "Π. Μ.",
     sealedNotStartedLabel: "ΤΟ ΗΜΕΡΟΛΟΓΙΟ ΑΝΟΙΓΕΙ ΣΕ",
@@ -1373,6 +1379,11 @@ const en: Dictionary = {
       "The journal of a voyage around the world, hidden inside a single city.",
     coverFlip: "TURN THE PAGE TO BEGIN",
     entryNo: "ENTRY No.",
+    adminLockedBadge: "ADMIN ONLY",
+    adminLockedTitle: "Locked entry",
+    adminLockedBody:
+      "Only you can see this, as an admin. Ordinary explorers never reach this page: for them it stays sealed until they scan the previous lead's QR. Browsing here does not change anyone's progress.",
+    adminLockedClose: "GOT IT",
     stampAlt: (country: string) => `Stamp from ${country}`,
     signature: "P. M.",
     sealedNotStartedLabel: "THE JOURNAL OPENS IN",

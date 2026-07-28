@@ -59,6 +59,12 @@ function leadBackground(clue: Clue): string | null {
 type Props = {
   unlocked: Clue[]
   locked: LockedClue[]
+  /**
+   * Full content for the leads the crew has NOT unlocked yet. Server-side this
+   * is populated only for superadmins, so ordinary explorers receive nothing to
+   * page into. Empty for everyone else.
+   */
+  adminPreview?: Clue[]
   unlockedCount: number
   /** True once the crew scanned the trail-end QR at the LAST lead's own spot.
    *  That scan is what closes the paper trail and releases Pytheas's first
@@ -88,7 +94,9 @@ type MapStop = { order: number; country: string; countryEn: string }
 type Page =
   | { kind: "cover" }
   | { kind: "map"; stops: MapStop[]; total: number; allDone: boolean }
-  | { kind: "clue"; clue: Clue }
+  // `adminLocked` marks a lead the crew has not unlocked yet, paged into by a
+  // superadmin. It renders exactly like a real entry plus an admin-only notice.
+  | { kind: "clue"; clue: Clue; adminLocked?: boolean }
   | { kind: "sealed"; gate: "time" | "qr"; unlockMs?: number; notStarted: boolean; order: number }
   | { kind: "final"; stamps: MapStop[]; trailEndReached: boolean }
 
@@ -101,6 +109,7 @@ const PAGE_HEIGHT = "min-h-[36rem] md:min-h-[44rem]"
 export function PoreiaView({
   unlocked,
   locked,
+  adminPreview,
   unlockedCount,
   trailEndReached,
   compassReached,
@@ -157,9 +166,16 @@ export function PoreiaView({
         order: next.order,
       })
     }
+    // Admin-only continuation: every still-sealed lead, in order, right after the
+    // sealed page. The sealed page is kept so admins can still proofread what a
+    // real explorer sees at the gate before reading past it. This array is empty
+    // unless the server marked the viewer as a superadmin.
+    for (const clue of adminPreview ?? []) {
+      list.push({ kind: "clue", clue, adminLocked: true })
+    }
     if (allDone) list.push({ kind: "final", stamps: stops, trailEndReached })
     return list
-  }, [unlocked, next, notStarted, allDone, total, trailEndReached])
+  }, [unlocked, adminPreview, next, notStarted, allDone, total, trailEndReached])
 
   // Deep link: /journal?page=N opens directly on that page (used by the
   // "open" cards on the home page). Initialised lazily so we land on the
@@ -192,7 +208,9 @@ export function PoreiaView({
   useEffect(() => {
     if (flip) return
     const page = pages[index]
-    if (page?.kind === "clue") {
+    // Admin preview pages are deliberately NOT tracked: they are unearned views
+    // and would otherwise skew the per-lead view counts in analytics.
+    if (page?.kind === "clue" && !page.adminLocked) {
       const order = page.clue.order
       if (lastTrackedLead.current !== order) {
         lastTrackedLead.current = order
@@ -775,7 +793,9 @@ function JournalPage({
             allDone={page.allDone}
           />
         )}
-        {page.kind === "clue" && <CluePageBody clue={page.clue} />}
+        {page.kind === "clue" && (
+          <CluePageBody clue={page.clue} adminLocked={page.adminLocked} />
+        )}
         {page.kind === "sealed" && (
           <SealedPageBody
             gate={page.gate}
@@ -873,18 +893,43 @@ function CoverPage({ fill }: { fill?: boolean }) {
   return <JournalCover heightClass={fill ? "h-full" : PAGE_HEIGHT} />
 }
 
-function CluePageBody({ clue }: { clue: Clue }) {
+function CluePageBody({ clue, adminLocked }: { clue: Clue; adminLocked?: boolean }) {
   const { t, locale } = useI18n()
   const country = locale === "en" ? clue.countryEn : clue.country
   const subtitle = locale === "en" ? clue.subtitleEn : clue.subtitle
   const body = locale === "en" ? clue.bodyEn : clue.body
   return (
     <div>
+      {/* Superadmin-only notice on a lead the crew has not unlocked yet. Drawn
+          dashed and muted (the same language as the locked note pills) so an
+          admin can never mistake a preview page for a genuinely earned entry. */}
+      {adminLocked && (
+        <div className="mb-5 flex items-start gap-3 rounded-sm border border-dashed border-ink/35 bg-ink/[0.05] px-3.5 py-3 md:mb-6">
+          <Lock className="mt-0.5 size-4 shrink-0 text-ink/60" aria-hidden />
+          <div className="min-w-0">
+            <p className="font-sans text-[11px] font-bold tracking-chip text-ink/70">
+              {t.journal.adminLockedTitle}
+            </p>
+            <p className="mt-1 font-serif text-[0.9rem] leading-6 text-ink/70">
+              {t.journal.adminLockedBody}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Entry header with a real vintage stamp affixed to the page */}
       <div className="flex items-start justify-between gap-3 sm:gap-4">
         <div className="min-w-0">
-          <p className="font-sans text-[11px] font-bold tracking-chip text-ink/55">
-            {t.journal.entryNo} {String(clue.order).padStart(2, "0")}
+          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 font-sans text-[11px] font-bold tracking-chip text-ink/55">
+            <span>
+              {t.journal.entryNo} {String(clue.order).padStart(2, "0")}
+            </span>
+            {adminLocked && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-dashed border-ink/40 px-1.5 py-0.5 text-[9px] leading-none text-ink/60">
+                <EyeOff className="size-2.5" aria-hidden />
+                {t.journal.adminLockedBadge}
+              </span>
+            )}
           </p>
           <h2 className="mt-1 text-balance font-serif text-3xl font-black leading-none text-ink md:text-5xl">
             {country}
