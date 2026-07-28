@@ -47,6 +47,10 @@ const trustedOrigins = Array.from(
         : undefined,
       process.env.BETTER_AUTH_URL,
       "http://localhost:3000",
+      // The v0 dev sandbox serves the app through a *.vercel.run proxy, so the
+      // browser's Origin header never matches localhost. Dev-only, so this can
+      // never widen the trusted set in preview or production.
+      ...(process.env.NODE_ENV === "development" ? ["https://*.vercel.run"] : []),
     ].filter(Boolean) as string[],
   ),
 )
