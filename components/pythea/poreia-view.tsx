@@ -113,9 +113,13 @@ type Page =
 
 const FLIP_DURATION = 1.5
 
-// Shared page height so every page is as tall as the longest entry, keeping
-// the book a fixed size as you flip instead of resizing per page.
-const PAGE_HEIGHT = "min-h-[36rem] md:min-h-[44rem]"
+// Minimum page height, so a short entry still reads as a full journal page.
+// Desktop keeps the generous 44rem spread. The phone floor is deliberately much
+// lower: at 36rem it was taller than most pages' actual content, so short pages
+// (cover, sealed) were padded out with dead space and the compass in the bottom
+// corner was pushed off screen. 24rem still looks like a page but stops the
+// floor from dictating the height of real content.
+const PAGE_HEIGHT = "min-h-[24rem] md:min-h-[44rem]"
 
 export function PoreiaView({
   unlocked,
@@ -363,7 +367,10 @@ export function PoreiaView({
 
   return (
     <AdminNoticeContext.Provider value={showLockedNotice}>
-      <main className="relative mx-auto w-full max-w-4xl flex-1 px-3 pb-16 pt-24 md:px-4 md:pb-28 md:pt-32">
+      {/* pt on phones only needs to clear the 73px fixed header; the old pt-24
+          (96px) spent 16px of a short screen on nothing, which pushed the book,
+          and with it the compass in the page's bottom corner, below the fold. */}
+      <main className="relative mx-auto w-full max-w-4xl flex-1 px-3 pb-16 pt-20 md:px-4 md:pb-28 md:pt-32">
       {/* Preload every unlocked stamp up front so flipping pages never shows
           a late pop-in. Rendered off-screen, not announced to screen readers. */}
       <div aria-hidden className="pointer-events-none absolute size-0 overflow-hidden opacity-0">
@@ -387,7 +394,7 @@ export function PoreiaView({
         initial={lite ? false : { opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="mb-3 flex items-center gap-2.5 md:gap-4"
+        className="mb-2 flex items-center gap-2.5 md:mb-3 md:gap-4"
       >
         <Feather className="size-4 shrink-0 text-brass md:size-5" />
         <span className="font-sans text-[11px] font-bold tracking-chip text-brass md:text-xs">
@@ -404,7 +411,7 @@ export function PoreiaView({
         initial={lite ? false : { opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.1 }}
-        className="mb-7 max-w-xl text-pretty font-serif text-base italic leading-relaxed text-muted-foreground md:mb-9 md:text-lg"
+        className="mb-4 max-w-xl text-pretty font-serif text-base italic leading-relaxed text-muted-foreground md:mb-9 md:text-lg"
       >
         {t.journal.lead}
       </motion.p>
@@ -418,7 +425,7 @@ export function PoreiaView({
           initial={lite ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.15 }}
-          className="mb-7 -mt-4 md:mb-9 md:-mt-5"
+          className="mb-4 -mt-2 md:mb-9 md:-mt-5"
         >
           <FinaleNoteBar
             trailEndReached={trailEndReached}
@@ -480,24 +487,27 @@ export function PoreiaView({
           >
             {isMobile ? (
               <>
-                {/* SIZER: every page stacked in one grid cell, invisible. The
-                    grid cell grows to the tallest page (cover, content or
-                    sealed) so the book height is uniform. Pure CSS, no
-                    measurement, so it can never get out of sync. */}
-                <div
-                  aria-hidden
-                  className="invisible col-start-1 row-start-1 grid"
-                >
-                  {pages.map((p, i) => (
-                    <div key={i} className="col-start-1 row-start-1">
-                      <JournalPage
-                        page={p}
-                        pageNumber={i}
-                        totalPages={pages.length}
-                        onCountdownDone={() => {}}
-                      />
-                    </div>
-                  ))}
+                {/* SIZER: an invisible copy of the page being shown, which gives
+                    the grid cell its height. It used to stack ALL pages here so
+                    every page shared the tallest one's height, but on a phone that
+                    padded short pages (the cover, sealed pages) with a ~170px dead
+                    band and pushed the compass below the fold. Sizing to the page
+                    actually on screen keeps each page as tall as its own content.
+
+                    Deliberately keyed to the DESTINATION page (targetPage) rather
+                    than max(from,to): the height then changes once, at the moment
+                    the slide starts, where the motion hides it, instead of
+                    snapping after the slide has settled. Still pure CSS, so it
+                    cannot drift out of sync with the visible page. */}
+                <div aria-hidden className="invisible col-start-1 row-start-1 grid">
+                  <div className="col-start-1 row-start-1">
+                    <JournalPage
+                      page={targetPage}
+                      pageNumber={targetIndex}
+                      totalPages={pages.length}
+                      onCountdownDone={() => {}}
+                    />
+                  </div>
                 </div>
 
                 {/* VISIBLE: stretched by the grid to the cell height. Both
