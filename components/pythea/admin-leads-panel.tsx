@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState, useTransition } from "react"
+import { upload } from "@vercel/blob/client"
 import {
   ScrollText,
   ChevronDown,
@@ -54,6 +55,54 @@ const errorText: Record<string, string> = {
   bad_lat: "Latitude must be between -90 and 90.",
   bad_lng: "Longitude must be between -180 and 180.",
   bad_radius: "Radius must be between 10 and 5000 metres.",
+}
+
+/** Client-side caps, matching the ones the upload route enforces. */
+const MAX_BYTES = { stamp: 5 * 1024 * 1024, background: 15 * 1024 * 1024 } as const
+const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/avif"]
+
+/**
+ * Send a picked image straight from the browser to Blob, returning its URL.
+ *
+ * Lead artwork cannot travel through a Server Action: Vercel caps a Server
+ * Action body at 4.5 MB, so a background near the 15 MB allowance came back as
+ * a 413 with nothing saved. Uploading direct to Blob keeps the bytes off our
+ * server entirely; the action that follows only stores the resulting URL.
+ */
+async function sendToBlob(
+  fd: FormData,
+  kind: "stamp" | "background",
+): Promise<{ ok: true; url: string } | { ok: false; message: string }> {
+  const file = fd.get("file")
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, message: errorText.no_file }
+  }
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    return { ok: false, message: errorText.bad_type }
+  }
+  if (file.size > MAX_BYTES[kind]) {
+    return { ok: false, message: kind === "background" ? errorText.too_large_bg : errorText.too_large }
+  }
+
+  const ext = file.type.split("/")[1]?.replace("jpeg", "jpg") ?? "png"
+  const folder = kind === "background" ? "lead-bg" : "stamps"
+  const id = String(fd.get("id") ?? "lead")
+
+  try {
+    const blob = await upload(`${folder}/${id}-${Date.now()}.${ext}`, file, {
+      access: "public",
+      handleUploadUrl: "/api/admin-image-upload",
+      contentType: file.type,
+      clientPayload: kind,
+    })
+    return { ok: true, url: blob.url }
+  } catch (error) {
+    // A rejected token (not signed in, over the cap) surfaces here.
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "That image could not be uploaded.",
+    }
+  }
 }
 
 const DIFFICULTIES: Difficulty[] = ["easy", "medium", "hard"]
@@ -264,7 +313,13 @@ export function AdminLeadsPanel({
 
   function uploadStamp(id: string, fd: FormData) {
     startTransition(async () => {
-      const res = await adminUploadLeadStamp(fd)
+      const sent = await sendToBlob(fd, "stamp")
+      if (!sent.ok) {
+        setPopup({ kind: "err", text: sent.message })
+        return
+      }
+      const aspect = String(fd.get("aspect") ?? "2:3")
+      const res = await adminUploadLeadStamp(id, sent.url, aspect)
       if (!res.ok) {
         setPopup({ kind: "err", text: errorText[res.error] ?? "Could not upload that stamp." })
         return
@@ -291,7 +346,12 @@ export function AdminLeadsPanel({
 
   function uploadBackground(id: string, fd: FormData) {
     startTransition(async () => {
-      const res = await adminUploadLeadBackground(fd)
+      const sent = await sendToBlob(fd, "background")
+      if (!sent.ok) {
+        setPopup({ kind: "err", text: sent.message })
+        return
+      }
+      const res = await adminUploadLeadBackground(id, sent.url)
       if (!res.ok) {
         setPopup({ kind: "err", text: errorText[res.error] ?? "Could not upload that background." })
         return

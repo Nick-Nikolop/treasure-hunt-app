@@ -101,7 +101,7 @@ import {
   updateLeadGeo,
   setTokenForLead,
 } from "@/lib/leads"
-import { put, del } from "@vercel/blob"
+import { del } from "@vercel/blob"
 import { getAnalyticsSnapshot, type AnalyticsSnapshot } from "@/lib/analytics"
 import {
   FINISH_ORDER,
@@ -1465,43 +1465,52 @@ export async function adminRemoveLead(id: string): Promise<ActionResult> {
   return { ok: true }
 }
 
-/** Server-enforced cap for an uploaded stamp image (5 MB). */
-const MAX_STAMP_BYTES = 5 * 1024 * 1024
-const ALLOWED_STAMP_TYPES = ["image/png", "image/jpeg", "image/webp", "image/avif"]
-/** Full-page background art is far heavier than a stamp, so it gets a 15 MB cap. */
-const MAX_BACKGROUND_BYTES = 15 * 1024 * 1024
+/**
+ * Lead artwork is uploaded straight from the browser to Blob via
+ * /api/admin-image-upload, so these actions receive a finished Blob URL rather
+ * than the file itself. Sending the bytes through a Server Action capped the
+ * upload at 4.5 MB on Vercel (a hard platform limit that `bodySizeLimit` cannot
+ * raise), which returned a 413 for any reasonably sized background. Size and
+ * content-type are enforced when the upload token is minted.
+ */
+const BLOB_HOST_FRAGMENT = ".public.blob.vercel-storage.com"
+
+/** Reject anything that is not one of our own Blob URLs. */
+function isOwnBlobUrl(raw: string): boolean {
+  try {
+    const u = new URL(raw)
+    return u.protocol === "https:" && u.hostname.endsWith(BLOB_HOST_FRAGMENT)
+  } catch {
+    return false
+  }
+}
 
 /**
- * Upload a new γραμματόσημο (stamp) image for a lead. The file is stored in
- * Blob and its public URL saved on the lead. Any previous uploaded stamp is
- * removed. `aspect` is the suggested ratio the admin authored to (e.g. "2:3").
+ * Attach an already-uploaded γραμματόσημο (stamp) image to a lead. Any previous
+ * uploaded stamp is removed. `aspect` is the suggested ratio the admin authored
+ * to (e.g. "2:3").
  */
 export async function adminUploadLeadStamp(
-  formData: FormData,
+  id: string,
+  url: string,
+  aspect: string,
 ): Promise<{ ok: true; url: string; aspect: string } | { ok: false; error: string }> {
   const admin = await requireAdmin()
 
-  const id = String(formData.get("id") ?? "").trim()
-  const aspect = String(formData.get("aspect") ?? "2:3").trim() || "2:3"
-  const file = formData.get("file")
-  if (!id) return { ok: false, error: "bad_value" }
-  if (!(file instanceof File) || file.size === 0) return { ok: false, error: "no_file" }
-  if (file.size > MAX_STAMP_BYTES) return { ok: false, error: "too_large" }
-  if (!ALLOWED_STAMP_TYPES.includes(file.type)) return { ok: false, error: "bad_type" }
+  const leadId = (id ?? "").trim()
+  const nextAspect = (aspect ?? "2:3").trim() || "2:3"
+  const nextUrl = (url ?? "").trim()
+  if (!leadId) return { ok: false, error: "bad_value" }
+  if (!nextUrl) return { ok: false, error: "no_file" }
+  if (!isOwnBlobUrl(nextUrl)) return { ok: false, error: "bad_value" }
 
   const defs = await getLeadDefs()
-  const target = defs.find((d) => d.id === id)
+  const target = defs.find((d) => d.id === leadId)
   if (!target) return { ok: false, error: "not_found" }
-
-  const ext = file.type.split("/")[1]?.replace("jpeg", "jpg") ?? "png"
-  const blob = await put(`stamps/${id}-${Date.now()}.${ext}`, file, {
-    access: "public",
-    contentType: file.type,
-  })
 
   // Remove the previous uploaded stamp (bundled defaults are left alone).
   const prev = target.stampImageUrl
-  if (prev && prev.includes(".public.blob.vercel-storage.com") && prev !== blob.url) {
+  if (prev && prev.includes(BLOB_HOST_FRAGMENT) && prev !== nextUrl) {
     try {
       await del(prev)
     } catch {
@@ -1509,7 +1518,7 @@ export async function adminUploadLeadStamp(
     }
   }
 
-  await updateLeadStamp(id, blob.url, aspect)
+  await updateLeadStamp(leadId, nextUrl, nextAspect)
   await logActivity({
     category: "admin",
     action: "admin.lead_stamp_updated",
@@ -1519,7 +1528,7 @@ export async function adminUploadLeadStamp(
   })
   revalidatePath("/admin")
   revalidatePath("/journal")
-  return { ok: true, url: blob.url, aspect }
+  return { ok: true, url: nextUrl, aspect: nextAspect }
 }
 
 /** Clear a lead's uploaded stamp, reverting it to the bundled/default art. */
@@ -1559,30 +1568,24 @@ export async function adminClearLeadStamp(id: string): Promise<ActionResult> {
  * falls back to a bundled landmark chosen by lead order.
  */
 export async function adminUploadLeadBackground(
-  formData: FormData,
+  id: string,
+  url: string,
 ): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
   const admin = await requireAdmin()
 
-  const id = String(formData.get("id") ?? "").trim()
-  const file = formData.get("file")
-  if (!id) return { ok: false, error: "bad_value" }
-  if (!(file instanceof File) || file.size === 0) return { ok: false, error: "no_file" }
-  if (file.size > MAX_BACKGROUND_BYTES) return { ok: false, error: "too_large_bg" }
-  if (!ALLOWED_STAMP_TYPES.includes(file.type)) return { ok: false, error: "bad_type" }
+  const leadId = (id ?? "").trim()
+  const nextUrl = (url ?? "").trim()
+  if (!leadId) return { ok: false, error: "bad_value" }
+  if (!nextUrl) return { ok: false, error: "no_file" }
+  if (!isOwnBlobUrl(nextUrl)) return { ok: false, error: "bad_value" }
 
   const defs = await getLeadDefs()
-  const target = defs.find((d) => d.id === id)
+  const target = defs.find((d) => d.id === leadId)
   if (!target) return { ok: false, error: "not_found" }
-
-  const ext = file.type.split("/")[1]?.replace("jpeg", "jpg") ?? "jpg"
-  const blob = await put(`lead-bg/${id}-${Date.now()}.${ext}`, file, {
-    access: "public",
-    contentType: file.type,
-  })
 
   // Remove the previous uploaded background (bundled defaults are left alone).
   const prev = target.backgroundImageUrl
-  if (prev && prev.includes(".public.blob.vercel-storage.com") && prev !== blob.url) {
+  if (prev && prev.includes(BLOB_HOST_FRAGMENT) && prev !== nextUrl) {
     try {
       await del(prev)
     } catch {
@@ -1590,7 +1593,7 @@ export async function adminUploadLeadBackground(
     }
   }
 
-  await updateLeadBackground(id, blob.url)
+  await updateLeadBackground(leadId, nextUrl)
   await logActivity({
     category: "admin",
     action: "admin.lead_background_updated",
@@ -1600,7 +1603,7 @@ export async function adminUploadLeadBackground(
   })
   revalidatePath("/admin")
   revalidatePath("/journal")
-  return { ok: true, url: blob.url }
+  return { ok: true, url: nextUrl }
 }
 
 /** Clear a lead's uploaded background, reverting it to the bundled landmark art. */
