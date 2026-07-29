@@ -15,6 +15,7 @@ import { resolveLeadBackground } from "@/lib/lead-backgrounds"
 import { COMPASS_SRC, DEFAULT_COMPASS_OPACITY_PCT } from "@/lib/compass"
 import { getFinaleNotes, type FinaleNote } from "@/app/journal/actions"
 import { HandwrittenNote } from "@/components/pythea/handwritten-note"
+import { WinnerPreviewButton } from "@/components/pythea/winner-preview-button"
 import { motion } from "framer-motion"
 import {
   Lock,
@@ -718,6 +719,11 @@ export function PoreiaView({
 
         {/* Leaderboard preview + "who is at your port" widgets */}
         <JournalWidgets standings={standings} />
+
+        {/* Admin-only: open the treasure screen without scanning its QR, so the
+            finale copy can be proofread. Gated here as well as inside the
+            component, so ordinary explorers are never sent this markup. */}
+        {isAdmin && <WinnerPreviewButton />}
 
         {lockedNotice !== null && (
           <AdminLockedOverlay order={lockedNotice} onClose={closeLockedNotice} />

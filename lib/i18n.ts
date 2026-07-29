@@ -369,7 +369,7 @@ const el = {
     leaveTitle: "Αποχώρηση από την ομάδα;",
     leaveBodyMember: "Θα φύγεις από αυτή την ομάδα. Μπορείς να ξαναμπείς με νέα πρόσκληση.",
     leaveBodyOwner:
-      "Είσαι ο αρχηγός. Φεύγοντας, η ομάδα περνά στο επ��μενο παλαιότερο μέλος. Αν είσαι ο τελευταίος, η ομάδα διαλύεται.",
+      "Είσαι ο αρχηγός. Φεύγοντας, η ομάδα περνά στο επόμενο παλαιότερο μέλος. Αν είσαι ο τελευταίος, η ομάδα διαλύεται.",
     leaveConfirm: "ΑΠΟΧΩΡΗΣΗ",
     removeTitle: (name: string) => `Αφαίρεση ${name};`,
     removeBody: "Θα αφαιρεθεί από την ομάδα. Μπορεί να ξαναμπεί με πρόσκληση.",
@@ -398,7 +398,7 @@ const el = {
       already_in_team: "Είσαι ήδη σε άλλη ομάδα. Φύγε πρώτα από εκείνη.",
       already_member: "Είσαι ήδη σε αυτή την ομάδα.",
       full: "Η ομάδα είναι γεμάτη.",
-      not_found: "Δεν βρέθηκε ομ��δα με αυτόν τον κωδικό.",
+      not_found: "Δεν βρέθηκε ομάδα με αυτόν τον κωδικό.",
       too_short: "Το όνομα είναι πολύ μικρό.",
       too_long: "Το όνομα είναι πολύ μεγάλο.",
       not_owner: "Μόνο ο αρχηγός μπορεί να το κάνει αυτό.",
@@ -491,14 +491,23 @@ const el = {
     coverTitle: "Πυθέας ο Μεσσήνιος",
     coverSubtitle:
       "Ημερολόγιο ενός ταξιδιού γύρω από τον κόσμο, κρυμμένο μέσα σε μία πόλη.",
-    coverFlip: "ΓΥΡΙΣΕ ΣΕΛΙΔΑ ΓΙΑ ΝΑ ΞΕΚΙΝΗ��ΕΙΣ",
+    coverFlip: "ΓΥΡΙΣΕ ΣΕΛΙΔΑ ΓΙΑ ΝΑ ΞΕΚΙΝΗΣΕΙΣ",
     entryNo: "ΚΑΤΑΧΩΡΗΣΗ Νο.",
     // Superadmin-only: browsing a lead the crew has not unlocked yet
     adminLockedBadge: "ΜΟΝΟ ΓΙΑ ADMIN",
-    adminLockedTitle: "Κλειδ��μένη καταχώρηση",
+    adminLockedTitle: "Κλειδωμένη καταχώρηση",
     adminLockedBody:
       "Τη βλέπεις μόνο εσύ, ως admin. Οι κανονικοί εξερευνητές δεν φτάνουν σε αυτή τη σελίδα: για εκείνους παραμένει σφραγισμένη μέχρι να σκανάρουν το QR του προηγούμενου στοιχείου. Η περιήγηση εδώ δεν αλλάζει την πρόοδο κανενός.",
     adminLockedClose: "ΚΑΤΑΛΑΒΑ",
+    // Superadmin-only: previewing the treasure/winner screen from the journal
+    winnerPreviewCta: "ΟΘΟΝΗ ΝΙΚΗΤΗ",
+    winnerPreviewHint:
+      "Δες τι εμφανίζεται στο πλήρωμα όταν σκανάρει το QR του θησαυρού. Δεν καταγράφεται τίποτα.",
+    winnerPreviewBadge: "ΜΟΝΟ ΓΙΑ ADMIN · ΠΡΟΕΠΙΣΚΟΠΗΣΗ",
+    winnerPreviewTitle: "Η οθόνη του νικητή",
+    winnerPreviewBody:
+      "Ακριβώς αυτό βλέπει ένα πλήρωμα όταν φτάνει στον θησαυρό, με το πραγματικό κείμενο του φινάλε. Είναι μόνο προεπισκόπηση: δεν μετράει τερματισμό, δεν αλλάζει κατάταξη και δεν καταγράφεται πουθενά.",
+    winnerPreviewClose: "ΚΛΕΙΣΙΜΟ",
     stampAlt: (country: string) => `Γραμματόσημο από ${country}`,
     signature: "Π. Μ.",
     sealedNotStartedLabel: "ΤΟ ΗΜΕΡΟΛΟΓΙΟ ΑΝΟΙΓΕΙ ΣΕ",
@@ -767,7 +776,7 @@ const el = {
     confirmPasswordPlaceholder: "Ξαναγράψε τον κωδικό",
     firstNameLabel: "Όνομα",
     firstNamePlaceholder: "Πυθέας",
-    lastNameLabel: "Επώνυμο (πρ��αιρετικό)",
+    lastNameLabel: "Επώνυμο (προαιρετικό)",
     lastNamePlaceholder: "ο Μεσσήνιος",
     yearLabel: "Έτος γέννησης",
     yearPlaceholder: "1990",
@@ -1385,6 +1394,15 @@ const en: Dictionary = {
     adminLockedBody:
       "Only you can see this, as an admin. Ordinary explorers never reach this page: for them it stays sealed until they scan the previous lead's QR. Browsing here does not change anyone's progress.",
     adminLockedClose: "GOT IT",
+    // Superadmin-only: previewing the treasure/winner screen from the journal
+    winnerPreviewCta: "WINNER SCREEN",
+    winnerPreviewHint:
+      "See what a crew gets when they scan the treasure QR. Nothing is recorded.",
+    winnerPreviewBadge: "ADMIN ONLY · PREVIEW",
+    winnerPreviewTitle: "The winner screen",
+    winnerPreviewBody:
+      "This is exactly what a crew sees when they reach the treasure, with the real finale copy. It is a preview only: it counts as no finish, changes no standings, and is recorded nowhere.",
+    winnerPreviewClose: "CLOSE",
     stampAlt: (country: string) => `Stamp from ${country}`,
     signature: "P. M.",
     sealedNotStartedLabel: "THE JOURNAL OPENS IN",

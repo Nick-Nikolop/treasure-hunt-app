@@ -221,6 +221,30 @@ export function WinnerReveal() {
   )
 }
 
+/**
+ * Admin-only preview of the treasure screen, rendered inside the journal so the
+ * finale can be proofread without planting a fake scan.
+ *
+ * It reuses the very same `WinnerScreen` as the real thing, with the LIVE finale
+ * copy, so what an admin checks is exactly what a finishing crew will see.
+ *
+ * It deliberately does NOT fire the `huntFinished` analytics event that
+ * `WinnerReveal` fires: a preview is not a finish, and logging one would
+ * pollute the finish funnel with events from admins who never played.
+ */
+export function WinnerScreenPreview() {
+  const { t, locale } = useI18n()
+  const f = t.finale
+  const { data, loading } = useFinaleSummary()
+
+  if (loading) return <FinaleLoader label={f.loading} />
+
+  const message = data ? (locale === "en" ? data.winnerEn : data.winner) : ""
+  const prizeNote = data ? (locale === "en" ? data.winnerNoteEn : data.winnerNote) : ""
+
+  return <WinnerScreen message={message} prizeNote={prizeNote} />
+}
+
 function WinnerScreen({ message, prizeNote }: { message: string; prizeNote: string }) {
   const { t } = useI18n()
   const f = t.finale
