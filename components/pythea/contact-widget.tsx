@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { ArrowUpRight, Instagram, LifeBuoy, X } from "lucide-react"
+import { ArrowUpRight, Instagram, MessageCircleMore, X } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
 import { LEGAL_ORG } from "@/lib/legal"
 import { track } from "@/lib/analytics-client"
@@ -81,7 +81,7 @@ export function ContactWidget() {
             {/* Header band, same vocabulary as the how-to-play modal. */}
             <div className="relative flex items-center gap-2.5 border-b border-brass/20 bg-brass/[0.07] px-3.5 py-2.5">
               <span className="flex size-7 shrink-0 items-center justify-center rounded-sm border border-brass/45 bg-brass/10">
-                <LifeBuoy className="size-3.5 text-brass" />
+                <MessageCircleMore className="size-3.5 text-brass" />
               </span>
               <h2
                 id="contact-widget-title"
@@ -152,7 +152,9 @@ export function ContactWidget() {
           {open ? (
             <X className="size-3.5" />
           ) : (
-            <LifeBuoy className="size-3.5 transition-transform duration-700 group-hover:rotate-180" />
+            /* A bubble must not spin (its tail would end up on top), so it
+               gets a gentle nudge-and-swell on hover instead. */
+            <MessageCircleMore className="size-3.5 transition-transform duration-300 group-hover:-translate-y-px group-hover:scale-110" />
           )}
         </span>
         {/* Label is icon-only below `sm` so it cannot crowd a phone screen. */}
