@@ -29,6 +29,15 @@ const el = {
     brandSub: "Ο ΜΕΣΣΗΝΙΟΣ",
     openMenu: "Άνοιγμα μενού",
   },
+  // Floating contact widget: any question goes to Instagram DMs.
+  contact: {
+    open: "Χρειάζεσαι βοήθεια;",
+    title: "Επικοινωνία",
+    lede: "Έχεις απορία ή κάποιο πρόβλημα; Στείλε μας μήνυμα στο Instagram και θα σου απαντήσουμε το συντομότερο.",
+    cta: "Στείλε μήνυμα στο Instagram",
+    handle: "@thehuntkalamata",
+    close: "Κλείσιμο",
+  },
   hero: {
     coords: "36°57′Β · 22°06′Α · ΚΑΛΑΜΑΤΑ",
     season: "30 ΙΟΥΛΙΟΥ 2026",
@@ -1065,6 +1074,14 @@ const en: Dictionary = {
     brand: "PYTHEAS",
     brandSub: "THE MESSENIAN",
     openMenu: "Open menu",
+  },
+  contact: {
+    open: "Need help?",
+    title: "Contact us",
+    lede: "Got a question or run into a problem? Send us a message on Instagram and we will get back to you as soon as we can.",
+    cta: "Message us on Instagram",
+    handle: "@thehuntkalamata",
+    close: "Close",
   },
   hero: {
     coords: "36°57′N · 22°06′E · KALAMATA",

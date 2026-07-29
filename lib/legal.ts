@@ -28,4 +28,6 @@ export const LEGAL_ORG = {
   name: "The Hunt Kalamata",
   contactEmail: "thehuntkalamata@gmail.com",
   instagram: "@thehuntkalamata",
+  /** Single source of truth for the profile link (contact widget + teaser). */
+  instagramUrl: "https://www.instagram.com/thehuntkalamata",
 } as const
