@@ -67,6 +67,7 @@ import {
   setPhaseOverride,
   setPhaseUnlockTimes,
   setJournalLockedManual,
+  setRostersLockedManual,
   getPhaseLeads,
   removePhaseLead,
 } from "@/lib/hunt-config"
@@ -609,6 +610,8 @@ export async function adminSavePhase(input: {
   journalUnlockMs: number
   /** Manual journal + leaderboard seal. */
   journalLockedManual: boolean
+  /** Whether rosters freeze once the hunt goes live. Defaults ON. */
+  rostersLockedManual: boolean
 }): Promise<ActionResult> {
   const admin = await requireAdmin()
 
@@ -618,6 +621,7 @@ export async function adminSavePhase(input: {
     return { ok: false, error: "bad_value" }
   }
   if (typeof input.journalLockedManual !== "boolean") return { ok: false, error: "bad_value" }
+  if (typeof input.rostersLockedManual !== "boolean") return { ok: false, error: "bad_value" }
 
   const before = await getPhaseSettings()
   await setPhaseOverride(input.override)
@@ -626,6 +630,7 @@ export async function adminSavePhase(input: {
     journalUnlockMs: input.journalUnlockMs,
   })
   await setJournalLockedManual(input.journalLockedManual)
+  await setRostersLockedManual(input.rostersLockedManual)
 
   const after: PhaseSettings = {
     override: input.override,
@@ -636,6 +641,7 @@ export async function adminSavePhase(input: {
       journalUnlockMs: input.journalUnlockMs,
     }),
     journalLockedManual: input.journalLockedManual,
+    rostersLockedManual: input.rostersLockedManual,
   }
 
   // Call out a journal seal flip explicitly: it is the one change here that can
@@ -645,11 +651,18 @@ export async function adminSavePhase(input: {
     ? `; journal ${after.journalLockedManual ? "LOCKED" : "UNLOCKED"}`
     : ""
 
+  // Same for the roster freeze: it decides whether crews can still change
+  // mid-hunt, so a flip needs to be traceable.
+  const rosterNote =
+    before.rostersLockedManual !== after.rostersLockedManual
+      ? `; rosters ${after.rostersLockedManual ? "LOCK ON" : "LOCK OFF"}`
+      : ""
+
   await logActivity({
     ...adminActor(admin),
     category: "admin",
     action: "phase_update",
-    summary: `Phase settings updated (override ${before.override} → ${after.override})${sealNote}`,
+    summary: `Phase settings updated (override ${before.override} → ${after.override})${sealNote}${rosterNote}`,
   })
 
   // The gate is read on every request, but revalidate the key routes so any

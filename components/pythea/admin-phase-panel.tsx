@@ -9,6 +9,7 @@ import {
   Lock,
   Globe,
   BookOpen,
+  Users,
   Users2,
   Download,
   Trash2,
@@ -60,6 +61,7 @@ export function AdminPhasePanel({ data }: { data: PhaseAdminData }) {
     utcMsToAthensLocalInput(data.settings.journalUnlockMs),
   )
   const [journalSealed, setJournalSealed] = useState(data.settings.journalLockedManual)
+  const [rostersFrozen, setRostersFrozen] = useState(data.settings.rostersLockedManual)
 
   // Double-confirmation state.
   const [reviewOpen, setReviewOpen] = useState(false)
@@ -81,12 +83,15 @@ export function AdminPhasePanel({ data }: { data: PhaseAdminData }) {
     override !== data.settings.override ||
     phase2Local !== utcMsToAthensLocalInput(data.settings.phase2UnlockMs) ||
     journalLocal !== utcMsToAthensLocalInput(data.settings.journalUnlockMs) ||
-    journalSealed !== data.settings.journalLockedManual
+    journalSealed !== data.settings.journalLockedManual ||
+    rostersFrozen !== data.settings.rostersLockedManual
 
   // True when this save would newly seal the journal. Drives the extra warning
   // in the review dialog, since that is the destructive direction.
   const sealingNow = journalSealed && !data.settings.journalLockedManual
   const unsealingNow = !journalSealed && data.settings.journalLockedManual
+  // For rosters the risky direction is the opposite one: unfreezing mid-hunt.
+  const unfreezingRosters = !rostersFrozen && data.settings.rostersLockedManual
 
   const journalEffectiveMs = validTimes
     ? normalizedJournalUnlockMs({
@@ -108,6 +113,7 @@ export function AdminPhasePanel({ data }: { data: PhaseAdminData }) {
         phase2UnlockMs: phase2Ms,
         journalUnlockMs: journalMs,
         journalLockedManual: journalSealed,
+        rostersLockedManual: rostersFrozen,
       })
       setReviewOpen(false)
       setConfirmText("")
@@ -353,6 +359,81 @@ export function AdminPhasePanel({ data }: { data: PhaseAdminData }) {
         )}
       </div>
 
+      {/* Roster freeze. Phase-gated on purpose: it only ever applies once the
+          hunt is live, so leaving it ON cannot block sign-ups beforehand. */}
+      <div className="rounded-sm border border-border bg-card/40 p-4">
+        <h3 className="font-sans text-xs font-bold tracking-chip text-muted-foreground">
+          TEAM ROSTER FREEZE
+        </h3>
+        <p className="mt-2 font-sans text-[13px] leading-relaxed text-muted-foreground">
+          <strong>On by default.</strong> When the hunt goes live (phase 3) crews stop changing: no
+          creating, joining, inviting, leaving or removing, so leaderboard rosters stay stable and
+          nobody is stranded solo mid-hunt. Renaming stays open, and superadmins always bypass it.
+          Turn it off to keep crews editable during the hunt.
+        </p>
+
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={() => setRostersFrozen(true)}
+            aria-pressed={rostersFrozen}
+            className={`flex items-start gap-2.5 rounded-sm border px-3.5 py-3 text-left transition-colors ${
+              rostersFrozen ? "border-brass bg-brass/10" : "border-border hover:border-brass/50"
+            }`}
+          >
+            <Lock
+              className={`mt-0.5 size-4 shrink-0 ${rostersFrozen ? "text-brass" : "text-muted-foreground"}`}
+            />
+            <span className="flex flex-col">
+              <span className="font-sans text-sm font-bold text-foreground">Freeze at phase 3</span>
+              <span className="font-sans text-[12px] text-muted-foreground">
+                Recommended. Rosters lock the moment the hunt opens
+              </span>
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setRostersFrozen(false)}
+            aria-pressed={!rostersFrozen}
+            className={`flex items-start gap-2.5 rounded-sm border px-3.5 py-3 text-left transition-colors ${
+              !rostersFrozen ? "border-brass bg-brass/10" : "border-border hover:border-brass/50"
+            }`}
+          >
+            <Users
+              className={`mt-0.5 size-4 shrink-0 ${!rostersFrozen ? "text-brass" : "text-muted-foreground"}`}
+            />
+            <span className="flex flex-col">
+              <span className="font-sans text-sm font-bold text-foreground">Stay open</span>
+              <span className="font-sans text-[12px] text-muted-foreground">
+                Crews can still change while the hunt runs
+              </span>
+            </span>
+          </button>
+        </div>
+
+        <p className="mt-3 font-sans text-[12px] text-muted-foreground">
+          Currently live:{" "}
+          <strong className={data.settings.rostersLockedManual ? "text-brass" : "text-foreground"}>
+            {data.settings.rostersLockedManual ? "FREEZE ON" : "STAY OPEN"}
+          </strong>
+          {rostersFrozen !== data.settings.rostersLockedManual && (
+            <> &middot; pending change to {rostersFrozen ? "FREEZE ON" : "STAY OPEN"}</>
+          )}
+          {data.settings.rostersLockedManual && data.effectivePhase < 3 && (
+            <> &middot; not in effect yet, applies from phase 3</>
+          )}
+        </p>
+
+        {/* Turning it off while the hunt is live is the risky direction here. */}
+        {!rostersFrozen && data.effectivePhase === 3 && (
+          <p className="mt-3 flex items-start gap-2 rounded-sm border border-destructive/40 bg-destructive/10 px-3 py-2 font-sans text-[12px] text-foreground">
+            <TriangleAlert className="mt-0.5 size-3.5 shrink-0 text-destructive" />
+            The hunt is live: crews will be able to reshuffle mid-trail, which can shift the
+            leaderboard.
+          </p>
+        )}
+      </div>
+
       {/* Save */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
         <button
@@ -489,6 +570,18 @@ export function AdminPhasePanel({ data }: { data: PhaseAdminData }) {
               )}
             </dd>
           </div>
+          <div className="flex items-center justify-between gap-3">
+            <dt className="text-muted-foreground">Roster freeze</dt>
+            <dd className={`font-bold ${rostersFrozen ? "text-brass" : "text-foreground"}`}>
+              {rostersFrozen ? "ON (phase 3)" : "OFF"}
+              {rostersFrozen !== data.settings.rostersLockedManual && (
+                <span className="font-normal text-muted-foreground">
+                  {" "}
+                  (was {data.settings.rostersLockedManual ? "on" : "off"})
+                </span>
+              )}
+            </dd>
+          </div>
           {override === "auto" && (
             <>
               <div className="flex items-center justify-between gap-3">
@@ -519,6 +612,16 @@ export function AdminPhasePanel({ data }: { data: PhaseAdminData }) {
             <span>
               You are <strong>reopening the journal</strong>. Every signed-in explorer regains
               access to their clues right away.
+            </span>
+          </p>
+        )}
+
+        {unfreezingRosters && (
+          <p className="mt-4 flex items-start gap-2 rounded-sm border border-destructive/40 bg-destructive/10 px-3 py-2.5 font-sans text-[12.5px] leading-relaxed text-foreground">
+            <Users className="mt-0.5 size-3.5 shrink-0 text-destructive" />
+            <span>
+              You are <strong>unfreezing team rosters</strong>. Crews will be able to create, join,
+              leave and remove members even while the hunt is live.
             </span>
           </p>
         )}

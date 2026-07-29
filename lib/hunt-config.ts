@@ -153,6 +153,7 @@ export async function getPhaseSettings(): Promise<PhaseSettings> {
       phase2: scoreConfig.phase2UnlockAt,
       journal: scoreConfig.journalUnlockAt,
       journalLockedManual: scoreConfig.journalLockedManual,
+      rostersLockedManual: scoreConfig.rostersLockedManual,
     })
     .from(scoreConfig)
     .where(eq(scoreConfig.id, "default"))
@@ -165,6 +166,9 @@ export async function getPhaseSettings(): Promise<PhaseSettings> {
     // Absent row / column ⇒ OPEN. The journal defaults to unlocked so a fresh
     // or half-migrated database can never accidentally seal it.
     journalLockedManual: row?.journalLockedManual ?? false,
+    // Absent row / column ⇒ ON, preserving the automatic phase 3 freeze this
+    // switch replaced. Only an explicit `false` unfreezes rosters.
+    rostersLockedManual: row?.rostersLockedManual ?? true,
   }
 }
 
@@ -176,6 +180,17 @@ export async function setJournalLockedManual(locked: boolean): Promise<void> {
     .onConflictDoUpdate({
       target: scoreConfig.id,
       set: { journalLockedManual: locked, updatedAt: new Date() },
+    })
+}
+
+/** Flip the phase 3 roster freeze on or off. */
+export async function setRostersLockedManual(locked: boolean): Promise<void> {
+  await db
+    .insert(scoreConfig)
+    .values({ id: "default", rostersLockedManual: locked, updatedAt: new Date() })
+    .onConflictDoUpdate({
+      target: scoreConfig.id,
+      set: { rostersLockedManual: locked, updatedAt: new Date() },
     })
 }
 

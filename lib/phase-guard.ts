@@ -3,6 +3,7 @@ import "server-only"
 import { getAdminUser } from "@/lib/admin"
 import { getPhaseSettings } from "@/lib/hunt-config"
 import {
+  areRostersFrozen,
   computeEffectivePhase,
   isJournalLocked,
   type Phase,
@@ -58,11 +59,14 @@ export async function getPublicPhase(nowMs = Date.now()): Promise<Phase> {
  *
  * Superadmins bypass it, exactly like every other phase gate, so a crew can
  * still be repaired on the day.
+ *
+ * The freeze is no longer automatic: it is an admin switch that DEFAULTS ON, so
+ * the behaviour above is what happens unless an admin turns it off.
  */
 export async function areRostersLocked(): Promise<boolean> {
   const [admin, settings] = await Promise.all([getAdminUser(), getPhaseSettings()])
   if (admin) return false
-  return computeEffectivePhase(settings, Date.now()) === 3
+  return areRostersFrozen(computeEffectivePhase(settings, Date.now()), settings)
 }
 
 export async function getPhaseContext(): Promise<PhaseContext> {

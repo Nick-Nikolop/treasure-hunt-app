@@ -15,6 +15,7 @@ import { SiteFooter } from "@/components/pythea/site-footer"
 import { TeaserLanding } from "@/components/pythea/teaser-landing"
 import { LockedRedirectNotice } from "@/components/pythea/locked-redirect-notice"
 import { getPhaseContext } from "@/lib/phase-guard"
+import { areRostersFrozen } from "@/lib/phase"
 import { cookies, headers } from "next/headers"
 import { auth } from "@/lib/auth"
 import { isLeadOneOpen, START_MS } from "@/lib/clues"
@@ -94,9 +95,13 @@ export default async function Page() {
         {/* Welcome / join panel first, then the path (9 countries / 9 leads),
             then the "Ι. Ο ΘΡΥΛΟΣ" legend. The path links down to the legend for
             anyone who wants the backstory. */}
+        {/* Mirrors areRostersLocked() rather than testing the phase directly,
+            so turning the admin switch off reopens sign-ups here too. */}
         <Register
           isInTeam={isInTeam}
-          rostersLocked={!phaseCtx.isSuperadmin && phaseCtx.phase === 3}
+          rostersLocked={
+            !phaseCtx.isSuperadmin && areRostersFrozen(phaseCtx.phase, phaseCtx.settings)
+          }
         />
         <PrizePool />
         <Journey
