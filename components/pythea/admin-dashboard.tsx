@@ -96,6 +96,45 @@ function fmtDate(d: Date | string) {
   return date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })
 }
 
+/** Compact "how long ago", e.g. "just now", "4m", "3h", "2d". */
+function fmtAgo(ms: number) {
+  const mins = Math.floor(ms / 60_000)
+  if (mins < 1) return "just now"
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  const days = Math.floor(hrs / 24)
+  if (days < 30) return `${days}d ago`
+  return `${Math.floor(days / 30)}mo ago`
+}
+
+type PresenceState = "online" | "idle" | "offline" | "never"
+
+/**
+ * Bucket a user by how recently they emitted an event. Both timestamps are
+ * server-side epoch ms (`presence.takenAt` and `lastSeenAt`), so this never
+ * depends on the admin's own device clock being right.
+ */
+function presenceState(
+  lastSeenAt: number | null,
+  takenAt: number,
+  onlineMin: number,
+  recentMin: number,
+): PresenceState {
+  if (lastSeenAt == null) return "never"
+  const mins = (takenAt - lastSeenAt) / 60_000
+  if (mins <= onlineMin) return "online"
+  if (mins <= recentMin) return "idle"
+  return "offline"
+}
+
+const PRESENCE_DOT: Record<PresenceState, string> = {
+  online: "bg-emerald-400 ring-2 ring-emerald-400/25",
+  idle: "bg-amber-400 ring-2 ring-amber-400/20",
+  offline: "bg-muted-foreground/30",
+  never: "bg-muted-foreground/15",
+}
+
 export function AdminDashboard({
   data,
   currentUserId,
@@ -117,6 +156,14 @@ export function AdminDashboard({
   // Progress opens first: it is the "where is everyone" view admins want mid-hunt.
   const [tab, setTab] = useState<Tab>("progress")
   const [query, setQuery] = useState("")
+  // Users tab: narrow the list to whoever is online/idle right now.
+  const [onlineOnly, setOnlineOnly] = useState(false)
+  // Opt-in polling. Off by default because a refresh re-runs the whole admin
+  // query, which is heavy; admins watching the hunt live can switch it on.
+  const [livePresence, setLivePresence] = useState(false)
+  // Seconds since this snapshot arrived. Measured from mount rather than by
+  // comparing clocks, so a skewed device clock cannot make it read wrong.
+  const [snapshotAge, setSnapshotAge] = useState(0)
   const [pending, startTransition] = useTransition()
   const [banner, setBanner] = useState<{ kind: "ok" | "err"; text: string } | null>(null)
 
@@ -196,16 +243,44 @@ export function AdminDashboard({
     })
   }
 
+  // Age the snapshot label once a second. Resets whenever fresh data arrives.
+  useEffect(() => {
+    setSnapshotAge(0)
+    const id = setInterval(() => setSnapshotAge((s) => s + 1), 1000)
+    return () => clearInterval(id)
+  }, [data.presence.takenAt])
+
+  // Live mode: re-pull the dashboard every 20s while the Users tab is open.
+  useEffect(() => {
+    if (!livePresence || tab !== "users") return
+    const id = setInterval(() => router.refresh(), 20_000)
+    return () => clearInterval(id)
+  }, [livePresence, tab, router])
+
+  const presence = data.presence
+
   const filteredUsers = useMemo(() => {
     const q = query.trim().toLowerCase()
-    if (!q) return data.users
-    return data.users.filter(
-      (u) =>
-        u.email.toLowerCase().includes(q) ||
-        u.name.toLowerCase().includes(q) ||
-        (u.teamName ?? "").toLowerCase().includes(q),
-    )
-  }, [data.users, query])
+    const matches = !q
+      ? data.users
+      : data.users.filter(
+          (u) =>
+            u.email.toLowerCase().includes(q) ||
+            u.name.toLowerCase().includes(q) ||
+            (u.teamName ?? "").toLowerCase().includes(q),
+        )
+    const stateOf = (u: AdminUserRow) =>
+      presenceState(u.lastSeenAt, presence.takenAt, presence.onlineWindowMin, presence.recentWindowMin)
+    const shown = onlineOnly
+      ? matches.filter((u) => {
+          const s = stateOf(u)
+          return s === "online" || s === "idle"
+        })
+      : matches
+    // Most recently seen first, so whoever is live floats to the top. Users who
+    // have never emitted an event sort last.
+    return [...shown].sort((a, b) => (b.lastSeenAt ?? -1) - (a.lastSeenAt ?? -1))
+  }, [data.users, query, onlineOnly, presence])
 
   const filteredTeams = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -376,6 +451,86 @@ export function AdminDashboard({
         </div>
       )}
 
+      {/* Live presence, Users tab only */}
+      {tab === "users" && (
+        <section className="mt-3 rounded-sm border border-border bg-card/40 p-3.5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+              <PresenceCount
+                tone="online"
+                value={presence.onlineNow}
+                label="Online now"
+                hint={`active in the last ${presence.onlineWindowMin} min`}
+              />
+              <PresenceCount
+                tone="idle"
+                value={presence.recentlyActive}
+                label="Recently active"
+                hint={`within ${presence.recentWindowMin} min`}
+              />
+              <PresenceCount
+                tone="anon"
+                value={presence.anonOnline}
+                label="Signed out"
+                hint="devices browsing without an account"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-sans text-[10px] uppercase tracking-chip text-muted-foreground/70">
+                {snapshotAge < 5 ? "Updated just now" : `Updated ${snapshotAge}s ago`}
+              </span>
+              <button
+                type="button"
+                onClick={() => setLivePresence((v) => !v)}
+                aria-pressed={livePresence}
+                title={
+                  livePresence
+                    ? "Stop auto-refreshing"
+                    : "Auto-refresh this dashboard every 20 seconds"
+                }
+                className={`inline-flex items-center gap-1.5 rounded-sm border px-2.5 py-1.5 font-sans text-[10px] font-bold uppercase tracking-chip transition-colors ${
+                  livePresence
+                    ? "border-emerald-400/40 bg-emerald-400/10 text-emerald-300"
+                    : "border-border bg-background text-muted-foreground hover:border-brass hover:text-foreground"
+                }`}
+              >
+                <span
+                  className={`size-1.5 rounded-full ${
+                    livePresence ? "animate-pulse bg-emerald-400" : "bg-muted-foreground/40"
+                  }`}
+                />
+                {livePresence ? "Live" : "Go live"}
+              </button>
+              <button
+                type="button"
+                onClick={() => router.refresh()}
+                title="Refresh now"
+                className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-background px-2.5 py-1.5 font-sans text-[10px] font-bold uppercase tracking-chip text-muted-foreground transition-colors hover:border-brass hover:text-foreground"
+              >
+                <RotateCcw className="size-3" />
+                Refresh
+              </button>
+            </div>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-2.5">
+            <label className="flex cursor-pointer items-center gap-2 font-sans text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={onlineOnly}
+                onChange={(e) => setOnlineOnly(e.target.checked)}
+                className="size-3.5 accent-brass"
+              />
+              Show only people who are online or idle
+            </label>
+            {/* Presence is inferred from the behaviour stream, so say so plainly. */}
+            <p className="font-sans text-[10px] leading-snug text-muted-foreground/60">
+              Based on page views and taps, not a live connection. Someone reading one page
+              without tapping can slip to idle.
+            </p>
+          </div>
+        </section>
+      )}
+
       {/* Content */}
       <div className="mt-5">
         {tab === "progress" ? (
@@ -392,6 +547,13 @@ export function AdminDashboard({
                 key={u.id}
                 u={u}
                 totalLeads={data.totalLeads}
+                pState={presenceState(
+                  u.lastSeenAt,
+                  presence.takenAt,
+                  presence.onlineWindowMin,
+                  presence.recentWindowMin,
+                )}
+                snapshotAt={presence.takenAt}
                 isSelf={u.id === currentUserId}
                 pending={pending}
                 hasTeams={data.teams.length > 0}
@@ -861,6 +1023,38 @@ export function AdminDashboard({
   )
 }
 
+/** One headline number in the Users-tab presence strip. */
+function PresenceCount({
+  tone,
+  value,
+  label,
+  hint,
+}: {
+  tone: "online" | "idle" | "anon"
+  value: number
+  label: string
+  hint: string
+}) {
+  const dot =
+    tone === "online"
+      ? "bg-emerald-400 ring-2 ring-emerald-400/25"
+      : tone === "idle"
+        ? "bg-amber-400 ring-2 ring-amber-400/20"
+        : "bg-muted-foreground/40"
+  return (
+    <div className="flex items-center gap-2.5">
+      <span className={`size-2 shrink-0 rounded-full ${dot}`} />
+      <div className="min-w-0">
+        <div className="flex items-baseline gap-1.5">
+          <span className="font-serif text-xl font-black leading-none text-foreground">{value}</span>
+          <span className="font-sans text-[11px] font-bold text-foreground">{label}</span>
+        </div>
+        <p className="font-sans text-[10px] leading-snug text-muted-foreground/70">{hint}</p>
+      </div>
+    </div>
+  )
+}
+
 function Stat({
   label,
   value,
@@ -967,6 +1161,8 @@ function IconBtn({
 function UserCard({
   u,
   totalLeads,
+  pState,
+  snapshotAt,
   isSelf,
   pending,
   hasTeams,
@@ -981,6 +1177,10 @@ function UserCard({
 }: {
   u: AdminUserRow
   totalLeads: number
+  /** Live/idle/offline bucket, computed by the caller from the snapshot. */
+  pState: PresenceState
+  /** Server epoch ms of the presence snapshot, the reference for "x ago". */
+  snapshotAt: number
   isSelf: boolean
   pending: boolean
   hasTeams: boolean
@@ -998,8 +1198,32 @@ function UserCard({
   return (
     <li className="flex flex-col gap-3 rounded-sm border border-border bg-card/40 p-4 md:flex-row md:items-center md:justify-between">
       <div className="flex items-center gap-3">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brass/15 font-serif text-sm font-black text-brass">
-          {displayName.slice(0, 1).toUpperCase()}
+        {/* Avatar carries the presence dot, so status reads at a glance. */}
+        <span className="relative shrink-0">
+          <span className="flex size-9 items-center justify-center rounded-full bg-brass/15 font-serif text-sm font-black text-brass">
+            {displayName.slice(0, 1).toUpperCase()}
+          </span>
+          <span
+            className={`absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-card ${PRESENCE_DOT[pState]}`}
+            title={
+              pState === "online"
+                ? "Online now"
+                : pState === "idle"
+                  ? "Recently active"
+                  : pState === "never"
+                    ? "Never seen"
+                    : "Offline"
+            }
+          />
+          <span className="sr-only">
+            {pState === "online"
+              ? "Online now"
+              : pState === "idle"
+                ? "Recently active"
+                : pState === "never"
+                  ? "Never seen"
+                  : "Offline"}
+          </span>
         </span>
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -1025,6 +1249,39 @@ function UserCard({
             <ProgressBadge progress={u.progress} total={totalLeads} />
             <span aria-hidden>·</span>
             <span>Joined {fmtDate(u.createdAt)}</span>
+          </p>
+          {/* Presence detail: when they were last seen, and on what. */}
+          <p className="mt-1 flex flex-wrap items-center gap-x-1.5 font-sans text-[11px] text-muted-foreground">
+            {pState === "online" ? (
+              <span className="font-bold text-emerald-300">Online now</span>
+            ) : u.lastSeenAt == null ? (
+              <span className="italic text-muted-foreground/60">Never seen since sign-up</span>
+            ) : (
+              <span>
+                Last online{" "}
+                <span
+                  className={pState === "idle" ? "font-bold text-amber-300" : "text-foreground"}
+                  title={new Date(u.lastSeenAt).toLocaleString()}
+                >
+                  {fmtAgo(snapshotAt - u.lastSeenAt)}
+                </span>
+              </span>
+            )}
+            {u.lastPath && (
+              <>
+                <span aria-hidden>·</span>
+                <span className="truncate">
+                  {pState === "online" ? "On" : "Was on"}{" "}
+                  <span className="font-mono text-[10px] text-foreground">{u.lastPath}</span>
+                </span>
+              </>
+            )}
+            {(u.lastDevice || u.lastBrowser || u.lastOs) && (
+              <>
+                <span aria-hidden>·</span>
+                <span>{[u.lastDevice, u.lastOs, u.lastBrowser].filter(Boolean).join(" / ")}</span>
+              </>
+            )}
           </p>
         </div>
       </div>

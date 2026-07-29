@@ -107,7 +107,12 @@ import {
   setTokenForLead,
 } from "@/lib/leads"
 import { del } from "@vercel/blob"
-import { getAnalyticsSnapshot, type AnalyticsSnapshot } from "@/lib/analytics"
+import {
+  getAnalyticsSnapshot,
+  getPresence,
+  type AnalyticsSnapshot,
+  type PresenceSummary,
+} from "@/lib/analytics"
 import {
   FINISH_ORDER,
   COMPASS_ORDER,
@@ -176,6 +181,17 @@ export type AdminUserRow = {
   reachedAt: number | null
   /** Endgame steps reached, each stamped by its own QR scan. */
   milestones: Milestones
+  /**
+   * Presence, derived from the analytics behaviour stream (see `getPresence`).
+   * `lastSeenAt` is epoch ms of their newest event ever, or null for someone who
+   * registered but has never produced one. The rest describe where they were
+   * when that last event fired.
+   */
+  lastSeenAt: number | null
+  lastPath: string | null
+  lastDevice: string | null
+  lastBrowser: string | null
+  lastOs: string | null
 }
 
 /**
@@ -244,6 +260,8 @@ export type AdminData = {
   leads: EditableLead[]
   /** First page of the audit log (newest first), unfiltered. */
   activity: ActivityPage
+  /** Live headcount + per-user last-seen, for the Users tab. */
+  presence: PresenceSummary
   /** Behavioural analytics snapshot (default 14-day window) for the Analytics tab. */
   analytics: AnalyticsSnapshot
   /** Phased-rollout control state for the Phase tab. */
@@ -385,6 +403,9 @@ export async function getAdminData(): Promise<AdminData> {
     }
   })
 
+  // Who is online right now, plus every user's last-seen stamp. One query.
+  const presence = await getPresence()
+
   return {
     users: users.map((u) => ({
       id: u.id,
@@ -401,6 +422,11 @@ export async function getAdminData(): Promise<AdminData> {
       progress: progressOf(u.id),
       reachedAt: reachedAtOf(u.id),
       milestones: milestonesOf(u.id),
+      lastSeenAt: presence.byUser[u.id]?.lastSeenAt ?? null,
+      lastPath: presence.byUser[u.id]?.path ?? null,
+      lastDevice: presence.byUser[u.id]?.device ?? null,
+      lastBrowser: presence.byUser[u.id]?.browser ?? null,
+      lastOs: presence.byUser[u.id]?.os ?? null,
     })),
     teams: teamsWithMembers,
     superadminCount: await superadminCount(),
@@ -421,6 +447,7 @@ export async function getAdminData(): Promise<AdminData> {
     analytics: await getAnalyticsSnapshot(14),
     phase: await getPhaseAdminData(),
     pendingProofCount: await getPendingProofCount(),
+    presence,
   }
 }
 

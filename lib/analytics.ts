@@ -387,6 +387,105 @@ export type AnalyticsSnapshot = {
   recent: RecentEvent[]
 }
 
+// ── Presence: who is online right now ──────────────────────────────────────
+//
+// There is no websocket and no heartbeat ping, so "online" is derived from the
+// behaviour stream: a user counts as online if ANY event of theirs landed in the
+// last `ONLINE_WINDOW_MIN` minutes. The client emits page.view on every
+// navigation, page.leave on unload, plus interaction events, which is dense
+// enough to be a good proxy.
+//
+// The honest caveat: someone who opens a lead page and reads it for ten minutes
+// without touching anything emits nothing in that time, so they drop to "idle"
+// even though the tab is open. That is why the middle band exists rather than a
+// hard online/offline flag. `session.updatedAt` is deliberately NOT used - Better
+// Auth only refreshes it about once a day, so it cannot see a live visit.
+
+/** Active within this many minutes counts as online now. */
+export const ONLINE_WINDOW_MIN = 5
+/** Active within this many minutes counts as recently active (idle). */
+export const RECENT_WINDOW_MIN = 30
+
+/** Last-known footprint of one signed-in user, from their newest event. */
+export type PresenceInfo = {
+  /** Epoch ms of this user's most recent event, ever. */
+  lastSeenAt: number
+  /** Page they were last on. */
+  path: string | null
+  device: string | null
+  browser: string | null
+  os: string | null
+}
+
+export type PresenceSummary = {
+  /** Server epoch ms the snapshot was taken, so the UI can age it client-side. */
+  takenAt: number
+  /** Distinct signed-in users active inside the online window. */
+  onlineNow: number
+  /** Distinct signed-in users active inside the wider recent window. */
+  recentlyActive: number
+  /** Distinct signed-out devices active inside the online window. */
+  anonOnline: number
+  onlineWindowMin: number
+  recentWindowMin: number
+  /** Keyed by user id. Only holds users who have ever emitted an event. */
+  byUser: Record<string, PresenceInfo>
+}
+
+/**
+ * One row per signed-in user: their newest event, with the page and device it
+ * came from. `DISTINCT ON` is a Postgres feature that keeps the first row of
+ * each `userId` group, and the matching `ORDER BY` makes that the newest one.
+ */
+export async function getPresence(): Promise<PresenceSummary> {
+  const latest = await db.execute(sql`
+    SELECT DISTINCT ON ("userId")
+           "userId", "createdAt", "path", "device", "browser", "os"
+      FROM ${analyticsEvent}
+     WHERE "userId" IS NOT NULL
+     ORDER BY "userId", "createdAt" DESC`)
+
+  const anon = await db.execute(sql`
+    SELECT count(DISTINCT "anonId")::int AS n
+      FROM ${analyticsEvent}
+     WHERE "userId" IS NULL
+       AND "anonId" IS NOT NULL
+       AND "createdAt" > now() - (${ONLINE_WINDOW_MIN} * interval '1 minute')`)
+
+  const takenAt = Date.now()
+  const onlineCut = takenAt - ONLINE_WINDOW_MIN * 60_000
+  const recentCut = takenAt - RECENT_WINDOW_MIN * 60_000
+
+  const byUser: Record<string, PresenceInfo> = {}
+  let onlineNow = 0
+  let recentlyActive = 0
+
+  for (const raw of latest.rows as Record<string, unknown>[]) {
+    const id = String(raw.userId)
+    const lastSeenAt = new Date(raw.createdAt as string).getTime()
+    if (!Number.isFinite(lastSeenAt)) continue
+    byUser[id] = {
+      lastSeenAt,
+      path: (raw.path as string | null) ?? null,
+      device: (raw.device as string | null) ?? null,
+      browser: (raw.browser as string | null) ?? null,
+      os: (raw.os as string | null) ?? null,
+    }
+    if (lastSeenAt >= onlineCut) onlineNow++
+    if (lastSeenAt >= recentCut) recentlyActive++
+  }
+
+  return {
+    takenAt,
+    onlineNow,
+    recentlyActive,
+    anonOnline: Number((anon.rows as { n?: number }[])[0]?.n ?? 0),
+    onlineWindowMin: ONLINE_WINDOW_MIN,
+    recentWindowMin: RECENT_WINDOW_MIN,
+    byUser,
+  }
+}
+
 /** One call that assembles everything the Analytics dashboard tab renders. */
 export async function getAnalyticsSnapshot(days = 14): Promise<AnalyticsSnapshot> {
   const [overview, timeline, topEvents, topPages, devices, browsers, auth, scan, recent] =
