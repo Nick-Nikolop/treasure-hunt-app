@@ -64,9 +64,9 @@ const DEFAULT_WINNER_NOTE_EN =
  * Default clock time the hunt closes, as a bare "HH:MM" string. Only the TIME
  * is configurable: the date is part of the localized copy, because the closing
  * party is a fixed calendar event while the hour has already moved once.
- * Rendered into step 7 of the "how to play" walkthrough.
+ * Rendered into the hero chip and the "how to play" walkthrough.
  */
-export const DEFAULT_HUNT_ENDS_AT = "19:00"
+export const DEFAULT_HUNT_ENDS_AT = "17:00"
 
 /** Accept only a 24h "H:MM"/"HH:MM" clock time, else fall back to the default. */
 export function normalizeHuntEndsAt(value: unknown): string {

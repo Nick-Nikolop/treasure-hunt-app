@@ -2,7 +2,7 @@
 
 import { useRef } from "react"
 import { motion, useScroll, useTransform } from "framer-motion"
-import { MapPin, ChevronDown } from "lucide-react"
+import { MapPin, ChevronDown, Clock } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
 
 const reveal = {
@@ -14,7 +14,7 @@ const reveal = {
   }),
 }
 
-export function Hero() {
+export function Hero({ endsAt }: { endsAt: string }) {
   const { t } = useI18n()
   const ref = useRef<HTMLElement>(null)
   const { scrollYProgress } = useScroll({
@@ -99,6 +99,11 @@ export function Hero() {
           </span>
           <span className="inline-flex items-center rounded-full border border-brass/60 bg-brass/15 px-3 py-1 font-bold text-brass backdrop-blur-sm">
             {t.hero.free}
+          </span>
+          {/* The closing time, so it is visible without opening anything. */}
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background/60 px-3 py-1 backdrop-blur-sm">
+            <Clock className="size-3 text-brass" />
+            {t.hero.endsAt.replace("{time}", endsAt)}
           </span>
         </motion.div>
 

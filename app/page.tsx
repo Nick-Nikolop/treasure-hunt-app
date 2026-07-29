@@ -72,8 +72,8 @@ export default async function Page() {
   const locale = isLocale(cookieLang) ? cookieLang : DEFAULT_LOCALE
   const jsonLd = homeJsonLd(locale, getDictionary(locale).faq.items)
 
-  // Only the admin preview below needs this, so skip the read for everyone else.
-  const huntEndsAt = phaseCtx.isSuperadmin ? (await getFinaleConfig()).huntEndsAt : ""
+  // Now read for everyone, not just admins: the hero shows the closing time.
+  const { huntEndsAt } = await getFinaleConfig()
 
   return (
     <>
@@ -86,7 +86,7 @@ export default async function Page() {
       <SiteHeader initialUser={initialUser} />
       <LockedRedirectNotice />
       <main className="relative">
-        <Hero />
+        <Hero endsAt={huntEndsAt} />
         {/* Straight under the hero: WHERE the leads actually arrive. Players kept
             expecting an email or a text, so the real journal is shown (and
             linked) up front, with a countdown to the moment it opens. */}

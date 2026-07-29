@@ -8,6 +8,7 @@ import {
   Ban,
   BookOpen,
   Camera,
+  Clock,
   Lightbulb,
   LocateFixed,
   MapPinned,
@@ -169,6 +170,15 @@ export function HowToPlayModal({
                 {current.copy.lede}
               </p>
             </div>
+
+            {/* The closing time as its own strip. Page 2 only: page 1 already
+                spells it out in step 7, so a strip there would just repeat it. */}
+            {page === 1 && (
+              <p className="flex items-center justify-center gap-2 border-b border-brass/20 bg-brass/[0.12] px-5 py-2.5 text-center font-sans text-[10px] font-bold tracking-chip text-brass">
+                <Clock className="size-3 shrink-0" aria-hidden />
+                {h.deadline.replace("{time}", endsAt)}
+              </p>
+            )}
 
             {/* Steps on page 1, rules on page 2. Keyed on the page so React
                 rebuilds the rows instead of reusing them across a swap. */}
