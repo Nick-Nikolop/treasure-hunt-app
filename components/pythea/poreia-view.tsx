@@ -803,16 +803,23 @@ function JournalPage({
         </div>
           )
         })()}
-      {/* Compass, parked in the bottom-right corner: the stamp owns the top-right
+      {/* Compass, parked in the bottom-LEFT corner: the stamp owns the top-right
           and the page number owns the bottom-centre, so this corner is free.
           Deliberately legible rather than a faint wash, because the needle
           direction is part of the final puzzle. Sized against BOTH page axes (and
           capped in px) so the whole compass is always fully visible, never
-          cropped, on any viewport. */}
+          cropped, on any viewport.
+
+          The left padding deliberately matches the body column's own pl
+          (3.25rem / md:6rem), so the compass shares a left edge with the clue
+          text. Anything smaller would slide it under the spiral binding rings
+          (w-10 / md:w-14) and across the red margin rule (left-11 / md:left-20),
+          which sit in that same corner. Keep these three in step if any of them
+          moves. */}
       {page.kind === "clue" && (
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 flex items-end justify-end overflow-hidden rounded-l-sm rounded-r-lg pb-7 pr-3.5 [container-type:size] md:pb-11 md:pr-12"
+          className="pointer-events-none absolute inset-0 flex items-end justify-start overflow-hidden rounded-l-sm rounded-r-lg pb-7 pl-[3.25rem] [container-type:size] md:pb-11 md:pl-24"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
