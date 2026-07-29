@@ -346,7 +346,7 @@ function WinnerScreen({ message, prizeNote }: { message: string; prizeNote: stri
               trail-end and compass screens, which already close the same way. */}
           <Link
             href="/journal"
-            className="inline-flex items-center justify-center gap-2 rounded-sm border border-border bg-background px-5 py-3 font-sans text-xs font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass"
+            className="inline-flex items-center justify-center gap-2 rounded-sm bg-brass px-5 py-3 font-sans text-xs font-bold tracking-chip text-primary-foreground transition-opacity hover:opacity-90"
           >
             <BookOpen className="size-4" />
             {f.openJournal}
