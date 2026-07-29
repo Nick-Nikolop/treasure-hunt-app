@@ -57,11 +57,6 @@ import {
   type HintRow,
 } from "@/lib/hints"
 import {
-  getScoreConfig,
-  setScoreConfig,
-  setLeadDifficulties,
-} from "@/lib/scoring"
-import {
   getSolveCooldownSeconds,
   setSolveCooldownSeconds,
   getLeadBgWashPct,
@@ -117,10 +112,9 @@ import {
   COMPASS_ORDER,
   TRAIL_END_ORDER,
   effectiveUnlockedCount,
-  isDifficulty,
+  isLeadOneOpen,
+  START_MS,
   isLeadIcon,
-  type Difficulty,
-  type ScoreConfig,
 } from "@/lib/clues"
 import { and, asc, desc, eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
@@ -173,6 +167,12 @@ export type AdminUserRow = {
   teamRole: string | null
   /** Effective unlocked-lead count for this user (stored + lead-1 time gate). */
   progress: number
+  /**
+   * Epoch ms this user arrived at their current lead, or null if they have not
+   * started. This is the leaderboard tiebreak: among everyone on the same lead,
+   * the earliest arrival is ahead.
+   */
+  reachedAt: number | null
   /** Endgame steps reached, each stamped by its own QR scan. */
   milestones: Milestones
 }
@@ -199,6 +199,12 @@ export type AdminTeamRow = {
   createdAt: Date
   /** Furthest lead any member of the team has reached. */
   progress: number
+  /**
+   * Epoch ms the crew first reached `progress`: the EARLIEST arrival among the
+   * members standing on that furthest lead, so a crew is credited with when it
+   * got there rather than when its last member caught up.
+   */
+  reachedAt: number | null
   /** Endgame steps the crew has reached (any member counts, like progress). */
   milestones: Milestones
   members: {
@@ -208,6 +214,8 @@ export type AdminTeamRow = {
     role: string
     /** This member's own effective lead count, to spot a carried teammate. */
     progress: number
+    /** Epoch ms this member reached their own lead, or null if not started. */
+    reachedAt: number | null
   }[]
 }
 
@@ -225,16 +233,12 @@ export type AdminData = {
   campaigns: CampaignRow[]
   /** Lead options (order + country names) for the hint association dropdown. */
   leadOptions: { order: number; country: string; countryEn: string }[]
-  /** Global scoring tiers (placement points + difficulty bonuses). */
-  scoreConfig: ScoreConfig
   /** Anti-cheat cooldown (seconds) enforced between consecutive QR solves. */
   solveCooldownSeconds: number
   /** Global parchment-wash strength (%) over journal lead-page landmark art. */
   leadBgWashPct: number
   /** Global visibility (%) of the compass on journal lead pages. */
   compassOpacityPct: number
-  /** Difficulty per lead order (1..TOTAL_CLUES). */
-  leadDifficulties: { order: number; difficulty: Difficulty }[]
   /** Editable lead copy (subtitle + body, per language) with defaults merged. */
   leads: EditableLead[]
   /** First page of the audit log (newest first), unfiltered. */
@@ -298,9 +302,16 @@ export async function getAdminData(): Promise<AdminData> {
   const now = Date.now()
   const editableLeads = await getEditableLeads()
   const unlocks = await db
-    .select({ userId: leadUnlock.userId, leadOrder: leadUnlock.leadOrder })
+    .select({
+      userId: leadUnlock.userId,
+      leadOrder: leadUnlock.leadOrder,
+      unlockedAt: leadUnlock.unlockedAt,
+    })
     .from(leadUnlock)
   const storedByUser = new Map<string, number>()
+  // Arrival time of each (user, lead) pair, so we can read off when a user got
+  // to their furthest lead. Keyed "userId:leadOrder".
+  const unlockAt = new Map<string, number>()
   // The endgame steps are stored as sentinel rows far above any real position, so
   // they are tracked separately rather than being folded into the max below (the
   // max is clamped to the lead total anyway, but keeping them apart is what lets
@@ -312,11 +323,26 @@ export async function getAdminData(): Promise<AdminData> {
     if (row.leadOrder === TRAIL_END_ORDER) trailEndUsers.add(row.userId)
     else if (row.leadOrder === COMPASS_ORDER) compassUsers.add(row.userId)
     else if (row.leadOrder === FINISH_ORDER) finishedUsers.add(row.userId)
-    else storedByUser.set(row.userId, Math.max(storedByUser.get(row.userId) ?? 0, row.leadOrder))
+    else {
+      storedByUser.set(row.userId, Math.max(storedByUser.get(row.userId) ?? 0, row.leadOrder))
+      unlockAt.set(`${row.userId}:${row.leadOrder}`, row.unlockedAt.getTime())
+    }
   }
   const liveTotal = editableLeads.length
   const progressOf = (userId: string) =>
     effectiveUnlockedCount(storedByUser.get(userId) ?? 0, now, liveTotal)
+  /**
+   * When a user arrived at their current lead. Mirrors the leaderboard rule in
+   * lib/hunt.ts: lead 1 opens for everyone at once (so it carries the shared
+   * start time, not a personal scan), and anything beyond it is stamped by the
+   * user's own unlock row.
+   */
+  const reachedAtOf = (userId: string): number | null => {
+    const progress = progressOf(userId)
+    if (progress === 0) return null
+    if (progress === 1) return isLeadOneOpen(now) ? START_MS : null
+    return unlockAt.get(`${userId}:${storedByUser.get(userId) ?? 0}`) ?? null
+  }
   const milestonesOf = (userId: string): Milestones => ({
     trailEnd: trailEndUsers.has(userId),
     compass: compassUsers.has(userId),
@@ -327,6 +353,12 @@ export async function getAdminData(): Promise<AdminData> {
     const memberRows = allMembers.filter((m) => m.teamId === tm.id)
     // A team's progress is the furthest any of its members has reached.
     const teamProgress = memberRows.reduce((max, m) => Math.max(max, progressOf(m.userId)), 0)
+    // Credit the crew with the first moment any of its members stood on that
+    // furthest lead.
+    const arrivals = memberRows
+      .filter((m) => progressOf(m.userId) === teamProgress)
+      .map((m) => reachedAtOf(m.userId))
+      .filter((v): v is number => v !== null)
     return {
       id: tm.id,
       name: tm.name,
@@ -334,6 +366,7 @@ export async function getAdminData(): Promise<AdminData> {
       inviteCode: tm.inviteCode,
       createdAt: tm.createdAt,
       progress: teamProgress,
+      reachedAt: teamProgress === 0 || arrivals.length === 0 ? null : Math.min(...arrivals),
       // A crew shares its progress, so any member reaching a step counts for all.
       milestones: {
         trailEnd: memberRows.some((m) => trailEndUsers.has(m.userId)),
@@ -346,6 +379,7 @@ export async function getAdminData(): Promise<AdminData> {
         email: m.email ?? "",
         role: m.role,
         progress: progressOf(m.userId),
+        reachedAt: reachedAtOf(m.userId),
       })),
     }
   })
@@ -364,6 +398,7 @@ export async function getAdminData(): Promise<AdminData> {
       teamName: u.teamName,
       teamRole: u.teamRole,
       progress: progressOf(u.id),
+      reachedAt: reachedAtOf(u.id),
       milestones: milestonesOf(u.id),
     })),
     teams: teamsWithMembers,
@@ -377,14 +412,9 @@ export async function getAdminData(): Promise<AdminData> {
       country: c.country,
       countryEn: c.countryEn,
     })),
-    scoreConfig: await getScoreConfig(),
     solveCooldownSeconds: await getSolveCooldownSeconds(),
     leadBgWashPct: await getLeadBgWashPct(),
     compassOpacityPct: await getCompassOpacityPct(),
-    leadDifficulties: editableLeads.map((c) => ({
-      order: c.order,
-      difficulty: c.difficulty,
-    })),
     leads: editableLeads,
     activity: await listActivity({ limit: 50 }),
     analytics: await getAnalyticsSnapshot(14),
@@ -655,9 +685,8 @@ export async function adminRemovePhaseLead(email: string): Promise<ActionResult>
 
 /**
  * Save the editable content for a single lead, addressed by its stable id.
- * Country, subtitle, body (both languages), the stamp icon and the difficulty
- * are all editable; the stamp image and the lead's position are managed by
- * their own actions. The journal reflects the change on its next render.
+ * Country, subtitle, body (both languages) and the stamp icon are all editable;
+ * the stamp image and the lead's position are managed by their own actions. The journal reflects the change on its next render.
  */
 export async function adminSaveLead(input: {
   id: string
@@ -668,7 +697,6 @@ export async function adminSaveLead(input: {
   icon: string
   body: string
   bodyEn: string
-  difficulty: Difficulty
 }): Promise<ActionResult> {
   const admin = await requireAdmin()
 
@@ -678,7 +706,6 @@ export async function adminSaveLead(input: {
   const country = (input.country ?? "").trim()
   const countryEn = (input.countryEn ?? "").trim()
   if (country.length < 1 || countryEn.length < 1) return { ok: false, error: "too_short" }
-  if (!isDifficulty(input.difficulty)) return { ok: false, error: "bad_value" }
   const icon = isLeadIcon(input.icon) ? input.icon : "Landmark"
 
   const existing = (await getLeadDefs()).find((l) => l.id === id)
@@ -692,7 +719,6 @@ export async function adminSaveLead(input: {
     icon,
     body: input.body ?? "",
     bodyEn: input.bodyEn ?? "",
-    difficulty: input.difficulty,
   })
 
   await logActivity({
@@ -761,57 +787,32 @@ export async function adminSetLeadBgWash(pct: number): Promise<ActionResult> {
 }
 
 /**
- * Save the scoring settings: the global placement tiers and each lead's
- * difficulty. Scores are computed live from these on every leaderboard read,
- * so saving here instantly recalculates every standing.
+ * Save the anti-cheat solve cooldown. This used to also save placement points
+ * and per-lead difficulty; both are gone, because standings are now decided
+ * purely by how far a crew has come and how early they got there.
  */
-export async function adminSaveScoring(input: {
-  config: ScoreConfig
-  difficulties: { leadOrder: number; difficulty: Difficulty }[]
+export async function adminSaveHuntRules(input: {
   /** Anti-cheat cooldown between consecutive QR solves, in seconds. */
   solveCooldownSeconds?: number
 }): Promise<ActionResult> {
   const admin = await requireAdmin()
 
-  const c = input.config
-  const nums = [
-    c.firstPoints,
-    c.secondPoints,
-    c.thirdPoints,
-    c.restPoints,
-    c.mediumBonus,
-    c.hardBonus,
-  ]
-  if (nums.some((n) => !Number.isFinite(n) || n < 0)) {
-    return { ok: false, error: "bad_value" }
-  }
-  if (
-    !Array.isArray(input.difficulties) ||
-    input.difficulties.some((d) => !isDifficulty(d.difficulty))
-  ) {
-    return { ok: false, error: "bad_value" }
-  }
   const cooldown = input.solveCooldownSeconds
   if (cooldown !== undefined && (!Number.isFinite(cooldown) || cooldown < 0)) {
     return { ok: false, error: "bad_value" }
   }
-
-  await setScoreConfig(c)
-  await setLeadDifficulties(input.difficulties)
   if (cooldown !== undefined) {
     await setSolveCooldownSeconds(cooldown)
   }
 
   await logActivity({
     category: "admin",
-    action: "admin.scoring_updated",
+    action: "admin.hunt_rules_updated",
     ...adminActor(admin),
-    summary: `${adminActor(admin).actorName} updated scoring settings and lead difficulties`,
-    metadata: { config: c, solveCooldownSeconds: cooldown },
+    summary: `${adminActor(admin).actorName} updated the solve cooldown`,
+    metadata: { solveCooldownSeconds: cooldown },
   })
 
-  // Standings are derived live, but revalidate both surfaces so the new numbers
-  // show immediately.
   revalidatePath("/admin")
   revalidatePath("/leaderboard")
   return { ok: true }
@@ -1478,8 +1479,8 @@ export async function adminAddLead(input: {
 }
 
 /**
- * Remove a lead by its stable id. Deletes its QR token, journal content and
- * difficulty, then compacts the remaining positions. Its stamp image (if any)
+ * Remove a lead by its stable id. Deletes its QR token and journal content,
+ * then compacts the remaining positions. Its stamp image (if any)
  * is best-effort removed from Blob. Refuses to remove the very first lead so
  * the time-gated opener always exists.
  */

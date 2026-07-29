@@ -94,8 +94,7 @@ export const leadUnlock = pgTable("lead_unlock", {
 })
 
 // The admin-managed leads of the hunt. This is the runtime source of truth for
-// the set of stops, their order, their journal copy, difficulty and stamp
-// image. Seeded once from the hardcoded defaults in lib/clues.ts.
+// the set of stops, their order, their journal copy and stamp image. Seeded once from the hardcoded defaults in lib/clues.ts.
 //
 //  - `id`        STABLE identity. A printed QR code binds to this id, so a lead
 //                keeps its QR no matter how it is reordered. Never changes.
@@ -129,7 +128,6 @@ export const lead = pgTable(
     // Which bundled compass watermark sits behind the journal text.
     // One of the keys in lib/compass.ts `COMPASS_VARIANTS`.
     compassVariant: text("compassVariant").notNull().default("s-to-n"),
-    difficulty: text("difficulty").notNull().default("easy"),
     // GPS gate for scans: the physical spot the QR lives at. When both lat and
     // lng are set, a scan requires the explorer to be within `geoRadiusM`
     // metres (falling back to a global default when null). Left null for leads
@@ -174,18 +172,14 @@ export const hint = pgTable("hint", {
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 })
 
-// Global leaderboard scoring tiers. A single row (id = "default"). Placement
-// points are the base awarded to the 1st/2nd/3rd finisher of each lead, with
-// everyone else getting `restPoints`. Medium/Hard leads add a flat bonus to
-// every tier (so the difficulty just shifts the whole reward up).
+// Global hunt settings. A single row (id = "default"). Despite the legacy
+// "score_config" table name there is no scoring any more: standings are decided
+// purely by how far a crew has come and how early they got there. The row is
+// kept because it also holds the cooldown, phase, journal and compass settings
+// below. The old points columns are dropped from this model; any that still
+// exist in the database are NOT NULL DEFAULT, so they stay dormant and ignored.
 export const scoreConfig = pgTable("score_config", {
   id: text("id").primaryKey().default("default"),
-  firstPoints: integer("firstPoints").notNull().default(100),
-  secondPoints: integer("secondPoints").notNull().default(70),
-  thirdPoints: integer("thirdPoints").notNull().default(50),
-  restPoints: integer("restPoints").notNull().default(30),
-  mediumBonus: integer("mediumBonus").notNull().default(50),
-  hardBonus: integer("hardBonus").notNull().default(150),
   // Minimum seconds that must pass between a crew's consecutive QR solves. An
   // anti-cheat gate so leads can't be scanned suspiciously fast back-to-back.
   solveCooldownSeconds: integer("solveCooldownSeconds").notNull().default(900),
@@ -226,15 +220,6 @@ export const phaseLead = pgTable("phase_lead", {
   termsVersion: text("termsVersion"),
   acceptedTermsAt: timestamp("acceptedTermsAt"),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
-})
-
-// Per-lead difficulty set by admins. One row per lead order; missing rows mean
-// the lead defaults to "easy". Difficulty selects which bonus (if any) is added
-// to that lead's placement points.
-export const leadDifficulty = pgTable("lead_difficulty", {
-  leadOrder: integer("leadOrder").primaryKey(),
-  difficulty: text("difficulty").notNull().default("easy"),
-  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 })
 
 // Admin-authored overrides for a lead's editable copy. One row per lead order;

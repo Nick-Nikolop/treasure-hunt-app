@@ -18,17 +18,14 @@ import { cache } from "react"
 import { randomUUID } from "node:crypto"
 import { and, asc, eq, isNull, lt, sql } from "drizzle-orm"
 import { db } from "@/lib/db"
-import { lead, clueToken, hint, leadContent, leadDifficulty } from "@/lib/db/schema"
+import { lead, clueToken, hint, leadContent } from "@/lib/db/schema"
 import {
   CLUES,
   FINISH_ORDER,
   COMPASS_ORDER,
   TRAIL_END_ORDER,
   LEGACY_FINISH_ORDER,
-  DEFAULT_DIFFICULTY,
-  isDifficulty,
   type Clue,
-  type Difficulty,
 } from "@/lib/clues"
 import { huntLinkFor } from "@/lib/site-url"
 import { DEFAULT_GEO_RADIUS_M } from "@/lib/geo"
@@ -50,9 +47,8 @@ export const COMPASS_LEAD_ID = "__compass__"
  *  note; it is the step before the compass QR. */
 export const TRAIL_END_LEAD_ID = "__trailend__"
 
-/** A fully-resolved lead: the public Clue shape plus its difficulty + geo gate. */
+/** A fully-resolved lead: the public Clue shape plus its geo gate. */
 export type LeadDef = Clue & {
-  difficulty: Difficulty
   /** QR location gate. Null lat/lng means "not configured" (no gate). */
   lat: number | null
   lng: number | null
@@ -80,10 +76,6 @@ function freshToken(): string {
   return randomUUID().replace(/-/g, "").slice(0, 18)
 }
 
-function normalizeDifficulty(value: unknown): Difficulty {
-  return isDifficulty(value) ? value : DEFAULT_DIFFICULTY
-}
-
 // ── Seeding & one-time backfill ─────────────────────────────────────────────
 
 let seedPromise: Promise<void> | null = null
@@ -107,8 +99,6 @@ async function doSeed(): Promise<void> {
     // don't lose edits made before the migration.
     const overrides = await db.select().from(leadContent)
     const ovById = new Map(overrides.map((o) => [o.leadOrder, o]))
-    const diffs = await db.select().from(leadDifficulty)
-    const diffById = new Map(diffs.map((d) => [d.leadOrder, d.difficulty]))
 
     const now = new Date()
     const rows: (typeof lead.$inferInsert)[] = CLUES.map((c) => {
@@ -131,7 +121,6 @@ async function doSeed(): Promise<void> {
         stampAspect: c.stampAspect,
         backgroundImageUrl: c.backgroundImageUrl,
         compassVariant: c.compassVariant,
-        difficulty: normalizeDifficulty(diffById.get(c.order)),
         createdAt: now,
         updatedAt: now,
       }
@@ -193,7 +182,7 @@ async function doSeed(): Promise<void> {
 // ── Reads ───────────────────────────────────────────────────────────────────
 
 /**
- * The live, ordered lead list with fully-resolved content + stamp + difficulty.
+ * The live, ordered lead list with fully-resolved content + stamp.
  * Memoized per request via React.cache. Seeds the table on first use.
  */
 export const getLeadDefs = cache(async (): Promise<LeadDef[]> => {
@@ -213,7 +202,6 @@ export const getLeadDefs = cache(async (): Promise<LeadDef[]> => {
     stampAspect: r.stampAspect || "2:3",
     backgroundImageUrl: r.backgroundImageUrl,
     compassVariant: normalizeCompassVariant(r.compassVariant),
-    difficulty: normalizeDifficulty(r.difficulty),
     lat: r.lat,
     lng: r.lng,
     geoRadiusM: r.geoRadiusM,
@@ -268,14 +256,6 @@ export async function getLeadById(id: string): Promise<LeadDef | null> {
 /** Find a lead by its 1-based position, or null. */
 export async function getLeadByPosition(position: number): Promise<LeadDef | null> {
   return (await getLeadDefs()).find((l) => l.order === position) ?? null
-}
-
-/** Map of position → difficulty for every live lead (for scoring). */
-export async function getLeadDifficultyMap(): Promise<Map<number, Difficulty>> {
-  const defs = await getLeadDefs()
-  const out = new Map<number, Difficulty>()
-  for (const d of defs) out.set(d.order, d.difficulty)
-  return out
 }
 
 // ── QR token binding (keyed by stable leadId) ───────────────────────────────
@@ -521,7 +501,6 @@ export type LeadContentInput = {
   /** Raw body text, paragraphs separated by a blank line. */
   body: string
   bodyEn: string
-  difficulty: Difficulty
 }
 
 /**
@@ -550,7 +529,6 @@ export async function createLead(
     stampAspect: "2:3",
     backgroundImageUrl: null,
     compassVariant: DEFAULT_COMPASS_VARIANT,
-    difficulty: normalizeDifficulty(input.difficulty ?? "easy"),
     createdAt: now,
     updatedAt: now,
   })
@@ -573,14 +551,13 @@ export async function createLead(
     stampAspect: r.stampAspect || "2:3",
     backgroundImageUrl: r.backgroundImageUrl,
     compassVariant: normalizeCompassVariant(r.compassVariant),
-    difficulty: normalizeDifficulty(r.difficulty),
     lat: r.lat,
     lng: r.lng,
     geoRadiusM: r.geoRadiusM,
   }
 }
 
-/** Update a lead's editable content + difficulty (not its stamp or position). */
+/** Update a lead's editable content (not its stamp or position). */
 export async function updateLeadContent(id: string, input: LeadContentInput): Promise<void> {
   await db
     .update(lead)
@@ -592,7 +569,6 @@ export async function updateLeadContent(id: string, input: LeadContentInput): Pr
       icon: input.icon,
       body: input.body,
       bodyEn: input.bodyEn,
-      difficulty: normalizeDifficulty(input.difficulty),
       updatedAt: new Date(),
     })
     .where(eq(lead.id, id))
@@ -632,15 +608,6 @@ export async function updateLeadCompassVariant(
   await db
     .update(lead)
     .set({ compassVariant, updatedAt: new Date() })
-    .where(eq(lead.id, id))
-  invalidate()
-}
-
-/** Update just per-lead difficulty (used by the scoring panel). */
-export async function setLeadDifficultyById(id: string, difficulty: Difficulty): Promise<void> {
-  await db
-    .update(lead)
-    .set({ difficulty: normalizeDifficulty(difficulty), updatedAt: new Date() })
     .where(eq(lead.id, id))
   invalidate()
 }

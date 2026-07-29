@@ -36,7 +36,7 @@ import {
   getFinaleState,
   adminSaveFinaleGeo,
 } from "@/app/admin/actions"
-import { LEAD_ICONS, type Difficulty, type LeadIcon } from "@/lib/clues"
+import { LEAD_ICONS, type LeadIcon } from "@/lib/clues"
 import type { EditableLead } from "@/lib/lead-content"
 import type { ClueTokenRow } from "@/lib/hunt"
 import { DEFAULT_GEO_RADIUS_M } from "@/lib/geo"
@@ -116,7 +116,6 @@ async function sendToBlob(
   }
 }
 
-const DIFFICULTIES: Difficulty[] = ["easy", "medium", "hard"]
 
 // Suggested stamp ratios. 2:3 portrait is the house style for the γραμματόσημα.
 const ASPECTS = ["2:3", "3:2", "1:1"] as const
@@ -131,7 +130,6 @@ const CONTENT_FIELDS = [
   "icon",
   "body",
   "bodyEn",
-  "difficulty",
 ] as const
 
 type Popup = { kind: "ok" | "err"; text: string }
@@ -149,7 +147,7 @@ function contentDiffers(a: EditableLead, b: EditableLead): boolean {
  * reordered, and QR tokens cannot be regenerated, because every one of those
  * actions can disturb progress that crews have already earned (progress is
  * tracked by position) or invalidate a QR that is already printed and hidden in
- * the field. What stays editable is everything safe: copy, difficulty, icon,
+ * the field. What stays editable is everything safe: copy, icon,
  * stamp, page artwork and each QR's scan location.
  *
  * Copy edits happen LOCALLY — they mutate an in-memory working copy and never
@@ -300,7 +298,6 @@ export function AdminLeadsPanel({
           icon: it.icon,
           body: it.body,
           bodyEn: it.bodyEn,
-          difficulty: it.difficulty,
         })
         if (!res.ok) {
           failedIds.push(it.id)
@@ -1107,7 +1104,7 @@ function LeadCard({
             />
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-4 sm:max-w-sm">
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:max-w-[12rem]">
             <label className="flex flex-col gap-1.5">
               <span className="font-sans text-[11px] font-bold uppercase tracking-chip text-muted-foreground">
                 Card icon
@@ -1120,22 +1117,6 @@ function LeadCard({
                 {LEAD_ICONS.map((name) => (
                   <option key={name} value={name}>
                     {name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col gap-1.5">
-              <span className="font-sans text-[11px] font-bold uppercase tracking-chip text-muted-foreground">
-                Difficulty
-              </span>
-              <select
-                value={lead.difficulty}
-                onChange={(e) => onChange({ difficulty: e.target.value as Difficulty })}
-                className="w-full rounded-sm border border-border bg-background px-3 py-2 font-sans text-sm capitalize text-foreground outline-none focus:border-brass"
-              >
-                {DIFFICULTIES.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
                   </option>
                 ))}
               </select>

@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 //  Lead copy helpers (registry-backed).
 //
-//  Leads (country, icon, subtitle, body, stamp, difficulty) now live in the
+//  Leads (country, icon, subtitle, body, stamp) now live in the
 //  `lead` table and are read through lib/leads.ts. This module is a thin
 //  compatibility layer over that registry:
 //   - `applyLeadContent` resolves a set of positional clue stubs to the live
@@ -48,7 +48,7 @@ export async function applyLeadContent(clues: Clue[]): Promise<Clue[]> {
 
 /**
  * The current editable copy for every lead, as raw text, for the admin editor.
- * Includes the stable id, position, stamp image + aspect, and difficulty.
+ * Includes the stable id, position and stamp image + aspect.
  */
 export async function getEditableLeads() {
   const defs = await getLeadDefs()
@@ -66,7 +66,6 @@ export async function getEditableLeads() {
     stampAspect: d.stampAspect,
     backgroundImageUrl: d.backgroundImageUrl,
     compassVariant: d.compassVariant,
-    difficulty: d.difficulty,
     lat: d.lat,
     lng: d.lng,
     geoRadiusM: d.geoRadiusM,

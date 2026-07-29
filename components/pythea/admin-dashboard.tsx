@@ -58,14 +58,13 @@ import {
   adminSetTeamProgress,
   adminResetUserProgress,
   adminResetTeamProgress,
-  adminSaveScoring,
+  adminSaveHuntRules,
   getActivityLog,
   type AdminData,
   type AdminUserRow,
   type AdminTeamRow,
   type ActionResult,
 } from "@/app/admin/actions"
-import type { Difficulty, ScoreConfig } from "@/lib/clues"
 import type { ActivityPage } from "@/lib/activity"
 
 type Tab =
@@ -296,7 +295,7 @@ export function AdminDashboard({
           )}
         </TabButton>
         <TabButton active={tab === "scoring"} onClick={() => setTab("scoring")} icon={Trophy}>
-          Scoring
+          Rules
         </TabButton>
         <TabButton active={tab === "activity"} onClick={() => setTab("activity")} icon={History}>
           Activity
@@ -509,16 +508,13 @@ export function AdminDashboard({
         ) : tab === "finale" && isBootstrap ? (
           <AdminFinalePanel />
         ) : (
-          <ScoringPanel
-            config={data.scoreConfig}
+          <HuntRulesPanel
             solveCooldownSeconds={data.solveCooldownSeconds}
-            leadDifficulties={data.leadDifficulties}
-            leadOptions={data.leadOptions}
             pending={pending}
-            onSave={(config, difficulties, solveCooldownSeconds) =>
+            onSave={(solveCooldownSeconds) =>
               runAction(
-                () => adminSaveScoring({ config, difficulties, solveCooldownSeconds }),
-                "Scoring saved. All standings have been recalculated.",
+                () => adminSaveHuntRules({ solveCooldownSeconds }),
+                "Hunt rules saved.",
               )
             }
           />
@@ -1163,42 +1159,21 @@ function ProgressBadge({ progress, total }: { progress: number; total: number })
   )
 }
 
-const DIFFICULTIES: { value: Difficulty; label: string }[] = [
-  { value: "easy", label: "Easy" },
-  { value: "medium", label: "Medium" },
-  { value: "hard", label: "Hard" },
-]
-
 /**
- * The Scoring panel: edit the global placement tiers (points for the 1st / 2nd
- * / 3rd / everyone-else to complete a lead), the bonus that medium and hard
- * leads add on top, and the difficulty of each individual lead. Saving writes
- * the settings; since standings are computed live from them, every score is
- * recalculated on the next leaderboard read.
+ * The Hunt rules panel. There is no scoring in this hunt: standings are decided
+ * purely by how far a crew has come and how early they got there, so the old
+ * placement-points and lead-difficulty controls are gone. What remains here is
+ * the anti-cheat solve cooldown.
  */
-function ScoringPanel({
-  config,
+function HuntRulesPanel({
   solveCooldownSeconds,
-  leadDifficulties,
-  leadOptions,
   pending,
   onSave,
 }: {
-  config: ScoreConfig
   solveCooldownSeconds: number
-  leadDifficulties: { order: number; difficulty: Difficulty }[]
-  leadOptions: AdminData["leadOptions"]
   pending: boolean
-  onSave: (
-    config: ScoreConfig,
-    difficulties: { leadOrder: number; difficulty: Difficulty }[],
-    solveCooldownSeconds: number,
-  ) => void
+  onSave: (solveCooldownSeconds: number) => void
 }) {
-  const [draft, setDraft] = useState<ScoreConfig>(config)
-  const [diffs, setDiffs] = useState<Map<number, Difficulty>>(
-    () => new Map(leadDifficulties.map((d) => [d.order, d.difficulty])),
-  )
   // Cooldown is stored in seconds but edited in minutes for convenience.
   const [cooldownMin, setCooldownMin] = useState<number>(() =>
     Math.round((solveCooldownSeconds / 60) * 100) / 100,
@@ -1206,132 +1181,20 @@ function ScoringPanel({
 
   // Re-sync local state if fresh server data arrives (e.g. after a save).
   useEffect(() => {
-    setDraft(config)
-  }, [config])
-  useEffect(() => {
-    setDiffs(new Map(leadDifficulties.map((d) => [d.order, d.difficulty])))
-  }, [leadDifficulties])
-  useEffect(() => {
     setCooldownMin(Math.round((solveCooldownSeconds / 60) * 100) / 100)
   }, [solveCooldownSeconds])
-
-  const countryByOrder = useMemo(
-    () => new Map(leadOptions.map((l) => [l.order, l])),
-    [leadOptions],
-  )
-
-  function setNum(key: keyof ScoreConfig, value: string) {
-    const n = Math.max(0, Math.round(Number(value) || 0))
-    setDraft((d) => ({ ...d, [key]: n }))
-  }
-
-  // Preview the four tier totals for a given bonus.
-  function tierPreview(bonus: number): string {
-    return [draft.firstPoints, draft.secondPoints, draft.thirdPoints, draft.restPoints]
-      .map((p) => p + bonus)
-      .join(" / ")
-  }
-
-  function save() {
-    const difficulties = leadOptions.map((l) => ({
-      leadOrder: l.order,
-      difficulty: diffs.get(l.order) ?? "easy",
-    }))
-    const cooldownSeconds = Math.max(0, Math.round((Number(cooldownMin) || 0) * 60))
-    onSave(draft, difficulties, cooldownSeconds)
-  }
 
   return (
     <div className="flex flex-col gap-4">
       <div className="rounded-sm border border-border bg-card/40 p-4">
         <div className="flex items-center gap-2">
           <Trophy className="size-4 text-brass" />
-          <h2 className="font-serif text-lg font-black text-foreground">Scoring</h2>
+          <h2 className="font-serif text-lg font-black text-foreground">Hunt rules</h2>
         </div>
         <p className="mt-1 font-sans text-[13px] leading-relaxed text-muted-foreground">
-          Points are awarded each time a crew completes a lead (reaches the next stop, or scans the
-          finishing QR on the last one). The first three to complete a lead earn the placement
-          points below; everyone else earns the &ldquo;rest&rdquo; amount. Medium and hard leads add
-          a flat bonus on top. Saving recalculates every standing instantly.
+          There are no points. A standing is decided by how far a crew has come and, for anyone tied
+          on the same lead, who arrived there first. See the Progress tab for the live order.
         </p>
-      </div>
-
-      {/* Placement tiers */}
-      <div className="rounded-sm border border-border bg-card/40 p-4">
-        <h3 className="font-sans text-[11px] font-bold uppercase tracking-chip text-muted-foreground">
-          Placement points (Easy base)
-        </h3>
-        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <NumberField label="1st" value={draft.firstPoints} onChange={(v) => setNum("firstPoints", v)} />
-          <NumberField label="2nd" value={draft.secondPoints} onChange={(v) => setNum("secondPoints", v)} />
-          <NumberField label="3rd" value={draft.thirdPoints} onChange={(v) => setNum("thirdPoints", v)} />
-          <NumberField label="Everyone else" value={draft.restPoints} onChange={(v) => setNum("restPoints", v)} />
-        </div>
-      </div>
-
-      {/* Difficulty bonuses */}
-      <div className="rounded-sm border border-border bg-card/40 p-4">
-        <h3 className="font-sans text-[11px] font-bold uppercase tracking-chip text-muted-foreground">
-          Difficulty bonus (added to every tier)
-        </h3>
-        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div>
-            <NumberField label="Medium bonus" value={draft.mediumBonus} onChange={(v) => setNum("mediumBonus", v)} />
-            <p className="mt-1.5 font-mono text-[11px] text-muted-foreground">
-              {tierPreview(draft.mediumBonus)}
-            </p>
-          </div>
-          <div>
-            <NumberField label="Hard bonus" value={draft.hardBonus} onChange={(v) => setNum("hardBonus", v)} />
-            <p className="mt-1.5 font-mono text-[11px] text-muted-foreground">
-              {tierPreview(draft.hardBonus)}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Per-lead difficulty */}
-      <div className="rounded-sm border border-border bg-card/40 p-4">
-        <h3 className="font-sans text-[11px] font-bold uppercase tracking-chip text-muted-foreground">
-          Lead difficulty
-        </h3>
-        <ul className="mt-3 flex flex-col gap-2">
-          {leadOptions.map((l) => {
-            const country = countryByOrder.get(l.order)
-            const current = diffs.get(l.order) ?? "easy"
-            return (
-              <li
-                key={l.order}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-sm border border-border bg-background/40 px-3 py-2.5"
-              >
-                <div className="min-w-0">
-                  <span className="font-sans text-[11px] font-bold uppercase tracking-chip text-muted-foreground">
-                    Lead {String(l.order).padStart(2, "0")}
-                  </span>
-                  <span className="ml-2 truncate font-sans text-sm text-foreground">
-                    {country?.country ?? ""}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1 rounded-sm border border-border p-0.5">
-                  {DIFFICULTIES.map((d) => (
-                    <button
-                      key={d.value}
-                      type="button"
-                      onClick={() => setDiffs((m) => new Map(m).set(l.order, d.value))}
-                      className={`rounded-sm px-2.5 py-1 font-sans text-[11px] font-bold tracking-chip transition-colors ${
-                        current === d.value
-                          ? "bg-brass text-background"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      {d.label}
-                    </button>
-                  ))}
-                </div>
-              </li>
-            )
-          })}
-        </ul>
       </div>
 
       {/* Anti-cheat solve cooldown */}
@@ -1359,12 +1222,12 @@ function ScoringPanel({
       <div className="flex justify-end">
         <button
           type="button"
-          onClick={save}
+          onClick={() => onSave(Math.max(0, Math.round((Number(cooldownMin) || 0) * 60)))}
           disabled={pending}
           className="inline-flex items-center gap-2 rounded-sm bg-brass px-4 py-2.5 font-sans text-sm font-bold tracking-chip text-background transition-opacity hover:opacity-90 disabled:opacity-40"
         >
           <Save className="size-4" />
-          Save & recalculate
+          Save
         </button>
       </div>
     </div>

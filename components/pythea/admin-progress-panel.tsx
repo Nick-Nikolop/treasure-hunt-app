@@ -29,9 +29,18 @@ type Entrant = {
   /** Secondary line: member count for a crew, email for a solo explorer. */
   sub: string
   progress: number
+  /** Epoch ms they arrived at their current lead, or null if not started. */
+  reachedAt: number | null
   milestones: Milestones
   /** Crew members, empty for a solo explorer. */
-  members: { userId: string; name: string; email: string; role: string; progress: number }[]
+  members: {
+    userId: string
+    name: string
+    email: string
+    role: string
+    progress: number
+    reachedAt: number | null
+  }[]
 }
 
 /** Where an entrant currently stands, as a sortable rung. */
@@ -74,6 +83,7 @@ export function AdminProgressPanel({
       label: t.name,
       sub: `${t.members.length} ${t.members.length === 1 ? "member" : "members"}`,
       progress: t.progress,
+      reachedAt: t.reachedAt,
       milestones: t.milestones,
       members: t.members,
     }))
@@ -86,6 +96,7 @@ export function AdminProgressPanel({
         label: [u.firstName, u.lastName].filter(Boolean).join(" ") || u.name || u.email,
         sub: u.email,
         progress: u.progress,
+        reachedAt: u.reachedAt,
         milestones: u.milestones,
         members: [],
       }))
@@ -169,7 +180,8 @@ export function AdminProgressPanel({
 
       <p className="font-sans text-[11px] leading-relaxed text-muted-foreground">
         A crew counts as one entrant and shares one position, so only explorers with no crew are
-        listed on their own. Click any row to see who is in it.
+        listed on their own. Within each lead, rows are ordered by arrival time, so the crew badged
+        &ldquo;1st here&rdquo; got there first. Click any row to see who is in it.
       </p>
 
       <div className="relative w-full sm:max-w-xs">
@@ -192,7 +204,17 @@ export function AdminProgressPanel({
 
       <ol className="flex flex-col gap-2">
         {rungs.map((rung) => {
-          const here = rung.here.filter(matches).sort((a, b) => a.label.localeCompare(b.label))
+          // Everyone on a rung is on the same lead, so arrival time is exactly
+          // the order they stand in: earliest first, matching the leaderboard.
+          // Entrants with no recorded time sort last, then alphabetically.
+          const here = rung.here.filter(matches).sort((a, b) => {
+            if (a.reachedAt !== b.reachedAt) {
+              if (a.reachedAt === null) return 1
+              if (b.reachedAt === null) return -1
+              return a.reachedAt - b.reachedAt
+            }
+            return a.label.localeCompare(b.label)
+          })
           // While searching, hide rungs with no match to keep the list short.
           if (q !== "" && here.length === 0) return null
 
@@ -262,10 +284,12 @@ export function AdminProgressPanel({
 
               {hasRows && expanded && (
                 <ul className="flex flex-col gap-1.5 px-3 pb-3">
-                  {here.map((e) => (
+                  {here.map((e, i) => (
                     <EntrantRow
                       key={e.id}
                       entrant={e}
+                      rank={i + 1}
+                      rungSize={here.length}
                       totalLeads={totalLeads}
                       open={openId === e.id}
                       onToggle={() => setOpenId(openId === e.id ? null : e.id)}
@@ -284,22 +308,43 @@ export function AdminProgressPanel({
 /** One crew or solo explorer, expandable to show its members. */
 function EntrantRow({
   entrant,
+  rank,
+  rungSize,
   totalLeads,
   open,
   onToggle,
 }: {
   entrant: Entrant
+  /** Arrival position within this rung, 1 = got here first. */
+  rank: number
+  /** How many entrants share this rung, so a lone leader isn't badged. */
+  rungSize: number
   totalLeads: number
   open: boolean
   onToggle: () => void
 }) {
   const isTeam = entrant.kind === "team"
+  // "1st here" is only meaningful when others share the lead. Alone on a rung,
+  // being first is automatic and the badge would read as a distinction.
+  const wonTheRung = rank === 1 && rungSize > 1 && entrant.reachedAt !== null
   // A solo explorer has nothing to expand into, so the row stays inert.
   const expandable = isTeam && entrant.members.length > 0
 
   return (
     <li className="rounded-sm border border-border bg-background">
       <div className="flex items-center gap-2 px-3 py-2">
+        {/* Arrival position on this rung. First here gets the brass badge. */}
+        <span
+          className={`inline-flex size-6 shrink-0 items-center justify-center rounded-sm font-sans text-[11px] font-bold tabular-nums ${
+            wonTheRung
+              ? "bg-brass text-background"
+              : "border border-border text-muted-foreground"
+          }`}
+          title={rank === 1 ? "First to reach this lead" : `${ordinal(rank)} to reach this lead`}
+        >
+          {rank}
+        </span>
+
         {isTeam ? (
           <Users className="size-3.5 shrink-0 text-brass" />
         ) : (
@@ -307,9 +352,20 @@ function EntrantRow({
         )}
 
         <div className="min-w-0 flex-1">
-          <p className="truncate font-sans text-sm font-bold text-foreground">{entrant.label}</p>
+          <p className="truncate font-sans text-sm font-bold text-foreground">
+            {entrant.label}
+            {wonTheRung && (
+              <span className="ml-1.5 font-sans text-[10px] font-bold uppercase tracking-chip text-brass">
+                1st here
+              </span>
+            )}
+          </p>
           <p className="truncate font-sans text-[11px] text-muted-foreground">{entrant.sub}</p>
         </div>
+
+        <span className="hidden shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground sm:inline">
+          {formatArrival(entrant.reachedAt)}
+        </span>
 
         <span className="shrink-0 font-sans text-[11px] tabular-nums text-muted-foreground">
           {entrant.progress}/{totalLeads}
@@ -343,8 +399,11 @@ function EntrantRow({
                   </span>
                 )}
               </span>
-              <span className="shrink-0 truncate font-sans text-[11px] text-muted-foreground">
+              <span className="hidden shrink-0 truncate font-sans text-[11px] text-muted-foreground sm:inline">
                 {m.email}
+              </span>
+              <span className="shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">
+                {formatArrival(m.reachedAt)}
               </span>
               <span className="shrink-0 font-sans text-[11px] tabular-nums text-muted-foreground">
                 {m.progress}/{totalLeads}
@@ -355,6 +414,27 @@ function EntrantRow({
       )}
     </li>
   )
+}
+
+/** "1st" / "2nd" / "3rd" / "4th"... for the arrival badge tooltip. */
+function ordinal(n: number): string {
+  const rem100 = n % 100
+  if (rem100 >= 11 && rem100 <= 13) return `${n}th`
+  if (n % 10 === 1) return `${n}st`
+  if (n % 10 === 2) return `${n}nd`
+  if (n % 10 === 3) return `${n}rd`
+  return `${n}th`
+}
+
+/** Short local date + time an entrant arrived, or a dash when unknown. */
+function formatArrival(ms: number | null): string {
+  if (ms === null) return "—"
+  return new Date(ms).toLocaleString(undefined, {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  })
 }
 
 function Tally({
