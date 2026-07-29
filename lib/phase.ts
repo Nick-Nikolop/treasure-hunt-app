@@ -80,6 +80,31 @@ export function nextAutoAdvanceMs(input: PhaseInput, nowMs: number): number | nu
 export type PhaseSettings = PhaseInput & {
   /** Admin-flipped seal on the journal + leaderboard. */
   journalLockedManual: boolean
+  /** Admin-flipped switch for the phase 3 roster freeze. Defaults to ON. */
+  rostersLockedManual: boolean
+}
+
+/**
+ * Whether team set-up is frozen for a normal explorer.
+ *
+ * TWO conditions, both required:
+ *
+ *   1. The PHASE must be 3, i.e. the hunt is actually live. Before that, teams
+ *      are still being formed, so a freeze would simply block sign-ups.
+ *   2. The admin switch must be ON. It defaults to ON, so the out-of-the-box
+ *      behaviour is the automatic phase 3 freeze this replaced; turning it off
+ *      keeps crews editable during the hunt.
+ *
+ * Deliberately phase-gated rather than a bare "lock now" flag: because the
+ * switch defaults ON, a phase-independent version would freeze rosters from the
+ * moment the site opened and nobody could ever register.
+ */
+export function areRostersFrozen(
+  phase: Phase,
+  settings: { rostersLockedManual: boolean },
+): boolean {
+  if (phase < 3) return false
+  return settings.rostersLockedManual
 }
 
 /**

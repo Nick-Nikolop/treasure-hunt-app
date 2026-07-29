@@ -197,6 +197,11 @@ export const scoreConfig = pgTable("score_config", {
   // the journal is open the moment the site is, and an admin has to flip this
   // deliberately (behind a typed confirmation) to close it.
   journalLockedManual: boolean("journalLockedManual").notNull().default(false),
+  // Whether team rosters freeze once the hunt goes live (phase 3). Default TRUE,
+  // i.e. they do, which is the behaviour this replaced. An admin can flip it off
+  // to keep crews editable during the hunt. It is deliberately phase-gated: a
+  // roster lock that ignored the phase would block sign-ups before the hunt.
+  rostersLockedManual: boolean("rostersLockedManual").notNull().default(true),
   // How strongly the parchment wash covers the landmark art behind every
   // journal lead page (0 = art fully visible, 100 = art fully hidden). One
   // global knob for all leads.
