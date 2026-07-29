@@ -1,9 +1,11 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { usePathname } from "next/navigation"
 import { AnimatePresence, motion } from "framer-motion"
 import { ArrowUpRight, Instagram, MessageCircleMore, X } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
+import { cn } from "@/lib/utils"
 import { LEGAL_ORG } from "@/lib/legal"
 import { track } from "@/lib/analytics-client"
 import { EV } from "@/lib/analytics-events"
@@ -15,10 +17,12 @@ import { EV } from "@/lib/analytics-events"
  * Instagram DMs, so the panel is deliberately small (one line of copy + one
  * outbound row) rather than a contact form.
  *
- * POSITION: bottom-LEFT on purpose. The bottom-right corner is already taken
- * on two pages - the register `FloatingCta` (`md:right-8 bottom-8`, z-40) on
- * the landing page and `ClueControls` (`bottom-4 right-4`, z-50) in the
- * journal - so anchoring right would overlap both.
+ * POSITION: bottom-LEFT corner on purpose. The bottom-right corner is already
+ * taken on two pages - the register `FloatingCta` (`md:right-8 bottom-8`,
+ * z-40) on the landing page and `ClueControls` (`bottom-4 right-4`, z-50) in
+ * the journal - so anchoring right would overlap both. The only exception to
+ * sitting flush in the corner is the landing page on mobile, where that same
+ * CTA goes full-width along the bottom (see `liftedForLandingCta`).
  *
  * z-35 is deliberate: `Atmosphere` paints a full-screen vignette at z-30, so
  * z-30 here would depend on DOM order to stay visible. It stays UNDER the
@@ -27,6 +31,14 @@ import { EV } from "@/lib/analytics-events"
  */
 export function ContactWidget() {
   const { t } = useI18n()
+  const pathname = usePathname()
+  /**
+   * The landing page's register CTA is FULL-WIDTH on mobile (`inset-x-5
+   * bottom-5`), so it would bury the widget there. It is the only page with
+   * that CTA, so only that page needs the extra clearance and every other
+   * page keeps the widget snug in the corner.
+   */
+  const liftedForLandingCta = pathname === "/"
   const [open, setOpen] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -56,11 +68,16 @@ export function ContactWidget() {
   }, [open])
 
   return (
-    /* Sits higher on MOBILE: the landing page's register CTA is full-width
-       (`inset-x-5 bottom-5`) below `md`, so `bottom-5` here would be buried
-       underneath it. From `md` up that CTA collapses to the right corner and
-       the normal bottom-left spot is free. */
-    <div className="fixed bottom-24 left-5 z-[35] flex flex-col items-start gap-2.5 md:bottom-5 print:hidden">
+    <div
+      className={cn(
+        "fixed left-5 z-[35] flex flex-col items-start gap-2.5 print:hidden",
+        // Snug in the corner, but padded by the iOS home-bar inset so it is not
+        // sitting on the gesture area on phones (env() resolves to 0px on desktop).
+        liftedForLandingCta
+          ? "bottom-[calc(6rem+env(safe-area-inset-bottom))] md:bottom-[calc(1.25rem+env(safe-area-inset-bottom))]"
+          : "bottom-[calc(1.25rem+env(safe-area-inset-bottom))]",
+      )}
+    >
       <AnimatePresence>
         {open && (
           <motion.div
