@@ -777,6 +777,9 @@ const el = {
     sealedGroupNote: "Όσοι έχουν περάσει το σημάδι 8 δεν εμφανίζονται με σειρά. Θα μάθετε ποιοι προηγούνται στο τελικό πάρτι.",
     sealedGroupCount: (n: number) =>
       n === 1 ? "1 συμμετέχων" : `${n} συμμετέχοντες`,
+    // The arrival time is what would betray the order inside the endgame, so it
+    // is withheld for anyone past the seal.
+    reachedSealed: "Ο χρόνος μένει κρυφός",
     firstHere: "1ος εδώ",
   },
   controls: {
@@ -1701,6 +1704,9 @@ const en: Dictionary = {
     sealedGroupTitle: "In the endgame",
     sealedGroupNote: "Anyone past mark 8 is listed without an order. You will find out who is ahead at the closing party.",
     sealedGroupCount: (n: number) => (n === 1 ? "1 entrant" : `${n} entrants`),
+    // The arrival time is what would betray the order inside the endgame, so it
+    // is withheld for anyone past the seal.
+    reachedSealed: "Arrival time hidden",
     firstHere: "1st here",
   },
   controls: {

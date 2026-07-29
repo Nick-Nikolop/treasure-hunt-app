@@ -224,7 +224,7 @@ const RAW_CLUES: Omit<
     subtitleEn: "The land of great distances",
     icon: "Package",
     body: [
-      "Από την Αίγυπτο στράφηκα προς τον βορρά και έφτασα στη Ρωσία. Μια χώρα αχανής, γεμάτη χειμώνες, ιστορίες, μουσικές και προϊόντα που ταξιδεύουν μακριά από τον τόπο τους.",
+      "Από την Αίγυπτο στράφηκα προς τον βορρά και έφτασα στη Ρωσία. Μια χώρα αχανής, γεμάτη χειμώνες, ισ��ορίες, μουσικές και προϊόντα που ταξιδεύουν μακριά από τον τόπο τους.",
       "Συνηθίζω να λέω πως μια χώρα δεν τη θυμάσαι μόνο από τα μνημεία της, αλλά και από τις γεύσεις, τις μυρωδιές και τα μικρά πράγματα που κουβαλούν οι άνθρωποι μαζί τους.",
       "Έτσι, στην Καλαμάτα, το επόμενο ίχνος το άφησα εκεί όπου κάτι από τη Ρωσία συνεχίζει να φτάνει στην πόλη, σαν μικρό φορτίο από έναν πολύ μεγάλο τόπο.",
     ],
@@ -330,70 +330,37 @@ export const TRAIL_END_ORDER = 100002
 /** The legacy finish sentinel used before the lead count became dynamic. */
 export const LEGACY_FINISH_ORDER = TOTAL_CLUES + 1
 
-// ── Scoring ─────────────────────────────────────────────────────────────────
+// ── Standings ───────────────────────────────────────────────────────────────
+//
+// There are no points in this hunt. A standing is decided by exactly two
+// things: how far along the trail you are, and how early you got there. So if
+// several teams and solos are all sitting on the same lead, whoever scanned
+// into it first is ahead of the rest.
 
-export type Difficulty = "easy" | "medium" | "hard"
+/**
+ * Once an entity moves PAST this lead it enters the endgame and its exact
+ * standing is concealed, so the finishing order stays a surprise until the
+ * closing party.
+ *
+ * This deliberately hides the LEADERS, which is why there is no "top 3" podium
+ * anywhere: the entities out in front are precisely the ones being concealed,
+ * so a podium would end up presenting 4th place as the winner.
+ *
+ * Lives here (a dependency-free module) rather than in lib/hunt.ts so that
+ * client components can import it without pulling the database in.
+ */
+export const ENDGAME_AFTER_LEAD = 8
 
-export type ScoreConfig = {
-  /** Points for the 1st/2nd/3rd entity to complete a lead, then everyone else. */
-  firstPoints: number
-  secondPoints: number
-  thirdPoints: number
-  restPoints: number
-  /** Flat bonus added to every placement tier on medium / hard leads. */
-  mediumBonus: number
-  hardBonus: number
+/** True when a progress value is deep enough that the standing is concealed. */
+export function isEndgameProgress(progress: number): boolean {
+  return progress > ENDGAME_AFTER_LEAD
 }
-
-/** Defaults used when no config row exists yet. */
-export const DEFAULT_SCORE_CONFIG: ScoreConfig = {
-  firstPoints: 100,
-  secondPoints: 70,
-  thirdPoints: 50,
-  restPoints: 30,
-  mediumBonus: 50,
-  hardBonus: 150,
-}
-
-export const DEFAULT_DIFFICULTY: Difficulty = "easy"
 
 /**
  * Default anti-cheat cooldown (in seconds) enforced between a crew's two
  * consecutive QR solves. 900s = 15 minutes. Admin-tunable; 0 disables it.
  */
 export const DEFAULT_COOLDOWN_SECONDS = 900
-
-export function isDifficulty(value: unknown): value is Difficulty {
-  return value === "easy" || value === "medium" || value === "hard"
-}
-
-/** The bonus added to a lead's placement points for its difficulty. */
-export function difficultyBonus(config: ScoreConfig, difficulty: Difficulty): number {
-  if (difficulty === "hard") return config.hardBonus
-  if (difficulty === "medium") return config.mediumBonus
-  return 0
-}
-
-/**
- * Points a single placement earns on a lead of a given difficulty.
- * `placement` is 0-based: 0 = first to complete, 1 = second, 2 = third, and
- * anything else falls into the "rest" tier.
- */
-export function pointsForPlacement(
-  config: ScoreConfig,
-  difficulty: Difficulty,
-  placement: number,
-): number {
-  const base =
-    placement === 0
-      ? config.firstPoints
-      : placement === 1
-        ? config.secondPoints
-        : placement === 2
-          ? config.thirdPoints
-          : config.restPoints
-  return base + difficultyBonus(config, difficulty)
-}
 
 export const START_MS = new Date(START_ISO).getTime()
 

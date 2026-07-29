@@ -2,13 +2,17 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { motion } from "framer-motion"
-import { Trophy, Users, User as UserIcon, MapPin, Flag, X, Lock } from "lucide-react"
+import { Users, User as UserIcon, MapPin, X, Lock } from "lucide-react"
 import { ModalShell } from "@/components/pythea/modal-shell"
 import { useI18n } from "@/components/pythea/language-provider"
 import { track } from "@/lib/analytics-client"
 import { EV } from "@/lib/analytics-events"
 import { buildVoyageRoute, TREASURE_XY, MAP_VIEWBOX } from "@/lib/voyage-map"
-import { ENDGAME_AFTER_LEAD, isEndgameProgress, type LeaderboardEntry } from "@/lib/hunt"
+import type { LeaderboardEntry } from "@/lib/hunt"
+// From lib/clues (a dependency-free module) and NOT lib/hunt: these two are
+// runtime values, and lib/hunt imports the database, which must never be pulled
+// into a client bundle. Type-only imports above are erased, so they are fine.
+import { ENDGAME_AFTER_LEAD, isEndgameProgress } from "@/lib/clues"
 
 type Port = { order: number; country: string; countryEn: string }
 
@@ -57,6 +61,20 @@ export function LeaderboardView({
       map.set(e.progress, list)
     }
     return map
+  }, [entries])
+
+  // Split the board at the endgame line. `sealed` keeps no ordering at all (it
+  // is re-sorted by name) so that even the DOM order cannot betray who is in
+  // front; `ranked` stays in true standings order.
+  const { sealed, ranked } = useMemo(() => {
+    const started = entries.filter((e) => e.progress > 0)
+    return {
+      sealed: started
+        .filter((e) => isEndgameProgress(e.progress))
+        .slice()
+        .sort((a, b) => a.name.localeCompare(b.name)),
+      ranked: started.filter((e) => !isEndgameProgress(e.progress)),
+    }
   }, [entries])
 
   const portName = useMemo(() => {
@@ -304,17 +322,69 @@ export function LeaderboardView({
           </div>
         </section>
 
-        {/* Full standings, compact */}
+        {/* Full standings. Everyone still outside the endgame is ranked openly;
+            everyone past it is pooled into one unordered group at the top, so
+            the finishing order stays secret until the closing party. */}
         <section className="mt-8">
           <p className="font-sans text-[11px] font-bold tracking-chip text-muted-foreground">
             {lb.standingsLabel}
           </p>
+
+          {sealed.length > 0 && (
+            <div className="mt-3 rounded-sm border border-brass/40 bg-brass/[0.06] px-4 py-3.5">
+              <div className="flex items-center gap-2">
+                <Lock className="size-3.5 shrink-0 text-brass" aria-hidden />
+                <span className="font-serif text-base font-black text-brass">
+                  {lb.sealedGroupTitle}
+                </span>
+                <span className="ml-auto shrink-0 font-sans text-[10px] font-bold tracking-chip text-brass/80">
+                  {lb.sealedGroupCount(sealed.length)}
+                </span>
+              </div>
+              <p className="mt-1.5 text-pretty font-serif text-sm italic leading-relaxed text-muted-foreground">
+                {lb.sealedGroupNote}
+              </p>
+              {/* Names are shown (so a crew can see it is in here) but never an
+                  order, a lead number or an arrival time. Sorted by name so the
+                  DOM order leaks nothing about who is winning. */}
+              <ul className="mt-3 flex flex-wrap gap-1.5">
+                {sealed.map((entry) => {
+                  const isMe = entry.id === myEntryId
+                  return (
+                    <li
+                      key={`sealed-${entry.kind}-${entry.id}`}
+                      className={`inline-flex items-center gap-1.5 rounded-sm border px-2 py-1 ${
+                        isMe ? "border-brass bg-brass/15" : "border-brass/25 bg-background/40"
+                      }`}
+                    >
+                      {entry.kind === "team" ? (
+                        <Users className="size-3 shrink-0 text-muted-foreground" aria-hidden />
+                      ) : (
+                        <UserIcon className="size-3 shrink-0 text-muted-foreground" aria-hidden />
+                      )}
+                      <span className="font-serif text-sm font-bold text-foreground">
+                        {entry.name}
+                      </span>
+                      {isMe && (
+                        <span className="font-sans text-[9px] font-bold tracking-chip text-brass">
+                          {lb.you}
+                        </span>
+                      )}
+                      <span className="sr-only">{lb.sealedRowSr}</span>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          )}
+
           <ol className="mt-3 flex flex-col gap-2">
-            {entries.map((entry, i) => {
+            {ranked.map((entry, i) => {
               const isMe = entry.id === myEntryId
-              const rank = i + 1
+              // Ranks continue below the sealed group, so the first visible row
+              // is not "1st". Nobody outside the endgame can be the leader.
+              const rank = sealed.length + i + 1
               const country = locale === "en" ? entry.countryEn : entry.country
-              const done = entry.progress >= total
               return (
                 <li
                   key={`row-${entry.kind}-${entry.id}`}
@@ -322,15 +392,12 @@ export function LeaderboardView({
                     isMe ? "border-brass bg-brass/5" : "border-border bg-card/30"
                   }`}
                 >
+                  {/* Plain numbers only. No trophies: with the leaders concealed
+                      a trophy here would crown whoever is merely most visible. */}
                   <div className="flex w-7 shrink-0 justify-center">
-                    {rank <= 3 ? (
-                      <Trophy
-                        className={`size-4 ${rank === 1 ? "text-brass" : rank === 2 ? "text-muted-foreground" : "text-muted-foreground/70"}`}
-                        aria-hidden
-                      />
-                    ) : (
-                      <span className="font-serif text-sm font-black text-muted-foreground">{rank}</span>
-                    )}
+                    <span className="font-serif text-sm font-black text-muted-foreground">
+                      {rank}
+                    </span>
                   </div>
                   <button
                     type="button"
@@ -358,18 +425,17 @@ export function LeaderboardView({
                     )}
                   </button>
                   <div className="flex shrink-0 items-center gap-2.5">
-                    {done && <Flag className="size-3.5 text-brass" aria-label={lb.finished} />}
+                    {/* How far, then when they got there: the two things that
+                        actually decide the order now. */}
                     <span className="inline-flex items-baseline gap-1 font-sans text-[10px] font-bold tracking-chip text-muted-foreground/70">
                       <span className="font-serif text-sm font-black text-muted-foreground">
                         {entry.progress}
                       </span>
                       /{total}
                     </span>
-                    <ScoreCell
-                      score={entry.score}
-                      hidden={isScoreHidden(entry.progress)}
-                      lb={lb}
-                    />
+                    <span className="hidden font-sans text-[10px] tabular-nums text-muted-foreground/70 sm:inline">
+                      {fmt(entry.reachedAt)}
+                    </span>
                   </div>
                 </li>
               )
@@ -432,7 +498,6 @@ export function LeaderboardView({
               <PortEntryRow
                 key={`${entry.kind}-${entry.id}`}
                 entry={entry}
-                total={total}
                 isMe={entry.id === myEntryId}
                 reachedText={fmt(entry.reachedAt)}
                 lb={lb}
@@ -447,18 +512,15 @@ export function LeaderboardView({
 
 function PortEntryRow({
   entry,
-  total,
   isMe,
   reachedText,
   lb,
 }: {
   entry: LeaderboardEntry
-  total: number
   isMe: boolean
   reachedText: string
   lb: ReturnType<typeof useI18n>["t"]["leaderboard"]
 }) {
-  const done = entry.progress >= total
   return (
     <li
       className={`flex items-start gap-3 rounded-sm border px-4 py-3 ${
@@ -483,69 +545,30 @@ function PortEntryRow({
               {lb.you}
             </span>
           )}
-          {done && (
-            <span className="inline-flex shrink-0 items-center gap-1 rounded-sm bg-brass/15 px-1.5 py-0.5 font-sans text-[9px] font-bold tracking-chip text-brass">
-              <Flag className="size-3" aria-hidden />
-              {lb.finished}
-            </span>
-          )}
+          {/* No "finished" badge: anyone who has finished is deep inside the
+              sealed endgame, so flagging them here would give the result away. */}
         </div>
         {entry.kind === "team" && entry.members.length > 0 && (
           <p className="mt-0.5 truncate font-sans text-xs text-muted-foreground">
             {lb.membersLabel}: {entry.members.join(", ")}
           </p>
         )}
+        {/* A sealed entrant's arrival time is withheld: it is exactly what
+            would reveal the order inside the endgame. */}
         <p className="mt-0.5 font-sans text-[11px] text-muted-foreground/80">
-          {lb.reachedLabel} {reachedText}
+          {isEndgameProgress(entry.progress) ? (
+            <span className="inline-flex items-center gap-1 text-brass/90">
+              <Lock className="size-3" aria-hidden />
+              {lb.reachedSealed}
+            </span>
+          ) : (
+            <>
+              {lb.reachedLabel} {reachedText}
+            </>
+          )}
         </p>
       </div>
-      <span className="shrink-0">
-        <ScoreCell score={entry.score} hidden={isScoreHidden(entry.progress)} big lb={lb} />
-      </span>
     </li>
-  )
-}
-
-function ScoreCell({
-  score,
-  hidden,
-  big,
-  lb,
-}: {
-  score: number
-  hidden: boolean
-  big?: boolean
-  lb: ReturnType<typeof useI18n>["t"]["leaderboard"]
-}) {
-  const numClass = big ? "text-lg" : "text-base"
-  if (hidden) {
-    return (
-      <span className="flex flex-col items-end leading-none">
-        <span className="relative inline-flex items-center">
-          {/* Blurred placeholder digits, decoupled from the real score so the
-              value cannot be read or inferred through the blur. */}
-          <span
-            aria-hidden
-            className={`select-none font-serif ${numClass} font-black text-brass blur-[6px]`}
-          >
-            888
-          </span>
-          <Lock className="absolute left-1/2 top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 text-brass/90" aria-hidden />
-        </span>
-        <span className="font-sans text-[9px] font-bold tracking-chip text-muted-foreground/70">
-          {lb.scoreSealed}
-        </span>
-        <span className="sr-only">{lb.scoreSealedSr}</span>
-      </span>
-    )
-  }
-  return (
-    <span className="flex flex-col items-end leading-none">
-      <span className={`font-serif ${numClass} font-black text-brass`}>{score}</span>
-      <span className="font-sans text-[9px] font-bold tracking-chip text-muted-foreground/70">
-        {lb.points}
-      </span>
-    </span>
   )
 }
 

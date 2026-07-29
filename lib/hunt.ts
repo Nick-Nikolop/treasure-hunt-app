@@ -17,6 +17,7 @@ import {
   clampProgress,
   effectiveUnlockedCount,
   isLeadOneOpen,
+  isEndgameProgress,
   START_MS,
 } from "@/lib/clues"
 import {
@@ -75,23 +76,6 @@ export async function getCrewUserIds(userId: string): Promise<string[]> {
     .from(teamMember)
     .where(eq(teamMember.teamId, teamId))
   return members.map((m) => m.userId)
-}
-
-/**
- * Once an entity moves PAST this lead it enters the endgame and its exact
- * standing is concealed, so the finishing order stays a surprise until the
- * closing party. This is the one source of truth for that rule: the public
- * board, the journal widgets and the SEO/summary reads all defer to it.
- *
- * Note this deliberately hides the LEADERS. That is why there is no "top 3"
- * anywhere: the entities in front are exactly the ones being concealed, so a
- * podium would present 4th place as the winner.
- */
-export const ENDGAME_AFTER_LEAD = 8
-
-/** True when this progress is deep enough that the standing must be concealed. */
-export function isEndgameProgress(progress: number): boolean {
-  return progress > ENDGAME_AFTER_LEAD
 }
 
 export type StandingsSummary = {
@@ -203,7 +187,7 @@ export async function getCrewEffectiveProgress(
   return effectiveUnlockedCount(storedMax, nowMs, await getTotalLeads())
 }
 
-// ── Progress writes ─────────────────────────────────────────────────────────
+// ── Progress writes ─────────────────���───────────────────────────────────────
 
 /**
  * Ensure each user in `userIds` holds every lead from 2..targetLead. Existing
