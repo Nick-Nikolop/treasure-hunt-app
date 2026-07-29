@@ -440,6 +440,11 @@ export function PoreiaView({
         </motion.div>
       )}
 
+      {/* Auto-opens once per browser on a first visit, and leaves a button
+          behind so the seven steps can be re-read at any time. Sits above the
+          book: it explains how to read what follows, so it belongs before it. */}
+      <HowToPlayLauncher endsAt={huntEndsAt} />
+
       {/* The book, centered. Pages are bound on the left; a turned page rotates
           around the spine and tucks behind the journal. The stage clips at the
           spine so the leaf slips behind instead of floating away on the left. */}
@@ -720,10 +725,6 @@ export function PoreiaView({
           {t.journal.liteHint}
         </span>
       </div>
-
-        {/* Auto-opens once per browser on a first visit, and leaves a button
-            behind so the seven steps can be re-read at any time. */}
-        <HowToPlayLauncher endsAt={huntEndsAt} />
 
         {/* Leaderboard preview + "who is at your port" widgets */}
         <JournalWidgets standings={standings} />

@@ -218,16 +218,19 @@ export function HowToPlayLauncher({ endsAt }: { endsAt: string }) {
 
   return (
     <>
-      <div className="mt-6 flex flex-col items-center justify-center gap-2 text-center">
+      {/* Sits ABOVE the book, where the surrounding chrome (title strip, lead)
+          is left-aligned prose, so this is a left-aligned row rather than the
+          centered column used by the controls below the book. */}
+      <div className="mb-3 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-3 md:mb-9">
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-2.5 rounded-sm border border-border bg-card/60 px-3.5 py-2 font-sans text-[11px] font-bold tracking-chip text-muted-foreground transition-colors hover:border-brass/60 hover:text-foreground"
+          className="inline-flex shrink-0 items-center gap-2.5 rounded-sm border border-border bg-card/60 px-3.5 py-2 font-sans text-[11px] font-bold tracking-chip text-muted-foreground transition-colors hover:border-brass/60 hover:text-foreground"
         >
           <ScrollText className="size-3.5 text-brass/70" aria-hidden />
           {h.reopenCta}
         </button>
-        <span className="max-w-xs text-pretty font-sans text-[11px] leading-relaxed tracking-chip text-muted-foreground/70">
+        <span className="text-pretty font-sans text-[11px] leading-relaxed tracking-chip text-muted-foreground/70">
           {h.reopenHint}
         </span>
       </div>
