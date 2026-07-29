@@ -37,6 +37,7 @@ import { useI18n } from "@/components/pythea/language-provider"
 import { useLiteMode } from "@/components/pythea/lite-mode-provider"
 import { JournalCover } from "@/components/pythea/journal-cover"
 import { JournalWidgets } from "@/components/pythea/journal-widgets"
+import { HowToPlayLauncher } from "@/components/pythea/how-to-play-modal"
 import type { StandingsSummary } from "@/lib/hunt"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { track } from "@/lib/analytics-client"
@@ -95,6 +96,8 @@ type Props = {
   washPct?: number
   /** Global visibility (0..100) of the compass on lead pages. */
   compassOpacityPct?: number
+  /** Admin-set "HH:MM" closing time, shown in the how-to-play walkthrough. */
+  huntEndsAt: string
 }
 
 // A stop drawn on the voyage chart. Built only from already-unlocked clues,
@@ -133,6 +136,7 @@ export function PoreiaView({
   total,
   next,
   standings,
+  huntEndsAt,
   washPct = 72,
   compassOpacityPct = DEFAULT_COMPASS_OPACITY_PCT,
 }: Props) {

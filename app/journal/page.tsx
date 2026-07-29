@@ -19,6 +19,7 @@ import { getAdminUser } from "@/lib/admin"
 import { getLeadDefs } from "@/lib/leads"
 import { getLeadBgWashPct, getCompassOpacityPct } from "@/lib/hunt-config"
 import { getPhaseContext } from "@/lib/phase-guard"
+import { getFinaleConfig } from "@/lib/finale"
 
 // Recompute against the live server clock, the player's stored progress, and
 // the per-browser testing cookie.
@@ -78,6 +79,9 @@ export default async function PoreiaPage() {
   // Global visibility of the compass in each lead page's bottom-right corner.
   const compassOpacityPct = await getCompassOpacityPct()
 
+  // Admin-set closing time, rendered into step 7 of the how-to-play walkthrough.
+  const { huntEndsAt } = await getFinaleConfig()
+
   // The unlocked slice already carries full live content (country, body,
   // stamp), so it is used directly.
   const unlocked = state.unlocked
@@ -133,6 +137,7 @@ export default async function PoreiaPage() {
           startMs={state.startMs}
           next={state.next}
           standings={standings}
+          huntEndsAt={huntEndsAt}
           washPct={leadBgWashPct}
           compassOpacityPct={compassOpacityPct}
         />

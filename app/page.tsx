@@ -22,6 +22,8 @@ import { getIsInTeam } from "@/lib/hunt"
 import { getTotalLeads } from "@/lib/leads"
 import { DEFAULT_LOCALE, isLocale, LANG_COOKIE, getDictionary } from "@/lib/i18n"
 import { homeJsonLd } from "@/lib/seo"
+import { HowToPlayPreviewButton } from "@/components/pythea/how-to-play-modal"
+import { getFinaleConfig } from "@/lib/finale"
 
 // Recompute against the live clock on each request (for the countdown state).
 export const dynamic = "force-dynamic"
@@ -70,6 +72,9 @@ export default async function Page() {
   const locale = isLocale(cookieLang) ? cookieLang : DEFAULT_LOCALE
   const jsonLd = homeJsonLd(locale, getDictionary(locale).faq.items)
 
+  // Only the admin preview below needs this, so skip the read for everyone else.
+  const huntEndsAt = phaseCtx.isSuperadmin ? (await getFinaleConfig()).huntEndsAt : ""
+
   return (
     <>
       <script
@@ -104,6 +109,10 @@ export default async function Page() {
         <HowItWorks />
         <Faq />
         <Party />
+        {/* Admin-only: proofread the first-visit walkthrough without having to
+            clear localStorage in the journal. `phaseCtx.isSuperadmin` is already
+            resolved above, so this costs no extra query. */}
+        {phaseCtx.isSuperadmin && <HowToPlayPreviewButton endsAt={huntEndsAt} />}
       </main>
       {/* The floating register CTA only makes sense for signed-out visitors. */}
       {!initialUser && <FloatingCta />}

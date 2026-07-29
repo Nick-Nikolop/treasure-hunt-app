@@ -146,6 +146,21 @@ export function HowToPlayModal({
                             on every step keeps the copy free to move it. */}
                         {step.body.replace("{time}", endsAt)}
                       </p>
+                      {/* Step 3 is the one about the search boundaries, so it
+                          gets the Kalamata sweep clip: muted + looping so it
+                          reads as an illustration, not a video to play. */}
+                      {i === 2 && (
+                        <video
+                          src="/how-to-play/search-area.mp4"
+                          autoPlay
+                          loop
+                          muted
+                          playsInline
+                          preload="metadata"
+                          aria-label={step.title}
+                          className="mt-2.5 w-full rounded-sm border border-brass/25"
+                        />
+                      )}
                     </div>
                   </li>
                 )
