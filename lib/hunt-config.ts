@@ -1,7 +1,9 @@
 // ─────────────────────────────────────────────────────────────────────────
-//  Hunt-wide settings that live on the single `score_config` row but are not
-//  part of the scoring tiers. Kept separate from lib/scoring.ts so the
-//  ScoreConfig shape stays purely about points.
+//  Hunt-wide settings that live on the single `score_config` row. Despite that
+//  legacy table name there is no scoring any more: standings are decided purely
+//  by how far a crew has come and how early they got there. The row survives
+//  because it carries the settings read here (cooldown, journal wash, compass,
+//  phase rollout).
 // ─────────────────────────────────────────────────────────────────────────
 
 import { db } from "@/lib/db"

@@ -636,7 +636,7 @@ export function AdminDashboard({
             {data.teams.map((tm) => (
               <option key={tm.id} value={tm.id} disabled={tm.id === assignTarget?.teamId}>
                 {tm.name} ({tm.members.length}/{MAX_CREW_SIZE})
-                {tm.id === assignTarget?.teamId ? " — current" : ""}
+                {tm.id === assignTarget?.teamId ? " (current)" : ""}
               </option>
             ))}
           </select>

@@ -235,8 +235,8 @@ export function LeaderboardView({
                   tabIndex={0}
                   aria-label={
                     revealed && name
-                      ? `${name} — ${lb.explorersHere(count)}`
-                      : `${lb.portLabel(order)} — ${lb.explorersHere(count)}`
+                      ? `${name} · ${lb.explorersHere(count)}`
+                      : `${lb.portLabel(order)} · ${lb.explorersHere(count)}`
                   }
                   onClick={() => setSelected(order)}
                   onKeyDown={(e) => {

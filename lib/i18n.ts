@@ -737,7 +737,7 @@ const el = {
     signInPrompt: "Συνδέσου για να δεις αυτή τη βοήθεια.",
   },
   leaderboard: {
-    metaTitle: "Κατάταξη — Το Ταξίδι του Πυθέα",
+    metaTitle: "Κατάταξη · Το Ταξίδι του Πυθέα",
     metaDescription: "Δες ποιος προηγείται στο κυνήγι θησαυρού του Πυθέα.",
     eyebrow: "ΚΑΤΑΤΑΞΗ",
     title: "Ποιος προηγείται",
@@ -1665,7 +1665,7 @@ const en: Dictionary = {
     signInPrompt: "Sign in to view this hint.",
   },
   leaderboard: {
-    metaTitle: "Leaderboard — The Voyage of Pytheas",
+    metaTitle: "Leaderboard · The Voyage of Pytheas",
     metaDescription: "See who leads the treasure hunt of Pytheas.",
     eyebrow: "LEADERBOARD",
     title: "Who is in the lead",

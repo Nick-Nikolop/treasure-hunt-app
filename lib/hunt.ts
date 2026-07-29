@@ -187,7 +187,7 @@ export async function getCrewEffectiveProgress(
   return effectiveUnlockedCount(storedMax, nowMs, await getTotalLeads())
 }
 
-// ── Progress writes ─────────────────���───────────────────────────────────────
+// ── Progress writes ─────────────────────────────────────────────────────────
 
 /**
  * Ensure each user in `userIds` holds every lead from 2..targetLead. Existing
