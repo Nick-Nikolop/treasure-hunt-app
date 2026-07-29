@@ -21,8 +21,8 @@ export type PhaseContext = {
   settings: PhaseSettings
   nowMs: number
   /**
-   * True when the journal + leaderboard are sealed for THIS viewer. Comes from
-   * the manual admin switch only, never from the phase or a countdown.
+   * True when the journal + leaderboard are sealed for THIS viewer: always
+   * during phase 2, then per the manual admin seal once phase 3 arrives.
    */
   journalLocked: boolean
   /** True when the whole site is sealed behind the teaser for THIS viewer. */
@@ -75,8 +75,8 @@ export async function getPhaseContext(): Promise<PhaseContext> {
     isSuperadmin,
     settings,
     nowMs,
-    // Manual seal only. No phase or countdown locks the journal any more.
-    journalLocked: !isSuperadmin && isJournalLocked(settings),
+    // Sealed for the whole of phase 2; from phase 3 the manual admin seal decides.
+    journalLocked: !isSuperadmin && isJournalLocked(phase, settings),
     siteLocked: !isSuperadmin && phase === 1,
   }
 }

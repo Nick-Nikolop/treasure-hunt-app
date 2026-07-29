@@ -4,12 +4,14 @@
 //  The hunt opens in three phases:
 //    Phase 1  Teaser landing only. Non-superadmins see a countdown + email
 //             capture; the rest of the site is sealed.
-//    Phase 2  Site is live. The journal is OPEN here.
-//    Phase 3  Everything is open and team rosters freeze.
+//    Phase 2  Site is live, but the journal is still SEALED (the hunt has not
+//             started, so there are no lead pages to read yet).
+//    Phase 3  Journal + leaderboard open and team rosters freeze.
 //
-//  The journal/leaderboard seal is NOT part of this ladder. It is a manual
-//  admin switch (journalLockedManual) so a countdown can never close the
-//  journal on a crew that is already out playing.
+//  On top of the ladder there is a manual admin seal (journalLockedManual). It
+//  only bites from phase 3 onwards: before that the phase already seals the
+//  journal, and afterwards only a deliberate admin flip can close it, so no
+//  countdown can shut the journal on a crew that is already out playing.
 //
 //  The EFFECTIVE phase is computed on every request from an admin override plus
 //  two unlock instants, so phases auto-advance the moment a clock elapses — no
@@ -83,14 +85,24 @@ export type PhaseSettings = PhaseInput & {
 /**
  * Whether the journal + leaderboard are locked for a normal explorer.
  *
- * This is a MANUAL switch only. It used to be `phase < 3`, which meant the
- * journal auto-locked for the whole of phase 2 and then re-locked itself
- * whenever a countdown or a forced phase moved backwards. That bit players
- * mid-hunt: a crew deep in the trail could reach the last lead and find the
- * journal sealed under them. Nothing time-based, phase-based or progress-based
- * closes it any more. An admin has to flip this flag on purpose.
+ * TWO independent locks, in this order:
+ *
+ *   1. The PHASE. Before phase 3 the hunt has not started, so the journal is
+ *      always sealed and the modal shows a countdown to the phase 3 instant.
+ *      The leads ARE the journal pages, so there is nothing to read yet and
+ *      nobody can be mid-hunt: this cannot strand a crew.
+ *   2. The MANUAL admin seal, which only becomes meaningful once phase 3 has
+ *      arrived. From then on the journal is open unless an admin deliberately
+ *      closes it, and no clock can ever re-seal it under a crew that is out
+ *      playing (a backwards countdown edit changes the phase, not this flag).
+ *
+ * So: phase 2 is always locked; in phase 3 the admin toggle decides.
  */
-export function isJournalLocked(settings: { journalLockedManual: boolean }): boolean {
+export function isJournalLocked(
+  phase: Phase,
+  settings: { journalLockedManual: boolean },
+): boolean {
+  if (phase < 3) return true
   return settings.journalLockedManual
 }
 
@@ -170,8 +182,6 @@ export function athensLocalInputToUtcMs(value: string): number {
 /** Human label for a phase, used in the admin panel. */
 export function phaseLabel(phase: Phase): string {
   if (phase === 1) return "Phase 1 · Teaser"
-  // Phase 2 no longer implies a locked journal: the only difference between 2
-  // and 3 is that phase 3 freezes team rosters (see areRostersLocked).
-  if (phase === 2) return "Phase 2 · Site live"
-  return "Phase 3 · Fully open (rosters frozen)"
+  if (phase === 2) return "Phase 2 · Site live (journal sealed)"
+  return "Phase 3 · Journal open (rosters frozen)"
 }

@@ -933,6 +933,15 @@ const el = {
     lockedBody:
       "Το πλήρωμα το έκλεισε για λίγο. Δοκίμασε ξανά σε λίγο ή περίμενε μήνυμα από τους διοργανωτές.",
     lockedClose: "ΚΛΕΙΣΙΜΟ",
+    // Phase-2 variant: the seal IS scheduled here, so the modal shows a
+    // countdown to the phase 3 instant instead of the vague manual copy.
+    lockedSoonJournalTitle: "Το ημερολόγιο δεν έχει ανοίξει ακόμη.",
+    lockedSoonLeaderboardTitle: "Η κατάταξη δεν έχει ανοίξει ακόμη.",
+    lockedSoonJournalBody:
+      "Μόλις ξεκινήσει η κυνήγι, το πρώτο στοιχείο θα εμφανιστεί εδώ, ως πρώτη σελίδα του ημερολογίου.",
+    lockedSoonLeaderboardBody:
+      "Η κατάταξη ανοίγει μαζί με το ημερολόγιο, όταν ξεκινήσει η κυνήγι.",
+    lockedCountdownLabel: "ΑΝΟΙΓΕΙ ΣΕ",
   },
 }
 
@@ -1836,6 +1845,15 @@ const en: Dictionary = {
     lockedBody:
       "The crew has closed it briefly. Try again shortly, or wait for word from the organisers.",
     lockedClose: "CLOSE",
+    // Phase-2 variant: the seal IS scheduled here, so the modal shows a
+    // countdown to the phase 3 instant instead of the vague manual copy.
+    lockedSoonJournalTitle: "The journal has not opened yet.",
+    lockedSoonLeaderboardTitle: "The leaderboard has not opened yet.",
+    lockedSoonJournalBody:
+      "The moment the hunt begins, your first lead appears here as the opening page of the journal.",
+    lockedSoonLeaderboardBody:
+      "The leaderboard opens together with the journal, when the hunt begins.",
+    lockedCountdownLabel: "OPENS IN",
   },
 }
 

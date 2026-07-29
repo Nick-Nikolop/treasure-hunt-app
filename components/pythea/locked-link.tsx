@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { Lock } from "lucide-react"
@@ -12,13 +12,18 @@ import {
 } from "@/components/ui/dialog"
 import { usePhase } from "@/components/pythea/phase-provider"
 import { useI18n } from "@/components/pythea/language-provider"
+import { Countdown } from "@/components/pythea/countdown"
+import { normalizedJournalUnlockMs } from "@/lib/phase"
 
 type LockTarget = "journal" | "leaderboard"
 
 /**
- * A link that behaves normally when its target is unlocked (the default, or the
- * viewer is a superadmin), but when an admin has manually sealed the journal +
- * leaderboard it intercepts the click and explains that instead of navigating.
+ * A link that behaves normally when its target is unlocked (or the viewer is a
+ * superadmin), but when the journal + leaderboard are sealed it intercepts the
+ * click and explains that instead of navigating.
+ *
+ * Sealed means either "we are still in phase 2" (the usual case, which shows a
+ * countdown to the opening) or "an admin closed it by hand in phase 3".
  *
  * Drop-in replacement for a `<Link href="/journal">` / `<Link href="/leaderboard">`.
  */
@@ -78,8 +83,50 @@ export function LockedCountdownModal({
 }) {
   const { t } = useI18n()
   const p = t.phase
+  const phase = usePhase()
 
-  const title = target === "journal" ? p.lockedJournalTitle : p.lockedLeaderboardTitle
+  // Two different reasons the journal can be shut, and they need different copy:
+  //
+  //  - Before phase 3 the seal is SCHEDULED, so we show a live countdown to the
+  //    phase 3 instant. This is the normal case players hit.
+  //  - In phase 3 the only thing that can close it is the manual admin seal,
+  //    which has no unlock time, so a clock there would promise a moment that
+  //    does not exist. That case keeps the vaguer "closed briefly" copy.
+  const scheduled = (phase?.phase ?? 3) < 3
+  const targetMs = phase
+    ? normalizedJournalUnlockMs({
+        override: phase.override,
+        phase2UnlockMs: phase.phase2UnlockMs,
+        journalUnlockMs: phase.journalUnlockMs,
+      })
+    : 0
+
+  // An admin can PIN phase 2 while the unlock instant already sits in the past.
+  // Showing a frozen 00:00:00:00 there would look broken, so we fall back to the
+  // manual copy. Resolved in an effect (not in render) so the server and client
+  // markup agree during hydration, since this modal can open on first paint from
+  // the `/?locked=journal` redirect.
+  const [elapsed, setElapsed] = useState<boolean | null>(null)
+  useEffect(() => {
+    setElapsed(!targetMs || targetMs <= Date.now())
+  }, [targetMs])
+
+  const showClock = scheduled && elapsed === false
+  const useSoonCopy = scheduled && elapsed !== true
+
+  const title = useSoonCopy
+    ? target === "journal"
+      ? p.lockedSoonJournalTitle
+      : p.lockedSoonLeaderboardTitle
+    : target === "journal"
+      ? p.lockedJournalTitle
+      : p.lockedLeaderboardTitle
+
+  const body = useSoonCopy
+    ? target === "journal"
+      ? p.lockedSoonJournalBody
+      : p.lockedSoonLeaderboardBody
+    : p.lockedBody
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -104,13 +151,18 @@ export function LockedCountdownModal({
               {title}
             </DialogTitle>
             <DialogDescription className="mx-auto mt-2 max-w-sm font-serif text-sm leading-relaxed text-muted-foreground">
-              {p.lockedBody}
+              {body}
             </DialogDescription>
           </div>
 
-          {/* No countdown. The seal is a manual admin switch with no scheduled
-              unlock, so showing a ticking clock here would promise a time that
-              does not exist. */}
+          {showClock && (
+            <div className="flex w-full flex-col items-center gap-2.5 border-t border-border pt-5">
+              <span className="font-sans text-[10px] font-bold tracking-chip text-foreground/45">
+                {p.lockedCountdownLabel}
+              </span>
+              <Countdown targetMs={targetMs} size="sm" />
+            </div>
+          )}
 
           <button
             type="button"
