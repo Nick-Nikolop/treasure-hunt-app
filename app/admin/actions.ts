@@ -71,13 +71,14 @@ import {
   getPhaseSettings,
   setPhaseOverride,
   setPhaseUnlockTimes,
+  setJournalLockedManual,
   getPhaseLeads,
   removePhaseLead,
 } from "@/lib/hunt-config"
 import {
   computeEffectivePhase,
   normalizedJournalUnlockMs,
-  type PhaseInput,
+  type PhaseSettings,
   type PhaseOverride,
 } from "@/lib/phase"
 import {
@@ -248,7 +249,7 @@ export type AdminData = {
 
 /** Everything the Phase tab needs to render + edit the rollout gates. */
 export type PhaseAdminData = {
-  settings: PhaseInput
+  settings: PhaseSettings
   /** The effective phase right now, given the settings + server clock. */
   effectivePhase: 1 | 2 | 3
   /** The notify-later waitlist captured on the teaser (newest first). */
@@ -576,6 +577,8 @@ export async function adminSavePhase(input: {
   override: PhaseOverride
   phase2UnlockMs: number
   journalUnlockMs: number
+  /** Manual journal + leaderboard seal. */
+  journalLockedManual: boolean
 }): Promise<ActionResult> {
   const admin = await requireAdmin()
 
@@ -584,6 +587,7 @@ export async function adminSavePhase(input: {
   if (!Number.isFinite(input.phase2UnlockMs) || !Number.isFinite(input.journalUnlockMs)) {
     return { ok: false, error: "bad_value" }
   }
+  if (typeof input.journalLockedManual !== "boolean") return { ok: false, error: "bad_value" }
 
   const before = await getPhaseSettings()
   await setPhaseOverride(input.override)
@@ -591,8 +595,9 @@ export async function adminSavePhase(input: {
     phase2UnlockMs: input.phase2UnlockMs,
     journalUnlockMs: input.journalUnlockMs,
   })
+  await setJournalLockedManual(input.journalLockedManual)
 
-  const after: PhaseInput = {
+  const after: PhaseSettings = {
     override: input.override,
     phase2UnlockMs: input.phase2UnlockMs,
     journalUnlockMs: normalizedJournalUnlockMs({
@@ -600,13 +605,21 @@ export async function adminSavePhase(input: {
       phase2UnlockMs: input.phase2UnlockMs,
       journalUnlockMs: input.journalUnlockMs,
     }),
+    journalLockedManual: input.journalLockedManual,
   }
+
+  // Call out a journal seal flip explicitly: it is the one change here that can
+  // shut a live hunt out of the journal, so it must be obvious in the audit log.
+  const sealChanged = before.journalLockedManual !== after.journalLockedManual
+  const sealNote = sealChanged
+    ? `; journal ${after.journalLockedManual ? "LOCKED" : "UNLOCKED"}`
+    : ""
 
   await logActivity({
     ...adminActor(admin),
     category: "admin",
     action: "phase_update",
-    summary: `Phase settings updated (override ${before.override} → ${after.override})`,
+    summary: `Phase settings updated (override ${before.override} → ${after.override})${sealNote}`,
   })
 
   // The gate is read on every request, but revalidate the key routes so any

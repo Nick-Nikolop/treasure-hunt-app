@@ -29,8 +29,8 @@ import {
 const OVERRIDES: { value: PhaseOverride; label: string; hint: string }[] = [
   { value: "auto", label: "Auto", hint: "Follow the two countdowns below" },
   { value: "1", label: "Force Phase 1", hint: "Teaser only, site sealed" },
-  { value: "2", label: "Force Phase 2", hint: "Site live, journal locked" },
-  { value: "3", label: "Force Phase 3", hint: "Everything open" },
+  { value: "2", label: "Force Phase 2", hint: "Site live, rosters still open" },
+  { value: "3", label: "Force Phase 3", hint: "Everything open, rosters frozen" },
 ]
 
 function fmtAthens(ms: number): string {
@@ -59,6 +59,7 @@ export function AdminPhasePanel({ data }: { data: PhaseAdminData }) {
   const [journalLocal, setJournalLocal] = useState(
     utcMsToAthensLocalInput(data.settings.journalUnlockMs),
   )
+  const [journalSealed, setJournalSealed] = useState(data.settings.journalLockedManual)
 
   // Double-confirmation state.
   const [reviewOpen, setReviewOpen] = useState(false)
@@ -79,7 +80,13 @@ export function AdminPhasePanel({ data }: { data: PhaseAdminData }) {
   const dirty =
     override !== data.settings.override ||
     phase2Local !== utcMsToAthensLocalInput(data.settings.phase2UnlockMs) ||
-    journalLocal !== utcMsToAthensLocalInput(data.settings.journalUnlockMs)
+    journalLocal !== utcMsToAthensLocalInput(data.settings.journalUnlockMs) ||
+    journalSealed !== data.settings.journalLockedManual
+
+  // True when this save would newly seal the journal. Drives the extra warning
+  // in the review dialog, since that is the destructive direction.
+  const sealingNow = journalSealed && !data.settings.journalLockedManual
+  const unsealingNow = !journalSealed && data.settings.journalLockedManual
 
   const journalEffectiveMs = validTimes
     ? normalizedJournalUnlockMs({
@@ -100,11 +107,19 @@ export function AdminPhasePanel({ data }: { data: PhaseAdminData }) {
         override,
         phase2UnlockMs: phase2Ms,
         journalUnlockMs: journalMs,
+        journalLockedManual: journalSealed,
       })
       setReviewOpen(false)
       setConfirmText("")
       if (res.ok) {
-        setBanner({ kind: "ok", text: "Phase settings saved. The gate is live for every visitor." })
+        setBanner({
+          kind: "ok",
+          text: sealingNow
+            ? "Saved. The journal and leaderboard are now LOCKED for every explorer."
+            : unsealingNow
+              ? "Saved. The journal and leaderboard are now OPEN for every explorer."
+              : "Phase settings saved. The gate is live for every visitor.",
+        })
         router.refresh()
       } else {
         setBanner({ kind: "err", text: "Those phase settings could not be saved." })
@@ -155,8 +170,9 @@ export function AdminPhasePanel({ data }: { data: PhaseAdminData }) {
         </div>
         <p className="mt-1 font-sans text-[13px] leading-relaxed text-muted-foreground">
           Control how the site opens to the public. In <strong>Phase 1</strong> only the teaser
-          landing shows. In <strong>Phase 2</strong> the site is live but the journal and
-          leaderboard stay locked. In <strong>Phase 3</strong> everything is open. Superadmins
+          landing shows. In <strong>Phase 2</strong> the site is live. In <strong>Phase 3</strong>{" "}
+          team rosters freeze, so nobody can create, join or leave a crew mid-hunt. The journal is
+          open from Phase 2 onward and is only ever closed by the manual seal below. Superadmins
           always bypass every gate. Times are Athens (Greek) local.
         </p>
       </div>
@@ -244,8 +260,8 @@ export function AdminPhasePanel({ data }: { data: PhaseAdminData }) {
           </label>
           <label className="flex flex-col gap-1.5">
             <span className="flex items-center gap-1.5 font-sans text-[13px] font-semibold text-foreground">
-              <BookOpen className="size-3.5 text-brass" />
-              Phase 2 &rarr; 3 (journal + leaderboard)
+              <Users2 className="size-3.5 text-brass" />
+              Phase 2 &rarr; 3 (rosters freeze)
             </span>
             <input
               type="datetime-local"
@@ -258,8 +274,81 @@ export function AdminPhasePanel({ data }: { data: PhaseAdminData }) {
         {validTimes && journalEffectiveMs > journalMs && (
           <p className="mt-3 flex items-start gap-2 rounded-sm border border-amber-500/40 bg-amber-500/10 px-3 py-2 font-sans text-[12px] text-foreground">
             <TriangleAlert className="mt-0.5 size-3.5 shrink-0 text-amber-500" />
-            The journal unlock is earlier than the site unlock, so it will be clamped to{" "}
+            The Phase 3 boundary is earlier than the site unlock, so it will be clamped to{" "}
             {fmtAthens(journalEffectiveMs)}.
+          </p>
+        )}
+      </div>
+
+      {/* Manual journal seal. Deliberately separate from the phase ladder: the
+          journal is never closed by a phase, a countdown or a player's progress,
+          only by this switch. */}
+      <div className="rounded-sm border border-border bg-card/40 p-4">
+        <h3 className="font-sans text-xs font-bold tracking-chip text-muted-foreground">
+          JOURNAL &amp; LEADERBOARD SEAL
+        </h3>
+        <p className="mt-2 font-sans text-[13px] leading-relaxed text-muted-foreground">
+          The journal is <strong>open by default</strong> and nothing closes it on its own. Use this
+          only to deliberately shut it, for example if a lead has to be pulled mid-hunt. Explorers
+          who try to open it get a &ldquo;sealed&rdquo; notice; superadmins keep full access.
+        </p>
+
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={() => setJournalSealed(false)}
+            aria-pressed={!journalSealed}
+            className={`flex items-start gap-2.5 rounded-sm border px-3.5 py-3 text-left transition-colors ${
+              !journalSealed ? "border-brass bg-brass/10" : "border-border hover:border-brass/50"
+            }`}
+          >
+            <BookOpen
+              className={`mt-0.5 size-4 shrink-0 ${!journalSealed ? "text-brass" : "text-muted-foreground"}`}
+            />
+            <span className="flex flex-col">
+              <span className="font-sans text-sm font-bold text-foreground">Open</span>
+              <span className="font-sans text-[12px] text-muted-foreground">
+                Every signed-in explorer can read the journal
+              </span>
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setJournalSealed(true)}
+            aria-pressed={journalSealed}
+            className={`flex items-start gap-2.5 rounded-sm border px-3.5 py-3 text-left transition-colors ${
+              journalSealed
+                ? "border-destructive bg-destructive/10"
+                : "border-border hover:border-destructive/50"
+            }`}
+          >
+            <Lock
+              className={`mt-0.5 size-4 shrink-0 ${journalSealed ? "text-destructive" : "text-muted-foreground"}`}
+            />
+            <span className="flex flex-col">
+              <span className="font-sans text-sm font-bold text-foreground">Locked</span>
+              <span className="font-sans text-[12px] text-muted-foreground">
+                Journal + leaderboard sealed for everyone but admins
+              </span>
+            </span>
+          </button>
+        </div>
+
+        {/* Live status, so it is unmistakable what is true right now vs pending. */}
+        <p className="mt-3 font-sans text-[12px] text-muted-foreground">
+          Currently live:{" "}
+          <strong className={data.settings.journalLockedManual ? "text-destructive" : "text-brass"}>
+            {data.settings.journalLockedManual ? "LOCKED" : "OPEN"}
+          </strong>
+          {journalSealed !== data.settings.journalLockedManual && (
+            <> &middot; pending change to {journalSealed ? "LOCKED" : "OPEN"}</>
+          )}
+        </p>
+
+        {sealingNow && (
+          <p className="mt-3 flex items-start gap-2 rounded-sm border border-destructive/40 bg-destructive/10 px-3 py-2 font-sans text-[12px] text-foreground">
+            <TriangleAlert className="mt-0.5 size-3.5 shrink-0 text-destructive" />
+            This will lock out crews who are out playing right now, mid-trail.
           </p>
         )}
       </div>
@@ -388,6 +477,18 @@ export function AdminPhasePanel({ data }: { data: PhaseAdminData }) {
               {override === "auto" ? "Auto (countdowns)" : `Forced Phase ${override}`}
             </dd>
           </div>
+          <div className="flex items-center justify-between gap-3">
+            <dt className="text-muted-foreground">Journal &amp; leaderboard</dt>
+            <dd className={`font-bold ${journalSealed ? "text-destructive" : "text-brass"}`}>
+              {journalSealed ? "LOCKED" : "OPEN"}
+              {journalSealed !== data.settings.journalLockedManual && (
+                <span className="font-normal text-muted-foreground">
+                  {" "}
+                  (was {data.settings.journalLockedManual ? "locked" : "open"})
+                </span>
+              )}
+            </dd>
+          </div>
           {override === "auto" && (
             <>
               <div className="flex items-center justify-between gap-3">
@@ -395,12 +496,32 @@ export function AdminPhasePanel({ data }: { data: PhaseAdminData }) {
                 <dd className="font-bold text-foreground">{fmtAthens(phase2Ms)}</dd>
               </div>
               <div className="flex items-center justify-between gap-3">
-                <dt className="text-muted-foreground">Journal opens</dt>
+                <dt className="text-muted-foreground">Rosters freeze</dt>
                 <dd className="font-bold text-foreground">{fmtAthens(journalEffectiveMs)}</dd>
               </div>
             </>
           )}
         </dl>
+
+        {sealingNow && (
+          <p className="mt-4 flex items-start gap-2 rounded-sm border border-destructive/40 bg-destructive/10 px-3 py-2.5 font-sans text-[12.5px] leading-relaxed text-foreground">
+            <Lock className="mt-0.5 size-3.5 shrink-0 text-destructive" />
+            <span>
+              You are <strong>sealing the journal</strong>. Any crew currently out on the trail
+              loses access to their clues immediately, including crews mid-lead. Only do this if you
+              intend to halt the hunt.
+            </span>
+          </p>
+        )}
+        {unsealingNow && (
+          <p className="mt-4 flex items-start gap-2 rounded-sm border border-brass/40 bg-brass/10 px-3 py-2.5 font-sans text-[12.5px] leading-relaxed text-foreground">
+            <BookOpen className="mt-0.5 size-3.5 shrink-0 text-brass" />
+            <span>
+              You are <strong>reopening the journal</strong>. Every signed-in explorer regains
+              access to their clues right away.
+            </span>
+          </p>
+        )}
 
         <label className="mt-4 flex flex-col gap-1.5">
           <span className="font-sans text-[13px] font-semibold text-foreground">

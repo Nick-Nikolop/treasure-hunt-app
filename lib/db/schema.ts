@@ -195,9 +195,14 @@ export const scoreConfig = pgTable("score_config", {
   // When phase 1 → 2 auto-advances (site opens). NULL falls back to the code
   // default in lib/phase.ts.
   phase2UnlockAt: timestamp("phase2UnlockAt"),
-  // When phase 2 → 3 auto-advances (journal + leaderboard open). NULL falls
-  // back to the code default in lib/phase.ts.
+  // When phase 2 → 3 auto-advances (the hunt fully opens and rosters freeze).
+  // NULL falls back to the code default in lib/phase.ts.
   journalUnlockAt: timestamp("journalUnlockAt"),
+  // Manual seal for the journal + leaderboard. This is the ONLY thing that can
+  // lock them: no phase, date or player progress ever does. Default false, so
+  // the journal is open the moment the site is, and an admin has to flip this
+  // deliberately (behind a typed confirmation) to close it.
+  journalLockedManual: boolean("journalLockedManual").notNull().default(false),
   // How strongly the parchment wash covers the landmark art behind every
   // journal lead page (0 = art fully visible, 100 = art fully hidden). One
   // global knob for all leads.

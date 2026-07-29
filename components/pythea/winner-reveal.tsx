@@ -196,9 +196,9 @@ export function CompassReveal() {
 
 /**
  * Step 2 of the finale, shown when the TREASURE QR is scanned (status
- * "finished"). The animated winner screen: finishing placement, the (editable)
- * winner message, and the top-3 prize note. Placement is decided by treasure
- * scan order.
+ * "finished"). The animated winner screen: the (editable) winner message and
+ * the top-3 prize note. Deliberately identical for every finisher, with no
+ * placement shown, so the standings stay for the event announcement.
  */
 export function WinnerReveal() {
   const { t, locale } = useI18n()
@@ -216,27 +216,12 @@ export function WinnerReveal() {
 
   return (
     <div className="w-full max-w-xl">
-      <WinnerScreen
-        place={data?.place ?? null}
-        totalFinishers={data?.totalFinishers ?? 0}
-        message={winnerMsg}
-        prizeNote={winnerNote}
-      />
+      <WinnerScreen message={winnerMsg} prizeNote={winnerNote} />
     </div>
   )
 }
 
-function WinnerScreen({
-  place,
-  totalFinishers,
-  message,
-  prizeNote,
-}: {
-  place: number | null
-  totalFinishers: number
-  message: string
-  prizeNote: string
-}) {
+function WinnerScreen({ message, prizeNote }: { message: string; prizeNote: string }) {
   const { t } = useI18n()
   const f = t.finale
 
@@ -299,22 +284,12 @@ function WinnerScreen({
           {f.winnerTitle}
         </motion.h1>
 
-        {/* Finishing placement medal. */}
-        {place != null && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: "spring", stiffness: 160, damping: 14, delay: 0.7 }}
-            className="mx-auto mt-6 inline-flex flex-col items-center gap-1 rounded-sm border border-brass/50 bg-brass/10 px-6 py-3"
-          >
-            <span className="gold-foil font-serif text-3xl font-black md:text-4xl">
-              {f.place(place)}
-            </span>
-            <span className="font-sans text-[11px] font-bold tracking-chip text-muted-foreground">
-              {f.finishers(place, totalFinishers)}
-            </span>
-          </motion.div>
-        )}
+        {/* No finishing placement is shown here on purpose. Every crew that
+            reaches the treasure sees the same screen: the standings are
+            announced at the event, so revealing "3rd of 12" the moment someone
+            scans would pre-empt that and deflate a finish that took the whole
+            trail to earn. The ranking still exists and is still visible on the
+            leaderboard and in the admin panel. */}
 
         <motion.p
           initial={{ opacity: 0, y: 8 }}

@@ -13,7 +13,7 @@ import {
   DEFAULT_PHASE2_UNLOCK_MS,
   computeEffectivePhase,
   type Phase,
-  type PhaseInput,
+  type PhaseSettings,
   type PhaseOverride,
 } from "@/lib/phase"
 import { desc, eq } from "drizzle-orm"
@@ -144,12 +144,13 @@ function normalizeOverride(value: string | null | undefined): PhaseOverride {
  * Read the current phase configuration (override + the two unlock instants),
  * falling back to the code defaults when the row or a column is empty.
  */
-export async function getPhaseSettings(): Promise<PhaseInput> {
+export async function getPhaseSettings(): Promise<PhaseSettings> {
   const rows = await db
     .select({
       override: scoreConfig.phaseOverride,
       phase2: scoreConfig.phase2UnlockAt,
       journal: scoreConfig.journalUnlockAt,
+      journalLockedManual: scoreConfig.journalLockedManual,
     })
     .from(scoreConfig)
     .where(eq(scoreConfig.id, "default"))
@@ -159,7 +160,21 @@ export async function getPhaseSettings(): Promise<PhaseInput> {
     override: normalizeOverride(row?.override),
     phase2UnlockMs: row?.phase2 ? row.phase2.getTime() : DEFAULT_PHASE2_UNLOCK_MS,
     journalUnlockMs: row?.journal ? row.journal.getTime() : DEFAULT_JOURNAL_UNLOCK_MS,
+    // Absent row / column ⇒ OPEN. The journal defaults to unlocked so a fresh
+    // or half-migrated database can never accidentally seal it.
+    journalLockedManual: row?.journalLockedManual ?? false,
   }
+}
+
+/** Flip the manual journal + leaderboard seal. */
+export async function setJournalLockedManual(locked: boolean): Promise<void> {
+  await db
+    .insert(scoreConfig)
+    .values({ id: "default", journalLockedManual: locked, updatedAt: new Date() })
+    .onConflictDoUpdate({
+      target: scoreConfig.id,
+      set: { journalLockedManual: locked, updatedAt: new Date() },
+    })
 }
 
 /** Compute the effective phase right now (or at a given instant). */

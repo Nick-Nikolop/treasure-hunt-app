@@ -2,7 +2,12 @@ import "server-only"
 
 import { getAdminUser } from "@/lib/admin"
 import { getPhaseSettings } from "@/lib/hunt-config"
-import { computeEffectivePhase, isJournalLocked, type Phase, type PhaseInput } from "@/lib/phase"
+import {
+  computeEffectivePhase,
+  isJournalLocked,
+  type Phase,
+  type PhaseSettings,
+} from "@/lib/phase"
 
 /**
  * Everything a page/layout needs to decide what a visitor may see. The
@@ -13,9 +18,12 @@ import { computeEffectivePhase, isJournalLocked, type Phase, type PhaseInput } f
 export type PhaseContext = {
   phase: Phase
   isSuperadmin: boolean
-  settings: PhaseInput
+  settings: PhaseSettings
   nowMs: number
-  /** True when the journal + leaderboard are sealed for THIS viewer. */
+  /**
+   * True when the journal + leaderboard are sealed for THIS viewer. Comes from
+   * the manual admin switch only, never from the phase or a countdown.
+   */
   journalLocked: boolean
   /** True when the whole site is sealed behind the teaser for THIS viewer. */
   siteLocked: boolean
@@ -67,7 +75,8 @@ export async function getPhaseContext(): Promise<PhaseContext> {
     isSuperadmin,
     settings,
     nowMs,
-    journalLocked: !isSuperadmin && isJournalLocked(phase),
+    // Manual seal only. No phase or countdown locks the journal any more.
+    journalLocked: !isSuperadmin && isJournalLocked(settings),
     siteLocked: !isSuperadmin && phase === 1,
   }
 }

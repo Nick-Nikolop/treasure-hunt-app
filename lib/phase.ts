@@ -4,9 +4,12 @@
 //  The hunt opens in three phases:
 //    Phase 1  Teaser landing only. Non-superadmins see a countdown + email
 //             capture; the rest of the site is sealed.
-//    Phase 2  Site is live, but the Journal and Leaderboard stay locked behind
-//             a second countdown.
-//    Phase 3  Everything is open.
+//    Phase 2  Site is live. The journal is OPEN here.
+//    Phase 3  Everything is open and team rosters freeze.
+//
+//  The journal/leaderboard seal is NOT part of this ladder. It is a manual
+//  admin switch (journalLockedManual) so a countdown can never close the
+//  journal on a crew that is already out playing.
 //
 //  The EFFECTIVE phase is computed on every request from an admin override plus
 //  two unlock instants, so phases auto-advance the moment a clock elapses — no
@@ -67,9 +70,28 @@ export function nextAutoAdvanceMs(input: PhaseInput, nowMs: number): number | nu
   return null
 }
 
-/** Whether the journal + leaderboard are locked for a normal explorer. */
-export function isJournalLocked(phase: Phase): boolean {
-  return phase < 3
+/**
+ * The full settings row: the phase inputs plus the manual journal seal, which
+ * is deliberately NOT part of PhaseInput so it can never influence the phase
+ * maths above.
+ */
+export type PhaseSettings = PhaseInput & {
+  /** Admin-flipped seal on the journal + leaderboard. */
+  journalLockedManual: boolean
+}
+
+/**
+ * Whether the journal + leaderboard are locked for a normal explorer.
+ *
+ * This is a MANUAL switch only. It used to be `phase < 3`, which meant the
+ * journal auto-locked for the whole of phase 2 and then re-locked itself
+ * whenever a countdown or a forced phase moved backwards. That bit players
+ * mid-hunt: a crew deep in the trail could reach the last lead and find the
+ * journal sealed under them. Nothing time-based, phase-based or progress-based
+ * closes it any more. An admin has to flip this flag on purpose.
+ */
+export function isJournalLocked(settings: { journalLockedManual: boolean }): boolean {
+  return settings.journalLockedManual
 }
 
 // ── Athens (Greek) time helpers ────────────────────────────────────────────
@@ -148,6 +170,8 @@ export function athensLocalInputToUtcMs(value: string): number {
 /** Human label for a phase, used in the admin panel. */
 export function phaseLabel(phase: Phase): string {
   if (phase === 1) return "Phase 1 · Teaser"
-  if (phase === 2) return "Phase 2 · Hunt live (journal locked)"
-  return "Phase 3 · Fully open"
+  // Phase 2 no longer implies a locked journal: the only difference between 2
+  // and 3 is that phase 3 freezes team rosters (see areRostersLocked).
+  if (phase === 2) return "Phase 2 · Site live"
+  return "Phase 3 · Fully open (rosters frozen)"
 }
