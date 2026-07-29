@@ -160,9 +160,10 @@ export function HandwrittenNote({
           />
 
           {/* Two creases from being folded in three and carried.
-              Soft tonal bands, not hairlines: a 1px dark line with a 1px white
-              line under it reads as a drawn rule underlining the text. A real
-              fold is a gentle shadow a few pixels wide.
+              These must be WIDE, feathered tonal bands. Any band only a couple
+              of percent tall resolves to a crisp line, and the moment one lands
+              near a text baseline it reads as a ruled underline struck through
+              the letter. A real fold is a broad soft trough of shading.
               No ruled lines either, since parchment is unruled and a fixed rule
               pitch drifts against text that resizes at the md breakpoint. */}
           <div
@@ -170,7 +171,7 @@ export function HandwrittenNote({
             className="pointer-events-none absolute inset-0"
             style={{
               backgroundImage:
-                "linear-gradient(180deg, transparent 32.6%, oklch(0.2 0.02 62 / 0.05) 34%, transparent 35.4%), linear-gradient(180deg, transparent 67.6%, oklch(0.2 0.02 62 / 0.042) 69%, transparent 70.4%)",
+                "linear-gradient(180deg, transparent 27%, oklch(0.2 0.02 62 / 0.03) 34%, oklch(1 0 0 / 0.055) 37%, transparent 43%), linear-gradient(180deg, transparent 62%, oklch(0.2 0.02 62 / 0.026) 69%, oklch(1 0 0 / 0.05) 72%, transparent 78%)",
             }}
           />
 
