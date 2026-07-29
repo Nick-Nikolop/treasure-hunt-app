@@ -516,6 +516,9 @@ const el = {
         body: "{time} το Σάββατο 1 Αυγούστου και θα ακολουθήσει πάρτι όπου θα ανακοινωθούν οι νικητές και θα παρουσιαστούν οι γρίφοι.",
       },
     ],
+    next: "ΚΑΝΟΝΕΣ & TIPS",
+    back: "ΠΙΣΩ",
+    pageOf: "{n} ΑΠΟ {total}",
     close: "ΚΑΤΑΛΑΒΑ, ΞΕΚΙΝΑΜΕ",
     reopenCta: "ΠΩΣ ΠΑΙΖΕΤΑΙ",
     reopenHint: "Ξαναδές τα βήματα του κυνηγιού όποτε θέλεις.",
@@ -523,6 +526,39 @@ const el = {
     previewHint:
       "Δες το παράθυρο που εμφανίζεται στους εξερευνητές την πρώτη φορά που ανοίγουν το ημερολόγιο.",
     previewBadge: "ΜΟΝΟ ΓΙΑ ADMIN · ΠΡΟΕΠΙΣΚΟΠΗΣΗ",
+  },
+  // ── Page 2 of the walkthrough: rules & safety ─────────────────────────────
+  rulesTips: {
+    eyebrow: "ΠΑΙΞΕ ΕΞΥΠΝΑ, ΑΣΦΑΛΩΣ ΚΑΙ ΔΙΚΑΙΑ",
+    title: "ΚΑΝΟΝΕΣ & TIPS",
+    lede: "Όσα πρέπει να ξέρεις πριν βγεις στο κυνήγι.",
+    stepLabel: "ΚΑΝΟΝΑΣ",
+    steps: [
+      {
+        title: "Επιβεβαίωση μέσω GPS",
+        body: "Ενεργοποίησε ακριβή τοποθεσία για να ξεκλειδώνει αυτόματα ο επόμενος γρίφος.",
+      },
+      {
+        title: "Εναλλακτική με φωτογραφίες",
+        body: "Αν δεν χρησιμοποιείς GPS, ανέβασε 1–3 φωτογραφίες για έλεγχο.",
+      },
+      {
+        title: "Βαθμολογία & νικητές",
+        body: "Οι 3 πρώτες ομάδες κερδίζουν. Αν δεν τερματίσουν 3 ομάδες, μετρά η πρόοδος.",
+      },
+      {
+        title: "Όχι αθέμιτος ανταγωνισμός",
+        body: "Αν παρατηρηθεί αθέμιτος ανταγωνισμός μεταξύ ομάδων, η υπαίτια ομάδα αποκλείεται από τον διαγωνισμό.",
+      },
+      {
+        title: "Όχι καταστροφή ή cheating",
+        body: "Καταστροφή QR, διαμοιρασμός απαντήσεων ή απόπειρα εξαπάτησης = άμεσος αποκλεισμός.",
+      },
+      {
+        title: "Μετακινήσου με ασφάλεια",
+        body: "Σεβάσου ΚΟΚ, πεζούς και ιδιωτικούς χώρους. Κανένας γρίφος δεν απαιτεί είσοδο σε επικίνδυνο σημείο.",
+      },
+    ],
   },
   journal: {
     back: "ΠΙΣΩ ΣΤΗΝ ΑΡΧΗ",
@@ -1499,6 +1535,9 @@ const en: Dictionary = {
         body: "{time} on Saturday 1 August, followed by a party where the winners are announced and the clues are presented.",
       },
     ],
+    next: "RULES & TIPS",
+    back: "BACK",
+    pageOf: "{n} OF {total}",
     close: "GOT IT, LET'S GO",
     reopenCta: "HOW TO PLAY",
     reopenHint: "Read the steps of the hunt again whenever you like.",
@@ -1506,6 +1545,38 @@ const en: Dictionary = {
     previewHint:
       "See the window explorers get the first time they open the journal.",
     previewBadge: "ADMIN ONLY · PREVIEW",
+  },
+  rulesTips: {
+    eyebrow: "PLAY SMART, SAFE AND FAIR",
+    title: "RULES & TIPS",
+    lede: "What you need to know before you head out on the hunt.",
+    stepLabel: "RULE",
+    steps: [
+      {
+        title: "GPS verification",
+        body: "Turn on precise location so the next clue unlocks automatically.",
+      },
+      {
+        title: "Photo alternative",
+        body: "If you are not using GPS, upload 1–3 photos to be checked.",
+      },
+      {
+        title: "Scoring & winners",
+        body: "The first 3 crews win. If fewer than 3 crews finish, progress decides it.",
+      },
+      {
+        title: "No unfair play",
+        body: "If unfair competition between crews is observed, the crew responsible is disqualified from the contest.",
+      },
+      {
+        title: "No damage or cheating",
+        body: "Destroying a QR, sharing answers or attempting to cheat = immediate disqualification.",
+      },
+      {
+        title: "Move around safely",
+        body: "Respect traffic rules, pedestrians and private property. No clue ever requires entering a dangerous spot.",
+      },
+    ],
   },
   journal: {
     back: "BACK TO START",

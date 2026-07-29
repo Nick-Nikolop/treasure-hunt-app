@@ -1,15 +1,23 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import {
+  ArrowLeft,
+  ArrowRight,
+  Ban,
   BookOpen,
+  Camera,
   Lightbulb,
+  LocateFixed,
   MapPinned,
   PartyPopper,
   QrCode,
   Repeat,
   ScrollText,
+  ShieldCheck,
+  TriangleAlert,
+  Trophy,
   Users,
   X,
 } from "lucide-react"
@@ -27,6 +35,9 @@ import { useI18n } from "@/components/pythea/language-provider"
 
 /** One icon per step, in the same order as the copy in lib/i18n.ts. */
 const STEP_ICONS = [Users, BookOpen, MapPinned, Lightbulb, QrCode, Repeat, PartyPopper] as const
+
+/** Same idea for page 2 (rules & tips). Note this lucide names it TriangleAlert. */
+const RULE_ICONS = [LocateFixed, Camera, Trophy, TriangleAlert, Ban, ShieldCheck] as const
 
 /**
  * Per-browser marker that the walkthrough has been shown. Versioned so the
@@ -47,6 +58,44 @@ export function HowToPlayModal({
 }) {
   const { t } = useI18n()
   const h = t.howToPlay
+
+  // Two pages in one overlay: the steps, then the rules. Kept as pages rather
+  // than one long scroll so neither half gets skimmed past.
+  const pages: {
+    copy: {
+      eyebrow: string
+      title: string
+      lede: string
+      stepLabel: string
+      steps: readonly { title: string; body: string }[]
+    }
+    icons: readonly React.ComponentType<{ className?: string }>[]
+    /** Index of the step that carries the search-area clip, or -1 for none. */
+    videoAt: number
+  }[] = [
+    { copy: h, icons: STEP_ICONS, videoAt: 2 },
+    { copy: t.rulesTips, icons: RULE_ICONS, videoAt: -1 },
+  ]
+  const [page, setPage] = useState(0)
+  const last = page === pages.length - 1
+  const current = pages[page]
+
+  // Always reopen on page 1, so the reopen button is predictable.
+  useEffect(() => {
+    if (open) setPage(0)
+  }, [open])
+
+  // Paging keeps the overlay mounted, so scroll back to the top by hand or
+  // page 2 starts halfway down wherever page 1 was left.
+  const scrollerRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    const el = scrollerRef.current
+    if (!el) return
+    // `scrollTo` is missing on elements in some older webviews, so fall back to
+    // assigning scrollTop rather than throwing mid-render.
+    if (typeof el.scrollTo === "function") el.scrollTo({ top: 0 })
+    else el.scrollTop = 0
+  }, [page])
 
   // Escape closes, matching the journal's other overlays.
   useEffect(() => {
@@ -72,6 +121,7 @@ export function HowToPlayModal({
     <AnimatePresence>
       {open && (
         <motion.div
+          ref={scrollerRef}
           className="fixed inset-0 z-[70] overflow-y-auto overscroll-contain p-4 sm:p-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -104,26 +154,27 @@ export function HowToPlayModal({
               <X className="size-4" />
             </button>
 
-            {/* Poster-style masthead */}
+            {/* Poster-style masthead, swapping per page */}
             <div className="border-b border-brass/20 bg-brass/[0.06] px-5 py-7 text-center sm:px-8">
               <p className="font-sans text-[10px] font-bold tracking-chip text-brass/80">
-                {h.eyebrow}
+                {current.copy.eyebrow}
               </p>
               <h2
                 id="howtoplay-title"
                 className="mt-2 text-balance font-serif text-3xl font-black leading-tight text-brass sm:text-4xl"
               >
-                {h.title}
+                {current.copy.title}
               </h2>
               <p className="mx-auto mt-2 max-w-sm text-pretty font-serif leading-relaxed text-muted-foreground">
-                {h.lede}
+                {current.copy.lede}
               </p>
             </div>
 
-            {/* The seven steps */}
-            <ol className="flex flex-col gap-2.5 px-4 py-5 sm:px-6">
-              {h.steps.map((step, i) => {
-                const Icon = STEP_ICONS[i] ?? ScrollText
+            {/* Steps on page 1, rules on page 2. Keyed on the page so React
+                rebuilds the rows instead of reusing them across a swap. */}
+            <ol key={page} className="flex flex-col gap-2.5 px-4 py-5 sm:px-6">
+              {current.copy.steps.map((step, i) => {
+                const Icon = current.icons[i] ?? ScrollText
                 return (
                   <li
                     key={step.title}
@@ -137,7 +188,8 @@ export function HowToPlayModal({
                     </span>
                     <Icon className="mt-1 hidden size-5 shrink-0 text-brass/80 sm:block" aria-hidden />
                     <div className="min-w-0 flex-1">
-                      <span className="sr-only">{`${h.stepLabel} ${i + 1}: `}</span>
+                      {/* Per page: "ΒΗΜΑ 1" on the steps, "ΚΑΝΟΝΑΣ 1" on the rules. */}
+                      <span className="sr-only">{`${current.copy.stepLabel} ${i + 1}: `}</span>
                       <h3 className="font-serif text-lg font-extrabold leading-snug text-foreground">
                         {step.title}
                       </h3>
@@ -146,10 +198,10 @@ export function HowToPlayModal({
                             on every step keeps the copy free to move it. */}
                         {step.body.replace("{time}", endsAt)}
                       </p>
-                      {/* Step 3 is the one about the search boundaries, so it
-                          gets the Kalamata sweep clip: muted + looping so it
-                          reads as an illustration, not a video to play. */}
-                      {i === 2 && (
+                      {/* Step 3 of page 1 is the one about the search
+                          boundaries, so it gets the Kalamata sweep clip: muted
+                          + looping so it reads as an illustration. */}
+                      {i === current.videoAt && (
                         <video
                           src="/how-to-play/search-area.mp4"
                           autoPlay
@@ -167,14 +219,31 @@ export function HowToPlayModal({
               })}
             </ol>
 
-            <div className="border-t border-border bg-background/60 px-4 py-4 sm:px-6">
-              <button
-                type="button"
-                onClick={onClose}
-                className="w-full rounded-sm bg-brass px-5 py-3 font-sans text-xs font-bold tracking-chip text-background transition-opacity hover:opacity-90"
-              >
-                {h.close}
-              </button>
+            {/* Page 1 advances to the rules; page 2 can go back and dismiss. */}
+            <div className="flex flex-col gap-3 border-t border-border bg-background/60 px-4 py-4 sm:px-6">
+              <div className="flex items-center gap-2.5">
+                {page > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setPage((p) => p - 1)}
+                    className="inline-flex shrink-0 items-center gap-2 rounded-sm border border-border px-3.5 py-3 font-sans text-xs font-bold tracking-chip text-muted-foreground transition-colors hover:border-brass/60 hover:text-foreground"
+                  >
+                    <ArrowLeft className="size-3.5" aria-hidden />
+                    {h.back}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={last ? onClose : () => setPage((p) => p + 1)}
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-sm bg-brass px-5 py-3 font-sans text-xs font-bold tracking-chip text-background transition-opacity hover:opacity-90"
+                >
+                  {last ? h.close : h.next}
+                  {!last && <ArrowRight className="size-3.5" aria-hidden />}
+                </button>
+              </div>
+              <p className="text-center font-sans text-[10px] font-bold tracking-chip text-muted-foreground/60">
+                {h.pageOf.replace("{n}", String(page + 1)).replace("{total}", String(pages.length))}
+              </p>
             </div>
           </motion.div>
         </motion.div>
