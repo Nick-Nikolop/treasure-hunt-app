@@ -106,6 +106,14 @@ export function AdminDashboard({
   isBootstrap?: boolean
 }) {
   const router = useRouter()
+  // People vs entrants: a crew races as ONE entrant sharing one position, so the
+  // Progress tab always shows fewer entrants than there are registered people.
+  // Spelled out here so the two numbers visibly reconcile instead of looking
+  // like a bug. Nothing is filtered by email verification.
+  const soloPeople = data.users.filter((u) => u.teamId == null).length
+  const peopleInCrews = data.users.length - soloPeople
+  const entrantCount = data.teams.length + soloPeople
+
   // Progress opens first: it is the "where is everyone" view admins want mid-hunt.
   const [tab, setTab] = useState<Tab>("progress")
   const [query, setQuery] = useState("")
@@ -246,8 +254,12 @@ export function AdminDashboard({
           </p>
         </div>
         <div className="grid grid-cols-3 gap-2 sm:flex sm:gap-3">
-          <Stat label="USERS" value={data.users.length} />
-          <Stat label="TEAMS" value={data.teams.length} />
+          <Stat
+            label="PEOPLE"
+            value={data.users.length}
+            hint={`${peopleInCrews} in crews, ${soloPeople} solo`}
+          />
+          <Stat label="CREWS" value={data.teams.length} hint={`${entrantCount} entrants racing`} />
           <Stat label="ADMINS" value={data.superadminCount} />
         </div>
       </div>
@@ -331,9 +343,29 @@ export function AdminDashboard({
         </TabButton>
       </div>
 
+      {/* Same reconciliation as the Progress tab, phrased for whichever list is
+          open, so a lower entrant count never reads as missing people. */}
+      {(tab === "users" || tab === "teams") && (
+        <p className="mt-4 font-sans text-[11px] leading-relaxed text-muted-foreground">
+          {tab === "users" ? (
+            <>
+              All {data.users.length} registered people, verified email or not. {peopleInCrews} of
+              them are in a crew and {soloPeople} are on their own, which is why the Progress tab
+              counts {entrantCount} entrants rather than {data.users.length}.
+            </>
+          ) : (
+            <>
+              {data.teams.length} crews holding {peopleInCrews} people. Each crew races as one
+              entrant sharing one position, so together with the {soloPeople} solo explorers the
+              Progress tab counts {entrantCount} entrants.
+            </>
+          )}
+        </p>
+      )}
+
       {/* Search row, sits below the tab bar for the Users/Teams tabs */}
       {(tab === "users" || tab === "teams") && (
-        <div className="relative mt-4 w-full sm:max-w-xs">
+        <div className="relative mt-3 w-full sm:max-w-xs">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
             value={query}
@@ -829,13 +861,27 @@ export function AdminDashboard({
   )
 }
 
-function Stat({ label, value }: { label: string; value: number }) {
+function Stat({
+  label,
+  value,
+  hint,
+}: {
+  label: string
+  value: number
+  /** Optional breakdown under the label, so totals reconcile across tabs. */
+  hint?: string
+}) {
   return (
     <div className="flex flex-col items-center rounded-sm border border-border bg-card/50 px-3 py-2 sm:min-w-[4.5rem] sm:px-4">
       <span className="font-serif text-2xl font-black text-brass">{value}</span>
       <span className="font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
         {label}
       </span>
+      {hint && (
+        <span className="mt-0.5 text-center font-sans text-[9px] leading-snug text-muted-foreground/70">
+          {hint}
+        </span>
+      )}
     </div>
   )
 }

@@ -162,6 +162,11 @@ export function AdminProgressPanel({
     }))
 
   const shown = entrants.filter(matches)
+  // Spelled out so the Entrants total visibly reconciles with the registered
+  // people count on the Overview tab: crews collapse into one entrant each.
+  const teamCount = entrants.filter((e) => e.kind === "team").length
+  const soloCount = entrants.filter((e) => e.kind === "solo").length
+  const inTeamCount = users.length - soloCount
   const started = entrants.filter((e) => stageRank(stageOf(e)) > 0).length
   const finished = entrants.filter((e) => e.milestones.finished).length
   const endgame = entrants.filter(
@@ -172,16 +177,26 @@ export function AdminProgressPanel({
     <div className="flex flex-col gap-4">
       {/* Totals across the whole field */}
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-        <Tally icon={Users} label="Entrants" value={entrants.length} />
+        <Tally
+          icon={Users}
+          label="Entrants"
+          value={entrants.length}
+          hint={`${teamCount} crews + ${soloCount} on their own`}
+        />
         <Tally icon={MapPin} label="Started" value={started} />
         <Tally icon={Compass} label="In the endgame" value={endgame} />
         <Tally icon={Trophy} label="Finished" value={finished} />
       </div>
 
       <p className="font-sans text-[11px] leading-relaxed text-muted-foreground">
-        A crew counts as one entrant and shares one position, so only explorers with no crew are
-        listed on their own. Within each lead, rows are ordered by arrival time, so the crew badged
-        &ldquo;1st here&rdquo; got there first. Click any row to see who is in it.
+        <strong className="font-bold text-foreground">
+          Entrants ({entrants.length}) is lower than registered people ({users.length}) on purpose:
+        </strong>{" "}
+        a crew races as one entrant sharing one position, so {teamCount} crews stand in for{" "}
+        {inTeamCount} people, and only the {soloCount} explorers with no crew are listed on their
+        own. Nothing is missing and this is not about email verification: every registered account is
+        counted here, verified or not. Within each lead, rows are ordered by arrival time, so the
+        crew badged &ldquo;1st here&rdquo; got there first. Click any row to see who is in it.
       </p>
 
       <div className="relative w-full sm:max-w-xs">
@@ -441,10 +456,13 @@ function Tally({
   icon: Icon,
   label,
   value,
+  hint,
 }: {
   icon: React.ComponentType<{ className?: string }>
   label: string
   value: number
+  /** Optional breakdown under the number, e.g. how a total is composed. */
+  hint?: string
 }) {
   return (
     <div className="rounded-sm border border-border bg-card/40 p-4">
@@ -453,6 +471,9 @@ function Tally({
         <span className="font-sans text-[10px] font-bold uppercase tracking-chip">{label}</span>
       </div>
       <p className="mt-1 font-heading text-2xl tabular-nums text-foreground">{value}</p>
+      {hint && (
+        <p className="mt-0.5 font-sans text-[10px] leading-snug text-muted-foreground">{hint}</p>
+      )}
     </div>
   )
 }
