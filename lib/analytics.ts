@@ -436,14 +436,19 @@ export type PresenceSummary = {
  * One row per signed-in user: their newest event, with the page and device it
  * came from. `DISTINCT ON` is a Postgres feature that keeps the first row of
  * each `userId` group, and the matching `ORDER BY` makes that the newest one.
+ *
+ * The join onto `user` is load-bearing, not decorative: events outlive the
+ * accounts that made them, so without it a deleted user's recent event would be
+ * counted in `onlineNow` while no row exists to render, and the headline number
+ * would disagree with the list underneath it.
  */
 export async function getPresence(): Promise<PresenceSummary> {
   const latest = await db.execute(sql`
-    SELECT DISTINCT ON ("userId")
-           "userId", "createdAt", "path", "device", "browser", "os"
-      FROM ${analyticsEvent}
-     WHERE "userId" IS NOT NULL
-     ORDER BY "userId", "createdAt" DESC`)
+    SELECT DISTINCT ON (e."userId")
+           e."userId", e."createdAt", e."path", e."device", e."browser", e."os"
+      FROM ${analyticsEvent} e
+      JOIN "user" u ON u.id = e."userId"
+     ORDER BY e."userId", e."createdAt" DESC`)
 
   const anon = await db.execute(sql`
     SELECT count(DISTINCT "anonId")::int AS n
