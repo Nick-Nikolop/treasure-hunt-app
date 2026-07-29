@@ -369,7 +369,7 @@ const el = {
     leaveTitle: "Αποχώρηση από την ομάδα;",
     leaveBodyMember: "Θα φύγεις από αυτή την ομάδα. Μπορείς να ξαναμπείς με νέα πρόσκληση.",
     leaveBodyOwner:
-      "Είσαι ο αρχηγός. Φεύγοντας, η ομάδα περνά στο επόμενο παλαιότερο μέλος. Αν είσαι ο τελευταίος, η ομάδα διαλύεται.",
+      "Είσαι ο αρχηγός. Φεύγοντας, η ομάδα περνά στο επ��μενο παλαιότερο μέλος. Αν είσαι ο τελευταίος, η ομάδα διαλύεται.",
     leaveConfirm: "ΑΠΟΧΩΡΗΣΗ",
     removeTitle: (name: string) => `Αφαίρεση ${name};`,
     removeBody: "Θα αφαιρεθεί από την ομάδα. Μπορεί να ξαναμπεί με πρόσκληση.",
@@ -398,7 +398,7 @@ const el = {
       already_in_team: "Είσαι ήδη σε άλλη ομάδα. Φύγε πρώτα από εκείνη.",
       already_member: "Είσαι ήδη σε αυτή την ομάδα.",
       full: "Η ομάδα είναι γεμάτη.",
-      not_found: "Δεν βρέθηκε ομάδα με αυτόν τον κωδικό.",
+      not_found: "Δεν βρέθηκε ομ��δα με αυτόν τον κωδικό.",
       too_short: "Το όνομα είναι πολύ μικρό.",
       too_long: "Το όνομα είναι πολύ μεγάλο.",
       not_owner: "Μόνο ο αρχηγός μπορεί να το κάνει αυτό.",
@@ -491,11 +491,11 @@ const el = {
     coverTitle: "Πυθέας ο Μεσσήνιος",
     coverSubtitle:
       "Ημερολόγιο ενός ταξιδιού γύρω από τον κόσμο, κρυμμένο μέσα σε μία πόλη.",
-    coverFlip: "ΓΥΡΙΣΕ ΣΕΛΙΔΑ ΓΙΑ ΝΑ ΞΕΚΙΝΗΣΕΙΣ",
+    coverFlip: "ΓΥΡΙΣΕ ΣΕΛΙΔΑ ΓΙΑ ΝΑ ΞΕΚΙΝΗ��ΕΙΣ",
     entryNo: "ΚΑΤΑΧΩΡΗΣΗ Νο.",
     // Superadmin-only: browsing a lead the crew has not unlocked yet
     adminLockedBadge: "ΜΟΝΟ ΓΙΑ ADMIN",
-    adminLockedTitle: "Κλειδωμένη καταχώρηση",
+    adminLockedTitle: "Κλειδ��μένη καταχώρηση",
     adminLockedBody:
       "Τη βλέπεις μόνο εσύ, ως admin. Οι κανονικοί εξερευνητές δεν φτάνουν σε αυτή τη σελίδα: για εκείνους παραμένει σφραγισμένη μέχρι να σκανάρουν το QR του προηγούμενου στοιχείου. Η περιήγηση εδώ δεν αλλάζει την πρόοδο κανενός.",
     adminLockedClose: "ΚΑΤΑΛΑΒΑ",
@@ -767,7 +767,7 @@ const el = {
     confirmPasswordPlaceholder: "Ξαναγράψε τον κωδικό",
     firstNameLabel: "Όνομα",
     firstNamePlaceholder: "Πυθέας",
-    lastNameLabel: "Επώνυμο (προαιρετικό)",
+    lastNameLabel: "Επώνυμο (πρ��αιρετικό)",
     lastNamePlaceholder: "ο Μεσσήνιος",
     yearLabel: "Έτος γέννησης",
     yearPlaceholder: "1990",
@@ -904,12 +904,13 @@ const el = {
     // Notify-later confirmation
     waitlistTitle: "Είσαι στη λίστα.",
     waitlistBody: "Θα σου στείλουμε email μόλις ανοίξει η πύλη.",
-    // Phase 2 locked modal (journal + leaderboard)
-    lockedEyebrow: "ΚΛΕΙΔΩΜΕΝΟ",
-    lockedJournalTitle: "Το ημερολόγιο ανοίγει σύντομα.",
-    lockedLeaderboardTitle: "Η κατάταξη ανοίγει σύντομα.",
-    lockedBody: "Αυτό το κομμάτι ξεκλειδώνει στην επόμενη φάση του κυνηγιού.",
-    lockedCountdownLabel: "ΞΕΚΛΕΙΔΩΝΕΙ ΣΕ",
+    // Manual seal modal (journal + leaderboard). There is no countdown here on
+    // purpose: the seal is flipped by hand, so there is no unlock time to show.
+    lockedEyebrow: "ΣΦΡΑΓΙΣΜΕΝΟ",
+    lockedJournalTitle: "Το ημερολόγιο είναι προσωρινά σφραγισμένο.",
+    lockedLeaderboardTitle: "Η κατάταξη είναι προσωρινά σφραγισμένη.",
+    lockedBody:
+      "Το πλήρωμα το έκλεισε για λίγο. Δοκίμασε ξανά σε λίγο ή περίμενε μήνυμα από τους διοργανωτές.",
     lockedClose: "ΚΛΕΙΣΙΜΟ",
   },
 }
@@ -1786,12 +1787,13 @@ const en: Dictionary = {
     // Notify-later confirmation
     waitlistTitle: "You're on the list.",
     waitlistBody: "We'll email you the moment the gate opens.",
-    // Phase 2 locked modal (journal + leaderboard)
-    lockedEyebrow: "LOCKED",
-    lockedJournalTitle: "The journal opens soon.",
-    lockedLeaderboardTitle: "The leaderboard opens soon.",
-    lockedBody: "This part unlocks in the next phase of the hunt.",
-    lockedCountdownLabel: "UNLOCKS IN",
+    // Manual seal modal (journal + leaderboard). No countdown by design: the
+    // seal is flipped by hand, so there is no unlock time to show.
+    lockedEyebrow: "SEALED",
+    lockedJournalTitle: "The journal is sealed for now.",
+    lockedLeaderboardTitle: "The leaderboard is sealed for now.",
+    lockedBody:
+      "The crew has closed it briefly. Try again shortly, or wait for word from the organisers.",
     lockedClose: "CLOSE",
   },
 }

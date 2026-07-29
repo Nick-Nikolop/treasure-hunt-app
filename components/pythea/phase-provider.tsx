@@ -12,7 +12,7 @@ import {
 export type PhaseClientContext = {
   phase: Phase
   isSuperadmin: boolean
-  /** Journal + leaderboard sealed for this viewer (phase < 3 and not admin). */
+  /** Journal + leaderboard sealed for this viewer (manual admin seal only). */
   journalLocked: boolean
   override: PhaseOverride
   phase2UnlockMs: number

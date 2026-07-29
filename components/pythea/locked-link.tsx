@@ -10,17 +10,15 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog"
-import { Countdown } from "@/components/pythea/countdown"
 import { usePhase } from "@/components/pythea/phase-provider"
 import { useI18n } from "@/components/pythea/language-provider"
-import { normalizedJournalUnlockMs } from "@/lib/phase"
 
 type LockTarget = "journal" | "leaderboard"
 
 /**
- * A link that behaves normally when its target is unlocked (phase 3, or the
- * viewer is a superadmin), but when the journal + leaderboard are still sealed
- * it intercepts the click and shows a countdown modal instead of navigating.
+ * A link that behaves normally when its target is unlocked (the default, or the
+ * viewer is a superadmin), but when an admin has manually sealed the journal +
+ * leaderboard it intercepts the click and explains that instead of navigating.
  *
  * Drop-in replacement for a `<Link href="/journal">` / `<Link href="/leaderboard">`.
  */
@@ -68,7 +66,7 @@ export function LockedLink({
   )
 }
 
-/** The shared countdown modal, also usable on its own (e.g. from a redirect). */
+/** The shared "sealed" modal, also usable on its own (e.g. from a redirect). */
 export function LockedCountdownModal({
   target,
   open,
@@ -79,17 +77,7 @@ export function LockedCountdownModal({
   onOpenChange: (next: boolean) => void
 }) {
   const { t } = useI18n()
-  const phase = usePhase()
   const p = t.phase
-
-  // Unlock instant for the journal/leaderboard = the phase-3 boundary.
-  const unlockMs = phase
-    ? normalizedJournalUnlockMs({
-        override: phase.override,
-        phase2UnlockMs: phase.phase2UnlockMs,
-        journalUnlockMs: phase.journalUnlockMs,
-      })
-    : Date.now()
 
   const title = target === "journal" ? p.lockedJournalTitle : p.lockedLeaderboardTitle
 
@@ -120,17 +108,9 @@ export function LockedCountdownModal({
             </DialogDescription>
           </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col items-center"
-          >
-            <span className="mb-3 font-sans text-[11px] font-bold tracking-chip text-muted-foreground/70">
-              {p.lockedCountdownLabel}
-            </span>
-            <Countdown targetMs={unlockMs} tone="dark" />
-          </motion.div>
+          {/* No countdown. The seal is a manual admin switch with no scheduled
+              unlock, so showing a ticking clock here would promise a time that
+              does not exist. */}
 
           <button
             type="button"
