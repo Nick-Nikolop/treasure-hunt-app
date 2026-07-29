@@ -1255,7 +1255,28 @@ function UserCard({
             {pState === "online" ? (
               <span className="font-bold text-emerald-300">Online now</span>
             ) : u.lastSeenAt == null ? (
-              <span className="italic text-muted-foreground/60">Never seen since sign-up</span>
+              /**
+               * No events ever. Sign-in REQUIRES a verified email, so an
+               * unverified account provably never got in, while a verified one
+               * did get in and simply left no trace (it predates tracking, or
+               * every request was blocked/prefetched). Two different facts, so
+               * they get two different labels rather than one vague guess.
+               */
+              u.emailVerified ? (
+                <span
+                  className="italic text-muted-foreground/60"
+                  title="Signed in at some point, but has no recorded activity. Their visits may predate activity tracking."
+                >
+                  No activity recorded
+                </span>
+              ) : (
+                <span
+                  className="font-bold text-rose-300/90"
+                  title="Never confirmed their email address. Sign-in requires verification, so this account has never been used."
+                >
+                  Never verified email
+                </span>
+              )
             ) : (
               <span>
                 Last online{" "}

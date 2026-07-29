@@ -167,6 +167,13 @@ export type AdminUserRow = {
   lastName: string | null
   yearOfBirth: number | null
   role: string
+  /**
+   * Whether they confirmed their email. Auth runs with
+   * `requireEmailVerification: true`, so `false` here means they have NEVER been
+   * able to sign in - which is a different situation from "signed in but quiet",
+   * and the Users tab labels the two differently.
+   */
+  emailVerified: boolean
   createdAt: Date
   teamId: string | null
   teamName: string | null
@@ -184,8 +191,13 @@ export type AdminUserRow = {
   /**
    * Presence, derived from the analytics behaviour stream (see `getPresence`).
    * `lastSeenAt` is epoch ms of their newest event ever, or null for someone who
-   * registered but has never produced one. The rest describe where they were
-   * when that last event fired.
+   * has never produced one. The rest describe where they were when that last
+   * event fired.
+   *
+   * A null does NOT by itself mean "never logged in". Measured on live data, the
+   * 29 users with no events break down as 28 unverified (so they truly never got
+   * in) and 1 verified account that predates event tracking. Read it together
+   * with `emailVerified` rather than alone.
    */
   lastSeenAt: number | null
   lastPath: string | null
@@ -292,6 +304,7 @@ export async function getAdminData(): Promise<AdminData> {
       lastName: user.lastName,
       yearOfBirth: user.yearOfBirth,
       role: user.role,
+      emailVerified: user.emailVerified,
       createdAt: user.createdAt,
       teamId: teamMember.teamId,
       teamRole: teamMember.role,
@@ -415,6 +428,7 @@ export async function getAdminData(): Promise<AdminData> {
       lastName: u.lastName,
       yearOfBirth: u.yearOfBirth,
       role: u.role,
+      emailVerified: u.emailVerified,
       createdAt: u.createdAt,
       teamId: u.teamId,
       teamName: u.teamName,
