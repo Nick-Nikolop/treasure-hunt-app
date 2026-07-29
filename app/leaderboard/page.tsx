@@ -4,6 +4,7 @@ import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
 import { getMyCrew } from "@/app/teams/actions"
 import { getLeaderboard } from "@/lib/hunt"
+import { LEADERBOARD_VISIBLE } from "@/lib/clues"
 import { getLeadDefs } from "@/lib/leads"
 import { Atmosphere } from "@/components/pythea/atmosphere"
 import { SiteHeader } from "@/components/pythea/site-header"
@@ -21,6 +22,11 @@ export const metadata: Metadata = {
 }
 
 export default async function LeaderboardPage() {
+  // The board is hidden for now. This runs BEFORE the session lookup on purpose,
+  // so it applies to admins and superadmins too: nobody sees it while the flag
+  // is off. The page below is left intact and comes back the moment it flips.
+  if (!LEADERBOARD_VISIBLE) redirect("/")
+
   // Phase gate: phase 1 seals the site, phase 2 locks the leaderboard.
   // Superadmins bypass. Locked visitors are bounced home with the modal flag.
   const phaseCtx = await getPhaseContext()

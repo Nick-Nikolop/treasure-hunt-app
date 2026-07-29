@@ -18,6 +18,7 @@ import {
 import { useI18n } from "@/components/pythea/language-provider"
 import { WinnerReveal, CompassReveal, TrailEndReveal } from "@/components/pythea/winner-reveal"
 import type { UnlockResult } from "@/lib/hunt"
+import { LEADERBOARD_VISIBLE } from "@/lib/clues"
 import { bypassCooldownScan } from "@/app/q/[token]/actions"
 import { track } from "@/lib/analytics-client"
 import { EV } from "@/lib/analytics-events"
@@ -173,7 +174,9 @@ export function ScanResult({
           <BookOpen className="size-4" />
           {s.openJournal}
         </Link>
-        {view.showLeaderboard && (
+        {/* `showLeaderboard` is kept per scan outcome above; the flag is what
+            actually hides the button while the board is out of the product. */}
+        {LEADERBOARD_VISIBLE && view.showLeaderboard && (
           <Link
             href="/leaderboard"
             className="inline-flex items-center justify-center gap-2 rounded-sm border border-border bg-background px-5 py-3 font-sans text-xs font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass"

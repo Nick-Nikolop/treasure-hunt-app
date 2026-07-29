@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
-import { Menu, Trophy, X } from "lucide-react"
+import { Menu, X } from "lucide-react"
 import { AuthNav, type SessionUser } from "@/components/pythea/auth-nav"
 import { LockedLink } from "@/components/pythea/locked-link"
 import { useI18n } from "@/components/pythea/language-provider"
@@ -123,13 +123,12 @@ export function SiteHeader({
 
         <div className="hidden items-center gap-3 md:flex">
           {progress && (
-            <LockedLink
-              target="leaderboard"
-              href="/leaderboard"
-              className="group inline-flex shrink-0 items-center gap-2"
-            >
+            /* The leaderboard is hidden, so this is no longer a link to it: the
+               progress pill stays (it is the player's own standing) but the
+               Trophy shortcut and the wrapping LockedLink are gone. */
+            <span className="group inline-flex shrink-0 items-center gap-2">
               {/* Location pill: current lead number + country, with a quiet progress count. */}
-              <span className="inline-flex items-center gap-2 rounded-sm border border-border bg-card/60 px-2.5 py-1.5 transition-colors group-hover:border-brass/60">
+              <span className="inline-flex items-center gap-2 rounded-sm border border-border bg-card/60 px-2.5 py-1.5">
                 {currentCountry && (
                   <span className="hidden flex-col leading-tight lg:flex">
                     <span className="font-sans text-[8px] font-bold uppercase tracking-chip text-muted-foreground/60">
@@ -148,15 +147,7 @@ export function SiteHeader({
                   /{progress.total}
                 </span>
               </span>
-              {/* Standings shortcut. There are no points, so the lead count
-                  above IS the standing; this is just the way through to it. */}
-              <span className="inline-flex items-center gap-1.5 rounded-sm border border-brass/40 bg-brass/10 px-2.5 py-1.5 transition-colors group-hover:border-brass">
-                <Trophy className="size-3.5 text-brass" />
-                <span className="font-sans text-[9px] font-bold uppercase tracking-chip text-brass/70">
-                  {t.leaderboard.navLabel}
-                </span>
-              </span>
-            </LockedLink>
+            </span>
           )}
           <AuthNav initialUser={initialUser} />
           {!loggedIn && (
@@ -172,21 +163,15 @@ export function SiteHeader({
 
         <div className="flex items-center gap-2 md:hidden">
           {progress && (
-            <LockedLink
-              target="leaderboard"
-              href="/leaderboard"
-              className="inline-flex shrink-0 items-center gap-1.5"
-            >
+            /* Same as desktop: the count stays, the leaderboard shortcut does not. */
+            <span className="inline-flex shrink-0 items-center gap-1.5">
               <span className="inline-flex items-baseline gap-0.5 rounded-sm border border-border bg-card/60 px-2 py-1.5 font-sans text-[10px] font-bold tracking-chip text-muted-foreground/70">
                 <span className="font-serif text-sm font-black text-foreground">
                   {progress.unlocked}
                 </span>
                 /{progress.total}
               </span>
-              <span className="inline-flex items-center gap-1 rounded-sm border border-brass/40 bg-brass/10 px-2 py-1.5">
-                <Trophy className="size-3 text-brass" />
-              </span>
-            </LockedLink>
+            </span>
           )}
           <button
             type="button"
@@ -236,17 +221,6 @@ export function SiteHeader({
                   </a>
                 )
               })}
-              {progress && (
-                <LockedLink
-                  target="leaderboard"
-                  href="/leaderboard"
-                  onNavigate={() => setOpen(false)}
-                  className="flex items-center gap-2.5 rounded-sm px-2 py-3 font-sans text-sm font-semibold tracking-chip text-muted-foreground hover:bg-card hover:text-foreground"
-                >
-                  <Trophy className="size-4 text-brass" />
-                  {greekCaps(t.scan.viewLeaderboard)}
-                </LockedLink>
-              )}
               {!loggedIn && (
                 <a
                   href="/#register"

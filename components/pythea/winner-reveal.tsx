@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { BookOpen, Compass, Gem, ScrollText, Trophy, Loader2 } from "lucide-react"
+import { BookOpen, Compass, Gem, ScrollText, Loader2 } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
 import { HandwrittenNote } from "@/components/pythea/handwritten-note"
 import { CompassRose } from "@/components/pythea/compass-rose"
@@ -312,8 +312,8 @@ function WinnerScreen({ message, prizeNote }: { message: string; prizeNote: stri
             reaches the treasure sees the same screen: the standings are
             announced at the event, so revealing "3rd of 12" the moment someone
             scans would pre-empt that and deflate a finish that took the whole
-            trail to earn. The ranking still exists and is still visible on the
-            leaderboard and in the admin panel. */}
+            trail to earn. The ranking still exists and is still computed; with
+            the leaderboard hidden it is visible only in the admin panel. */}
 
         <motion.p
           initial={{ opacity: 0, y: 8 }}
@@ -341,13 +341,9 @@ function WinnerScreen({ message, prizeNote }: { message: string; prizeNote: stri
           transition={{ delay: 1.2 }}
           className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:justify-center"
         >
-          <Link
-            href="/leaderboard"
-            className="inline-flex items-center justify-center gap-2 rounded-sm bg-brass px-5 py-3 font-sans text-xs font-bold tracking-chip text-primary-foreground transition-opacity hover:opacity-90"
-          >
-            <Trophy className="size-4" />
-            {f.viewLeaderboard}
-          </Link>
+          {/* The leaderboard button that used to sit here is gone while the board
+              is hidden, leaving the journal as the single CTA. That matches the
+              trail-end and compass screens, which already close the same way. */}
           <Link
             href="/journal"
             className="inline-flex items-center justify-center gap-2 rounded-sm border border-border bg-background px-5 py-3 font-sans text-xs font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass"

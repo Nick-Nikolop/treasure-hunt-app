@@ -135,7 +135,7 @@ const RAW_CLUES: Omit<
     icon: "Home",
     body: [
       "Αφήνοντας πίσω μου την Ασία, γύρισα στην Ευρώπη. Πρώτη μου στάση ήταν η Γαλλία, χώρα των τεχνών, των ιδεών και των μεγάλων περιπάτων.",
-      "Εκεί κατάλαβα κάτι σημαντικό: πως κάθε ταξίδι, όσο μακρινό κι αν είναι, στο τέλος οδηγεί σε ένα σπίτι. Κι έτσι, όταν θέλησα να κρύψω το επόμενο στοιχείο, διάλεξα ένα μέρος στην Καλαμάτα που ψιθυρίζει τη γαλλική λέξη για το σπίτι.",
+      "Εκεί κατάλαβα κάτι σημαντικό: πως κάθε ταξίδι, όσο μακρινό κι αν είναι, στο τέλος οδηγεί σε ένα σπίτι. Κι έτσι, όταν θέλησα να κρύψω το επόμενο στοιχείο, διάλεξα ένα μέρος στην Καλαμάτα που ψιθυρίζει τη γαλλ��κή λέξη για το σπίτι.",
       "Αν καταλάβεις πού κατοικεί η Γαλλία μέσα στην πόλη, θα βρεις και το επόμενο ίχνος του χάρτη.",
     ],
     bodyEn: [
@@ -224,7 +224,7 @@ const RAW_CLUES: Omit<
     subtitleEn: "The land of great distances",
     icon: "Package",
     body: [
-      "Από την Αίγυπτο στράφηκα προς τον βορρά και έφτασα στη Ρωσία. Μια χώρα αχανής, γεμάτη χειμώνες, ιστορίες, μουσικές και προϊόντα που ταξιδεύουν μακριά από τον τόπο τους.",
+      "Από την Αίγυπτο στράφηκα προς τον βορρά και έφτασα στη Ρωσία. Μια χώρα αχανής, γεμάτη χειμώνες, ισ��ορίες, μουσικές και προϊόντα που ταξιδεύουν μακριά από τον τόπο τους.",
       "Συνηθίζω να λέω πως μια χώρα δεν τη θυμάσαι μόνο από τα μνημεία της, αλλά και από τις γεύσεις, τις μυρωδιές και τα μικρά πράγματα που κουβαλούν οι άνθρωποι μαζί τους.",
       "Έτσι, στην Καλαμάτα, το επόμενο ίχνος το άφησα εκεί όπου κάτι από τη Ρωσία συνεχίζει να φτάνει στην πόλη, σαν μικρό φορτίο από έναν πολύ μεγάλο τόπο.",
     ],
@@ -350,6 +350,23 @@ export const LEGACY_FINISH_ORDER = TOTAL_CLUES + 1
  * client components can import it without pulling the database in.
  */
 export const ENDGAME_AFTER_LEAD = 8
+
+/**
+ * Master switch for the public leaderboard.
+ *
+ * While this is false the board is hidden from EVERYONE, admins included: the
+ * /leaderboard route redirects home before it even looks at who you are, and
+ * every link, nav chip and preview card pointing at it stops rendering.
+ *
+ * Nothing underneath is removed. `getLeaderboard`, `getStandingsSummary`, the
+ * arrival-time ordering and the endgame seal all keep running (the admin
+ * Progress tab still reads them), so flipping this to true restores the board
+ * exactly as it was.
+ *
+ * Deliberately NOT one of the admin phase/seal controls: those are event-day
+ * levers an admin flips, whereas this keeps the feature out of the product.
+ */
+export const LEADERBOARD_VISIBLE = false
 
 /** True when a progress value is deep enough that the standing is concealed. */
 export function isEndgameProgress(progress: number): boolean {
