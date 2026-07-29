@@ -478,6 +478,52 @@ const el = {
     seconds: "ΔΕΥΤ.",
     aria: "Αντίστροφη μέτρηση",
   },
+  // ── "How to play" walkthrough (first visit to the journal + on demand) ────
+  // Step 7 carries a "{time}" token rather than a hardcoded hour: the finish
+  // time is admin-editable in the Finale tab, so the component substitutes it.
+  howToPlay: {
+    eyebrow: "Η ΔΙΑΔΡΟΜΗ ΣΟΥ, ΒΗΜΑ ΠΡΟΣ ΒΗΜΑ",
+    title: "ΠΩΣ ΠΑΙΖΕΤΑΙ",
+    lede: "Όλα όσα χρειάζεσαι για να ξεκινήσεις σωστά.",
+    stepLabel: "ΒΗΜΑ",
+    steps: [
+      {
+        title: "Φτιάξε ομάδα",
+        body: "Δημιούργησε λογαριασμό ή μπες σε υπάρχουσα ομάδα. Έως 5 άτομα.",
+      },
+      {
+        title: "Άνοιξε το «Ημερολόγιο»",
+        body: "Εκεί εμφανίζονται όλοι οι γρίφοι. Ο πρώτος ανοίγει στις 30 Ιουλίου, 20:00.",
+      },
+      {
+        title: "Δες τα όρια αναζήτησης",
+        body: "Με την έναρξη θα αναρτηθεί εικόνα με τα όρια της περιοχής.",
+      },
+      {
+        title: "Λύσε τον γρίφο",
+        body: "Κάθε γρίφος οδηγεί σε πραγματικό σημείο της Καλαμάτας.",
+      },
+      {
+        title: "Βρες & σκάναρε το QR",
+        body: "Στο σωστό σημείο θα βρεις QR που ξεκλειδώνει τον επόμενο γρίφο.",
+      },
+      {
+        title: "Παίξτε με σειρά",
+        body: "Οι γρίφοι ανοίγουν διαδοχικά. Ένα μέλος αρκεί για να προχωρά όλη η ομάδα.",
+      },
+      {
+        title: "Το κυνήγι τελειώνει",
+        body: "{time} το Σάββατο 1 Αυγούστου και θα ακολουθήσει πάρτι όπου θα ανακοινωθούν οι νικητές και θα παρουσιαστούν οι γρίφοι.",
+      },
+    ],
+    close: "ΚΑΤΑΛΑΒΑ, ΞΕΚΙΝΑΜΕ",
+    reopenCta: "ΠΩΣ ΠΑΙΖΕΤΑΙ",
+    reopenHint: "Ξαναδές τα βήματα του κυνηγιού όποτε θέλεις.",
+    closeAria: "Κλείσιμο",
+    previewHint:
+      "Δες το παράθυρο που εμφανίζεται στους εξερευνητές την πρώτη φορά που ανοίγουν το ημερολόγιο.",
+    previewBadge: "ΜΟΝΟ ΓΙΑ ADMIN · ΠΡΟΕΠΙΣΚΟΠΗΣΗ",
+  },
   journal: {
     back: "ΠΙΣΩ ΣΤΗΝ ΑΡΧΗ",
     header: "ΗΜΕΡΟΛΟΓΙΟ ΤΑΞΙΔΙΟΥ",
@@ -1417,6 +1463,49 @@ const en: Dictionary = {
     minutes: "MIN",
     seconds: "SEC",
     aria: "Countdown",
+  },
+  howToPlay: {
+    eyebrow: "YOUR ROUTE, STEP BY STEP",
+    title: "HOW TO PLAY",
+    lede: "Everything you need to start off right.",
+    stepLabel: "STEP",
+    steps: [
+      {
+        title: "Build your crew",
+        body: "Create an account or join an existing crew. Up to 5 people.",
+      },
+      {
+        title: "Open the Journal",
+        body: "Every clue appears there. The first one opens on 30 July, 20:00.",
+      },
+      {
+        title: "Check the search area",
+        body: "When the hunt begins, an image with the boundaries of the area will be posted.",
+      },
+      {
+        title: "Solve the clue",
+        body: "Every clue leads to a real spot in Kalamata.",
+      },
+      {
+        title: "Find & scan the QR",
+        body: "At the right spot you will find a QR that unlocks the next clue.",
+      },
+      {
+        title: "Play in order",
+        body: "The clues open one after another. One member is enough for the whole crew to move on.",
+      },
+      {
+        title: "The hunt ends",
+        body: "{time} on Saturday 1 August, followed by a party where the winners are announced and the clues are presented.",
+      },
+    ],
+    close: "GOT IT, LET'S GO",
+    reopenCta: "HOW TO PLAY",
+    reopenHint: "Read the steps of the hunt again whenever you like.",
+    closeAria: "Close",
+    previewHint:
+      "See the window explorers get the first time they open the journal.",
+    previewBadge: "ADMIN ONLY · PREVIEW",
   },
   journal: {
     back: "BACK TO START",

@@ -1825,6 +1825,8 @@ export async function adminSaveFinale(input: {
   winnerEn: string
   winnerNote: string
   winnerNoteEn: string
+  /** Bare "HH:MM" time the hunt closes. Sanitized in `setFinaleConfig`. */
+  huntEndsAt: string
 }): Promise<ActionResult> {
   const admin = await requireAdmin()
 
@@ -1851,6 +1853,7 @@ export async function adminSaveFinale(input: {
     winnerEn: input.winnerEn ?? "",
     winnerNote: input.winnerNote ?? "",
     winnerNoteEn: input.winnerNoteEn ?? "",
+    huntEndsAt: input.huntEndsAt ?? "",
   })
 
   await logActivity({
@@ -1904,6 +1907,9 @@ export async function adminSaveFinaleGeo(input: {
     winnerEn: current.winnerEn,
     winnerNote: current.winnerNote,
     winnerNoteEn: current.winnerNoteEn,
+    // Untouched here: this action only moves a QR gate, so carry the end time
+    // through or the read-modify-write would silently reset it to the default.
+    huntEndsAt: current.huntEndsAt,
   })
 
   await logActivity({

@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react"
-import { Compass, MapPin, Save, Loader2, Check, ScrollText, Trophy } from "lucide-react"
+import { Compass, MapPin, Save, Loader2, Check, ScrollText, Trophy, Clock } from "lucide-react"
 import { getFinaleState, adminSaveFinale } from "@/app/admin/actions"
 
 /**
@@ -22,6 +22,8 @@ type Draft = {
   winnerEn: string
   winnerNote: string
   winnerNoteEn: string
+  /** "HH:MM" clock time the hunt closes, shown in the how-to-play walkthrough. */
+  huntEndsAt: string
 }
 
 const EMPTY: Draft = {
@@ -37,6 +39,7 @@ const EMPTY: Draft = {
   winnerEn: "",
   winnerNote: "",
   winnerNoteEn: "",
+  huntEndsAt: "",
 }
 
 /**
@@ -71,6 +74,7 @@ export function AdminFinalePanel() {
           winnerEn: c.winnerEn,
           winnerNote: c.winnerNote,
           winnerNoteEn: c.winnerNoteEn,
+          huntEndsAt: c.huntEndsAt,
         })
         setLoaded(true)
       })
@@ -213,6 +217,28 @@ export function AdminFinalePanel() {
               set("winnerNoteEn", en)
             }}
           />
+        </div>
+      </Section>
+
+      {/* When the hunt closes. Only the TIME is editable: the date lives in the
+          localized how-to-play copy because the closing party is a fixed
+          calendar event, while the hour has already moved once. */}
+      <Section icon={Clock} title="4 · When the hunt ends">
+        <p className="mb-4 max-w-prose font-sans text-sm leading-relaxed text-muted-foreground">
+          The closing time shown in step 7 of the{" "}
+          <strong className="text-foreground">How to play</strong> walkthrough, which every explorer
+          sees the first time they open the journal. Time only, in 24-hour{" "}
+          <strong className="text-foreground">HH:MM</strong> form. The date stays in the copy itself.
+        </p>
+        <div className="max-w-[10rem]">
+          <Field label="ΩΡΑ ΛΗΞΗΣ · END TIME">
+            <input
+              type="time"
+              value={draft.huntEndsAt}
+              onChange={(e) => set("huntEndsAt", e.target.value)}
+              className="rounded-sm border border-border bg-background px-3 py-2 font-sans text-base tabular-nums text-foreground outline-none focus:border-brass"
+            />
+          </Field>
         </div>
       </Section>
 

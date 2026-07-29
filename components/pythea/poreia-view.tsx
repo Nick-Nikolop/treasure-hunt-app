@@ -717,6 +717,10 @@ export function PoreiaView({
         </span>
       </div>
 
+        {/* Auto-opens once per browser on a first visit, and leaves a button
+            behind so the seven steps can be re-read at any time. */}
+        <HowToPlayLauncher endsAt={huntEndsAt} />
+
         {/* Leaderboard preview + "who is at your port" widgets */}
         <JournalWidgets standings={standings} />
 

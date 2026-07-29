@@ -60,6 +60,25 @@ const DEFAULT_WINNER_NOTE =
 const DEFAULT_WINNER_NOTE_EN =
   "Careful: you may have reached this point, but someone else may have arrived before you. If you are in the top 3 on the scoreboard, a nice sum awaits you…"
 
+/**
+ * Default clock time the hunt closes, as a bare "HH:MM" string. Only the TIME
+ * is configurable: the date is part of the localized copy, because the closing
+ * party is a fixed calendar event while the hour has already moved once.
+ * Rendered into step 7 of the "how to play" walkthrough.
+ */
+export const DEFAULT_HUNT_ENDS_AT = "19:00"
+
+/** Accept only a 24h "H:MM"/"HH:MM" clock time, else fall back to the default. */
+export function normalizeHuntEndsAt(value: unknown): string {
+  const s = typeof value === "string" ? value.trim() : ""
+  const m = /^(\d{1,2}):(\d{2})$/.exec(s)
+  if (!m) return DEFAULT_HUNT_ENDS_AT
+  const h = Number(m[1])
+  const min = Number(m[2])
+  if (h > 23 || min > 59) return DEFAULT_HUNT_ENDS_AT
+  return `${String(h).padStart(2, "0")}:${m[2]}`
+}
+
 export type FinaleConfig = {
   /** Compass QR GPS gate. `hasCoords` is true only when both lat and lng set. */
   hasCoords: boolean
@@ -94,6 +113,8 @@ export type FinaleConfig = {
   /** Winner-screen prize fine-print. */
   winnerNote: string
   winnerNoteEn: string
+  /** Bare "HH:MM" clock time the hunt closes (see DEFAULT_HUNT_ENDS_AT). */
+  huntEndsAt: string
 }
 
 // Provision the finale columns at most once per process. Mirrors the memoized
@@ -124,7 +145,8 @@ function ensureFinaleColumns(): Promise<void> {
            ADD COLUMN IF NOT EXISTS "finaleWinner" text,
            ADD COLUMN IF NOT EXISTS "finaleWinnerEn" text,
            ADD COLUMN IF NOT EXISTS "finaleWinnerNote" text,
-           ADD COLUMN IF NOT EXISTS "finaleWinnerNoteEn" text`,
+           ADD COLUMN IF NOT EXISTS "finaleWinnerNoteEn" text,
+           ADD COLUMN IF NOT EXISTS "huntEndsAt" text`,
       )
       .then(() => undefined)
       .catch((err) => {
@@ -164,7 +186,8 @@ export async function getFinaleConfig(): Promise<FinaleConfig> {
             "finaleNote2" AS n2, "finaleNote2En" AS n2e,
             "finaleNote2Cta" AS n2c, "finaleNote2CtaEn" AS n2ce,
             "finaleWinner" AS w, "finaleWinnerEn" AS we,
-            "finaleWinnerNote" AS wn, "finaleWinnerNoteEn" AS wne
+            "finaleWinnerNote" AS wn, "finaleWinnerNoteEn" AS wne,
+            "huntEndsAt" AS ends
        FROM "score_config" WHERE id = 'default' LIMIT 1`,
   )
   const row = res.rows[0] as
@@ -190,6 +213,7 @@ export async function getFinaleConfig(): Promise<FinaleConfig> {
         we: string | null
         wn: string | null
         wne: string | null
+        ends: string | null
       }
     | undefined
 
@@ -224,6 +248,7 @@ export async function getFinaleConfig(): Promise<FinaleConfig> {
     winnerEn: textOr(row?.we, DEFAULT_WINNER_EN),
     winnerNote: textOr(row?.wn, DEFAULT_WINNER_NOTE),
     winnerNoteEn: textOr(row?.wne, DEFAULT_WINNER_NOTE_EN),
+    huntEndsAt: normalizeHuntEndsAt(row?.ends),
   }
 }
 
@@ -252,6 +277,8 @@ export type FinaleConfigInput = {
   winnerEn: string
   winnerNote: string
   winnerNoteEn: string
+  /** "HH:MM" clock time the hunt closes. Invalid input falls back to default. */
+  huntEndsAt: string
 }
 
 /** Upsert the finale configuration onto the single `score_config` row. */
@@ -282,9 +309,9 @@ export async function setFinaleConfig(input: FinaleConfigInput): Promise<void> {
         "finaleNote1", "finaleNote1En", "finaleNote1Cta", "finaleNote1CtaEn",
         "finaleNote2", "finaleNote2En", "finaleNote2Cta", "finaleNote2CtaEn",
         "finaleWinner", "finaleWinnerEn", "finaleWinnerNote", "finaleWinnerNoteEn",
-        "trailEndLat", "trailEndLng", "trailEndRadiusM", "updatedAt")
+        "trailEndLat", "trailEndLng", "trailEndRadiusM", "huntEndsAt", "updatedAt")
      VALUES ('default', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
-        $17, $18, $19, $20, $21, now())
+        $17, $18, $19, $20, $21, $22, now())
      ON CONFLICT (id) DO UPDATE SET
         "compassLat" = EXCLUDED."compassLat",
         "compassLng" = EXCLUDED."compassLng",
@@ -307,6 +334,7 @@ export async function setFinaleConfig(input: FinaleConfigInput): Promise<void> {
         "trailEndLat" = EXCLUDED."trailEndLat",
         "trailEndLng" = EXCLUDED."trailEndLng",
         "trailEndRadiusM" = EXCLUDED."trailEndRadiusM",
+        "huntEndsAt" = EXCLUDED."huntEndsAt",
         "updatedAt" = now()`,
     [
       lat,
@@ -330,6 +358,7 @@ export async function setFinaleConfig(input: FinaleConfigInput): Promise<void> {
       elat,
       elng,
       eradius,
+      normalizeHuntEndsAt(input.huntEndsAt),
     ],
   )
 }
