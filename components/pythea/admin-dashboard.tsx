@@ -259,6 +259,16 @@ export function AdminDashboard({
 
   const presence = data.presence
 
+  /**
+   * Accounts that can never have been online: sign-in requires a verified email
+   * (`requireEmailVerification: true`), so these are dead sign-ups, not quiet
+   * users. Worth a headline number because they inflate the total user count.
+   */
+  const unverifiedCount = useMemo(
+    () => data.users.filter((u) => !u.emailVerified).length,
+    [data.users],
+  )
+
   const filteredUsers = useMemo(() => {
     const q = query.trim().toLowerCase()
     const matches = !q
@@ -473,6 +483,12 @@ export function AdminDashboard({
                 value={presence.anonOnline}
                 label="Signed out"
                 hint="devices browsing without an account"
+              />
+              <PresenceCount
+                tone="unverified"
+                value={unverifiedCount}
+                label="Never verified"
+                hint="cannot sign in until they confirm their email"
               />
             </div>
             <div className="flex items-center gap-2">
@@ -1030,7 +1046,7 @@ function PresenceCount({
   label,
   hint,
 }: {
-  tone: "online" | "idle" | "anon"
+  tone: "online" | "idle" | "anon" | "unverified"
   value: number
   label: string
   hint: string
@@ -1040,7 +1056,9 @@ function PresenceCount({
       ? "bg-emerald-400 ring-2 ring-emerald-400/25"
       : tone === "idle"
         ? "bg-amber-400 ring-2 ring-amber-400/20"
-        : "bg-muted-foreground/40"
+        : tone === "unverified"
+          ? "bg-rose-400/70 ring-2 ring-rose-400/15"
+          : "bg-muted-foreground/40"
   return (
     <div className="flex items-center gap-2.5">
       <span className={`size-2 shrink-0 rounded-full ${dot}`} />
