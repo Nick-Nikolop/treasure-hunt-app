@@ -28,14 +28,13 @@ export function SiteHeader({
 }: {
   initialUser?: SessionUser | null
   /**
-   * When supplied (e.g. on the journal), the header shows the player's live
-   * score, the lead they're currently at (number + country), and a leaderboard
-   * shortcut alongside the account menu.
+   * When supplied (e.g. on the journal), the header shows how far the player has
+   * come (leads unlocked out of the total, plus the country they are standing
+   * in) and a standings shortcut alongside the account menu.
    */
   progress?: {
     unlocked: number
     total: number
-    score: number
     /** The lead the player is currently on (furthest reached). */
     current: { order: number; country: string; countryEn: string } | null
   } | null
@@ -149,12 +148,12 @@ export function SiteHeader({
                   /{progress.total}
                 </span>
               </span>
-              {/* Score pill: brass-tinted to read as the primary stat. */}
+              {/* Standings shortcut. There are no points, so the lead count
+                  above IS the standing; this is just the way through to it. */}
               <span className="inline-flex items-center gap-1.5 rounded-sm border border-brass/40 bg-brass/10 px-2.5 py-1.5 transition-colors group-hover:border-brass">
                 <Trophy className="size-3.5 text-brass" />
-                <span className="font-serif text-sm font-black text-brass">{progress.score}</span>
                 <span className="font-sans text-[9px] font-bold uppercase tracking-chip text-brass/70">
-                  {t.leaderboard.points}
+                  {t.leaderboard.navLabel}
                 </span>
               </span>
             </LockedLink>
@@ -186,7 +185,6 @@ export function SiteHeader({
               </span>
               <span className="inline-flex items-center gap-1 rounded-sm border border-brass/40 bg-brass/10 px-2 py-1.5">
                 <Trophy className="size-3 text-brass" />
-                <span className="font-serif text-sm font-black text-brass">{progress.score}</span>
               </span>
             </LockedLink>
           )}

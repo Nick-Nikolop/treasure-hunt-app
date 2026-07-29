@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Trophy, Anchor, ChevronRight, Users, User as UserIcon } from "lucide-react"
+import { Trophy, Anchor, ChevronRight, Lock } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
 import type { StandingsSummary } from "@/lib/hunt"
 
@@ -10,13 +10,24 @@ import type { StandingsSummary } from "@/lib/hunt"
  * links to the full standings, and a "who is at your port" card counting the
  * other teams / solo explorers currently on the same lead as the player.
  *
- * Only progress marks are shown (never scores), so this stays consistent with
- * the score-hiding rule on the full leaderboard.
+ * There are no points anywhere: a standing is just how far you have come and how
+ * early you got there. Crucially this widget never names anyone who is ahead,
+ * because the entrants in front are the ones the endgame seal is meant to hide.
  */
 export function JournalWidgets({ standings }: { standings: StandingsSummary }) {
   const { t } = useI18n()
   const w = t.journal.widgets
-  const { top, rank, totalEntrants, myProgress, total, sameLeadTeams, sameLeadSolos } = standings
+  const {
+    rank,
+    totalEntrants,
+    myProgress,
+    total,
+    sameLeadTeams,
+    sameLeadSolos,
+    myRankSealed,
+    endgameCount,
+    aheadVisible,
+  } = standings
   const othersHere = sameLeadTeams + sameLeadSolos
 
   return (
@@ -39,50 +50,40 @@ export function JournalWidgets({ standings }: { standings: StandingsSummary }) {
             </h3>
           </div>
 
-          {top.length === 0 ? (
+          {totalEntrants === 0 ? (
             <p className="flex-1 font-serif text-sm italic leading-relaxed text-muted-foreground">
               {w.lbEmpty}
             </p>
+          ) : myRankSealed ? (
+            /* The player is in the endgame, so even their own rank is withheld. */
+            <div className="flex flex-1 flex-col justify-center">
+              <span className="font-serif text-base font-black text-brass">{w.lbSealed}</span>
+              <p className="mt-1 text-pretty font-serif text-sm leading-relaxed text-muted-foreground">
+                {w.lbSealedNote}
+              </p>
+            </div>
           ) : (
-            <ol className="flex flex-col gap-1.5">
-              {top.map((e) => (
-                <li
-                  key={`${e.kind}-${e.rank}`}
-                  className={`flex items-center gap-2.5 rounded-sm px-2 py-1.5 ${
-                    e.isMe ? "bg-brass/10 ring-1 ring-brass/40" : ""
-                  }`}
-                >
-                  <span
-                    className={`w-5 shrink-0 text-center font-serif text-sm font-black ${
-                      e.rank === 1 ? "text-brass" : "text-muted-foreground"
-                    }`}
-                  >
-                    {e.rank}
-                  </span>
-                  {e.kind === "team" ? (
-                    <Users className="size-3.5 shrink-0 text-muted-foreground/70" />
-                  ) : (
-                    <UserIcon className="size-3.5 shrink-0 text-muted-foreground/70" />
-                  )}
-                  <span className="min-w-0 flex-1 truncate font-serif text-sm text-foreground">
-                    {e.name}
-                    {e.isMe && (
-                      <span className="ml-1.5 font-sans text-[9px] font-bold tracking-chip text-brass">
-                        {w.you}
-                      </span>
-                    )}
-                  </span>
-                  <span className="shrink-0 font-serif text-xs font-bold text-muted-foreground">
-                    {e.progress} / {total}
-                  </span>
-                </li>
-              ))}
-            </ol>
+            /* Outside the endgame a player sees their own standing and the gap in
+               front, but never who the leaders are. */
+            <div className="flex flex-1 flex-col justify-center">
+              <span className="font-serif text-3xl font-black text-brass">
+                {rank ?? "\u2014"}
+              </span>
+              <p className="mt-1 font-serif text-sm leading-relaxed text-muted-foreground">
+                {w.lbAhead(aheadVisible)}
+              </p>
+              {endgameCount > 0 && (
+                <p className="mt-2 flex items-center gap-1.5 font-sans text-[10px] font-bold tracking-chip text-muted-foreground/80">
+                  <Lock className="size-3 shrink-0" />
+                  {w.lbEndgame(endgameCount)}
+                </p>
+              )}
+            </div>
           )}
 
           <div className="mt-auto flex items-center justify-between gap-2 pt-4">
             <span className="font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
-              {rank ? w.lbRank(rank, totalEntrants) : w.lbNotRanked}
+              {myRankSealed ? w.lbEndgame(endgameCount) : rank ? w.lbRank(rank, totalEntrants) : w.lbNotRanked}
             </span>
             <Link
               href="/leaderboard"

@@ -11,7 +11,6 @@ import { buildClueState, isOverrideAuthorized, PREVIEW_COOKIE } from "@/lib/clue
 import {
   getCrewUserIds,
   getCrewEffectiveProgress,
-  getUserScore,
   getStandingsSummary,
   hasReachedTrailEnd,
   hasReachedCompass,
@@ -83,10 +82,6 @@ export default async function PoreiaPage() {
   // stamp), so it is used directly.
   const unlocked = state.unlocked
 
-  // The player's live score (always 0 before they're ranked) and the lead they
-  // are currently at (the furthest clue they've unlocked) for the topbar.
-  const score = await getUserScore(session.user.id, now)
-
   // Live standings for the journal widgets: the user's rank, a top-3 preview,
   // and how many other teams / solo players share the user's current lead.
   const standings = await getStandingsSummary(session.user.id, state.total, now)
@@ -123,7 +118,7 @@ export default async function PoreiaPage() {
       <Atmosphere />
       <SiteHeader
         initialUser={initialUser}
-        progress={{ unlocked: state.unlockedCount, total: state.total, score, current }}
+        progress={{ unlocked: state.unlockedCount, total: state.total, current }}
       />
       <div className="flex min-h-screen flex-col">
         <PoreiaView

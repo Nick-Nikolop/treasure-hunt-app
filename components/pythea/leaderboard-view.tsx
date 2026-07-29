@@ -8,7 +8,7 @@ import { useI18n } from "@/components/pythea/language-provider"
 import { track } from "@/lib/analytics-client"
 import { EV } from "@/lib/analytics-events"
 import { buildVoyageRoute, TREASURE_XY, MAP_VIEWBOX } from "@/lib/voyage-map"
-import type { LeaderboardEntry } from "@/lib/hunt"
+import { ENDGAME_AFTER_LEAD, isEndgameProgress, type LeaderboardEntry } from "@/lib/hunt"
 
 type Port = { order: number; country: string; countryEn: string }
 
@@ -29,12 +29,8 @@ const NODE_TEXT = "oklch(0.94 0.02 80)"
 const BRASS = "oklch(0.62 0.14 70)"
 const TEAL = "oklch(0.5 0.07 200)"
 
-// Once a crew has completed riddle 8 (i.e. moved onto the final riddle, so
-// progress climbs past 8), its score is concealed so the podium stays a
-// surprise until the closing party. Tie the cutoff to the riddle number, not
-// the total, so it holds even if the route length ever changes.
-const SCORE_HIDDEN_AFTER_RIDDLE = 8
-const isScoreHidden = (progress: number) => progress > SCORE_HIDDEN_AFTER_RIDDLE
+// The endgame cutoff and its test both come from the server so the board, the
+// journal widgets and the admin panel can never disagree about who is sealed.
 
 export function LeaderboardView({
   entries,

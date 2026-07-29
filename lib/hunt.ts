@@ -18,8 +18,6 @@ import {
   effectiveUnlockedCount,
   isLeadOneOpen,
   START_MS,
-  pointsForPlacement,
-  type Difficulty,
 } from "@/lib/clues"
 import {
   getLeadDefs,
@@ -32,7 +30,6 @@ import {
   TRAIL_END_LEAD_ID,
 } from "@/lib/leads"
 import { haversineMeters } from "@/lib/geo"
-import { getScoreConfig } from "@/lib/scoring"
 import { getFinaleConfig } from "@/lib/finale"
 import { getSolveCooldownSeconds } from "@/lib/hunt-config"
 import { logActivity, resolveUserSnapshot } from "@/lib/activity"
@@ -81,33 +78,20 @@ export async function getCrewUserIds(userId: string): Promise<string[]> {
 }
 
 /**
- * The signed-in user's current leaderboard score. Derived from the live
- * standings (placements are relative to everyone), matching the user's own
- * solo entry or their crew's team entry. Returns 0 if not yet ranked.
+ * Once an entity moves PAST this lead it enters the endgame and its exact
+ * standing is concealed, so the finishing order stays a surprise until the
+ * closing party. This is the one source of truth for that rule: the public
+ * board, the journal widgets and the SEO/summary reads all defer to it.
+ *
+ * Note this deliberately hides the LEADERS. That is why there is no "top 3"
+ * anywhere: the entities in front are exactly the ones being concealed, so a
+ * podium would present 4th place as the winner.
  */
-export async function getUserScore(
-  userId: string,
-  nowMs: number = Date.now(),
-): Promise<number> {
-  const me = await db
-    .select({ teamId: teamMember.teamId })
-    .from(teamMember)
-    .where(eq(teamMember.userId, userId))
-    .limit(1)
-  const teamId = me[0]?.teamId ?? null
-  const board = await getLeaderboard(nowMs)
-  const entry = teamId
-    ? board.find((e) => e.kind === "team" && e.id === teamId)
-    : board.find((e) => e.kind === "solo" && e.id === userId)
-  return entry?.score ?? 0
-}
+export const ENDGAME_AFTER_LEAD = 8
 
-export type StandingsTop = {
-  rank: number
-  name: string
-  kind: "team" | "solo"
-  progress: number
-  isMe: boolean
+/** True when this progress is deep enough that the standing must be concealed. */
+export function isEndgameProgress(progress: number): boolean {
+  return progress > ENDGAME_AFTER_LEAD
 }
 
 export type StandingsSummary = {
@@ -123,8 +107,18 @@ export type StandingsSummary = {
   sameLeadTeams: number
   /** Other solo explorers currently on the same lead as the user. */
   sameLeadSolos: number
-  /** Top few entries for the mini leaderboard preview. */
-  top: StandingsTop[]
+  /**
+   * True once the user is past the endgame threshold, so their own rank is
+   * concealed from them too (everyone in the endgame sees the same thing).
+   */
+  myRankSealed: boolean
+  /** How many entrants are in the sealed endgame, without naming any of them. */
+  endgameCount: number
+  /**
+   * How many entrants are ahead of the user but still outside the endgame, so a
+   * player can see the gap in front of them without the leaders being revealed.
+   */
+  aheadVisible: number
 }
 
 /**
@@ -162,22 +156,26 @@ export async function getStandingsSummary(
     }
   }
 
-  const top: StandingsTop[] = board.slice(0, 3).map((e, i) => ({
-    rank: i + 1,
-    name: e.name,
-    kind: e.kind,
-    progress: e.progress,
-    isMe: isMine(e),
-  }))
+  // The endgame is concealed, so we never build a "top" list. We only count how
+  // many are in there, and how many visible entrants sit ahead of the user.
+  const myRankSealed = isEndgameProgress(myProgress)
+  const endgameCount = board.filter((e) => isEndgameProgress(e.progress)).length
+  const aheadVisible = board.filter(
+    (e) => !isMine(e) && !isEndgameProgress(e.progress) && e.progress > myProgress,
+  ).length
 
   return {
-    rank: myProgress > 0 && myIndex >= 0 ? myIndex + 1 : null,
+    // A sealed player is not told their own position either, so nobody can infer
+    // the finishing order by comparing notes with a friend.
+    rank: !myRankSealed && myProgress > 0 && myIndex >= 0 ? myIndex + 1 : null,
     totalEntrants: board.filter((e) => e.progress > 0).length,
     myProgress,
     total,
     sameLeadTeams,
     sameLeadSolos,
-    top,
+    myRankSealed,
+    endgameCount,
+    aheadVisible,
   }
 }
 
@@ -939,8 +937,6 @@ export type LeaderboardEntry = {
   id: string
   name: string
   progress: number
-  /** Total leaderboard score: sum of placement points earned across all leads. */
-  score: number
   /** Epoch ms the entity reached its current progress, or null at 0. */
   reachedAt: number | null
   /** Member display names, for teams. */
@@ -955,18 +951,21 @@ function displayName(u: { firstName: string | null; name: string; email: string 
 }
 
 /**
- * Build the full leaderboard: every team and every team-less user, ranked by
- * total score (highest first), then furthest lead, then who got there first.
+ * Build the full leaderboard: every team and every team-less user, ranked purely
+ * by how far along the trail they are, and then by who got there first.
  *
- * Scoring: a lead is "completed" the moment a crew leaves it for the next stop
- * (i.e. reaches lead N+1; the very last lead is completed by scanning the
- * finishing QR). For each lead we rank everyone who completed it by how early
- * they did, and award placement points (1st/2nd/3rd/rest) plus the lead's
- * difficulty bonus. A score is the sum of those points across all leads, and is
- * always recomputed live from the current settings.
+ * There are no points. Position is decided by exactly two things, in order:
+ *   1. progress  - the furthest lead the entity currently holds.
+ *   2. reachedAt - the moment they arrived at that lead, earliest wins.
+ * So if five teams and three solos are all sitting on lead 6, the one who
+ * scanned into lead 6 first is ahead of the rest of them.
+ *
+ * For a team, progress is its furthest member and reachedAt is the EARLIEST
+ * arrival among the members who are on that furthest lead, so a crew is credited
+ * with the moment it first got there rather than when its last member caught up.
  */
 export async function getLeaderboard(nowMs: number = Date.now()): Promise<LeaderboardEntry[]> {
-  const [users, members, teams, unlocks, config, leadDefs] = await Promise.all([
+  const [users, members, teams, unlocks, leadDefs] = await Promise.all([
     db
       .select({ id: user.id, name: user.name, firstName: user.firstName, email: user.email })
       .from(user),
@@ -977,12 +976,10 @@ export async function getLeaderboard(nowMs: number = Date.now()): Promise<Leader
     db
       .select({ userId: leadUnlock.userId, leadOrder: leadUnlock.leadOrder, unlockedAt: leadUnlock.unlockedAt })
       .from(leadUnlock),
-    getScoreConfig(),
     getLeadDefs(),
   ])
 
   const total = leadDefs.length
-  const difficultyByPos = new Map(leadDefs.map((d) => [d.order, d.difficulty]))
   const countryByPos = new Map(leadDefs.map((d) => [d.order, { country: d.country, countryEn: d.countryEn }]))
   const countryFor = (progress: number) =>
     countryByPos.get(progress) ?? { country: null, countryEn: null }
@@ -1007,17 +1004,6 @@ export async function getLeaderboard(nowMs: number = Date.now()): Promise<Leader
     return { progress, reachedAt: at }
   }
 
-  // Earliest moment any member of a crew reached a given lead order (or null).
-  function crewReachedAt(memberIds: string[], order: number): number | null {
-    let best: number | null = null
-    for (const uid of memberIds) {
-      for (const r of byUser.get(uid) ?? []) {
-        if (r.order === order && (best === null || r.at < best)) best = r.at
-      }
-    }
-    return best
-  }
-
   // Teams.
   const teamMembersOf = new Map<string, string[]>()
   const memberTeamId = new Map<string, string>()
@@ -1028,7 +1014,7 @@ export async function getLeaderboard(nowMs: number = Date.now()): Promise<Leader
     teamMembersOf.set(m.teamId, list)
   }
 
-  // Build every entity (team + solo) with its member ids retained for scoring.
+  // Build every entity: each team, plus every user who is not on a team.
   const entities: { entry: LeaderboardEntry; memberIds: string[] }[] = []
 
   for (const tm of teams) {
@@ -1045,7 +1031,7 @@ export async function getLeaderboard(nowMs: number = Date.now()): Promise<Leader
       .map((u) => displayName(u as { firstName: string | null; name: string; email: string }))
     entities.push({
       entry: {
-        kind: "team", id: tm.id, name: tm.name, progress, score: 0, reachedAt,
+        kind: "team", id: tm.id, name: tm.name, progress, reachedAt,
         members: memberNames, ...countryFor(progress),
       },
       memberIds,
@@ -1057,32 +1043,20 @@ export async function getLeaderboard(nowMs: number = Date.now()): Promise<Leader
     const { progress, reachedAt } = userProgress(u.id)
     entities.push({
       entry: {
-        kind: "solo", id: u.id, name: displayName(u), progress, score: 0, reachedAt,
+        kind: "solo", id: u.id, name: displayName(u), progress, reachedAt,
         members: [], ...countryFor(progress),
       },
       memberIds: [u.id],
     })
   }
 
-  // Score each lead: rank everyone who completed it (reached the next stop) by
-  // completion time, then award placement points + the lead's difficulty bonus.
-  for (let lead = 1; lead <= total; lead++) {
-    const difficulty: Difficulty = difficultyByPos.get(lead) ?? "easy"
-    const finishers = entities
-      .map((e) => ({ e, at: crewReachedAt(e.memberIds, lead + 1) }))
-      .filter((x): x is { e: (typeof entities)[number]; at: number } => x.at !== null)
-      .sort((a, b) => a.at - b.at || a.e.entry.id.localeCompare(b.e.entry.id))
-    finishers.forEach((f, idx) => {
-      f.e.entry.score += pointsForPlacement(config, difficulty, idx)
-    })
-  }
-
   const entries = entities.map((e) => e.entry)
 
-  // Rank: highest score first, then furthest lead, then earliest to get there,
-  // then name. Zero-score / zero-progress entries sink to the bottom.
+  // Rank: furthest lead first, then whoever reached it earliest, then name as a
+  // stable final tiebreak. Entries still at 0 sink to the bottom, and a null
+  // reachedAt sorts last within its lead so a known arrival always beats an
+  // unknown one.
   entries.sort((a, b) => {
-    if (b.score !== a.score) return b.score - a.score
     if (b.progress !== a.progress) return b.progress - a.progress
     const aAt = a.reachedAt ?? Number.POSITIVE_INFINITY
     const bAt = b.reachedAt ?? Number.POSITIVE_INFINITY

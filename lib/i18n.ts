@@ -552,6 +552,18 @@ const el = {
       lbRank: (rank: number, total: number) => `Είσαι στη θέση ${rank} από ${total}`,
       lbNotRanked: "Δεν έχεις μπει ακόμα στην κατάταξη",
       lbEmpty: "Κανείς δεν έχει ξεκινήσει ακόμα.",
+      lbAhead: (n: number) =>
+        n === 0
+          ? "Κανείς ορατός μπροστά σου"
+          : n === 1
+            ? "1 μπροστά σου"
+            : `${n} μπροστά σου`,
+      lbEndgame: (n: number) =>
+        n === 1
+          ? "1 στην τελική ευθεία"
+          : `${n} στην τελική ευθεία`,
+      lbSealed: "Είσαι στην τελική ευθεία",
+      lbSealedNote: "Η θέση σου μένει κρυφή μέχρι το τελικό πάρτι.",
       you: "ΕΣΥ",
       teamTag: "ΟΜΑΔΑ",
       soloTag: "ΑΤΟΜΙΚΟ",
@@ -755,9 +767,17 @@ const el = {
     legendReached: "Φτασμένο λιμάνι",
     legendSealed: "Κρυμμένο μπροστά",
     finished: "Τερμάτισε",
-    points: "πόντοι",
-    scoreSealed: "κρυφό",
-    scoreSealedSr: "Η βαθμολογία κρύβεται μέχρι το τελικό πάρτι.",
+    navLabel: "ΚΑΤΑΤΑΞΗ",
+    // The endgame: past this lead a standing is concealed, so the finishing
+    // order stays a surprise until the closing party.
+    sealedRank: "—",
+    sealedTag: "ΣΤΗΝ ΤΕΛΙΚΗ ΕΥΘΕΙΑ",
+    sealedRowSr: "Έχει περάσει στην τελική ευθεία. Η θέση μένει κρυφή μέχρι το τελικό πάρτι.",
+    sealedGroupTitle: "Στην τελική ευθεία",
+    sealedGroupNote: "Όσοι έχουν περάσει το σημάδι 8 δεν εμφανίζονται με σειρά. Θα μάθετε ποιοι προηγούνται στο τελικό πάρτι.",
+    sealedGroupCount: (n: number) =>
+      n === 1 ? "1 συμμετέχων" : `${n} συμμετέχοντες`,
+    firstHere: "1ος εδώ",
   },
   controls: {
     openAria: "Άνοιγμα πίνακα δοκιμών",
@@ -1467,6 +1487,11 @@ const en: Dictionary = {
       lbRank: (rank: number, total: number) => `You're ranked ${rank} of ${total}`,
       lbNotRanked: "You're not on the board yet",
       lbEmpty: "No one has started yet.",
+      lbAhead: (n: number) =>
+        n === 0 ? "No one visible ahead of you" : n === 1 ? "1 ahead of you" : `${n} ahead of you`,
+      lbEndgame: (n: number) => (n === 1 ? "1 in the endgame" : `${n} in the endgame`),
+      lbSealed: "You are in the endgame",
+      lbSealedNote: "Your position stays hidden until the closing party.",
       you: "YOU",
       teamTag: "TEAM",
       soloTag: "SOLO",
@@ -1667,9 +1692,16 @@ const en: Dictionary = {
     legendReached: "Reached port",
     legendSealed: "Hidden ahead",
     finished: "Finished",
-    points: "pts",
-    scoreSealed: "hidden",
-    scoreSealedSr: "Score is hidden until the closing party.",
+    navLabel: "STANDINGS",
+    // The endgame: past this lead a standing is concealed, so the finishing
+    // order stays a surprise until the closing party.
+    sealedRank: "—",
+    sealedTag: "IN THE ENDGAME",
+    sealedRowSr: "Has moved into the endgame. Their position stays hidden until the closing party.",
+    sealedGroupTitle: "In the endgame",
+    sealedGroupNote: "Anyone past mark 8 is listed without an order. You will find out who is ahead at the closing party.",
+    sealedGroupCount: (n: number) => (n === 1 ? "1 entrant" : `${n} entrants`),
+    firstHere: "1st here",
   },
   controls: {
     openAria: "Open test panel",
