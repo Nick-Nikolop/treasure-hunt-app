@@ -5,21 +5,26 @@ import { useI18n } from "@/components/pythea/language-provider"
 
 /**
  * The closed leather journal cover, rendered as a premium bound volume. Shared
- * between the journal page (as the first "page" you flip open) and the homepage
- * journey section (as a clickable preview), so both render the exact same
- * object.
+ * between the journal page (as the first "page" you flip open) and the landing
+ * page (as a clickable teaser), so both render the exact same object.
  *
  * - `heightClass` controls the height (a fixed PAGE_HEIGHT on the journal page,
  *   or h-full when stretched by the mobile grid sizer).
  * - `className` lets callers add hover/shadow treatments without touching the
  *   internal composition.
+ * - `titleAs` picks the tag for the embossed title. It is the `h1` on the
+ *   journal page (where it is the only heading), but the landing page already
+ *   has its own `h1` in the hero, so that caller passes "p" to avoid shipping a
+ *   second competing `h1`.
  */
 export function JournalCover({
   heightClass = "min-h-[36rem] md:min-h-[44rem]",
   className = "",
+  titleAs: TitleTag = "h1",
 }: {
   heightClass?: string
   className?: string
+  titleAs?: "h1" | "h2" | "p"
 }) {
   const { t } = useI18n()
   return (
@@ -79,9 +84,9 @@ export function JournalCover({
       <p className="mt-7 font-sans text-[11px] font-bold tracking-chip text-brass/80">
         {t.journal.coverOwner}
       </p>
-      <h1 className="gold-foil mt-2 text-balance font-serif text-4xl font-black leading-tight md:text-5xl">
+      <TitleTag className="gold-foil mt-2 text-balance font-serif text-4xl font-black leading-tight md:text-5xl">
         {t.journal.coverTitle}
-      </h1>
+      </TitleTag>
 
       {/* gilt divider with center diamond */}
       <div className="my-6 flex items-center gap-2">

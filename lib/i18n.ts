@@ -492,6 +492,18 @@ const el = {
     coverSubtitle:
       "Ημερολόγιο ενός ταξιδιού γύρω από τον κόσμο, κρυμμένο μέσα σε μία πόλη.",
     coverFlip: "ΓΥΡΙΣΕ ΣΕΛΙΔΑ ΓΙΑ ΝΑ ΞΕΚΙΝΗΣΕΙΣ",
+
+    // Landing-page teaser: makes it obvious the leads arrive IN the journal
+    teaserEyebrow: "ΠΟΥ ΘΑ ΒΡΕΙΣ ΤΑ ΣΤΟΙΧΕΙΑ",
+    teaserTitle: "Κάθε στοιχείο εμφανίζεται στο ημερολόγιο",
+    teaserBody:
+      "Δεν θα σου στείλουμε τα στοιχεία με email ούτε με μήνυμα. Κάθε στοιχείο είναι μια νέα σελίδα στο ημερολόγιο ταξιδιού του Πυθέα. Μόλις το πλήρωμά σου λύσει ένα στοιχείο και σκανάρει το QR στο σημείο, γυρίζει μόνη της η επόμενη σελίδα.",
+    teaserFirstLeadLabel: "ΤΟ ΠΡΩΤΟ ΣΤΟΙΧΕΙΟ ΑΝΟΙΓΕΙ",
+    teaserOpenLabel: "ΤΟ ΠΡΩΤΟ ΣΤΟΙΧΕΙΟ ΣΕ ΠΕΡΙΜΕΝΕΙ",
+    teaserOpenBody:
+      "Το ημερολόγιο είναι ανοιχτό. Άνοιξέ το και διάβασε την πρώτη καταχώρηση.",
+    teaserCta: "ΑΝΟΙΞΕ ΤΟ ΗΜΕΡΟΛΟΓΙΟ",
+    teaserTapHint: "Πάτησε το ημερολόγιο",
     entryNo: "ΚΑΤΑΧΩΡΗΣΗ Νο.",
     // Superadmin-only: browsing a lead the crew has not unlocked yet
     adminLockedBadge: "ΜΟΝΟ ΓΙΑ ADMIN",
@@ -1388,6 +1400,17 @@ const en: Dictionary = {
     coverSubtitle:
       "The journal of a voyage around the world, hidden inside a single city.",
     coverFlip: "TURN THE PAGE TO BEGIN",
+
+    // Landing-page teaser: makes it obvious the leads arrive IN the journal
+    teaserEyebrow: "WHERE YOU FIND THE LEADS",
+    teaserTitle: "Every lead appears in the journal",
+    teaserBody:
+      "We will not email or text you the leads. Each lead is a new page in Pytheas’ travel journal. The moment your crew solves one and scans the QR code at the spot, the next page turns by itself.",
+    teaserFirstLeadLabel: "THE FIRST LEAD OPENS",
+    teaserOpenLabel: "YOUR FIRST LEAD IS WAITING",
+    teaserOpenBody: "The journal is open. Step inside and read the first entry.",
+    teaserCta: "OPEN THE JOURNAL",
+    teaserTapHint: "Tap the journal",
     entryNo: "ENTRY No.",
     adminLockedBadge: "ADMIN ONLY",
     adminLockedTitle: "Locked entry",

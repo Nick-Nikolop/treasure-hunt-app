@@ -1,6 +1,7 @@
 import { Atmosphere } from "@/components/pythea/atmosphere"
 import { SiteHeader } from "@/components/pythea/site-header"
 import { Hero } from "@/components/pythea/hero"
+import { JournalTeaser } from "@/components/pythea/journal-teaser"
 import { Story } from "@/components/pythea/story"
 import { Journey } from "@/components/pythea/journey"
 import { Treasure } from "@/components/pythea/treasure"
@@ -81,6 +82,10 @@ export default async function Page() {
       <LockedRedirectNotice />
       <main className="relative">
         <Hero />
+        {/* Straight under the hero: WHERE the leads actually arrive. Players kept
+            expecting an email or a text, so the real journal is shown (and
+            linked) up front, with a countdown to the moment it opens. */}
+        <JournalTeaser />
         {/* Welcome / join panel first, then the path (9 countries / 9 leads),
             then the "Ι. Ο ΘΡΥΛΟΣ" legend. The path links down to the legend for
             anyone who wants the backstory. */}
