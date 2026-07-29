@@ -391,7 +391,7 @@ const el = {
     lockedEmptyBody:
       "Οι ομάδες κλείδωσαν όταν άνοιξε το κυνήγι, οπότε δεν μπορείς πια να φτιάξεις ομάδα ή να μπεις σε μία. Εξερεύνησε μόνος σου, το ημερολόγιο σε περιμένει.",
     lockedCrewNote:
-      "Οι ομάδες κλείδωσαν όταν άνοιξε το κυνήγι. Θα το τελειώσεις με αυτό το πλήρωμα.",
+      "Οι ομάδες κλείδωσαν όταν άνοιξε το κυνήγι. Θα το τελειώσεις με αυτή την ομάδα.",
     // Error messages (shared).
     errors: {
       rosters_locked: "Οι ομάδες κλείδωσαν, το κυνήγι έχει ήδη ξεκινήσει.",
@@ -497,7 +497,7 @@ const el = {
     teaserEyebrow: "ΠΟΥ ΘΑ ΒΡΕΙΣ ΤΑ ΣΤΟΙΧΕΙΑ",
     teaserTitle: "Κάθε στοιχείο εμφανίζεται στο ημερολόγιο",
     teaserBody:
-      "Δεν θα σου στείλουμε τα στοιχεία με email ούτε με μήνυμα. Κάθε στοιχείο είναι μια νέα σελίδα στο ημερολόγιο ταξιδιού του Πυθέα. Μόλις το πλήρωμά σου λύσει ένα στοιχείο και σκανάρει το QR στο σημείο, γυρίζει μόνη της η επόμενη σελίδα.",
+      "Δεν θα σου στείλουμε τα στοιχεία με email ούτε με μήνυμα. Κάθε στοιχείο είναι μια νέα σελίδα στο ημερολόγιο ταξιδιού του Πυθέα. Μόλις η ομάδα σου λύσει ένα στοιχείο και σκανάρει το QR στο σημείο, γυρίζει μόνη της η επόμενη σελίδα.",
     teaserFirstLeadLabel: "ΤΟ ΠΡΩΤΟ ΣΤΟΙΧΕΙΟ ΑΝΟΙΓΕΙ",
     teaserOpenLabel: "ΤΟ ΠΡΩΤΟ ΣΤΟΙΧΕΙΟ ΣΕ ΠΕΡΙΜΕΝΕΙ",
     teaserOpenBody:
@@ -514,11 +514,11 @@ const el = {
     // Superadmin-only: previewing the treasure/winner screen from the journal
     winnerPreviewCta: "ΟΘΟΝΗ ΝΙΚΗΤΗ",
     winnerPreviewHint:
-      "Δες τι εμφανίζεται στο πλήρωμα όταν σκανάρει το QR του θησαυρού. Δεν καταγράφεται τίποτα.",
+      "Δες τι εμφανίζεται στην ομάδα όταν σκανάρει το QR του θησαυρού. Δεν καταγράφεται τίποτα.",
     winnerPreviewBadge: "ΜΟΝΟ ΓΙΑ ADMIN · ΠΡΟΕΠΙΣΚΟΠΗΣΗ",
     winnerPreviewTitle: "Η οθόνη του νικητή",
     winnerPreviewBody:
-      "Ακριβώς αυτό βλέπει ένα πλήρωμα όταν φτάνει στον θησαυρό, με το πραγματικό κείμενο του φινάλε. Είναι μόνο προεπισκόπηση: δεν μετράει τερματισμό, δεν αλλάζει κατάταξη και δεν καταγράφεται πουθενά.",
+      "Ακριβώς αυτό βλέπει μια ομάδα όταν φτάνει στον θησαυρό, με το πραγματικό κείμενο του φινάλε. Είναι μόνο προεπισκόπηση: δεν μετράει τερματισμό, δεν αλλάζει κατάταξη και δεν καταγράφεται πουθενά.",
     winnerPreviewClose: "ΚΛΕΙΣΙΜΟ",
     stampAlt: (country: string) => `Γραμματόσημο από ${country}`,
     signature: "Π. Μ.",
@@ -931,7 +931,7 @@ const el = {
     lockedJournalTitle: "Το ημερολόγιο είναι προσωρινά σφραγισμένο.",
     lockedLeaderboardTitle: "Η κατάταξη είναι προσωρινά σφραγισμένη.",
     lockedBody:
-      "Το πλήρωμα το έκλεισε για λίγο. Δοκίμασε ξανά σε λίγο ή περίμενε μήνυμα από τους διοργανωτές.",
+      "Οι διοργανωτές το έκλεισαν για λίγο. Δοκίμασε ξανά σε λίγο ή περίμενε νέα από εκείνους.",
     lockedClose: "ΚΛΕΙΣΙΜΟ",
     // Phase-2 variant: the seal IS scheduled here, so the modal shows a
     // countdown to the phase 3 instant instead of the vague manual copy.
@@ -1309,7 +1309,7 @@ const en: Dictionary = {
     lockedTitle: "The hunt has begun.",
     lockedEmptyBody:
       "Teams locked when the hunt opened, so you can no longer create one or join one. Explore solo, the journal is waiting for you.",
-    lockedCrewNote: "Teams locked when the hunt opened. You'll finish it with this crew.",
+    lockedCrewNote: "Teams locked when the hunt opened. You'll finish it with this team.",
     errors: {
       rosters_locked: "Teams are locked, the hunt has already begun.",
       already_in_team: "You're already in another team. Leave it first.",
@@ -1414,7 +1414,7 @@ const en: Dictionary = {
     teaserEyebrow: "WHERE YOU FIND THE LEADS",
     teaserTitle: "Every lead appears in the journal",
     teaserBody:
-      "We will not email or text you the leads. Each lead is a new page in Pytheas’ travel journal. The moment your crew solves one and scans the QR code at the spot, the next page turns by itself.",
+      "We will not email or text you the leads. Each lead is a new page in Pytheas’ travel journal. The moment your team solves one and scans the QR code at the spot, the next page turns by itself.",
     teaserFirstLeadLabel: "THE FIRST LEAD OPENS",
     teaserOpenLabel: "YOUR FIRST LEAD IS WAITING",
     teaserOpenBody: "The journal is open. Step inside and read the first entry.",
@@ -1429,11 +1429,11 @@ const en: Dictionary = {
     // Superadmin-only: previewing the treasure/winner screen from the journal
     winnerPreviewCta: "WINNER SCREEN",
     winnerPreviewHint:
-      "See what a crew gets when they scan the treasure QR. Nothing is recorded.",
+      "See what a team gets when they scan the treasure QR. Nothing is recorded.",
     winnerPreviewBadge: "ADMIN ONLY · PREVIEW",
     winnerPreviewTitle: "The winner screen",
     winnerPreviewBody:
-      "This is exactly what a crew sees when they reach the treasure, with the real finale copy. It is a preview only: it counts as no finish, changes no standings, and is recorded nowhere.",
+      "This is exactly what a team sees when they reach the treasure, with the real finale copy. It is a preview only: it counts as no finish, changes no standings, and is recorded nowhere.",
     winnerPreviewClose: "CLOSE",
     stampAlt: (country: string) => `Stamp from ${country}`,
     signature: "P. M.",
@@ -1843,7 +1843,7 @@ const en: Dictionary = {
     lockedJournalTitle: "The journal is sealed for now.",
     lockedLeaderboardTitle: "The leaderboard is sealed for now.",
     lockedBody:
-      "The crew has closed it briefly. Try again shortly, or wait for word from the organisers.",
+      "The organisers have closed it briefly. Try again shortly, or wait for word from them.",
     lockedClose: "CLOSE",
     // Phase-2 variant: the seal IS scheduled here, so the modal shows a
     // countdown to the phase 3 instant instead of the vague manual copy.

@@ -13,7 +13,7 @@ import { areRostersLocked } from "@/lib/phase-guard"
 export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
-  title: "Το Πλήρωμά σου",
+  title: "Η Ομάδα σου",
   description: "Φτιάξε ή διαχειρίσου την ομάδα σου για το Ταξίδι του Πυθέα.",
   robots: { index: false, follow: false },
 }
