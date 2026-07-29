@@ -323,11 +323,12 @@ export function AdminDashboard({
             Location
           </TabButton>
         )}
-        {isBootstrap && (
-          <TabButton active={tab === "finale"} onClick={() => setTab("finale")} icon={Compass}>
-            Finale
-          </TabButton>
-        )}
+        {/* Finale is open to every superadmin: both of its actions (getFinaleState,
+            adminSaveFinale) only require an admin, unlike the Location tab above
+            whose actions are bootstrap-only. */}
+        <TabButton active={tab === "finale"} onClick={() => setTab("finale")} icon={Compass}>
+          Finale
+        </TabButton>
       </div>
 
       {/* Search row, sits below the tab bar for the Users/Teams tabs */}
@@ -505,7 +506,7 @@ export function AdminDashboard({
           <AdminProofsPanel />
         ) : tab === "location" && isBootstrap ? (
           <AdminLocationPanel />
-        ) : tab === "finale" && isBootstrap ? (
+        ) : tab === "finale" ? (
           <AdminFinalePanel />
         ) : (
           <HuntRulesPanel
