@@ -713,7 +713,7 @@ const el = {
     holdStamp: "ΣΕ ΑΝΑΜΟΝΗ",
     holdFrom: "Από την ομάδα του κυνηγιού",
     holdWaitHint: "Θα ενημερωθείς σε αυτή τη σελίδα μόλις ανοίξει το επόμενο βήμα.",
-    holdShort: "Το ίχνος έκλεισε, το επόμενο βήμα δεν άνοιξε ακόμη",
+    holdShort: "Το ταξίδι σχεδόν τελείωσε",
     // The alert shown to a held crew the moment the hold is lifted
     releaseTitle: "Ο δρόμος άνοιξε",
     releaseBody: "Το σημείωμα του Πυθέα σε περιμένει στο ημερολόγιο.",
@@ -1752,7 +1752,7 @@ const en: Dictionary = {
     holdStamp: "ON HOLD",
     holdFrom: "From the hunt team",
     holdWaitHint: "We will let you know on this page the moment the next step opens.",
-    holdShort: "Trail closed, the next step has not opened yet",
+    holdShort: "The journey is almost over",
     releaseTitle: "The way is open",
     releaseBody: "Pytheas's note is waiting for you in the journal.",
     releaseCta: "Read the note",

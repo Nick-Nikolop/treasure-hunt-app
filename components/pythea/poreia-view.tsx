@@ -1916,16 +1916,25 @@ function PaperPill({
   icon: Icon,
   label,
   onClick,
+  /** Draws the eye with a slow brass glow and an occasional nudge. */
+  glow = false,
 }: {
   icon: typeof Compass
   label: string
   onClick: () => void
+  glow?: boolean
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="group inline-flex items-center gap-2 rounded-full border border-ink/25 bg-ink/[0.04] px-4 py-2 font-sans text-[11px] font-bold tracking-chip text-ink/70 transition-colors hover:bg-ink/[0.09] hover:text-ink"
+      className={`group inline-flex items-center gap-2 rounded-full border px-4 py-2 font-sans text-[11px] font-bold tracking-chip transition-colors ${
+        glow
+          ? // Warmer resting state, so it still reads as the live one at the
+            // moment the glow passes through its trough.
+            "animate-hold-pill border-brass/60 bg-brass/[0.14] text-ink hover:bg-brass/25"
+          : "border-ink/25 bg-ink/[0.04] text-ink/70 hover:bg-ink/[0.09] hover:text-ink"
+      }`}
     >
       <Icon className="size-3.5 transition-transform group-hover:-rotate-6" aria-hidden />
       {label}
@@ -1992,7 +2001,12 @@ function FinalPageBody({
       {(showHold || showNote1 || showNote2 || finished) && (
         <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
           {showHold && (
-            <PaperPill icon={Hourglass} label={t.finale.holdShort} onClick={() => setOpen("hold")} />
+            <PaperPill
+              icon={Hourglass}
+              label={t.finale.holdShort}
+              onClick={() => setOpen("hold")}
+              glow
+            />
           )}
           {showNote1 && (
             <PaperPill
