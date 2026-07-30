@@ -52,11 +52,16 @@ export async function verifyScan(
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return { ok: false, reason: "auth" }
 
+  // Recorded on the unlock so the activity feed can tell an automated GPS pass
+  // apart from an unverified superadmin bypass. Both arrive via the same QR.
+  let source: "gps" | "skip" = "gps"
+
   if ("skip" in payload) {
     // Only superadmins may bypass the location gate. This is the placeholder
     // fallback so an admin can proceed if their location is denied/unavailable.
     const admin = await getAdminUser()
     if (!admin) return { ok: false, reason: "forbidden_skip" }
+    source = "skip"
   } else {
     const check = await checkScanLocation(token, payload.lat, payload.lng)
     // Silently record where this scan was attempted from. Best-effort only: it
@@ -81,7 +86,7 @@ export async function verifyScan(
     }
   }
 
-  const result = await unlockByToken(session.user.id, token)
+  const result = await unlockByToken(session.user.id, token, {}, source)
   return { ok: true, result }
 }
 
@@ -172,7 +177,10 @@ export async function bypassCooldownScan(token: string): Promise<BypassCooldownR
   const admin = await getAdminUser()
   if (!admin) return { ok: false, reason: "forbidden" }
 
-  const result = await unlockByToken(session.user.id, token, { bypassCooldown: true })
+  // "skip": this call performs no location check of its own, so it must not be
+  // logged as an automated GPS pass even though the crew may have passed one
+  // moments earlier on the gate screen.
+  const result = await unlockByToken(session.user.id, token, { bypassCooldown: true }, "skip")
   return { ok: true, result }
 }
 

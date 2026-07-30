@@ -201,7 +201,34 @@ export async function getCrewEffectiveProgress(
  * activity log, so the admin feed can say whether an explorer scanned the QR
  * themselves or had a photo proof approved.
  */
-export type UnlockSource = "qr" | "proof"
+/**
+ * How a lead was actually passed. Scanning the QR is the entry point for BOTH
+ * routes, so the QR itself distinguishes nothing; what differs is how presence
+ * at the mark was established:
+ *
+ * - "gps"   the automated location check in `verifyScan` put the explorer inside
+ *           the lead's radius.
+ * - "proof" the GPS check could not be satisfied, so a photo was submitted and
+ *           an admin approved it by hand.
+ * - "skip"  a superadmin bypassed a verification step (an unavailable location
+ *           gate, or the solve cooldown), so this unlock was not fully verified.
+ *           Worth surfacing separately: neither automated nor reviewed.
+ * - "nogate" the lead has no coordinates configured, so no location check was
+ *           possible. Not a pass or a failure, just nothing to verify against.
+ * - "admin" an admin set the crew's progress by hand from the dashboard, so no
+ *           scan happened at all.
+ * - "time"  the timed opener, which unlocks on a clock rather than a scan.
+ *
+ * Legacy rows written before this distinction existed store "qr" and cannot be
+ * split retroactively into gps-vs-skip, so readers must tolerate that value.
+ */
+export type UnlockSource =
+  | "gps"
+  | "proof"
+  | "skip"
+  | "nogate"
+  | "admin"
+  | "time"
 
 async function ensureUpTo(
   userIds: string[],
@@ -277,8 +304,11 @@ export async function setProgressForUsers(
   const at = new Date()
   await trimAbove(userIds, target)
   await ensureUpTo(userIds, target, source, at)
-  if (finale) await insertCompassRows(userIds, at)
-  if (stage === "treasure") await insertFinishRows(userIds, at)
+  // Forward the caller's source (default "admin"): these rows are a manual
+  // dashboard override, never an automated pass.
+  const finaleSource: UnlockSource = source === "time" ? "time" : "admin"
+  if (finale) await insertCompassRows(userIds, at, finaleSource)
+  if (stage === "treasure") await insertFinishRows(userIds, at, finaleSource)
 }
 
 export type UnlockResult =
@@ -348,7 +378,7 @@ async function crewHasFinished(userIds: string[]): Promise<boolean> {
 async function insertFinishRows(
   userIds: string[],
   at: Date,
-  source: UnlockSource = "qr",
+  source: UnlockSource = "gps",
 ): Promise<void> {
   if (userIds.length === 0) return
   const existing = await db
@@ -416,7 +446,7 @@ async function crewHasReachedTrailEnd(userIds: string[]): Promise<boolean> {
 async function insertTrailEndRows(
   userIds: string[],
   at: Date,
-  source: UnlockSource = "qr",
+  source: UnlockSource = "gps",
 ): Promise<void> {
   if (userIds.length === 0) return
   const existing = await db
@@ -453,7 +483,7 @@ async function crewHasReachedCompass(userIds: string[]): Promise<boolean> {
 async function insertCompassRows(
   userIds: string[],
   at: Date,
-  source: UnlockSource = "qr",
+  source: UnlockSource = "gps",
 ): Promise<void> {
   if (userIds.length === 0) return
   const existing = await db
@@ -490,10 +520,10 @@ function finaleStepName(leadOrder: number): string {
  * Record a lead solve / finish in the activity log. The scanner is the actor;
  * a scan advances the whole crew, so we tag the scanner's team for context.
  *
- * `via` records HOW the lead was passed: "qr" for a QR the explorer scanned
- * themselves, "proof" for a photo an admin reviewed and approved. The activity
- * feed shows this, so it must never be assumed — a proof-approved lead read as
- * "scanned" before this was threaded through.
+ * `via` records HOW the lead was passed (see UnlockSource).
+ * The activity feed shows this, so it must never be assumed: a proof-approved
+ * lead read as "scanned" before this was threaded through, and every non-proof
+ * unlock read as a plain QR scan even though the QR is common to both routes.
  */
 async function logLeadSolved(
   userId: string,
@@ -501,7 +531,7 @@ async function logLeadSolved(
   country: string,
   countryEn: string,
   finished: boolean,
-  via: UnlockSource = "qr",
+  via: UnlockSource = "gps",
 ): Promise<void> {
   const snap = await resolveUserSnapshot(userId)
   const tm = await db
@@ -533,7 +563,7 @@ async function logLeadSolved(
       : via === "proof"
         ? `${snap.name} passed lead No. ${padded} via approved photo proof (${country})`
         : `${snap.name} solved lead No. ${padded} by scanning the QR (${country})`,
-    metadata: { source: via, country, countryEn, crewScan: via === "qr", step: leadOrder },
+    metadata: { source: via, country, countryEn, crewScan: via !== "proof", step: leadOrder },
   })
 }
 
@@ -549,6 +579,13 @@ export async function unlockByToken(
   userId: string,
   token: string,
   opts: { bypassCooldown?: boolean } = {},
+  /**
+   * How presence at the mark was established for THIS unlock. Never "proof":
+   * proof-approved leads go through the separate admin path. Defaults to the
+   * CONSERVATIVE "nogate" so a caller that forgets to pass one can never be
+   * mislabelled as an automated GPS pass that did not happen.
+   */
+  source: Exclude<UnlockSource, "proof"> = "nogate",
 ): Promise<UnlockResult> {
   // Resolve the token to the STABLE lead id it was bound to. Progression is
   // then evaluated against that lead's CURRENT position, so a printed QR keeps
@@ -579,8 +616,8 @@ export async function unlockByToken(
       return { status: "out_of_order", required: total, current, leadOrder: TRAIL_END_ORDER }
     }
     if (!(await crewHasReachedTrailEnd(crew))) {
-      await insertTrailEndRows(crew, new Date(now))
-      await logLeadSolved(userId, TRAIL_END_ORDER, last.country, last.countryEn, true)
+      await insertTrailEndRows(crew, new Date(now), source)
+      await logLeadSolved(userId, TRAIL_END_ORDER, last.country, last.countryEn, true, source)
     }
     return { status: "trail_end_reached" }
   }
@@ -603,8 +640,8 @@ export async function unlockByToken(
       return { status: "out_of_order", required: total, current, leadOrder: COMPASS_ORDER }
     }
     if (!(await crewHasReachedCompass(crew))) {
-      await insertCompassRows(crew, new Date(now))
-      await logLeadSolved(userId, COMPASS_ORDER, last.country, last.countryEn, true)
+      await insertCompassRows(crew, new Date(now), source)
+      await logLeadSolved(userId, COMPASS_ORDER, last.country, last.countryEn, true, source)
     }
     return { status: "compass_reached" }
   }
@@ -634,8 +671,8 @@ export async function unlockByToken(
         countryEn: last.countryEn,
       }
     }
-    await insertFinishRows(crew, new Date(now))
-    await logLeadSolved(userId, FINISH_ORDER, last.country, last.countryEn, true)
+    await insertFinishRows(crew, new Date(now), source)
+    await logLeadSolved(userId, FINISH_ORDER, last.country, last.countryEn, true, source)
     return { status: "finished", country: last.country, countryEn: last.countryEn }
   }
 
@@ -663,8 +700,8 @@ export async function unlockByToken(
     if (cooldown) return cooldown
   }
 
-  await ensureUpTo(crew, leadOrder, "qr", new Date(now))
-  await logLeadSolved(userId, leadOrder, clue.country, clue.countryEn, false)
+  await ensureUpTo(crew, leadOrder, source, new Date(now))
+  await logLeadSolved(userId, leadOrder, clue.country, clue.countryEn, false, source)
   return { status: "unlocked", leadOrder, country: clue.country, countryEn: clue.countryEn }
 }
 

@@ -84,7 +84,11 @@ export const teamMember = pgTable("team_member", {
 
 // One row per (user, lead) the user has unlocked. This is the history that
 // powers both progression and the leaderboard ("reached lead N at time T").
-// `source` records how it was unlocked: "qr" | "time" | "admin".
+// `source` records how it was unlocked: "gps" (automated location check passed),
+// "proof" (admin approved a photo), "skip" (superadmin bypassed a check),
+// "nogate" (lead has no coordinates to check), "time" (timed opener) or "admin"
+// (set by hand from the dashboard). Legacy rows store "qr", which predates the
+// gps/skip/nogate split. Audit-only: nothing reads this to make decisions.
 export const leadUnlock = pgTable("lead_unlock", {
   id: text("id").primaryKey(),
   userId: text("userId").notNull(),

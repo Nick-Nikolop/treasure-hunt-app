@@ -1,10 +1,14 @@
 "use client"
 
 import { useMemo, useRef, useState, useTransition } from "react"
+import type { LucideIcon } from "lucide-react"
 import {
   Search,
   X,
   Compass,
+  Satellite,
+  ShieldAlert,
+  MapPinOff,
   Users,
   Shield,
   LogIn,
@@ -47,18 +51,58 @@ function categoryMeta(category: string): {
 }
 
 /**
- * How the explorer passed the lead, for `lead` events only: "qr" when they
- * scanned it themselves, "proof" when an admin approved their photo.
+ * How a lead was passed. Scanning the QR is the entry point for BOTH routes, so
+ * a "QR SCAN" badge would say nothing: what matters is whether the automated GPS
+ * check placed the crew at the mark, or an admin approved a photo by hand.
  *
- * Reads `metadata.source`, written by `logLeadSolved`. Returns null for anything
- * that is not a lead solve/finish (team, auth and admin events have no method),
- * and also for the handful of legacy rows recorded before the method was tracked,
- * so an unknown row shows no badge rather than a wrong one.
+ * "legacy" is for rows written before the distinction was recorded (stored as
+ * "qr"). Those cannot be split into gps-vs-skip retroactively, so they get a
+ * neutral chip rather than a confident and possibly wrong one. Unrecognised
+ * values return null, so an unknown source shows no badge instead of a lie.
  */
-function passMethod(row: ActivityRow): "qr" | "proof" | null {
+type PassMethod = "gps" | "proof" | "skip" | "nogate" | "legacy"
+
+const PASS_METHODS: Record<
+  PassMethod,
+  { label: string; title: string; icon: LucideIcon; className: string }
+> = {
+  gps: {
+    label: "GPS CHECK",
+    title: "Passed automatically: the location check placed them inside the lead's radius",
+    icon: Satellite,
+    className: "border-brass/45 bg-brass/15 text-brass",
+  },
+  proof: {
+    label: "PHOTO PROOF",
+    title: "Passed by photo proof, reviewed and approved by an admin",
+    icon: Camera,
+    className: "border-sky-500/45 bg-sky-500/15 text-sky-400",
+  },
+  skip: {
+    label: "CHECK SKIPPED",
+    title: "A superadmin bypassed a verification step, so this unlock was not fully verified",
+    icon: ShieldAlert,
+    className: "border-amber-500/45 bg-amber-500/15 text-amber-400",
+  },
+  nogate: {
+    label: "NO GPS GATE",
+    title: "This lead has no coordinates configured, so no location check was possible",
+    icon: MapPinOff,
+    className: "border-border bg-muted/40 text-muted-foreground",
+  },
+  legacy: {
+    label: "QR SCAN",
+    title: "Logged before GPS and skip were recorded separately, so the exact route is unknown",
+    icon: QrCode,
+    className: "border-border bg-muted/40 text-muted-foreground",
+  },
+}
+
+function passMethod(row: ActivityRow): PassMethod | null {
   if (row.category !== "lead") return null
   const src = (row.metadata as { source?: unknown } | null)?.source
-  return src === "proof" ? "proof" : src === "qr" ? "qr" : null
+  if (src === "gps" || src === "proof" || src === "skip" || src === "nogate") return src
+  return src === "qr" ? "legacy" : null
 }
 
 function fmtDateTime(d: Date | string) {
@@ -267,27 +311,18 @@ function ActivityItem({ row }: { row: ActivityRow }) {
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <p className="font-sans text-sm text-foreground">{row.summary}</p>
-          {/* How this lead was passed: scanned in person, or a photo an admin
-              approved. Only lead events carry this. */}
+          {/* How presence at the mark was established. The QR is common to both
+              routes, so this names the actual verification, not the scan. */}
           {via && (
             <span
-              className={
-                via === "proof"
-                  ? "inline-flex shrink-0 items-center gap-1 rounded-full border border-sky-500/45 bg-sky-500/15 px-2 py-0.5 font-sans text-[10px] font-bold tracking-chip text-sky-400"
-                  : "inline-flex shrink-0 items-center gap-1 rounded-full border border-brass/45 bg-brass/15 px-2 py-0.5 font-sans text-[10px] font-bold tracking-chip text-brass"
-              }
-              title={
-                via === "proof"
-                  ? "Passed by photo proof, reviewed and approved by an admin"
-                  : "Passed by scanning the QR in person"
-              }
+              className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 font-sans text-[10px] font-bold tracking-chip ${PASS_METHODS[via].className}`}
+              title={PASS_METHODS[via].title}
             >
-              {via === "proof" ? (
-                <Camera className="size-3" aria-hidden />
-              ) : (
-                <QrCode className="size-3" aria-hidden />
-              )}
-              {via === "proof" ? "PHOTO PROOF" : "QR SCAN"}
+              {(() => {
+                const Glyph = PASS_METHODS[via].icon
+                return <Glyph className="size-3" aria-hidden />
+              })()}
+              {PASS_METHODS[via].label}
             </span>
           )}
         </div>

@@ -45,7 +45,7 @@ export default async function ScanPage({
           <ScanGate token={token} isSuperAdmin={isSuperAdmin} />
         ) : (
           <ScanResult
-            result={await unlockByToken(session.user.id, token)}
+            result={await unlockByToken(session.user.id, token, {}, "nogate")}
             token={token}
             isSuperAdmin={isSuperAdmin}
           />
