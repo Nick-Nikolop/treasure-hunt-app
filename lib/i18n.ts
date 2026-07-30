@@ -239,7 +239,7 @@ const el = {
         num: "05",
         eyebrow: "ΜΙΑ ΟΜΑΔΑ, ΜΙΑ ΠΟΡΕΙΑ",
         title: "Όλη η ομάδα προχωρά μαζί",
-        body: "Η πρόοδος είναι κοινή για όλη την ομάδα. Αρκεί ένα μέλος να σκανάρει έναν κωδικό και ξεκλειδώνει για όλους. Το ίδιο ισχύει και όταν εγκρίνεται μια απόδειξη με φωτογραφίες.",
+        body: "Η πρόοδος ��ίναι κοινή για όλη την ομάδα. Αρκεί ένα μέλος να σκανάρει έναν κωδικό και ξεκλειδώνει για όλους. Το ίδιο ισχύει και όταν εγκρίνεται μια απόδειξη με φωτογραφίες.",
         points: [
           "Το σκανάρισμα ενός μέλους προχωρά ολόκληρη την ομάδα.",
           "Δεν χρειάζεται να είστε όλοι στο ίδιο σημείο ταυτόχρονα.",
@@ -694,6 +694,8 @@ const el = {
     note1Short: "ΠΡΩΤΟ ΣΗΜΕΙΩΜΑ",
     note2Short: "ΔΕΥΤΕΡΟ ΣΗΜΕΙΩΜΑ",
     note2Label: "ΤΟ ΔΕΥΤΕΡΟ ΣΗΜΕΙΩΜΑ ΤΟΥ ΠΥΘΕΑ",
+    wonShort: "ΒΡΗΚΕΣ ΤΟΝ ΘΗΣΑΥΡΟ",
+    wonHint: "Η οθόνη νίκης, όπως θα τη δει μια ομάδα που τερμάτισε.",
     // Shown only to superadmins, on a note they have not actually earned yet
     adminOnly: "ΜΟΝΟ ΓΙΑ ADMIN",
     adminNote1Hint:
@@ -816,7 +818,7 @@ const el = {
     approvedBody: "Ένας διαχειριστής επιβεβαίωσε ότι ήσουν στο σημάδι. Το {country} ξεκλειδώθηκε.",
     rejectedLabel: "ΑΠΟΡΡΙΦΘΗΚΕ",
     rejectedTitle: "Η απόδειξή σου απορρίφθηκε",
-    rejectedBody: "Ένας διαχειριστής δεν μπόρεσε να επιβεβαιώσει ότι ήσουν στο σημάδι για το {country}.",
+    rejectedBody: "Ένας διαχειριστής δεν μπόρε��ε να επιβεβαιώσει ότι ήσουν στο σημάδι για το {country}.",
     reasonLabel: "Αιτιολογία",
     viewCta: "ΑΝΟΙΞΕ ΤΟ ΗΜΕΡΟΛΟΓΙΟ",
     retryHint: "Μπορείς να ξαναδοκιμάσεις τον έλεγχο τοποθεσίας ή να στείλεις νέες φωτογραφίες.",
@@ -989,7 +991,7 @@ const el = {
     // forgot password (request a reset link)
     forgotPasswordCta: "Ξέχασες τον κωδικό σου;",
     forgotTitle: "Επαναφορά κωδικού",
-    forgotSubtitle: "Δώσε το email σου και θα σου στείλουμε έναν σύνδεσμο για να ορίσεις νέο κωδικό.",
+    forgotSubtitle: "Δώσε το email σου και θα σου στείλουμε έν��ν σύνδεσμο για να ορίσεις νέο κωδικό.",
     forgotSendCta: "Στείλε τον σύνδεσμο",
     forgotSending: "Γίνεται αποστολή...",
     forgotSentTitle: "Έλεγξε το email σου",
@@ -1714,6 +1716,8 @@ const en: Dictionary = {
     note1Short: "FIRST NOTE",
     note2Short: "SECOND NOTE",
     note2Label: "THE SECOND NOTE FROM PYTHEAS",
+    wonShort: "YOU FOUND THE TREASURE",
+    wonHint: "The winner screen, exactly as a finishing crew sees it.",
     adminOnly: "ADMIN ONLY",
     adminNote1Hint:
       "Only you can see this, as an admin. For ordinary explorers this button does not exist at all. It appears for them only when they scan the final lead's QR at its own spot: that scan closes the trail and unlocks the first note, which sends them to the compass.",

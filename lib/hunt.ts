@@ -379,6 +379,16 @@ export async function hasReachedCompass(userId: string): Promise<boolean> {
   return crewHasReachedCompass(crew)
 }
 
+/**
+ * Whether the signed-in user's crew has found the treasure. Powers the journal's
+ * re-readable winner pill, so a crew that finished (by QR or by an approved photo
+ * proof, which never shows them the live winner screen) can always get back to it.
+ */
+export async function hasFinished(userId: string): Promise<boolean> {
+  const crew = await getCrewUserIds(userId)
+  return crewHasFinished(crew)
+}
+
 /** Whether any member of the crew has scanned the trail-end QR (the QR at the
  *  last lead's own spot), which is what closes the paper trail. */
 async function crewHasReachedTrailEnd(userIds: string[]): Promise<boolean> {

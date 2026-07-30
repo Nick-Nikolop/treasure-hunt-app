@@ -16,6 +16,7 @@ import { COMPASS_SRC, DEFAULT_COMPASS_OPACITY_PCT } from "@/lib/compass"
 import { getFinaleNotes, type FinaleNote } from "@/app/journal/actions"
 import { HandwrittenNote } from "@/components/pythea/handwritten-note"
 import { WinnerPreviewButton } from "@/components/pythea/winner-preview-button"
+import { WinnerScreenPreview } from "@/components/pythea/winner-reveal"
 import { motion } from "framer-motion"
 import {
   Lock,
@@ -29,6 +30,8 @@ import {
   ScrollText,
   Gem,
   EyeOff,
+  Trophy,
+  X,
 } from "lucide-react"
 import type { Clue, LockedClue } from "@/lib/clues"
 import { buildVoyageRoute, TREASURE_XY } from "@/lib/voyage-map"
@@ -83,6 +86,13 @@ type Props = {
   trailEndReached: boolean
   /** True once the crew scanned the compass QR, which releases the second note. */
   compassReached: boolean
+  /**
+   * True once the crew has found the treasure. Keeps the winner screen within
+   * reach from the journal, which matters most for a crew that finished by an
+   * approved photo proof: that unlock happens while they are nowhere near the
+   * scan page, so they would otherwise never see their winner screen at all.
+   */
+  finished: boolean
   /** Superadmins see both notes here at all times, so the finale can be
    *  proofread from the journal without planting fake scans. */
   isAdmin: boolean
@@ -132,6 +142,7 @@ export function PoreiaView({
   unlockedCount,
   trailEndReached,
   compassReached,
+  finished,
   isAdmin,
   total,
   next,
@@ -425,7 +436,7 @@ export function PoreiaView({
           own spot, not merely by the last page being revealed. Once earned it is
           kept within reach here, so it need not be re-read by flipping all the
           way to the last page. */}
-      {(trailEndReached || compassReached || isAdmin) && (
+      {(trailEndReached || compassReached || finished || isAdmin) && (
         <motion.div
           initial={lite ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -435,6 +446,7 @@ export function PoreiaView({
           <FinaleNoteBar
             trailEndReached={trailEndReached}
             compassReached={compassReached}
+            finished={finished}
             isAdmin={isAdmin}
           />
         </motion.div>
@@ -1493,15 +1505,17 @@ function NotePill({
 function FinaleNoteBar({
   trailEndReached,
   compassReached,
+  finished,
   isAdmin,
 }: {
   trailEndReached: boolean
   compassReached: boolean
+  finished: boolean
   isAdmin: boolean
 }) {
   const { t } = useI18n()
   const { note1, note2 } = useFinaleNotes()
-  const [open, setOpen] = useState<null | 1 | 2>(null)
+  const [open, setOpen] = useState<null | 1 | 2 | "won">(null)
 
   // Only closing the FIRST note marks it as read. Closing the second one must
   // not, or an admin previewing note 2 early would suppress the final page's
@@ -1516,7 +1530,11 @@ function FinaleNoteBar({
   // The note body itself is only ever present when the server chose to send it.
   const show1 = note1 !== null && (trailEndReached || isAdmin)
   const show2 = note2 !== null && (compassReached || isAdmin)
-  if (!show1 && !show2) return null
+  // The winner pill is earned, never previewed: admins already have their own
+  // clearly-labelled preview button at the foot of the journal, so showing this
+  // one to them too would just be a second, unlabelled copy of the same screen.
+  const showWon = finished
+  if (!show1 && !show2 && !showWon) return null
 
   return (
     <>
@@ -1539,6 +1557,18 @@ function FinaleNoteBar({
             onClick={() => setOpen(2)}
           />
         )}
+        {/* Solid brass, unlike the notes: this crew won, so it should look like
+            a trophy rather than another piece of stationery. */}
+        {showWon && (
+          <button
+            type="button"
+            onClick={() => setOpen("won")}
+            className="group inline-flex items-center gap-2 rounded-full border border-brass bg-brass px-4 py-2 font-sans text-[11px] font-bold tracking-chip text-primary-foreground transition-transform hover:scale-[1.03]"
+          >
+            <Trophy className="size-3.5 transition-transform group-hover:-rotate-6" aria-hidden />
+            {t.finale.wonShort}
+          </button>
+        )}
       </div>
 
       {open === 1 && note1 && (
@@ -1559,7 +1589,66 @@ function FinaleNoteBar({
           onClose={closeNote2}
         />
       )}
+      {open === "won" && <WonOverlay onClose={() => setOpen(null)} />}
     </>
+  )
+}
+
+/**
+ * The winner screen, re-openable from the journal by a crew that has finished.
+ *
+ * Reuses `WinnerScreenPreview` because it renders the very same `WinnerScreen`
+ * from the live finale copy WITHOUT firing the `huntFinished` analytics event —
+ * re-reading your own winner screen is not a second finish, so it must not be
+ * counted as one. No preview chrome here: for a real finisher this is the story,
+ * not scaffolding.
+ */
+function WonOverlay({ onClose }: { onClose: () => void }) {
+  const { t } = useI18n()
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose()
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [onClose])
+
+  // The overlay scrolls internally, so the page behind it should not.
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [])
+
+  return (
+    <div
+      className="fixed inset-0 z-[80] overflow-y-auto bg-black/70 p-4 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-label={t.finale.wonShort}
+      onClick={onClose}
+    >
+      <div
+        className="mx-auto my-auto flex min-h-full w-full max-w-lg flex-col justify-center gap-4 py-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <WinnerScreenPreview />
+        <div className="flex justify-center">
+          <button
+            type="button"
+            autoFocus
+            onClick={onClose}
+            className="inline-flex items-center gap-2 rounded-full border border-brass/50 bg-brass/15 px-5 py-2 font-sans text-[11px] font-bold tracking-chip text-brass transition-colors hover:bg-brass/25"
+          >
+            <X className="size-3.5" aria-hidden />
+            {t.journal.adminLockedClose}
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }
 

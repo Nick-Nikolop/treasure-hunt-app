@@ -14,6 +14,7 @@ import {
   getStandingsSummary,
   hasReachedTrailEnd,
   hasReachedCompass,
+  hasFinished,
 } from "@/lib/hunt"
 import { getAdminUser } from "@/lib/admin"
 import { getLeadDefs } from "@/lib/leads"
@@ -104,6 +105,11 @@ export default async function PoreiaPage() {
   const compassReached = overrideActive
     ? state.unlockedCount >= state.total
     : await hasReachedCompass(session.user.id)
+
+  // The winner pill is shown only to a crew that really holds the finish row, so
+  // it is deliberately NOT faked by the superadmin progress override: admins
+  // proofread the winner screen with the labelled preview button instead.
+  const finished = await hasFinished(session.user.id)
   const isAdmin = (await getAdminUser()) !== null
 
   // Superadmins can page through leads the crew has not unlocked yet, so the
@@ -132,6 +138,7 @@ export default async function PoreiaPage() {
           unlockedCount={state.unlockedCount}
           trailEndReached={trailEndReached}
           compassReached={compassReached}
+          finished={finished}
           isAdmin={isAdmin}
           total={state.total}
           startMs={state.startMs}
