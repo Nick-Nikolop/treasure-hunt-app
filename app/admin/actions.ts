@@ -1996,6 +1996,16 @@ export async function adminSaveFinale(input: {
   winnerNoteEn: string
   /** Bare "HH:MM" time the hunt closes. Sanitized in `setFinaleConfig`. */
   huntEndsAt: string
+  /**
+   * Copy for the trail-end hold paper. Optional so an older client that does not
+   * send it leaves the existing wording alone instead of resetting it. The hold
+   * TOGGLE is deliberately NOT here: releasing crews is a separate, confirmed
+   * action (`adminSetTrailEndHold`) rather than a side effect of saving copy.
+   */
+  holdTitle?: string
+  holdTitleEn?: string
+  holdBody?: string
+  holdBodyEn?: string
 }): Promise<ActionResult> {
   const admin = await requireAdmin()
 
@@ -2026,6 +2036,12 @@ export async function adminSaveFinale(input: {
     winnerNote: input.winnerNote ?? "",
     winnerNoteEn: input.winnerNoteEn ?? "",
     huntEndsAt: input.huntEndsAt ?? "",
+    // Never altered by a copy save: only adminSetTrailEndHold moves this.
+    holdEnabled: current.holdEnabled,
+    holdTitle: input.holdTitle ?? current.holdTitle,
+    holdTitleEn: input.holdTitleEn ?? current.holdTitleEn,
+    holdBody: input.holdBody ?? current.holdBody,
+    holdBodyEn: input.holdBodyEn ?? current.holdBodyEn,
   })
 
   await logActivity({
@@ -2033,6 +2049,70 @@ export async function adminSaveFinale(input: {
     action: "admin.finale_updated",
     ...adminActor(admin),
     summary: `${adminActor(admin).actorName} updated the finale notes`,
+  })
+  revalidatePath("/admin")
+  revalidatePath("/journal")
+  return { ok: true }
+}
+
+/**
+ * Turn the trail-end hold on or off.
+ *
+ * Its own action rather than part of the finale copy save, because releasing the
+ * hold is consequential and immediate: every crew parked after lead 10 is freed
+ * at once and gets an alert. A dedicated action means one confirmed click, its
+ * own activity-log entry, and no chance of a stray form save releasing everyone.
+ *
+ * `setFinaleConfig` stamps `holdLiftedAt` on the on -> off transition, which is
+ * what makes the release alert targetable.
+ */
+export async function adminSetTrailEndHold(input: { enabled: boolean }): Promise<ActionResult> {
+  const admin = await requireAdmin()
+  const enabled = input.enabled === true
+
+  const current = await getFinaleConfig()
+  if (current.holdEnabled === enabled) return { ok: true }
+
+  await setFinaleConfig({
+    lat: current.lat,
+    lng: current.lng,
+    radiusM: current.radiusM,
+    treasureLat: current.treasureLat,
+    treasureLng: current.treasureLng,
+    treasureRadiusM: current.treasureRadiusM,
+    trailEndLat: current.trailEndLat,
+    trailEndLng: current.trailEndLng,
+    trailEndRadiusM: current.trailEndRadiusM,
+    note1: current.note1,
+    note1En: current.note1En,
+    note1Cta: current.note1Cta,
+    note1CtaEn: current.note1CtaEn,
+    compassHints: current.compassHints,
+    compassReturn: current.compassReturn,
+    compassReturnEn: current.compassReturnEn,
+    note2: current.note2,
+    note2En: current.note2En,
+    note2Cta: current.note2Cta,
+    note2CtaEn: current.note2CtaEn,
+    winner: current.winner,
+    winnerEn: current.winnerEn,
+    winnerNote: current.winnerNote,
+    winnerNoteEn: current.winnerNoteEn,
+    huntEndsAt: current.huntEndsAt,
+    holdEnabled: enabled,
+    holdTitle: current.holdTitle,
+    holdTitleEn: current.holdTitleEn,
+    holdBody: current.holdBody,
+    holdBodyEn: current.holdBodyEn,
+  })
+
+  await logActivity({
+    category: "admin",
+    action: enabled ? "admin.hold_enabled" : "admin.hold_lifted",
+    ...adminActor(admin),
+    summary: enabled
+      ? `${adminActor(admin).actorName} sealed the first note again after lead 10`
+      : `${adminActor(admin).actorName} lifted the hold after lead 10, releasing the first note`,
   })
   revalidatePath("/admin")
   revalidatePath("/journal")
@@ -2074,6 +2154,11 @@ export async function adminSaveFinaleGeo(input: {
     // Carried through untouched: this action only moves a QR gate, and dropping
     // these would reset every hint variant to its default mid-hunt.
     compassHints: current.compassHints,
+    holdEnabled: current.holdEnabled,
+    holdTitle: current.holdTitle,
+    holdTitleEn: current.holdTitleEn,
+    holdBody: current.holdBody,
+    holdBodyEn: current.holdBodyEn,
     compassReturn: current.compassReturn,
     compassReturnEn: current.compassReturnEn,
     note2: current.note2,

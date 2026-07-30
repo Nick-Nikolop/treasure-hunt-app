@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache"
 import { auth } from "@/lib/auth"
 import { isOverrideAuthorized, PREVIEW_COOKIE } from "@/lib/clues"
 import { getTotalLeads } from "@/lib/leads"
-import { getFinaleConfig, composeCompassNote } from "@/lib/finale"
+import { getFinaleConfig, composeCompassNote, isTrailEndHeld } from "@/lib/finale"
 import {
   getOrAssignCompassVariant,
   peekCompassVariant,
@@ -31,6 +31,18 @@ export type FinaleNote = {
 }
 
 /**
+ * The "please wait" paper shown INSTEAD of note 1 while the trail-end hold is on.
+ * Not secret (it deliberately reveals nothing about where anything is hidden), so
+ * it is sent to everyone and the `held` flag decides whether it is rendered.
+ */
+export type HoldPaper = {
+  title: string
+  titleEn: string
+  body: string
+  bodyEn: string
+}
+
+/**
  * Both of Pytheas's handwritten notes for the journal, each returned ONLY once
  * it has actually been earned: note 1 by scanning the final lead's QR (which
  * closes the paper trail), note 2 by scanning the compass QR.
@@ -53,6 +65,14 @@ export async function getFinaleNotes(previewVariant?: number): Promise<{
    * them: the four hints name four different hiding places.
    */
   variants: { active: number; count: number; assigned: number | null } | null
+  /**
+   * True when this viewer has closed the trail but the hold is still on, so
+   * `note1` is null for a reason that is NOT "unearned". The UI needs the two
+   * cases separated: one shows the hold paper, the other shows nothing at all.
+   */
+  held: boolean
+  /** Hold paper copy. Always sent, so admins can preview it on demand. */
+  hold: HoldPaper
 } | null> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return null
@@ -73,9 +93,17 @@ export async function getFinaleNotes(previewVariant?: number): Promise<{
   // on first read and keeps it forever; an admin/preview only PEEKS, so
   // proofreading the note never consumes a slot and never shifts what the next
   // real crew is handed. With nothing assigned yet, they preview the first hint.
+  // Admins and the preview override are never held, so the finale stays fully
+  // proofreadable from the journal while real crews are parked.
+  const held = !bypass && trailEnd && isTrailEndHeld(finale)
+  const note1Open = trailEnd && !held
+
+  // Deliberately gated on `note1Open`, not `trailEnd`: assigning a rotating hint
+  // to a held crew would burn a rotation slot for a note they cannot read yet.
+  // They are assigned one when the hold lifts and they actually open it.
   let variantIndex = 0
   let assigned: number | null = null
-  if (trailEnd) {
+  if (note1Open) {
     const crewKey = await resolveCrewKey(session.user.id)
     if (bypass) {
       assigned = await peekCompassVariant(crewKey)
@@ -101,7 +129,10 @@ export async function getFinaleNotes(previewVariant?: number): Promise<{
   const composed = composeCompassNote(finale, variantIndex)
 
   return {
-    note1: trailEnd
+    // Sealed on the SERVER, not merely hidden in the UI: this note names a real
+    // hiding place in Kalamata, so shipping it to a held crew's browser would
+    // hand them the compass location through devtools.
+    note1: note1Open
       ? {
           body: composed.body,
           bodyEn: composed.bodyEn,
@@ -123,6 +154,13 @@ export async function getFinaleNotes(previewVariant?: number): Promise<{
       bypass && trailEnd
         ? { active: variantIndex, count: COMPASS_VARIANT_COUNT, assigned }
         : null,
+    held,
+    hold: {
+      title: finale.holdTitle,
+      titleEn: finale.holdTitleEn,
+      body: finale.holdBody,
+      bodyEn: finale.holdBodyEn,
+    },
   }
 }
 

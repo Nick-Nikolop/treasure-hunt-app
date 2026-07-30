@@ -12,7 +12,7 @@ import {
   getFinishPlacement,
   type UnlockResult,
 } from "@/lib/hunt"
-import { getFinaleConfig, composeCompassNote } from "@/lib/finale"
+import { getFinaleConfig, composeCompassNote, isTrailEndHeld } from "@/lib/finale"
 import { getOrAssignCompassVariant, resolveCrewKey } from "@/lib/compass-variant"
 import { getLeadDefs } from "@/lib/leads"
 import {
@@ -119,6 +119,17 @@ export type FinaleSummary = {
   /** The top-3 prize fine-print, both languages. */
   winnerNote: string
   winnerNoteEn: string
+  /**
+   * True when the trail-end hold is on for this viewer, in which case `note1`
+   * and its call-to-action come back EMPTY and the hold paper below is what the
+   * trail-end screen must render instead.
+   */
+  held: boolean
+  /** Hold paper copy, both languages. */
+  holdTitle: string
+  holdTitleEn: string
+  holdBody: string
+  holdBodyEn: string
 }
 
 /**
@@ -131,25 +142,35 @@ export async function getFinaleSummary(): Promise<FinaleSummary | null> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return null
 
-  const [placement, finale, crewKey] = await Promise.all([
+  const [placement, finale, crewKey, admin] = await Promise.all([
     getFinishPlacement(session.user.id),
     getFinaleConfig(),
     resolveCrewKey(session.user.id),
+    getAdminUser(),
   ])
 
-  // Assign on demand so the hint shown the instant the trail-end QR is scanned is
-  // the same one the journal will keep showing this crew.
-  const composed = composeCompassNote(finale, await getOrAssignCompassVariant(crewKey))
+  // The SECOND place note 1 is handed out (the journal is the other), so the hold
+  // has to be enforced here too. Sealing only the journal would leave the hint
+  // readable straight off this response the moment the trail-end QR is scanned.
+  // Admins are exempt, so the finale stays proofreadable.
+  const held = admin === null && isTrailEndHeld(finale)
+
+  // Only composed when the note is actually being handed over. Assigning while
+  // held would burn a rotation slot on a hint the crew cannot read yet, and would
+  // shift which hint the next real crew receives.
+  const composed = held
+    ? { body: "", bodyEn: "" }
+    : composeCompassNote(finale, await getOrAssignCompassVariant(crewKey))
 
   return {
     place: placement.place,
     totalFinishers: placement.totalFinishers,
     note1: composed.body,
     note1En: composed.bodyEn,
-    compassReturn: finale.compassReturn,
-    compassReturnEn: finale.compassReturnEn,
-    note1Cta: finale.note1Cta,
-    note1CtaEn: finale.note1CtaEn,
+    compassReturn: held ? "" : finale.compassReturn,
+    compassReturnEn: held ? "" : finale.compassReturnEn,
+    note1Cta: held ? "" : finale.note1Cta,
+    note1CtaEn: held ? "" : finale.note1CtaEn,
     note2: finale.note2,
     note2En: finale.note2En,
     note2Cta: finale.note2Cta,
@@ -158,6 +179,11 @@ export async function getFinaleSummary(): Promise<FinaleSummary | null> {
     winnerEn: finale.winnerEn,
     winnerNote: finale.winnerNote,
     winnerNoteEn: finale.winnerNoteEn,
+    held,
+    holdTitle: finale.holdTitle,
+    holdTitleEn: finale.holdTitleEn,
+    holdBody: finale.holdBody,
+    holdBodyEn: finale.holdBodyEn,
   }
 }
 

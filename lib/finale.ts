@@ -96,6 +96,26 @@ const DEFAULT_WINNER_NOTE_EN =
   "Careful: you may have reached this point, but someone else may have arrived before you. If you are in the top 3 on the scoreboard, a nice sum awaits you…"
 
 /**
+ * The temporary hold that sits between the LAST lead and the compass hunt.
+ *
+ * Finland (the tenth and final lead) used to release note 1 the instant its QR
+ * was scanned. When the hold is on the scan still succeeds and the trail-end is
+ * still recorded, but note 1 is withheld and this paper is shown instead, so a
+ * crew that closes the trail early cannot start hunting the compass before the
+ * rest of the game is ready for them.
+ *
+ * Reassurance without numbers is deliberate: it promises their head start is
+ * safe WITHOUT naming their position, because the finishing order stays hidden
+ * until the closing ceremony.
+ */
+const DEFAULT_HOLD_TITLE = "\u03a4\u03bf \u03c4\u03b1\u03be\u03af\u03b4\u03b9 \u03c3\u03c7\u03b5\u03b4\u03cc\u03bd \u03c4\u03b5\u03bb\u03b5\u03af\u03c9\u03c3\u03b5"
+const DEFAULT_HOLD_TITLE_EN = "The journey is almost over"
+const DEFAULT_HOLD_BODY =
+  "\u0388\u03ba\u03bb\u03b5\u03b9\u03c3\u03b5\u03c2 \u03c4\u03bf \u03af\u03c7\u03bd\u03bf\u03c2. \u0394\u03ad\u03ba\u03b1 \u03c3\u03b7\u03bc\u03b5\u03af\u03b1, \u03b4\u03ad\u03ba\u03b1 \u03c7\u03ce\u03c1\u03b5\u03c2, \u03ba\u03b1\u03b9 \u03c4\u03bf \u03b7\u03bc\u03b5\u03c1\u03bf\u03bb\u03cc\u03b3\u03b9\u03bf \u03c4\u03bf\u03c5 \u03a0\u03c5\u03b8\u03ad\u03b1 \u03ad\u03c6\u03c4\u03b1\u03c3\u03b5 \u03c3\u03c4\u03bf \u03c4\u03ad\u03bb\u03bf\u03c2 \u03c4\u03bf\u03c5.\n\n\u038c\u03bc\u03c9\u03c2 \u03c4\u03bf \u03c4\u03b1\u03be\u03af\u03b4\u03b9 \u03b4\u03b5\u03bd \u03c4\u03b5\u03bb\u03b5\u03af\u03c9\u03c3\u03b5 \u03b1\u03ba\u03cc\u03bc\u03b7. \u039c\u03ad\u03bd\u03bf\u03c5\u03bd \u03ba\u03b9 \u03ac\u03bb\u03bb\u03b1 \u03b2\u03ae\u03bc\u03b1\u03c4\u03b1 \u03c0\u03c1\u03b9\u03bd \u03c6\u03c4\u03ac\u03c3\u03b5\u03b9\u03c2 \u03c3\u03c4\u03bf\u03bd \u03b8\u03b7\u03c3\u03b1\u03c5\u03c1\u03cc, \u03ba\u03b1\u03b9 \u03b4\u03b5\u03bd \u03ad\u03c7\u03bf\u03c5\u03bd \u03b1\u03bd\u03bf\u03af\u03be\u03b5\u03b9 \u03cc\u03bb\u03b1 \u03b1\u03ba\u03cc\u03bc\u03b7.\n\n\u039c\u03b7\u03bd \u03b1\u03bd\u03b7\u03c3\u03c5\u03c7\u03b5\u03af\u03c2: \u03ba\u03c1\u03b1\u03c4\u03ac\u03bc\u03b5 \u03c5\u03c0\u03cc\u03c8\u03b9\u03bd \u03c4\u03bf \u03c0\u03c1\u03bf\u03b2\u03ac\u03b4\u03b9\u03c3\u03bc\u03b1 \u03c0\u03bf\u03c5 \u03ad\u03c7\u03b5\u03b9\u03c2. \u038c,\u03c4\u03b9 \u03ba\u03ad\u03c1\u03b4\u03b9\u03c3\u03b5\u03c2 \u03bc\u03ad\u03c7\u03c1\u03b9 \u03b5\u03b4\u03ce \u03bc\u03ad\u03bd\u03b5\u03b9 \u03b4\u03b9\u03ba\u03cc \u03c3\u03bf\u03c5 \u03ba\u03b1\u03b9 \u03b4\u03b5\u03bd \u03c7\u03ac\u03bd\u03b5\u03c4\u03b1\u03b9 \u03cc\u03c3\u03bf \u03c0\u03b5\u03c1\u03b9\u03bc\u03ad\u03bd\u03b5\u03b9\u03c2.\n\n\u0398\u03b1 \u03c3\u03bf\u03c5 \u03c0\u03bf\u03cd\u03bc\u03b5 \u03b5\u03bc\u03b5\u03af\u03c2 \u03bc\u03cc\u03bb\u03b9\u03c2 \u03b1\u03bd\u03bf\u03af\u03be\u03b5\u03b9 \u03bf \u03b4\u03c1\u03cc\u03bc\u03bf\u03c2."
+const DEFAULT_HOLD_BODY_EN =
+  "You closed the trail. Ten marks, ten countries, and Pytheas's journal has reached its end.\n\nThe journey is not over yet, though. There are more steps before you reach the treasure, and not all of them have opened.\n\nDo not worry: your head start is safely on record. Everything you have earned so far stays yours and is not lost while you wait.\n\nWe will tell you the moment the way opens."
+
+/**
  * Default clock time the hunt closes, as a bare "HH:MM" string. Only the TIME
  * is configurable: the date is part of the localized copy, because the closing
  * party is a fixed calendar event while the hour has already moved once.
@@ -158,6 +178,30 @@ export type FinaleConfig = {
   winnerNoteEn: string
   /** Bare "HH:MM" clock time the hunt closes (see DEFAULT_HUNT_ENDS_AT). */
   huntEndsAt: string
+  /**
+   * Whether the trail-end hold is active. ON by default, so a fresh config row
+   * seals note 1 rather than accidentally releasing the compass hint early.
+   */
+  holdEnabled: boolean
+  /** Hold paper copy, shown instead of note 1 while held. */
+  holdTitle: string
+  holdTitleEn: string
+  holdBody: string
+  holdBodyEn: string
+  /**
+   * When the hold last went from on to off. This is what makes the release
+   * alert targetable: a bare boolean cannot distinguish a crew that sat through
+   * the hold from one that arrived after it was lifted and never saw it.
+   */
+  holdLiftedAt: Date | null
+}
+
+/**
+ * Whether note 1 must stay sealed. The single source of truth for the rule, so
+ * the journal, the scan screen and the compass QR cannot drift apart.
+ */
+export function isTrailEndHeld(cfg: Pick<FinaleConfig, "holdEnabled">): boolean {
+  return cfg.holdEnabled
 }
 
 // Provision the finale columns at most once per process. Mirrors the memoized
@@ -199,7 +243,13 @@ function ensureFinaleColumns(): Promise<void> {
            ADD COLUMN IF NOT EXISTS "finaleWinnerEn" text,
            ADD COLUMN IF NOT EXISTS "finaleWinnerNote" text,
            ADD COLUMN IF NOT EXISTS "finaleWinnerNoteEn" text,
-           ADD COLUMN IF NOT EXISTS "huntEndsAt" text`,
+           ADD COLUMN IF NOT EXISTS "huntEndsAt" text,
+           ADD COLUMN IF NOT EXISTS "holdEnabled" boolean,
+           ADD COLUMN IF NOT EXISTS "holdTitle" text,
+           ADD COLUMN IF NOT EXISTS "holdTitleEn" text,
+           ADD COLUMN IF NOT EXISTS "holdBody" text,
+           ADD COLUMN IF NOT EXISTS "holdBodyEn" text,
+           ADD COLUMN IF NOT EXISTS "holdLiftedAt" timestamptz`,
       )
       .then(() => undefined)
       .catch((err) => {
@@ -245,7 +295,9 @@ export async function getFinaleConfig(): Promise<FinaleConfig> {
             "finaleNote2Cta" AS n2c, "finaleNote2CtaEn" AS n2ce,
             "finaleWinner" AS w, "finaleWinnerEn" AS we,
             "finaleWinnerNote" AS wn, "finaleWinnerNoteEn" AS wne,
-            "huntEndsAt" AS ends
+            "huntEndsAt" AS ends,
+            "holdEnabled" AS hen, "holdTitle" AS ht, "holdTitleEn" AS hte,
+            "holdBody" AS hb, "holdBodyEn" AS hbe, "holdLiftedAt" AS hla
        FROM "score_config" WHERE id = 'default' LIMIT 1`,
   )
   const row = res.rows[0] as
@@ -282,6 +334,12 @@ export async function getFinaleConfig(): Promise<FinaleConfig> {
         wn: string | null
         wne: string | null
         ends: string | null
+        hen: boolean | null
+        ht: string | null
+        hte: string | null
+        hb: string | null
+        hbe: string | null
+        hla: Date | null
       }
     | undefined
 
@@ -337,6 +395,14 @@ export async function getFinaleConfig(): Promise<FinaleConfig> {
     winnerNote: textOr(row?.wn, DEFAULT_WINNER_NOTE),
     winnerNoteEn: textOr(row?.wne, DEFAULT_WINNER_NOTE_EN),
     huntEndsAt: normalizeHuntEndsAt(row?.ends),
+    // Defaults to TRUE: a null column means an admin has never touched the
+    // toggle, and the safe reading of that is "still held", never "wide open".
+    holdEnabled: row?.hen ?? true,
+    holdTitle: textOr(row?.ht, DEFAULT_HOLD_TITLE),
+    holdTitleEn: textOr(row?.hte, DEFAULT_HOLD_TITLE_EN),
+    holdBody: textOr(row?.hb, DEFAULT_HOLD_BODY),
+    holdBodyEn: textOr(row?.hbe, DEFAULT_HOLD_BODY_EN),
+    holdLiftedAt: row?.hla ?? null,
   }
 }
 
@@ -401,6 +467,12 @@ export type FinaleConfigInput = {
   winnerNoteEn: string
   /** "HH:MM" clock time the hunt closes. Invalid input falls back to default. */
   huntEndsAt: string
+  /** Trail-end hold. Turning this off releases every held crew at once. */
+  holdEnabled: boolean
+  holdTitle: string
+  holdTitleEn: string
+  holdBody: string
+  holdBodyEn: string
 }
 
 /** Upsert the finale configuration onto the single `score_config` row. */
@@ -437,6 +509,14 @@ export async function setFinaleConfig(input: FinaleConfigInput): Promise<void> {
 
   // The row always exists in practice (created by the scoring/phase setters),
   // but guard with an insert-or-update so a fresh DB still works.
+  //
+  // `holdLiftedAt` is stamped by a CASE in the UPDATE, i.e. the moment the hold
+  // is RELEASED (on -> off), rather than by reading the old value in JS first,
+  // so two admins saving at once cannot race and lose the timestamp.
+  // `IS DISTINCT FROM false` treats a never-touched NULL column as held, which
+  // matches the `?? true` read default. Re-sealing deliberately KEEPS the
+  // previous stamp: it is only ever read while the hold is off, and clearing it
+  // on the way back up would make an earlier release un-targetable.
   await pool.query(
     `INSERT INTO "score_config" (id, "compassLat", "compassLng", "compassRadiusM",
         "treasureLat", "treasureLng", "treasureRadiusM",
@@ -446,9 +526,11 @@ export async function setFinaleConfig(input: FinaleConfigInput): Promise<void> {
         "trailEndLat", "trailEndLng", "trailEndRadiusM", "huntEndsAt",
         "compassHint1", "compassHint1En", "compassHint2", "compassHint2En",
         "compassHint3", "compassHint3En", "compassHint4", "compassHint4En",
-        "compassReturn", "compassReturnEn", "updatedAt")
+        "compassReturn", "compassReturnEn",
+        "holdEnabled", "holdTitle", "holdTitleEn", "holdBody", "holdBodyEn", "updatedAt")
      VALUES ('default', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
-        $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, now())
+        $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32,
+        $33, $34, $35, $36, $37, now())
      ON CONFLICT (id) DO UPDATE SET
         "compassLat" = EXCLUDED."compassLat",
         "compassLng" = EXCLUDED."compassLng",
@@ -482,6 +564,17 @@ export async function setFinaleConfig(input: FinaleConfigInput): Promise<void> {
         "compassHint4En" = EXCLUDED."compassHint4En",
         "compassReturn" = EXCLUDED."compassReturn",
         "compassReturnEn" = EXCLUDED."compassReturnEn",
+        "holdEnabled" = EXCLUDED."holdEnabled",
+        "holdTitle" = EXCLUDED."holdTitle",
+        "holdTitleEn" = EXCLUDED."holdTitleEn",
+        "holdBody" = EXCLUDED."holdBody",
+        "holdBodyEn" = EXCLUDED."holdBodyEn",
+        "holdLiftedAt" = CASE
+          WHEN "score_config"."holdEnabled" IS DISTINCT FROM false
+               AND EXCLUDED."holdEnabled" = false
+            THEN now()
+          ELSE "score_config"."holdLiftedAt"
+        END,
         "updatedAt" = now()`,
     [
       lat,
@@ -507,6 +600,11 @@ export async function setFinaleConfig(input: FinaleConfigInput): Promise<void> {
       eradius,
       normalizeHuntEndsAt(input.huntEndsAt),
       ...hintParams,
+      input.holdEnabled === true,
+      clip(textOr(input.holdTitle, DEFAULT_HOLD_TITLE)),
+      clip(textOr(input.holdTitleEn, DEFAULT_HOLD_TITLE_EN)),
+      clip(textOr(input.holdBody, DEFAULT_HOLD_BODY)),
+      clip(textOr(input.holdBodyEn, DEFAULT_HOLD_BODY_EN)),
     ],
   )
 }

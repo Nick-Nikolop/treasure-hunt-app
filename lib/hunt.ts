@@ -33,7 +33,7 @@ import {
   TRAIL_END_LEAD_ID,
 } from "@/lib/leads"
 import { haversineMeters } from "@/lib/geo"
-import { getFinaleConfig } from "@/lib/finale"
+import { getFinaleConfig, isTrailEndHeld } from "@/lib/finale"
 import { getSolveCooldownSeconds } from "@/lib/hunt-config"
 import { logActivity, resolveUserSnapshot } from "@/lib/activity"
 import { and, eq, gt, inArray } from "drizzle-orm"
@@ -319,6 +319,10 @@ export type UnlockResult =
   // compass note; the crew is NOT finished yet — the treasure QR does that.
   | { status: "trail_end_reached" }
   | { status: "compass_reached" }
+  // The trail is closed but the hold is still on, so the compass step has not
+  // opened yet. Distinct from "out_of_order": the crew did nothing wrong and has
+  // nothing left to solve, they are simply waiting on us.
+  | { status: "held" }
   | { status: "finished"; country: string; countryEn: string }
   // The scan is valid and in order, but the crew solved their previous lead too
   // recently. `availableAtMs` is the epoch ms the next solve becomes possible.
@@ -638,6 +642,15 @@ export async function unlockByToken(
     // Must close the paper trail first: the trail-end QR is the step before.
     if (!(await crewHasReachedTrailEnd(crew))) {
       return { status: "out_of_order", required: total, current, leadOrder: COMPASS_ORDER }
+    }
+    // While the trail-end hold is on, the compass step has not opened. The hint
+    // that names the hiding place is sealed in the journal, so in practice a
+    // crew cannot get here anyway; refusing the scan as well means a crew who
+    // learns the spot some other way still cannot jump the queue. Crews already
+    // holding the compass are unaffected, since the idempotent re-scan below is
+    // only reached once this row exists.
+    if (!(await crewHasReachedCompass(crew)) && isTrailEndHeld(await getFinaleConfig())) {
+      return { status: "held" }
     }
     if (!(await crewHasReachedCompass(crew))) {
       await insertCompassRows(crew, new Date(now), source)
