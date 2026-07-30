@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import {
   ChevronDown,
   Users,
@@ -12,6 +12,7 @@ import {
   Search,
   Hourglass,
 } from "lucide-react"
+import { getFinaleState } from "@/app/admin/actions"
 import type { AdminTeamRow, AdminUserRow, Milestones } from "@/app/admin/actions"
 
 /**
