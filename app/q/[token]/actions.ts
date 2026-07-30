@@ -12,7 +12,8 @@ import {
   getFinishPlacement,
   type UnlockResult,
 } from "@/lib/hunt"
-import { getFinaleConfig } from "@/lib/finale"
+import { getFinaleConfig, composeCompassNote } from "@/lib/finale"
+import { getOrAssignCompassVariant, resolveCrewKey } from "@/lib/compass-variant"
 import { getLeadDefs } from "@/lib/leads"
 import {
   createProofSubmission,
@@ -89,9 +90,15 @@ export type FinaleSummary = {
   place: number | null
   /** How many crews/solos have finished so far. */
   totalFinishers: number
-  /** The trail-end note (Pytheas's first note), both languages. */
+  /**
+   * The trail-end note (Pytheas's first note), both languages, already ending
+   * with this crew's assigned hiding hint.
+   */
   note1: string
   note1En: string
+  /** The shared "put the compass back" aside shown under the compass note. */
+  compassReturn: string
+  compassReturnEn: string
   /** The call-to-action stamped under the first note, both languages. */
   note1Cta: string
   note1CtaEn: string
@@ -119,16 +126,23 @@ export async function getFinaleSummary(): Promise<FinaleSummary | null> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return null
 
-  const [placement, finale] = await Promise.all([
+  const [placement, finale, crewKey] = await Promise.all([
     getFinishPlacement(session.user.id),
     getFinaleConfig(),
+    resolveCrewKey(session.user.id),
   ])
+
+  // Assign on demand so the hint shown the instant the trail-end QR is scanned is
+  // the same one the journal will keep showing this crew.
+  const composed = composeCompassNote(finale, await getOrAssignCompassVariant(crewKey))
 
   return {
     place: placement.place,
     totalFinishers: placement.totalFinishers,
-    note1: finale.note1,
-    note1En: finale.note1En,
+    note1: composed.body,
+    note1En: composed.bodyEn,
+    compassReturn: finale.compassReturn,
+    compassReturnEn: finale.compassReturnEn,
     note1Cta: finale.note1Cta,
     note1CtaEn: finale.note1CtaEn,
     note2: finale.note2,

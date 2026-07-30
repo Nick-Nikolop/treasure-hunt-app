@@ -59,6 +59,9 @@ export function TrailEndReveal() {
 
   const note1 = data ? (locale === "en" ? data.note1En : data.note1) : ""
   const note1Cta = data ? (locale === "en" ? data.note1CtaEn : data.note1Cta) : ""
+  // The "put it back" request rides inside the note itself, so a crew reads it in
+  // the same breath as the hiding hint they were handed.
+  const compassReturn = data ? (locale === "en" ? data.compassReturnEn : data.compassReturn) : ""
 
   return (
     <motion.div
@@ -85,7 +88,7 @@ export function TrailEndReveal() {
         {f.trailEndTitle}
       </h2>
 
-      <HandwrittenNote body={note1} signature={f.signature} />
+      <HandwrittenNote body={note1} signature={f.signature} notice={compassReturn} />
 
       {/* Same brass banner as the other two beats. Here the target is the
           compass, so it carries the compass icon. */}

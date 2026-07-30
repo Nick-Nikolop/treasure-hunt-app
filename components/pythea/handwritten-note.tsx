@@ -1,6 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
+import { RotateCcw } from "lucide-react"
 
 /**
  * An irregular torn edge, in percentages so one polygon scales to any note
@@ -110,6 +111,7 @@ function WaxSeal() {
 export function HandwrittenNote({
   body,
   signature,
+  notice,
   className = "",
   animate = true,
 }: {
@@ -117,6 +119,13 @@ export function HandwrittenNote({
   body: string
   /** Optional sign-off shown in a looser hand under the note. */
   signature?: string
+  /**
+   * Optional highlighted aside, stamped under the note in a bright ink block.
+   * Deliberately NOT styled as Pytheas's handwriting: it is a message from the
+   * organisers (currently the request to put the compass back), so it has to
+   * read as pinned to the page rather than written on it.
+   */
+  notice?: string
   className?: string
   animate?: boolean
 }) {
@@ -199,6 +208,22 @@ export function HandwrittenNote({
                 {p}
               </p>
             ))}
+
+            {notice && notice.trim().length > 0 && (
+              // Bright pinned aside. Sits on its own tinted card with a heavy
+              // left rail so it separates cleanly from the italic hand above it.
+              <div className="mt-7 rounded-sm border-2 border-brass/70 border-l-[6px] border-l-brass bg-brass/15 px-4 py-3 md:mt-8 md:px-5 md:py-3.5">
+                <div className="flex items-start gap-2.5">
+                  <RotateCcw
+                    className="mt-0.5 size-4 shrink-0 text-brass md:size-[18px]"
+                    aria-hidden
+                  />
+                  <p className="text-pretty font-sans text-[14px] font-semibold leading-[1.65] text-ink md:text-[15px]">
+                    {notice}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {signature && (
               // Held clear of the seal, which sits bottom-right.

@@ -28,6 +28,41 @@ const DEFAULT_NOTE1_EN =
   'This is roughly where my journal ends. So you will wonder, "well then, where is this treasure of Pytheas?". Do not worry, the treasure is not the journey this time, as you know from the usual cliches.\n\nTo be able to find the treasure, though, you will need my compass. I have hidden it very well.\n\nMy compass is only for those who know how to observe, and not merely to look. For those who do not rush, but pay attention and piece together even the smallest detail of their journey. I leave it to you. I believe you will find my compass; somewhere inside Kalamata it lies, after all.'
 
 /**
+ * The four hiding hints that close the compass note, handed out in strict
+ * rotation (see lib/compass-variant.ts). Each crew reads exactly one, and always
+ * the same one, so these must stay four entries: the assignment stored per crew
+ * is an index into this list.
+ */
+const DEFAULT_COMPASS_HINTS: { el: string; en: string }[] = [
+  {
+    el: "Την πυξίδα μου θα τη βρείτε αν κοιτάξετε καλά γύρω σας, ακόμα και στις ρωγμές του μόλου κοντά στον φάρο.",
+    en: "You will find my compass if you look carefully around you, even in the cracks of the pier near the lighthouse.",
+  },
+  {
+    el: "Την πυξίδα μου θα τη βρείτε αν κοιτάξετε καλά γύρω σας, ακόμα και κάτω από τις πέτρες του γύρω χώρου.",
+    en: "You will find my compass if you look carefully around you, even under the stones of the surrounding ground.",
+  },
+  {
+    el: "Την πυξίδα μου θα τη βρείτε αν κοιτάξετε καλά γύρω σας, ειδικά προς την πόρτα που οδηγεί στο άπειρο.",
+    en: "You will find my compass if you look carefully around you, especially towards the door that leads to infinity.",
+  },
+  {
+    el: "Την πυξίδα μου θα τη βρείτε αν κοιτάξετε καλά γύρω σας, ειδικά εκεί που τρέχει άφθονο νερό.",
+    en: "You will find my compass if you look carefully around you, especially where water runs in abundance.",
+  },
+]
+
+/**
+ * Courtesy line appended to EVERY variant, asking the crew to put the compass
+ * back so later explorers can still find it. One shared sentence rather than
+ * four copies, so editing it once updates every variant.
+ */
+const DEFAULT_COMPASS_RETURN =
+  "Καλό θα ήταν να επιστραφεί η πυξίδα στην αρχική της τοποθεσία, εκεί όπου τη βρήκατε, ώστε να την αξιοποιήσουν και οι υπόλοιποι εξερευνητές."
+const DEFAULT_COMPASS_RETURN_EN =
+  "Please put the compass back where you found it, so the explorers coming after you can use it too."
+
+/**
  * Default call-to-action stamped under the first note, above its close button.
  * Short and shouted, so the crew leaves the journal knowing what to hunt next.
  */
@@ -101,6 +136,14 @@ export type FinaleConfig = {
   /** Call-to-action stamped under that note, above its close button. */
   note1Cta: string
   note1CtaEn: string
+  /**
+   * The four rotating hiding hints, always length 4, index-aligned with the
+   * per-crew assignment in lib/compass-variant.ts.
+   */
+  compassHints: { el: string; en: string }[]
+  /** Shared "put it back" line appended under whichever hint a crew received. */
+  compassReturn: string
+  compassReturnEn: string
   /** Compass-scan note (shown when the compass QR is scanned). */
   note2: string
   note2En: string
@@ -138,6 +181,16 @@ function ensureFinaleColumns(): Promise<void> {
            ADD COLUMN IF NOT EXISTS "finaleNote1En" text,
            ADD COLUMN IF NOT EXISTS "finaleNote1Cta" text,
            ADD COLUMN IF NOT EXISTS "finaleNote1CtaEn" text,
+           ADD COLUMN IF NOT EXISTS "compassHint1" text,
+           ADD COLUMN IF NOT EXISTS "compassHint1En" text,
+           ADD COLUMN IF NOT EXISTS "compassHint2" text,
+           ADD COLUMN IF NOT EXISTS "compassHint2En" text,
+           ADD COLUMN IF NOT EXISTS "compassHint3" text,
+           ADD COLUMN IF NOT EXISTS "compassHint3En" text,
+           ADD COLUMN IF NOT EXISTS "compassHint4" text,
+           ADD COLUMN IF NOT EXISTS "compassHint4En" text,
+           ADD COLUMN IF NOT EXISTS "compassReturn" text,
+           ADD COLUMN IF NOT EXISTS "compassReturnEn" text,
            ADD COLUMN IF NOT EXISTS "finaleNote2" text,
            ADD COLUMN IF NOT EXISTS "finaleNote2En" text,
            ADD COLUMN IF NOT EXISTS "finaleNote2Cta" text,
@@ -183,6 +236,11 @@ export async function getFinaleConfig(): Promise<FinaleConfig> {
             "treasureLat" AS tlat, "treasureLng" AS tlng, "treasureRadiusM" AS tradius,
             "finaleNote1" AS n1, "finaleNote1En" AS n1e,
             "finaleNote1Cta" AS n1c, "finaleNote1CtaEn" AS n1ce,
+            "compassHint1" AS h1, "compassHint1En" AS h1e,
+            "compassHint2" AS h2, "compassHint2En" AS h2e,
+            "compassHint3" AS h3, "compassHint3En" AS h3e,
+            "compassHint4" AS h4, "compassHint4En" AS h4e,
+            "compassReturn" AS cr, "compassReturnEn" AS cre,
             "finaleNote2" AS n2, "finaleNote2En" AS n2e,
             "finaleNote2Cta" AS n2c, "finaleNote2CtaEn" AS n2ce,
             "finaleWinner" AS w, "finaleWinnerEn" AS we,
@@ -205,6 +263,16 @@ export async function getFinaleConfig(): Promise<FinaleConfig> {
         n1e: string | null
         n1c: string | null
         n1ce: string | null
+        h1: string | null
+        h1e: string | null
+        h2: string | null
+        h2e: string | null
+        h3: string | null
+        h3e: string | null
+        h4: string | null
+        h4e: string | null
+        cr: string | null
+        cre: string | null
         n2: string | null
         n2e: string | null
         n2c: string | null
@@ -240,6 +308,26 @@ export async function getFinaleConfig(): Promise<FinaleConfig> {
     note1En: textOr(row?.n1e, DEFAULT_NOTE1_EN),
     note1Cta: textOr(row?.n1c, DEFAULT_NOTE1_CTA),
     note1CtaEn: textOr(row?.n1ce, DEFAULT_NOTE1_CTA_EN),
+    compassHints: [
+      {
+        el: textOr(row?.h1, DEFAULT_COMPASS_HINTS[0].el),
+        en: textOr(row?.h1e, DEFAULT_COMPASS_HINTS[0].en),
+      },
+      {
+        el: textOr(row?.h2, DEFAULT_COMPASS_HINTS[1].el),
+        en: textOr(row?.h2e, DEFAULT_COMPASS_HINTS[1].en),
+      },
+      {
+        el: textOr(row?.h3, DEFAULT_COMPASS_HINTS[2].el),
+        en: textOr(row?.h3e, DEFAULT_COMPASS_HINTS[2].en),
+      },
+      {
+        el: textOr(row?.h4, DEFAULT_COMPASS_HINTS[3].el),
+        en: textOr(row?.h4e, DEFAULT_COMPASS_HINTS[3].en),
+      },
+    ],
+    compassReturn: textOr(row?.cr, DEFAULT_COMPASS_RETURN),
+    compassReturnEn: textOr(row?.cre, DEFAULT_COMPASS_RETURN_EN),
     note2: textOr(row?.n2, DEFAULT_NOTE2),
     note2En: textOr(row?.n2e, DEFAULT_NOTE2_EN),
     note2Cta: textOr(row?.n2c, DEFAULT_NOTE2_CTA),
@@ -249,6 +337,36 @@ export async function getFinaleConfig(): Promise<FinaleConfig> {
     winnerNote: textOr(row?.wn, DEFAULT_WINNER_NOTE),
     winnerNoteEn: textOr(row?.wne, DEFAULT_WINNER_NOTE_EN),
     huntEndsAt: normalizeHuntEndsAt(row?.ends),
+  }
+}
+
+/**
+ * The compass note as a specific crew must read it: the shared body, then the
+ * ONE rotating hiding hint that crew was assigned, as a closing paragraph.
+ *
+ * The courtesy "put it back" line is deliberately NOT folded in here. It is
+ * returned separately (see `compassReturn`) because it is rendered as a
+ * highlighted aside rather than another paragraph of Pytheas's handwriting.
+ */
+export function composeCompassNote(
+  cfg: FinaleConfig,
+  variantIndex: number,
+): { body: string; bodyEn: string } {
+  const i =
+    Number.isFinite(variantIndex) && cfg.compassHints.length > 0
+      ? ((Math.trunc(variantIndex) % cfg.compassHints.length) + cfg.compassHints.length) %
+        cfg.compassHints.length
+      : 0
+  const hint = cfg.compassHints[i]
+  if (!hint) return { body: cfg.note1, bodyEn: cfg.note1En }
+  const join = (base: string, tail: string) => {
+    const b = base.trimEnd()
+    const s = tail.trim()
+    return s.length > 0 ? `${b}\n\n${s}` : b
+  }
+  return {
+    body: join(cfg.note1, hint.el),
+    bodyEn: join(cfg.note1En, hint.en),
   }
 }
 
@@ -269,6 +387,10 @@ export type FinaleConfigInput = {
   note1En: string
   note1Cta: string
   note1CtaEn: string
+  /** Exactly four hints; shorter/longer input is padded/trimmed on save. */
+  compassHints: { el: string; en: string }[]
+  compassReturn: string
+  compassReturnEn: string
   note2: string
   note2En: string
   note2Cta: string
@@ -301,6 +423,18 @@ export async function setFinaleConfig(input: FinaleConfigInput): Promise<void> {
     input.trailEndRadiusM != null ? clampRadius(input.trailEndRadiusM) : DEFAULT_GEO_RADIUS_M
   const clip = (s: string) => (typeof s === "string" ? s.slice(0, 2000) : "")
 
+  // Always persist exactly COMPASS_VARIANT_COUNT hints in a fixed order, since a
+  // crew's stored assignment is an index into this list. A short array from an
+  // older client falls back to that slot's default rather than blanking it.
+  const hintParams: string[] = []
+  for (let i = 0; i < DEFAULT_COMPASS_HINTS.length; i++) {
+    const h = input.compassHints?.[i]
+    hintParams.push(clip(textOr(h?.el, DEFAULT_COMPASS_HINTS[i].el)))
+    hintParams.push(clip(textOr(h?.en, DEFAULT_COMPASS_HINTS[i].en)))
+  }
+  hintParams.push(clip(textOr(input.compassReturn, DEFAULT_COMPASS_RETURN)))
+  hintParams.push(clip(textOr(input.compassReturnEn, DEFAULT_COMPASS_RETURN_EN)))
+
   // The row always exists in practice (created by the scoring/phase setters),
   // but guard with an insert-or-update so a fresh DB still works.
   await pool.query(
@@ -309,9 +443,12 @@ export async function setFinaleConfig(input: FinaleConfigInput): Promise<void> {
         "finaleNote1", "finaleNote1En", "finaleNote1Cta", "finaleNote1CtaEn",
         "finaleNote2", "finaleNote2En", "finaleNote2Cta", "finaleNote2CtaEn",
         "finaleWinner", "finaleWinnerEn", "finaleWinnerNote", "finaleWinnerNoteEn",
-        "trailEndLat", "trailEndLng", "trailEndRadiusM", "huntEndsAt", "updatedAt")
+        "trailEndLat", "trailEndLng", "trailEndRadiusM", "huntEndsAt",
+        "compassHint1", "compassHint1En", "compassHint2", "compassHint2En",
+        "compassHint3", "compassHint3En", "compassHint4", "compassHint4En",
+        "compassReturn", "compassReturnEn", "updatedAt")
      VALUES ('default', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
-        $17, $18, $19, $20, $21, $22, now())
+        $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, now())
      ON CONFLICT (id) DO UPDATE SET
         "compassLat" = EXCLUDED."compassLat",
         "compassLng" = EXCLUDED."compassLng",
@@ -335,6 +472,16 @@ export async function setFinaleConfig(input: FinaleConfigInput): Promise<void> {
         "trailEndLng" = EXCLUDED."trailEndLng",
         "trailEndRadiusM" = EXCLUDED."trailEndRadiusM",
         "huntEndsAt" = EXCLUDED."huntEndsAt",
+        "compassHint1" = EXCLUDED."compassHint1",
+        "compassHint1En" = EXCLUDED."compassHint1En",
+        "compassHint2" = EXCLUDED."compassHint2",
+        "compassHint2En" = EXCLUDED."compassHint2En",
+        "compassHint3" = EXCLUDED."compassHint3",
+        "compassHint3En" = EXCLUDED."compassHint3En",
+        "compassHint4" = EXCLUDED."compassHint4",
+        "compassHint4En" = EXCLUDED."compassHint4En",
+        "compassReturn" = EXCLUDED."compassReturn",
+        "compassReturnEn" = EXCLUDED."compassReturnEn",
         "updatedAt" = now()`,
     [
       lat,
@@ -359,6 +506,7 @@ export async function setFinaleConfig(input: FinaleConfigInput): Promise<void> {
       elng,
       eradius,
       normalizeHuntEndsAt(input.huntEndsAt),
+      ...hintParams,
     ],
   )
 }

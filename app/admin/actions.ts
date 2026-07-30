@@ -13,6 +13,7 @@ import {
 } from "@/lib/admin"
 import { siteUrl } from "@/lib/site-url"
 import { getFinaleConfig, setFinaleConfig, type FinaleConfig } from "@/lib/finale"
+import { listCompassVariantAssignments } from "@/lib/compass-variant"
 import {
   createLocationQr,
   getActiveLocationQr,
@@ -132,7 +133,7 @@ import {
   START_MS,
   isLeadIcon,
 } from "@/lib/clues"
-import { and, asc, desc, eq } from "drizzle-orm"
+import { and, asc, desc, eq, inArray } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { randomUUID } from "node:crypto"
 
@@ -1890,6 +1891,54 @@ export async function getFinaleState(): Promise<FinaleConfig> {
   return getFinaleConfig()
 }
 
+export type CompassVariantRow = {
+  /** Team name, or the explorer's name for a solo crew. */
+  name: string
+  /** True when this crew is a team, so the panel can label it. */
+  isTeam: boolean
+  /** 1-based variant number, matching the numbering shown in the editor. */
+  variant: number
+  assignedAt: string
+}
+
+/**
+ * Who has been handed which of the four rotating compass hints.
+ *
+ * Read-only by design: this NEVER assigns, so opening the admin panel cannot
+ * consume a slot in the rotation and shift what the next real crew receives.
+ * Names are resolved here rather than stored, so a team rename shows through.
+ */
+export async function adminListCompassVariants(): Promise<CompassVariantRow[]> {
+  await requireAdmin()
+  const rows = await listCompassVariantAssignments()
+  if (rows.length === 0) return []
+
+  const teamIds = rows.filter((r) => r.crewKey.startsWith("team:")).map((r) => r.crewKey.slice(5))
+  const userIds = rows.filter((r) => r.crewKey.startsWith("solo:")).map((r) => r.crewKey.slice(5))
+
+  const [teams, users] = await Promise.all([
+    teamIds.length > 0
+      ? db.select({ id: team.id, name: team.name }).from(team).where(inArray(team.id, teamIds))
+      : Promise.resolve([] as { id: string; name: string }[]),
+    userIds.length > 0
+      ? db.select({ id: user.id, name: user.name }).from(user).where(inArray(user.id, userIds))
+      : Promise.resolve([] as { id: string; name: string }[]),
+  ])
+  const teamName = new Map(teams.map((t) => [t.id, t.name]))
+  const userName = new Map(users.map((u) => [u.id, u.name]))
+
+  return rows.map((r) => {
+    const isTeam = r.crewKey.startsWith("team:")
+    const id = r.crewKey.slice(5)
+    return {
+      name: (isTeam ? teamName.get(id) : userName.get(id)) ?? id,
+      isTeam,
+      variant: r.variantIndex + 1,
+      assignedAt: r.assignedAt.toISOString(),
+    }
+  })
+}
+
 /** Parse one lat/lng/radius trio from string inputs. Returns nulls when blank
  *  (clears the gate) or an error code when a provided value is out of range. */
 function parseGate(
@@ -1928,6 +1977,15 @@ export async function adminSaveFinale(input: {
   note1En: string
   note1Cta: string
   note1CtaEn: string
+  /**
+   * The four rotating hiding hints. Order is meaningful: a crew's stored
+   * assignment is an index into this list, so editing hint 3 rewrites what every
+   * crew already on variant 3 reads. Blank entries fall back to their default.
+   */
+  compassHints: { el: string; en: string }[]
+  /** Shared "put the compass back" line shown under every variant. */
+  compassReturn: string
+  compassReturnEn: string
   note2: string
   note2En: string
   note2Cta: string
@@ -1956,6 +2014,9 @@ export async function adminSaveFinale(input: {
     note1En: input.note1En ?? "",
     note1Cta: input.note1Cta ?? "",
     note1CtaEn: input.note1CtaEn ?? "",
+    compassHints: Array.isArray(input.compassHints) ? input.compassHints : current.compassHints,
+    compassReturn: input.compassReturn ?? "",
+    compassReturnEn: input.compassReturnEn ?? "",
     note2: input.note2 ?? "",
     note2En: input.note2En ?? "",
     note2Cta: input.note2Cta ?? "",
@@ -2010,6 +2071,11 @@ export async function adminSaveFinaleGeo(input: {
     note1En: current.note1En,
     note1Cta: current.note1Cta,
     note1CtaEn: current.note1CtaEn,
+    // Carried through untouched: this action only moves a QR gate, and dropping
+    // these would reset every hint variant to its default mid-hunt.
+    compassHints: current.compassHints,
+    compassReturn: current.compassReturn,
+    compassReturnEn: current.compassReturnEn,
     note2: current.note2,
     note2En: current.note2En,
     note2Cta: current.note2Cta,

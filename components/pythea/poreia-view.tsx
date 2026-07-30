@@ -1248,7 +1248,7 @@ function SealedPageBody({
 
 type FinaleNotes = { note1: FinaleNote | null; note2: FinaleNote | null }
 /** A note already resolved to the reader's language. */
-type LocalNote = { body: string; cta: string }
+type LocalNote = { body: string; cta: string; notice: string }
 
 /** Marks the first note as read, so the final page stops auto-opening it once
  *  the explorer has seen it from either entry point. */
@@ -1286,7 +1286,13 @@ function useFinaleNotes(): { note1: LocalNote | null; note2: LocalNote | null } 
 
   const en = locale === "en"
   const pick = (n: FinaleNote | null | undefined): LocalNote | null =>
-    n ? { body: en ? n.bodyEn : n.body, cta: en ? n.ctaEn : n.cta } : null
+    n
+      ? {
+          body: en ? n.bodyEn : n.body,
+          cta: en ? n.ctaEn : n.cta,
+          notice: (en ? n.noticeEn : n.notice) ?? "",
+        }
+      : null
 
   return { note1: pick(notes?.note1), note2: pick(notes?.note2) }
 }
@@ -1300,12 +1306,15 @@ function NoteOverlay({
   body,
   cta,
   label,
+  notice,
   ctaIcon: CtaIcon,
   onClose,
 }: {
   body: string
   cta: string
   label: string
+  /** Highlighted aside stamped inside the note, when the note has one. */
+  notice?: string
   ctaIcon: typeof Compass
   onClose: () => void
 }) {
@@ -1332,7 +1341,7 @@ function NoteOverlay({
         <p className="mb-3 text-center font-sans text-[11px] font-bold tracking-chip text-[oklch(0.92_0.03_86)]">
           {label}
         </p>
-        <HandwrittenNote body={body} signature={t.finale.signature} />
+        <HandwrittenNote body={body} signature={t.finale.signature} notice={notice} />
 
         {/* The marching order, shouted. Sits between the note and the close
             button so the journal cannot be dismissed without seeing it. */}
@@ -1576,6 +1585,7 @@ function FinaleNoteBar({
           body={note1.body}
           cta={note1.cta}
           label={t.finale.noteLabel}
+          notice={note1.notice}
           ctaIcon={Compass}
           onClose={closeNote1}
         />
@@ -1708,6 +1718,7 @@ function FinalPageBody({
           body={note.body}
           cta={note.cta}
           label={t.finale.noteLabel}
+          notice={note.notice}
           ctaIcon={Compass}
           onClose={closeNote}
         />

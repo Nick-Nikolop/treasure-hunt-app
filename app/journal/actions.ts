@@ -5,12 +5,29 @@ import { revalidatePath } from "next/cache"
 import { auth } from "@/lib/auth"
 import { isOverrideAuthorized, PREVIEW_COOKIE } from "@/lib/clues"
 import { getTotalLeads } from "@/lib/leads"
-import { getFinaleConfig } from "@/lib/finale"
+import { getFinaleConfig, composeCompassNote } from "@/lib/finale"
+import {
+  getOrAssignCompassVariant,
+  peekCompassVariant,
+  resolveCrewKey,
+} from "@/lib/compass-variant"
 import { getAdminUser } from "@/lib/admin"
 import { hasReachedCompass, hasReachedTrailEnd } from "@/lib/hunt"
 
 /** One handwritten note plus the shouted call-to-action stamped under it. */
-export type FinaleNote = { body: string; bodyEn: string; cta: string; ctaEn: string }
+export type FinaleNote = {
+  body: string
+  bodyEn: string
+  cta: string
+  ctaEn: string
+  /**
+   * Optional highlighted aside under the note. Used by the compass note for the
+   * "put it back where you found it" request, which is a message from us to the
+   * crew rather than part of Pytheas's handwriting.
+   */
+  notice?: string
+  noticeEn?: string
+}
 
 /**
  * Both of Pytheas's handwritten notes for the journal, each returned ONLY once
@@ -45,13 +62,28 @@ export async function getFinaleNotes(): Promise<{
     bypass ? Promise.resolve(true) : hasReachedCompass(session.user.id),
   ])
 
+  // Which of the four rotating hints this crew reads. A real crew is assigned one
+  // on first read and keeps it forever; an admin/preview only PEEKS, so
+  // proofreading the note never consumes a slot and never shifts what the next
+  // real crew is handed. With nothing assigned yet, they preview the first hint.
+  let variantIndex = 0
+  if (trailEnd) {
+    const crewKey = await resolveCrewKey(session.user.id)
+    variantIndex = bypass
+      ? ((await peekCompassVariant(crewKey)) ?? 0)
+      : await getOrAssignCompassVariant(crewKey)
+  }
+  const composed = composeCompassNote(finale, variantIndex)
+
   return {
     note1: trailEnd
       ? {
-          body: finale.note1,
-          bodyEn: finale.note1En,
+          body: composed.body,
+          bodyEn: composed.bodyEn,
           cta: finale.note1Cta,
           ctaEn: finale.note1CtaEn,
+          notice: finale.compassReturn,
+          noticeEn: finale.compassReturnEn,
         }
       : null,
     note2: compass
