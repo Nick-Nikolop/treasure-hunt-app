@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { BookOpen, Compass, Gem, ScrollText, Loader2 } from "lucide-react"
+import { BookOpen, Compass, Gem, ScrollText, Loader2, Hourglass } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
 import { HandwrittenNote } from "@/components/pythea/handwritten-note"
+import { HoldPaper } from "@/components/pythea/hold-paper"
 import { CompassRose } from "@/components/pythea/compass-rose"
 import { getFinaleSummary, type FinaleSummary } from "@/app/q/[token]/actions"
 import { track } from "@/lib/analytics-client"
@@ -62,6 +63,46 @@ export function TrailEndReveal() {
   // The "put it back" request rides inside the note itself, so a crew reads it in
   // the same breath as the hiding hint they were handed.
   const compassReturn = data ? (locale === "en" ? data.compassReturnEn : data.compassReturn) : ""
+
+  // The trail closed, but the next step has not opened yet. The scan still
+  // counted (their trail-end time is banked, which is what protects the head
+  // start), so this is a "well done, now wait" screen and not a failure.
+  if (data?.held) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="flex w-full max-w-xl flex-col items-center"
+      >
+        <motion.div
+          initial={{ scale: 0, rotate: -30 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ type: "spring", stiffness: 140, damping: 12, delay: 0.1 }}
+          className="mb-5"
+        >
+          <Hourglass className="size-14 text-brass" aria-hidden />
+        </motion.div>
+
+        {/* No kicker or heading: the slip carries its own title, and the usual
+            "you found a note" line would be a lie while the note is sealed. */}
+        <HoldPaper
+          title={locale === "en" ? data.holdTitleEn : data.holdTitle}
+          body={locale === "en" ? data.holdBodyEn : data.holdBody}
+        />
+
+        <div className="mt-7 flex flex-col items-stretch gap-3 sm:flex-row sm:justify-center">
+          <Link
+            href="/journal"
+            className="inline-flex items-center justify-center gap-2 rounded-sm border border-border bg-background px-5 py-3 font-sans text-xs font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass"
+          >
+            <BookOpen className="size-4" />
+            {f.openJournal}
+          </Link>
+        </div>
+      </motion.div>
+    )
+  }
 
   return (
     <motion.div

@@ -1,7 +1,7 @@
 "use server"
 
 import { auth } from "@/lib/auth"
-import { db } from "@/lib/db"
+import { db, pool } from "@/lib/db"
 import { account, leadUnlock, session, team, teamMember, user } from "@/lib/db/schema"
 import {
   requireAdmin,
@@ -1889,6 +1889,37 @@ export async function adminSaveLeadGeo(input: {
 export async function getFinaleState(): Promise<FinaleConfig> {
   await requireAdmin()
   return getFinaleConfig()
+}
+
+/**
+ * How many crews are parked at the trail end right now, i.e. would be released
+ * the instant the hold is lifted.
+ *
+ * Powers the confirmation dialog: "this frees N crews" is a far better prompt
+ * than a generic "are you sure", because lifting the hold is irreversible in
+ * practice (once a crew has read the compass hint, re-sealing does not unlearn
+ * it). Counts distinct CREWS, not rows, since a team shares one trail-end.
+ */
+export async function adminCountHeldCrews(): Promise<number> {
+  await requireAdmin()
+  // One SQL pass. `lead_unlock` has no crewKey column (unlocks are per user), so
+  // crews are collapsed here the same way the app does it elsewhere: a team id
+  // when the explorer is on a team, otherwise their own id. Without that
+  // grouping a 4-person team would be counted as 4 waiting crews.
+  const res = await pool.query<{ n: string }>(
+    `SELECT count(*)::text AS n FROM (
+       SELECT DISTINCT COALESCE('team:' || tm."teamId", 'solo:' || lu."userId") AS crew
+         FROM "lead_unlock" lu
+         LEFT JOIN "team_member" tm ON tm."userId" = lu."userId"
+        WHERE lu."leadOrder" = $1
+          AND NOT EXISTS (
+            SELECT 1 FROM "lead_unlock" c
+             WHERE c."leadOrder" = $2 AND c."userId" = lu."userId"
+          )
+     ) crews`,
+    [TRAIL_END_ORDER, COMPASS_ORDER],
+  )
+  return Number(res.rows[0]?.n ?? 0)
 }
 
 export type CompassVariantRow = {

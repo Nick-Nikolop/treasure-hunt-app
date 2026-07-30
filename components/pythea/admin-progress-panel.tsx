@@ -73,6 +73,23 @@ export function AdminProgressPanel({
 }) {
   const [query, setQuery] = useState("")
   const [openId, setOpenId] = useState<string | null>(null)
+  /**
+   * Whether the trail-end hold is on, so the trail-end rung can be labelled
+   * honestly. Read here rather than passed in: this panel is rendered from a big
+   * shared `AdminData` payload, and the hold changes independently of it.
+   */
+  const [holdEnabled, setHoldEnabled] = useState(false)
+  useEffect(() => {
+    let alive = true
+    getFinaleState()
+      .then((c) => {
+        if (alive) setHoldEnabled(c.holdEnabled)
+      })
+      .catch(() => {})
+    return () => {
+      alive = false
+    }
+  }, [])
 
   // Teams are entrants in their own right; only users with no team appear on
   // their own, so nobody is counted twice.
@@ -122,8 +139,13 @@ export function AdminProgressPanel({
         label = "Hunting the treasure"
         hint = "Has the compass, looking for the treasure"
       } else if (key === "trailEnd") {
-        label = "Hunting the compass"
-        hint = "Holds the first note, looking for the compass"
+        // While the hold is on, this rung is a WAITING ROOM, not a search party:
+        // these crews have closed the trail but cannot have note 1 yet, so
+        // calling it "hunting the compass" would misreport the field.
+        label = holdEnabled ? "Waiting on the hold" : "Hunting the compass"
+        hint = holdEnabled
+          ? "Finished the trail, note 1 still sealed"
+          : "Holds the first note, looking for the compass"
       } else if (key === 0) {
         label = "Not started"
         hint = "No leads unlocked yet"
@@ -136,7 +158,7 @@ export function AdminProgressPanel({
       }
       return { key, label, hint, here }
     })
-  }, [entrants, leadOptions, totalLeads])
+  }, [entrants, leadOptions, totalLeads, holdEnabled])
 
   const q = query.trim().toLowerCase()
   const matches = (e: Entrant) =>
@@ -184,7 +206,12 @@ export function AdminProgressPanel({
           hint={`${teamCount} crews + ${soloCount} on their own`}
         />
         <Tally icon={MapPin} label="Started" value={started} />
-        <Tally icon={Compass} label="In the endgame" value={endgame} />
+        <Tally
+          icon={Compass}
+          label={holdEnabled ? "Past the trail" : "In the endgame"}
+          value={endgame}
+          hint={holdEnabled ? "Includes crews held at the trail end" : undefined}
+        />
         <Tally icon={Trophy} label="Finished" value={finished} />
       </div>
 

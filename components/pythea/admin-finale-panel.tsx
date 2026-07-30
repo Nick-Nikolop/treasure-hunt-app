@@ -13,10 +13,16 @@ import {
   Shuffle,
   RotateCcw,
   Users,
+  Hourglass,
+  Lock,
+  Unlock,
+  TriangleAlert,
 } from "lucide-react"
 import {
   getFinaleState,
   adminSaveFinale,
+  adminSetTrailEndHold,
+  adminCountHeldCrews,
   adminListCompassVariants,
   type CompassVariantRow,
 } from "@/app/admin/actions"
@@ -49,6 +55,11 @@ type Draft = {
   winnerNoteEn: string
   /** "HH:MM" clock time the hunt closes, shown in the how-to-play walkthrough. */
   huntEndsAt: string
+  /** Copy for the trail-end hold slip shown in place of the journal note. */
+  holdTitle: string
+  holdTitleEn: string
+  holdBody: string
+  holdBodyEn: string
 }
 
 const EMPTY: Draft = {
@@ -68,6 +79,10 @@ const EMPTY: Draft = {
   winnerNote: "",
   winnerNoteEn: "",
   huntEndsAt: "",
+  holdTitle: "",
+  holdTitleEn: "",
+  holdBody: "",
+  holdBodyEn: "",
 }
 
 /**
@@ -85,6 +100,11 @@ export function AdminFinalePanel() {
   /** Who currently holds which hint. Read-only; loading this assigns nothing. */
   const [assigned, setAssigned] = useState<CompassVariantRow[]>([])
   const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  /** Live hold state, saved separately from the copy draft. */
+  const [holdEnabled, setHoldEnabled] = useState(true)
+  const [holdBusy, setHoldBusy] = useState(false)
+  /** Non-null while the "really release everyone?" dialog is open. */
+  const [confirmLift, setConfirmLift] = useState<number | null>(null)
 
   useEffect(() => {
     let alive = true
@@ -108,7 +128,14 @@ export function AdminFinalePanel() {
           winnerNote: c.winnerNote,
           winnerNoteEn: c.winnerNoteEn,
           huntEndsAt: c.huntEndsAt,
+          holdTitle: c.holdTitle,
+          holdTitleEn: c.holdTitleEn,
+          holdBody: c.holdBody,
+          holdBodyEn: c.holdBodyEn,
         })
+        // The toggle is NOT part of the draft: it saves on its own, immediately
+        // and with a confirmation, so it can never ride along with a copy save.
+        setHoldEnabled(c.holdEnabled)
         setLoaded(true)
       })
       .catch(() => setLoaded(true))
@@ -143,6 +170,39 @@ export function AdminFinalePanel() {
     }))
     setSaved(false)
   }, [])
+
+  /**
+   * Enabling is immediate; DISABLING asks first, because it releases every parked
+   * crew at once and cannot be meaningfully undone (a crew that has read the
+   * compass hint cannot un-read it).
+   */
+  async function requestHold(next: boolean) {
+    setError(null)
+    if (next) {
+      await applyHold(true)
+      return
+    }
+    // Fetch the real number of affected crews so the prompt states the stakes.
+    let count = 0
+    try {
+      count = await adminCountHeldCrews()
+    } catch {
+      count = 0
+    }
+    setConfirmLift(count)
+  }
+
+  async function applyHold(next: boolean) {
+    setHoldBusy(true)
+    try {
+      const res = await adminSetTrailEndHold({ enabled: next })
+      if (res.ok) setHoldEnabled(next)
+      else setError("Could not change the hold. Please try again.")
+    } finally {
+      setHoldBusy(false)
+      setConfirmLift(null)
+    }
+  }
 
   function save() {
     setError(null)
@@ -392,6 +452,130 @@ export function AdminFinalePanel() {
           </Field>
         </div>
       </Section>
+
+      {/* The hold that parks crews between the last lead and the compass hunt. */}
+      <Section icon={Hourglass} title="5 · Hold after the last lead">
+        <p className="mb-4 max-w-prose font-sans text-sm leading-relaxed text-muted-foreground">
+          While this is on, scanning the <strong className="text-foreground">trail-end QR</strong>{" "}
+          still counts and still records the crew&apos;s finishing time, but{" "}
+          <strong className="text-foreground">note 1 stays sealed</strong> and the slip below is
+          shown instead. The compass QR is refused too, so nobody can start hunting the compass
+          early. Admins are never held, so you can keep proofreading the finale.
+        </p>
+
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-sm border border-border bg-background/60 p-3.5">
+          <div className="min-w-0">
+            <p className="font-sans text-sm font-bold text-foreground">
+              {holdEnabled ? "Hold is ON · note 1 is sealed" : "Hold is OFF · note 1 is released"}
+            </p>
+            <p className="mt-0.5 font-sans text-xs leading-relaxed text-muted-foreground">
+              {holdEnabled
+                ? "Crews who close the trail will wait here until you lift this."
+                : "Crews get the compass hint the moment they close the trail."}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => requestHold(!holdEnabled)}
+            disabled={holdBusy}
+            aria-pressed={holdEnabled}
+            className={`inline-flex shrink-0 items-center gap-2 rounded-sm px-4 py-2.5 font-sans text-sm font-bold tracking-chip transition-transform hover:-translate-y-0.5 disabled:opacity-50 ${
+              holdEnabled
+                ? "bg-brass text-background"
+                : "border border-border bg-background text-foreground"
+            }`}
+          >
+            {holdBusy ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : holdEnabled ? (
+              <Unlock className="size-4" />
+            ) : (
+              <Lock className="size-4" />
+            )}
+            {holdEnabled ? "Lift the hold" : "Seal it again"}
+          </button>
+        </div>
+
+        <BilingualNote
+          heading="Τίτλος · Title"
+          value={{ el: draft.holdTitle, en: draft.holdTitleEn }}
+          rows={2}
+          onChange={(el, en) => {
+            set("holdTitle", el)
+            set("holdTitleEn", en)
+          }}
+        />
+        <div className="mt-4">
+          <BilingualNote
+            heading="Κείμενο · Body"
+            value={{ el: draft.holdBody, en: draft.holdBodyEn }}
+            rows={9}
+            onChange={(el, en) => {
+              set("holdBody", el)
+              set("holdBodyEn", en)
+            }}
+          />
+        </div>
+      </Section>
+
+      {/* Confirmation before releasing everyone. Deliberately only on the way
+          OFF: sealing again is harmless, unsealing cannot be taken back. */}
+      {confirmLift !== null && (
+        <div
+          className="fixed inset-0 z-[90] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Lift the hold?"
+          onClick={() => setConfirmLift(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-md border border-border bg-background p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2">
+              <TriangleAlert className="size-5 text-brass" aria-hidden />
+              <h3 className="font-serif text-lg font-black text-foreground">Lift the hold?</h3>
+            </div>
+            <p className="mt-3 font-sans text-sm leading-relaxed text-muted-foreground">
+              {confirmLift === 0 ? (
+                <>
+                  No crew is waiting at the trail end right now. Anyone who closes the trail from
+                  here on will get the compass hint straight away.
+                </>
+              ) : (
+                <>
+                  This releases{" "}
+                  <strong className="text-foreground">
+                    {confirmLift} {confirmLift === 1 ? "crew" : "crews"}
+                  </strong>{" "}
+                  immediately. They will be alerted and can read the compass hint at once.
+                </>
+              )}
+            </p>
+            <p className="mt-2 font-sans text-xs leading-relaxed text-muted-foreground">
+              Sealing it again afterwards will not make them forget what they read.
+            </p>
+            <div className="mt-5 flex justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setConfirmLift(null)}
+                className="rounded-sm border border-border bg-background px-4 py-2 font-sans text-sm font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => applyHold(false)}
+                disabled={holdBusy}
+                className="inline-flex items-center gap-2 rounded-sm bg-brass px-4 py-2 font-sans text-sm font-bold tracking-chip text-background transition-transform hover:-translate-y-0.5 disabled:opacity-50"
+              >
+                {holdBusy ? <Loader2 className="size-4 animate-spin" /> : <Unlock className="size-4" />}
+                Lift it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Save bar */}
       <div className="sticky bottom-3 z-10 flex items-center justify-between gap-3 rounded-md border border-border bg-background/95 p-3 backdrop-blur">
