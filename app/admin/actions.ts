@@ -20,6 +20,13 @@ import {
   type LocationPing,
 } from "@/lib/location-ping"
 import {
+  searchScanSubjects,
+  getScanPingsForUser,
+  getScanPingsForTeam,
+  type ScanSubjects,
+  type ScanPingRow,
+} from "@/lib/scan-ping"
+import {
   logActivity,
   resolveUserSnapshot,
   actorLabel,
@@ -1855,7 +1862,7 @@ export async function adminSaveLeadGeo(input: {
   return { ok: true }
 }
 
-// ── Finale (the compass + winner screen) ────────────────────────────────────
+// ── Finale (the compass + winner screen) ───────��────────────────────────────
 
 /** Read the finale configuration (compass GPS + editable notes) for the admin. */
 export async function getFinaleState(): Promise<FinaleConfig> {
@@ -2205,4 +2212,27 @@ export async function getLocationState(): Promise<LocationState> {
   if (!token) return { token: null, link: null, pings: [] }
   const pings = await getLocationPings(token)
   return { token, link: pingLink(token), pings }
+}
+
+// --- Scan location review (bootstrap founder only) -------------------------
+// These expose where explorers scanned from, for judging photo proofs. Each is
+// guarded by requireBootstrapAdmin so no other superadmin can read positions,
+// mirroring the location-QR actions above.
+
+/** Search users + teams by name/email, annotated with captured scan counts. */
+export async function adminSearchScanSubjects(query: string): Promise<ScanSubjects> {
+  await requireBootstrapAdmin()
+  return searchScanSubjects(query)
+}
+
+/** Every captured scan position for one explorer, newest first. */
+export async function adminGetUserScanPings(userId: string): Promise<ScanPingRow[]> {
+  await requireBootstrapAdmin()
+  return getScanPingsForUser(userId)
+}
+
+/** Every captured scan position for a whole crew, newest first. */
+export async function adminGetTeamScanPings(teamId: string): Promise<ScanPingRow[]> {
+  await requireBootstrapAdmin()
+  return getScanPingsForTeam(teamId)
 }

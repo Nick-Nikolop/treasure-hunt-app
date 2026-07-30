@@ -21,13 +21,17 @@ import {
   type ProofContext,
 } from "@/lib/proofs"
 import { logActivity } from "@/lib/activity"
+import { recordScanPing } from "@/lib/scan-ping"
 
 /**
  * Client payload for a location-gated scan: either the explorer's reported
- * position, or a superadmin request to skip the check. Reported coordinates
- * are used only to compare against the lead's mark and are never stored.
+ * position (with optional GPS accuracy in metres), or a superadmin request to
+ * skip the check. The coordinates are compared against the lead's mark and are
+ * also captured to `scan_ping` for the founder's manual proof review.
  */
-export type ScanVerifyPayload = { lat: number; lng: number } | { skip: true }
+export type ScanVerifyPayload =
+  | { lat: number; lng: number; accuracy?: number }
+  | { skip: true }
 
 export type VerifyScanResponse =
   | { ok: true; result: UnlockResult }
@@ -54,6 +58,18 @@ export async function verifyScan(
     if (!admin) return { ok: false, reason: "forbidden_skip" }
   } else {
     const check = await checkScanLocation(token, payload.lat, payload.lng)
+    // Silently record where this scan was attempted from. Best-effort only: it
+    // never throws (see recordScanPing), so it cannot affect the scan outcome.
+    await recordScanPing({
+      userId: session.user.id,
+      token,
+      lat: payload.lat,
+      lng: payload.lng,
+      accuracy: payload.accuracy ?? null,
+      distanceM: check.ok ? null : check.distanceM ?? null,
+      radiusM: check.ok ? null : check.radiusM ?? null,
+      ok: check.ok,
+    })
     if (!check.ok) {
       return {
         ok: false,

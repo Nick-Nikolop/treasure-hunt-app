@@ -103,7 +103,9 @@ export function ScanGate({
 
   // Send whatever payload (coords or admin-skip) to the server and route the
   // response into the right card. The server does the real unlock.
-  async function submit(payload: { lat: number; lng: number } | { skip: true }) {
+  async function submit(
+    payload: { lat: number; lng: number; accuracy?: number } | { skip: true },
+  ) {
     setBusy(true)
     try {
       const resp = await verifyScan(token, payload)
@@ -133,7 +135,11 @@ export function ScanGate({
     setBusy(true)
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        void submit({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+        void submit({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: Number.isFinite(pos.coords.accuracy) ? pos.coords.accuracy : undefined,
+        })
       },
       () => {
         setBusy(false)

@@ -457,3 +457,32 @@ export const locationPing = pgTable(
     tokenCreatedIdx: index("location_ping_token_createdAt_idx").on(t.token, t.createdAt),
   }),
 )
+
+// Silent, founder-only capture of where a real hunt scan was attempted from.
+// Distinct from location_ping (the diagnostic QR tool): this is keyed to the
+// signed-in explorer so the founder can review a specific user's or crew's scan
+// positions when judging photo proofs. Written best-effort from `verifyScan` and
+// NEVER surfaced to players. Coords/accuracy are text for the same
+// float-precision reason as location_ping; distance/radius are the metres the
+// gate compared (null on a pass, since only the "too far" path computes them).
+// User name, team, and lead label are resolved at read time to keep the write a
+// single index-backed INSERT that can never slow or break a scan.
+export const scanPing = pgTable(
+  "scan_ping",
+  {
+    id: text("id").primaryKey(),
+    userId: text("userId").notNull(),
+    token: text("token").notNull(),
+    lat: text("lat").notNull(),
+    lng: text("lng").notNull(),
+    accuracy: text("accuracy"),
+    distanceM: integer("distanceM"),
+    radiusM: integer("radiusM"),
+    ok: boolean("ok").notNull(),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("scan_ping_userId_idx").on(t.userId),
+    createdIdx: index("scan_ping_createdAt_idx").on(t.createdAt),
+  }),
+)
