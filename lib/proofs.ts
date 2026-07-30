@@ -124,6 +124,39 @@ export async function getPendingProofs(): Promise<ProofRow[]> {
     .orderBy(proofSubmission.createdAt)
 }
 
+/**
+ * The oldest pending submission for `leadOrder` that was sent BEFORE `proof`, or
+ * null when `proof` is itself first in line for that lead.
+ *
+ * Two crews racing to the same lead must be judged in the order they actually
+ * got there, so the admin is only ever allowed to decide the front of each lead's
+ * queue. Ties on the exact millisecond fall back to id so the ordering is total
+ * and stable (never two rows each "waiting" for the other, which would deadlock
+ * the queue).
+ */
+export async function getEarlierPendingForLead(proof: ProofRow): Promise<ProofRow | null> {
+  const rows = await db
+    .select()
+    .from(proofSubmission)
+    .where(
+      and(
+        eq(proofSubmission.status, "pending"),
+        eq(proofSubmission.leadOrder, proof.leadOrder),
+        ne(proofSubmission.id, proof.id),
+      ),
+    )
+  const mine = proof.createdAt.getTime()
+  const earlier = rows.filter((r) => {
+    const t = r.createdAt.getTime()
+    return t < mine || (t === mine && r.id < proof.id)
+  })
+  if (earlier.length === 0) return null
+  return earlier.reduce((a, b) => {
+    const d = a.createdAt.getTime() - b.createdAt.getTime()
+    return d < 0 || (d === 0 && a.id < b.id) ? a : b
+  })
+}
+
 /** Count of pending submissions (for the admin tab badge). */
 export async function getPendingProofCount(): Promise<number> {
   const rows = await db

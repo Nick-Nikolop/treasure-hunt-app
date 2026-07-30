@@ -18,6 +18,8 @@ import {
   Trash2,
   Square,
   CheckSquare,
+  Lock,
+  ArrowDown,
 } from "lucide-react"
 import {
   adminListProofs,
@@ -46,6 +48,65 @@ function ordinal(n: number): string {
   return `${n}${s[(v - 20) % 10] ?? s[v] ?? s[0]}`
 }
 
+/**
+ * How far apart two submissions were, down to the second, because two crews
+ * racing to the same lead are often only seconds apart and that gap is exactly
+ * what decides who was there first.
+ */
+function gapLabel(later: Date | string, earlier: Date | string): string {
+  const a = typeof later === "string" ? new Date(later) : later
+  const b = typeof earlier === "string" ? new Date(earlier) : earlier
+  const s = Math.max(0, Math.round((a.getTime() - b.getTime()) / 1000))
+  if (s < 60) return `${s}s`
+  const m = Math.floor(s / 60)
+  if (m < 60) return s % 60 === 0 ? `${m}m` : `${m}m ${s % 60}s`
+  const h = Math.floor(m / 60)
+  return m % 60 === 0 ? `${h}h` : `${h}h ${m % 60}m`
+}
+
+/** Exact clock time, so the admin can audit the order rather than trust it. */
+function clockTime(d: Date | string): string {
+  const t = typeof d === "string" ? new Date(d) : d
+  return t.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+}
+
+type QueueInfo = {
+  /** True when this proof is at the front of its lead's queue (decidable). */
+  first: boolean
+  /** The proof it must wait for, when it is not first. */
+  waitingFor: AdminProofRow | null
+  /** Position within this lead's queue, 1-based. */
+  place: number
+  /** How many pending proofs this lead has in total. */
+  total: number
+}
+
+/**
+ * Work out each lead's review order. `pending` arrives oldest-first from the
+ * server, so the first row seen for a lead is that lead's front of queue; the
+ * rest are locked behind it until it has been decided.
+ */
+function buildQueue(pending: AdminProofRow[]): Map<string, QueueInfo> {
+  const byLead = new Map<number, AdminProofRow[]>()
+  for (const p of pending) {
+    const list = byLead.get(p.leadOrder)
+    if (list) list.push(p)
+    else byLead.set(p.leadOrder, [p])
+  }
+  const out = new Map<string, QueueInfo>()
+  for (const list of byLead.values()) {
+    list.forEach((p, i) => {
+      out.set(p.id, {
+        first: i === 0,
+        waitingFor: i === 0 ? null : list[0],
+        place: i + 1,
+        total: list.length,
+      })
+    })
+  }
+  return out
+}
+
 type Lightbox = { urls: string[]; index: number } | null
 
 export function AdminProofsPanel() {
@@ -58,6 +119,8 @@ export function AdminProofsPanel() {
   const [rejecting, setRejecting] = useState<string | null>(null)
   const [reason, setReason] = useState("")
   const [busyId, setBusyId] = useState<string | null>(null)
+  /** Set when the server refuses a decision because someone else is first in line. */
+  const [blocked, setBlocked] = useState<string | null>(null)
   // Selection + deletion state for the "recently decided" log.
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [confirmDelete, setConfirmDelete] = useState<null | "selected" | "all">(null)
@@ -84,9 +147,15 @@ export function AdminProofsPanel() {
 
   function decide(id: string, decision: "approved" | "rejected", why?: string) {
     setBusyId(id)
+    setBlocked(null)
     startTransition(async () => {
       try {
-        await adminDecideProof(id, decision, why)
+        const res = await adminDecideProof(id, decision, why)
+        // Lost a race: another admin (or a stale page) means someone else is now
+        // first in line for this lead. Say who, instead of failing silently.
+        if (!res.ok && res.error === "not_first_for_lead" && res.blockedBy) {
+          setBlocked(`${res.blockedBy.name} submitted for this lead first. Review theirs first.`)
+        }
       } finally {
         setBusyId(null)
         setRejecting(null)
@@ -97,6 +166,7 @@ export function AdminProofsPanel() {
   }
 
   const pending = data.pending
+  const queue = buildQueue(pending)
   const recent = data.recent
 
   // Drop any selected ids that are no longer in the decided list (e.g. removed
@@ -153,6 +223,13 @@ export function AdminProofsPanel() {
           </span>
         </div>
 
+        {blocked && (
+          <div className="mb-4 flex items-start gap-2 rounded-sm border border-brass/60 bg-brass/10 px-3 py-2.5">
+            <Lock className="mt-0.5 size-3.5 shrink-0 text-brass" aria-hidden />
+            <p className="font-serif text-sm text-foreground">{blocked}</p>
+          </div>
+        )}
+
         {!loaded ? (
           <div className="flex items-center justify-center py-16 text-muted-foreground">
             <Loader2 className="size-5 animate-spin" />
@@ -166,11 +243,48 @@ export function AdminProofsPanel() {
           </div>
         ) : (
           <ul className="space-y-4">
-            {pending.map((p) => (
+            {pending.map((p) => {
+              const q = queue.get(p.id)
+              const contested = (q?.total ?? 1) > 1
+              const locked = q ? !q.first : false
+              return (
               <li
                 key={p.id}
-                className="rounded-sm border border-border bg-card/60 p-4 md:p-5"
+                className={
+                  locked
+                    ? "rounded-sm border border-dashed border-border bg-card/30 p-4 md:p-5"
+                    : contested
+                      ? "rounded-sm border-2 border-brass bg-card/60 p-4 md:p-5"
+                      : "rounded-sm border border-border bg-card/60 p-4 md:p-5"
+                }
               >
+                {/* Racing crews: make the required order impossible to miss. */}
+                {contested && (
+                  <div className="mb-3 flex flex-wrap items-center gap-2">
+                    {q?.first ? (
+                      <>
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-brass px-2.5 py-1 font-sans text-[10px] font-bold tracking-chip text-primary-foreground">
+                          <ArrowDown className="size-3" aria-hidden />
+                          REVIEW THIS FIRST
+                        </span>
+                        <span className="font-sans text-[10px] tracking-chip text-muted-foreground">
+                          EARLIEST OF {q.total} FOR THIS LEAD
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
+                          <Lock className="size-3" aria-hidden />
+                          WAITING · No. {q?.place} OF {q?.total}
+                        </span>
+                        <span className="font-sans text-[10px] tracking-chip text-muted-foreground/70">
+                          BEHIND {q?.waitingFor?.userName.toUpperCase()}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                )}
+
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="font-serif text-base font-bold text-foreground">{p.userName}</p>
@@ -180,7 +294,10 @@ export function AdminProofsPanel() {
                   </div>
                   <div className="flex items-center gap-2">
                     <ContextBadge context={p.context} />
-                    <span className="font-sans text-[10px] tracking-chip text-muted-foreground/70">
+                    <span
+                      className="font-sans text-[10px] tracking-chip text-muted-foreground/70"
+                      title={clockTime(p.createdAt)}
+                    >
                       {timeAgo(p.createdAt)}
                     </span>
                   </div>
@@ -220,7 +337,22 @@ export function AdminProofsPanel() {
                   ))}
                 </div>
 
-                {rejecting === p.id ? (
+                {locked ? (
+                  <div className="mt-4 rounded-sm border border-border bg-background px-3 py-3">
+                    <p className="font-serif text-sm leading-relaxed text-muted-foreground">
+                      <span className="font-bold text-foreground">
+                        {q?.waitingFor?.userName}
+                      </span>{" "}
+                      sent proof for this same lead{" "}
+                      <span className="font-bold text-brass">
+                        {gapLabel(p.createdAt, q?.waitingFor?.createdAt ?? p.createdAt)} earlier
+                      </span>{" "}
+                      ({clockTime(q?.waitingFor?.createdAt ?? p.createdAt)} vs{" "}
+                      {clockTime(p.createdAt)}). Decide theirs first so this lead is awarded in the
+                      order the crews actually reached it.
+                    </p>
+                  </div>
+                ) : rejecting === p.id ? (
                   <div className="mt-4 space-y-2">
                     <textarea
                       value={reason}
@@ -287,7 +419,8 @@ export function AdminProofsPanel() {
                   </div>
                 )}
               </li>
-            ))}
+              )
+            })}
           </ul>
         )}
       </section>

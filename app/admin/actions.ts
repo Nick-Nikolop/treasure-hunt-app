@@ -49,6 +49,7 @@ import {
   getPendingProofCount,
   getRecentDecidedProofs,
   getProofById,
+  getEarlierPendingForLead,
   decideProof,
   deleteProofsByIds,
   deleteAllDecidedProofs,
@@ -542,6 +543,9 @@ export async function adminListProofs(): Promise<AdminProofsData> {
  * photos were SENT rather than reviewed, so review lag costs no time. Superadmin
  * only. Idempotent: a proof that was already decided by another admin is
  * reported as such.
+ *
+ * Refuses any proof that is not first in line for its lead, reporting who is
+ * ahead, so racing crews are always judged in the order they actually arrived.
  */
 export async function adminDecideProof(
   id: string,
@@ -549,13 +553,25 @@ export async function adminDecideProof(
   reason?: string,
 ): Promise<
   | { ok: true; decision: "approved" | "rejected"; unlock?: string }
-  | { ok: false; error: string }
+  | { ok: false; error: string; blockedBy?: { name: string; createdAt: Date } }
 > {
   const admin = await requireAdmin()
 
   const existing = await getProofById(id)
   if (!existing) return { ok: false, error: "not_found" }
   if (existing.status !== "pending") return { ok: false, error: "already_decided" }
+
+  // Whoever reached a lead FIRST must be judged first, so only the front of each
+  // lead's queue can be decided. The UI already locks the later cards, but this
+  // is the real guard: it also covers a stale page and two admins working at once.
+  const ahead = await getEarlierPendingForLead(existing)
+  if (ahead) {
+    return {
+      ok: false,
+      error: "not_first_for_lead",
+      blockedBy: { name: ahead.userName, createdAt: ahead.createdAt },
+    }
+  }
 
   const cleanReason = decision === "rejected" ? (reason ?? "").trim().slice(0, 500) || null : null
 
