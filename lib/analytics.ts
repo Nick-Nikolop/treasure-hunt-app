@@ -512,6 +512,17 @@ export type ActivitySeries = {
   peak: ActivityBucket | null
   /** Distinct users across the WHOLE window (not a sum of buckets). */
   uniqueUsers: number
+  /**
+   * The same window re-bucketed by CALENDAR DAY, so the chart can show peak and
+   * average per day even while displaying hourly detail.
+   *
+   * This has to come from its own SQL aggregation. Rolling the hourly buckets up
+   * client-side would count a user once per active hour and badly overstate the
+   * daily figure, because distinct counts are not additive.
+   *
+   * When `granularity` is already "day" this is the same data as `buckets`.
+   */
+  daily: ActivityBucket[]
 }
 
 /**
@@ -534,47 +545,67 @@ export async function getActivitySeries(
   granularity: "hour" | "day" = "hour",
   points = granularity === "hour" ? 24 : 30,
 ): Promise<ActivitySeries> {
-  // `points` is clamped and interpolated as a literal because Postgres will not
-  // accept a bound parameter inside an interval literal.
   const n = Math.max(2, Math.min(granularity === "hour" ? 72 : 180, Math.floor(points)))
-  const unit = granularity === "hour" ? "hour" : "day"
-  const step = sql.raw(`interval '1 ${unit}'`)
-  const span = sql.raw(`interval '${n - 1} ${unit}'`)
-  const trunc = sql.raw(`'${unit}'`)
 
-  const res = await db.execute(sql`
-    WITH buckets AS (
-      SELECT generate_series(
-        date_trunc(${trunc}, now()) - ${span},
-        date_trunc(${trunc}, now()),
-        ${step}
-      ) AS bucket
-    )
-    SELECT b.bucket,
-           count(DISTINCT e."userId") FILTER (WHERE u.id IS NOT NULL)::int AS users,
-           count(DISTINCT e."anonId") FILTER (WHERE e."userId" IS NULL
-                                                AND e."anonId" IS NOT NULL)::int AS anon,
-           count(e.id)::int AS events
-      FROM buckets b
-      LEFT JOIN ${analyticsEvent} e
-             ON e."createdAt" >= b.bucket
-            AND e."createdAt" < b.bucket + ${step}
-      LEFT JOIN "user" u ON u.id = e."userId"
-     GROUP BY b.bucket
-     ORDER BY b.bucket`)
+  /**
+   * Zero-filled distinct-activity buckets ending at the current period.
+   *
+   * `unit` and `count` are interpolated with `sql.raw` because Postgres will not
+   * accept a bound parameter inside an interval literal. Both are safe: `unit` is
+   * a two-value union and `count` is a clamped integer, neither is user text.
+   */
+  async function bucketsFor(unit: "hour" | "day", count: number): Promise<ActivityBucket[]> {
+    const step = sql.raw(`interval '1 ${unit}'`)
+    const span = sql.raw(`interval '${count - 1} ${unit}'`)
+    const trunc = sql.raw(`'${unit}'`)
 
-  const buckets: ActivityBucket[] = (res.rows as Record<string, unknown>[]).map((r) => ({
-    bucket: new Date(r.bucket as string).toISOString(),
-    users: Number(r.users ?? 0),
-    anon: Number(r.anon ?? 0),
-    events: Number(r.events ?? 0),
-  }))
+    const res = await db.execute(sql`
+      WITH buckets AS (
+        SELECT generate_series(
+          date_trunc(${trunc}, now()) - ${span},
+          date_trunc(${trunc}, now()),
+          ${step}
+        ) AS bucket
+      )
+      SELECT b.bucket,
+             count(DISTINCT e."userId") FILTER (WHERE u.id IS NOT NULL)::int AS users,
+             count(DISTINCT e."anonId") FILTER (WHERE e."userId" IS NULL
+                                                  AND e."anonId" IS NOT NULL)::int AS anon,
+             count(e.id)::int AS events
+        FROM buckets b
+        LEFT JOIN ${analyticsEvent} e
+               ON e."createdAt" >= b.bucket
+              AND e."createdAt" < b.bucket + ${step}
+        LEFT JOIN "user" u ON u.id = e."userId"
+       GROUP BY b.bucket
+       ORDER BY b.bucket`)
 
+    return (res.rows as Record<string, unknown>[]).map((r) => ({
+      bucket: new Date(r.bucket as string).toISOString(),
+      users: Number(r.users ?? 0),
+      anon: Number(r.anon ?? 0),
+      events: Number(r.events ?? 0),
+    }))
+  }
+
+  const buckets = await bucketsFor(granularity, n)
+
+  /**
+   * How many calendar days the window spans, so the daily roll-up covers exactly
+   * the same period. 24 hourly points can straddle 2 days, so round up and always
+   * ask for at least 2 (one settled day plus today) to keep the averages usable.
+   */
+  const dayCount =
+    granularity === "day" ? n : Math.max(2, Math.ceil(n / 24) + 1)
+  const daily = granularity === "day" ? buckets : await bucketsFor("day", dayCount)
+
+  const spanTrunc = sql.raw(`'${granularity}'`)
+  const spanInterval = sql.raw(`interval '${n - 1} ${granularity}'`)
   const uniq = await db.execute(sql`
     SELECT count(DISTINCT e."userId")::int AS n
       FROM ${analyticsEvent} e
       JOIN "user" u ON u.id = e."userId"
-     WHERE e."createdAt" >= date_trunc(${trunc}, now()) - ${span}`)
+     WHERE e."createdAt" >= date_trunc(${spanTrunc}, now()) - ${spanInterval}`)
 
   const peak = buckets.reduce<ActivityBucket | null>(
     (best, b) => (b.users > (best?.users ?? -1) ? b : best),
@@ -584,6 +615,7 @@ export async function getActivitySeries(
   return {
     granularity,
     buckets,
+    daily,
     peak: peak && peak.users > 0 ? peak : null,
     uniqueUsers: Number((uniq.rows as { n?: number }[])[0]?.n ?? 0),
   }

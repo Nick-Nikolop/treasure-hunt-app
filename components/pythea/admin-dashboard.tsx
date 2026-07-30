@@ -47,6 +47,7 @@ import { AdminPhasePanel } from "@/components/pythea/admin-phase-panel"
 import { AdminLocationPanel } from "@/components/pythea/admin-location-panel"
 import { AdminFinalePanel } from "@/components/pythea/admin-finale-panel"
 import { MAX_CREW_SIZE } from "@/lib/teams"
+import { cn } from "@/lib/utils"
 import {
   adminDeleteUser,
   adminSetRole,
@@ -356,7 +357,13 @@ export function AdminDashboard({
             Superadmin tools. Changes here are immediate and permanent.
           </p>
         </div>
-        <div className="grid grid-cols-3 gap-2 sm:flex sm:gap-3">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-3">
+          <Stat
+            label="ONLINE"
+            value={presence.onlineNow}
+            hint={`${presence.recentlyActive} in last ${presence.recentWindowMin}m`}
+            live
+          />
           <Stat
             label="PEOPLE"
             value={data.users.length}
@@ -1102,15 +1109,40 @@ function Stat({
   label,
   value,
   hint,
+  live,
 }: {
   label: string
   value: number
   /** Optional breakdown under the label, so totals reconcile across tabs. */
   hint?: string
+  /**
+   * Marks a figure that moves on its own. It turns the number green and adds a
+   * pulsing dot, so a stale-looking 0 is recognisably "nobody here right now"
+   * rather than a tile that failed to load.
+   */
+  live?: boolean
 }) {
   return (
-    <div className="flex flex-col items-center rounded-sm border border-border bg-card/50 px-3 py-2 sm:min-w-[4.5rem] sm:px-4">
-      <span className="font-serif text-2xl font-black text-brass">{value}</span>
+    <div
+      className={cn(
+        "flex flex-col items-center rounded-sm border bg-card/50 px-3 py-2 sm:min-w-[4.5rem] sm:px-4",
+        live && value > 0 ? "border-emerald-500/40" : "border-border",
+      )}
+    >
+      <span
+        className={cn(
+          "flex items-center gap-1.5 font-serif text-2xl font-black",
+          live && value > 0 ? "text-emerald-300" : "text-brass",
+        )}
+      >
+        {live && value > 0 && (
+          <span className="relative flex size-2">
+            <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400/70" />
+            <span className="relative inline-flex size-2 rounded-full bg-emerald-400" />
+          </span>
+        )}
+        {value}
+      </span>
       <span className="font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
         {label}
       </span>

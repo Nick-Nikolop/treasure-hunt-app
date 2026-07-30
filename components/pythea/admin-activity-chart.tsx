@@ -19,9 +19,10 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart"
-import { RefreshCw, TrendingUp, UserCheck, Users, Zap } from "lucide-react"
+import { CalendarRange, RefreshCw, TrendingUp, UserCheck, Users, Zap } from "lucide-react"
 import { adminGetActivitySeries } from "@/app/admin/actions"
 import type { ActivitySeries } from "@/lib/analytics"
+import { cn } from "@/lib/utils"
 
 /** The range presets. `points` is how many buckets of `granularity` to fetch. */
 const RANGES = [
@@ -99,11 +100,27 @@ export function AdminActivityChart({ initial }: { initial: ActivitySeries }) {
     } as (typeof settled)[number])
     const avg =
       settled.length > 0 ? settled.reduce((s, r) => s + r.users, 0) / settled.length : 0
+
+    // Per-CALENDAR-DAY figures, from the server's own daily aggregation. Today is
+    // dropped for the same reason as above: it is still filling.
+    const settledDays = series.daily.slice(0, -1)
+    const dayPeak = settledDays.reduce<(typeof settledDays)[number] | null>(
+      (best, d) => (d.users > (best?.users ?? -1) ? d : best),
+      null,
+    )
+    const dayAvg =
+      settledDays.length > 0
+        ? settledDays.reduce((s, d) => s + d.users, 0) / settledDays.length
+        : 0
+
     return {
       rows,
       stats: {
         peak: peak.users >= 0 ? peak : null,
         avg,
+        dayPeak: dayPeak && dayPeak.users > 0 ? dayPeak : null,
+        dayAvg,
+        dayCount: settledDays.length,
         totalEvents: rows.reduce((s, r) => s + r.events, 0),
         current: rows.at(-1) ?? null,
       },
@@ -181,25 +198,54 @@ export function AdminActivityChart({ initial }: { initial: ActivitySeries }) {
         </div>
       </div>
 
-      {/* Summary tiles */}
-      <div className="grid grid-cols-2 gap-px border-b border-border/60 bg-border/40 sm:grid-cols-4">
+      {/*
+        Summary tiles. Per-day peak and average always show; the per-hour pair is
+        added only on hourly ranges, since on a daily range it would render the
+        same two numbers twice.
+      */}
+      <div
+        className={cn(
+          "grid grid-cols-2 gap-px border-b border-border/60 bg-border/40",
+          series.granularity === "hour" ? "sm:grid-cols-3 xl:grid-cols-6" : "sm:grid-cols-4",
+        )}
+      >
         <Tile
           icon={UserCheck}
           label="Unique users"
           value={series.uniqueUsers}
           hint={`across the last ${range.label}`}
         />
+        {series.granularity === "hour" && (
+          <>
+            <Tile
+              icon={Users}
+              label="Peak / hour"
+              value={stats.peak?.users ?? 0}
+              hint={stats.peak ? fmtFull(stats.peak.bucket, "hour") : "no activity"}
+            />
+            <Tile
+              icon={TrendingUp}
+              label="Avg / hour"
+              value={stats.avg < 10 ? Number(stats.avg.toFixed(1)) : Math.round(stats.avg)}
+              hint="complete hours only"
+            />
+          </>
+        )}
         <Tile
-          icon={Users}
-          label={`Peak / ${series.granularity}`}
-          value={stats.peak?.users ?? 0}
-          hint={stats.peak ? fmtFull(stats.peak.bucket, series.granularity) : "no activity"}
+          icon={CalendarRange}
+          label="Peak / day"
+          value={stats.dayPeak?.users ?? 0}
+          hint={stats.dayPeak ? fmtFull(stats.dayPeak.bucket, "day") : "no activity"}
         />
         <Tile
           icon={TrendingUp}
-          label={`Avg / ${series.granularity}`}
-          value={stats.avg < 10 ? Number(stats.avg.toFixed(1)) : Math.round(stats.avg)}
-          hint="complete periods only"
+          label="Avg / day"
+          value={stats.dayAvg < 10 ? Number(stats.dayAvg.toFixed(1)) : Math.round(stats.dayAvg)}
+          hint={
+            stats.dayCount > 0
+              ? `over ${stats.dayCount} full ${stats.dayCount === 1 ? "day" : "days"}`
+              : "no full day yet"
+          }
         />
         <Tile
           icon={Zap}
