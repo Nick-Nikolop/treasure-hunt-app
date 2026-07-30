@@ -15,7 +15,9 @@ import { resolveLeadBackground } from "@/lib/lead-backgrounds"
 import { COMPASS_SRC, DEFAULT_COMPASS_OPACITY_PCT } from "@/lib/compass"
 import { getFinaleNotes, type FinaleNote } from "@/app/journal/actions"
 import { HandwrittenNote } from "@/components/pythea/handwritten-note"
+import { HoldPaper } from "@/components/pythea/hold-paper"
 import { WinnerPreviewButton } from "@/components/pythea/winner-preview-button"
+import { HoldPreviewButtons } from "@/components/pythea/hold-preview-buttons"
 import { WinnerScreenPreview } from "@/components/pythea/winner-reveal"
 import { motion } from "framer-motion"
 import {
@@ -32,6 +34,8 @@ import {
   EyeOff,
   Trophy,
   X,
+  Hourglass,
+  BellRing,
 } from "lucide-react"
 import type { Clue, LockedClue } from "@/lib/clues"
 import { buildVoyageRoute, TREASURE_XY } from "@/lib/voyage-map"
@@ -746,6 +750,11 @@ export function PoreiaView({
             component, so ordinary explorers are never sent this markup. */}
         {isAdmin && <WinnerPreviewButton />}
 
+        {/* Admin-only: preview the trail-end hold slip and its release alert,
+            neither of which can be seen on purpose without actually being a held
+            crew at the moment the hold is lifted. */}
+        {isAdmin && <HoldPreviewButtons />}
+
         {lockedNotice !== null && (
           <AdminLockedOverlay order={lockedNotice} onClose={closeLockedNotice} />
         )}
@@ -1250,6 +1259,8 @@ type FinaleNotes = {
   note1: FinaleNote | null
   note2: FinaleNote | null
   variants: { active: number; count: number; assigned: number | null } | null
+  held: boolean
+  hold: { title: string; titleEn: string; body: string; bodyEn: string }
 }
 /** A note already resolved to the reader's language. */
 type LocalNote = { body: string; cta: string; notice: string }
@@ -1285,6 +1296,10 @@ function useFinaleNotes(previewVariant?: number): {
   note1: LocalNote | null
   note2: LocalNote | null
   variants: FinaleNotes["variants"]
+  /** True when note 1 is withheld by the hold rather than simply unearned. */
+  held: boolean
+  /** Hold slip copy in the reader's language. */
+  hold: { title: string; body: string } | null
 } {
   const { locale } = useI18n()
   const [notes, setNotes] = useState<FinaleNotes | null>(null)
@@ -1315,6 +1330,13 @@ function useFinaleNotes(previewVariant?: number): {
     note1: pick(notes?.note1),
     note2: pick(notes?.note2),
     variants: notes?.variants ?? null,
+    held: notes?.held === true,
+    hold: notes
+      ? {
+          title: en ? notes.hold.titleEn : notes.hold.title,
+          body: en ? notes.hold.bodyEn : notes.hold.body,
+        }
+      : null,
   }
 }
 
@@ -1624,7 +1646,12 @@ function NotePill({
   label: string
   icon: typeof Compass
   locked: boolean
-  hint: string
+  /**
+   * The admin explanation shown on the dashed "locked" variant. Optional because
+   * an unlocked pill never renders it, and the hold pill is only ever unlocked:
+   * it IS the thing to read, not a preview of something withheld.
+   */
+  hint?: string
   onClick: () => void
 }) {
   const { t } = useI18n()
@@ -1690,8 +1717,8 @@ function FinaleNoteBar({
   // means "whatever this crew would actually be shown", which is what every
   // ordinary explorer always gets.
   const [previewVariant, setPreviewVariant] = useState<number | undefined>(undefined)
-  const { note1, note2, variants } = useFinaleNotes(previewVariant)
-  const [open, setOpen] = useState<null | 1 | 2 | "won">(null)
+  const { note1, note2, variants, held, hold } = useFinaleNotes(previewVariant)
+  const [open, setOpen] = useState<null | 1 | 2 | "won" | "hold">(null)
 
   // Only closing the FIRST note marks it as read. Closing the second one must
   // not, or an admin previewing note 2 early would suppress the final page's
@@ -1710,11 +1737,23 @@ function FinaleNoteBar({
   // clearly-labelled preview button at the foot of the journal, so showing this
   // one to them too would just be a second, unlabelled copy of the same screen.
   const showWon = finished
-  if (!show1 && !show2 && !showWon) return null
+  // A held crew gets the hold slip where note 1's pill would be. Gated on the
+  // real trail-end, never on `isAdmin`, because the server already exempts admins
+  // from the hold: for them `held` is false and note 1 shows as usual.
+  const showHold = held && hold !== null && trailEndReached
+  if (!show1 && !show2 && !showWon && !showHold) return null
 
   return (
     <>
       <div className="flex flex-wrap items-center justify-center gap-2.5">
+        {showHold && (
+          <NotePill
+            label={t.finale.holdShort}
+            icon={Hourglass}
+            locked={false}
+            onClick={() => setOpen("hold")}
+          />
+        )}
         {show1 && (
           <NotePill
             label={show2 ? t.finale.note1Short : t.finale.openNote}
@@ -1778,6 +1817,9 @@ function FinaleNoteBar({
           ctaIcon={Gem}
           onClose={closeNote2}
         />
+      )}
+      {open === "hold" && hold && (
+        <HoldOverlay title={hold.title} body={hold.body} onClose={() => setOpen(null)} />
       )}
       {open === "won" && <WonOverlay onClose={() => setOpen(null)} />}
     </>

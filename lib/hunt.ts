@@ -36,7 +36,7 @@ import { haversineMeters } from "@/lib/geo"
 import { getFinaleConfig, isTrailEndHeld } from "@/lib/finale"
 import { getSolveCooldownSeconds } from "@/lib/hunt-config"
 import { logActivity, resolveUserSnapshot } from "@/lib/activity"
-import { and, eq, gt, inArray } from "drizzle-orm"
+import { and, asc, eq, gt, inArray } from "drizzle-orm"
 import { randomUUID } from "node:crypto"
 
 // URL helpers now live in lib/site-url.ts (to avoid an import cycle with the
@@ -444,6 +444,26 @@ async function crewHasReachedTrailEnd(userIds: string[]): Promise<boolean> {
     .where(and(inArray(leadUnlock.userId, userIds), eq(leadUnlock.leadOrder, TRAIL_END_ORDER)))
     .limit(1)
   return rows.length > 0
+}
+
+/**
+ * WHEN the crew closed the paper trail, or null if they have not.
+ *
+ * Used to decide who actually waited through the hold: this is compared against
+ * the moment the hold was lifted, so a crew that arrives afterwards is never told
+ * "the way just opened" about a wait they never experienced. Takes the EARLIEST
+ * row, since crew members scan seconds apart and the first scan is the one that
+ * really closed the trail.
+ */
+export async function getCrewTrailEndAt(userIds: string[]): Promise<Date | null> {
+  if (userIds.length === 0) return null
+  const rows = await db
+    .select({ at: leadUnlock.unlockedAt })
+    .from(leadUnlock)
+    .where(and(inArray(leadUnlock.userId, userIds), eq(leadUnlock.leadOrder, TRAIL_END_ORDER)))
+    .orderBy(asc(leadUnlock.unlockedAt))
+    .limit(1)
+  return rows[0]?.at ?? null
 }
 
 /** Stamp the trail-end row for every crew member that doesn't have one yet. */

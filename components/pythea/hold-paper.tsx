@@ -1,9 +1,9 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { BellRing, Hourglass, Paperclip } from "lucide-react"
+import { BellRing, Hourglass } from "lucide-react"
 
-import { useI18n } from "@/lib/i18n"
+import { useI18n } from "@/components/pythea/language-provider"
 
 /**
  * Torn-from-a-pad edges: straight left and right sides, ragged top and bottom.

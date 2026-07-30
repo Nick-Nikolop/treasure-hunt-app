@@ -9,6 +9,7 @@ import { PhaseProvider } from '@/components/pythea/phase-provider'
 import { AnalyticsProvider } from '@/components/pythea/analytics-provider'
 import { CookieConsent } from '@/components/pythea/cookie-consent'
 import { NotificationProvider } from '@/components/pythea/notification-provider'
+import { HoldReleaseToast } from '@/components/pythea/hold-release-toast'
 import { AdminAlertsWidget } from '@/components/pythea/admin-alerts-widget'
 import { ContactWidget } from '@/components/pythea/contact-widget'
 import { getPhaseContext, getPublicPhase } from '@/lib/phase-guard'
@@ -172,6 +173,9 @@ export default async function RootLayout({
             </LiteModeProvider>
             <CookieConsent />
             <NotificationProvider />
+            {/* Global so a held crew is told the way opened wherever they are
+                waiting, not only if they happen to be on the journal. */}
+            <HoldReleaseToast />
             <AdminAlertsWidget />
             {/* Inside LanguageProvider: it reads localised copy. */}
             <ContactWidget />
