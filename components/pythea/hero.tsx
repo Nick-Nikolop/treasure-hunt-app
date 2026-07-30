@@ -2,7 +2,7 @@
 
 import { useRef } from "react"
 import { motion, useScroll, useTransform } from "framer-motion"
-import { MapPin, ChevronDown, Clock } from "lucide-react"
+import { ChevronDown, Clock } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
 
 const reveal = {
@@ -90,10 +90,6 @@ export function Hero({ endsAt }: { endsAt: string }) {
           transition={{ duration: 1, delay: 0.1 }}
           className="mb-7 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 font-sans text-[11px] font-semibold tracking-chip text-muted-foreground"
         >
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background/60 px-3 py-1 backdrop-blur-sm">
-            <MapPin className="size-3 text-brass" />
-            {t.hero.coords}
-          </span>
           <span className="inline-flex items-center rounded-full border border-border/70 bg-background/60 px-3 py-1 text-brass backdrop-blur-sm">
             {t.hero.season}
           </span>
