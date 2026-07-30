@@ -224,7 +224,7 @@ const RAW_CLUES: Omit<
     subtitleEn: "The land of great distances",
     icon: "Package",
     body: [
-      "Από την Αίγυπτο στράφηκα προς τον βορρά και έφτασα στη Ρωσία. Μια χώρα αχανής, γεμάτη χειμώνες, ιστορίες, μουσικές και προϊόντα που ταξιδεύουν μακριά από τον τόπο τους.",
+      "Από την Αίγυπτο στράφηκα προς τον βορρά και έφτασα στη Ρωσία. Μια χώρα αχανής, γεμάτη χειμώνες, ισ��ορίες, μουσικές και προϊόντα που ταξιδεύουν μακριά από τον τόπο τους.",
       "Συνηθίζω να λέω πως μια χώρα δεν τη θυμάσαι μόνο από τα μνημεία της, αλλά και από τις γεύσεις, τις μυρωδιές και τα μικρά πράγματα που κουβαλούν οι άνθρωποι μαζί τους.",
       "Έτσι, στην Καλαμάτα, το επόμενο ίχνος το άφησα εκεί όπου κάτι από τη Ρωσία συνεχίζει να φτάνει στην πόλη, σαν μικρό φορτίο από έναν πολύ μεγάλο τόπο.",
     ],
@@ -410,6 +410,43 @@ export function effectiveUnlockedCount(
 export function clampProgress(value: number, total: number = TOTAL_CLUES): number {
   if (!Number.isFinite(value)) return 0
   return Math.max(0, Math.min(total, Math.floor(value)))
+}
+
+/**
+ * True when a stored `leadOrder` is one of the endgame sentinels (trail end,
+ * compass, treasure) rather than a real position on the trail.
+ *
+ * Note this is a `>= FINISH_ORDER` test, so it deliberately does NOT catch
+ * LEGACY_FINISH_ORDER (= 10), which is a REAL lead position now that the trail
+ * is ten leads long. Those old rows are migrated up to FINISH_ORDER by the
+ * backfill in lib/leads.ts.
+ */
+export function isEndgameOrder(order: number): boolean {
+  return order >= FINISH_ORDER
+}
+
+/**
+ * How many leads to DISPLAY as solved.
+ *
+ * Every lead's QR unlocks the NEXT lead, so a crew's stored rows always top out
+ * one short: the final lead has no successor, and its QR writes the TRAIL_END
+ * sentinel instead of a real row. Counting real rows alone therefore pins anyone
+ * who closed the trail at `total - 1` forever (the bug that showed a finisher as
+ * "9/10" with Finland, the tenth lead, uncounted).
+ *
+ * Reaching any endgame step is only possible while standing on the last lead, so
+ * it proves the whole trail is behind them and the count reads full. This matches
+ * what the admin progress editor already does when it sets a finale stage, and
+ * what the journal already shows (it maxes over sentinel rows and clamps).
+ */
+export function leadsSolvedCount(
+  storedRealMax: number,
+  inEndgame: boolean,
+  nowMs: number,
+  total: number = TOTAL_CLUES,
+): number {
+  if (inEndgame) return total
+  return effectiveUnlockedCount(storedRealMax, nowMs, total)
 }
 
 /**

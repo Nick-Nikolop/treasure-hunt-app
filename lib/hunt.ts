@@ -18,6 +18,8 @@ import {
   effectiveUnlockedCount,
   isLeadOneOpen,
   isEndgameProgress,
+  isEndgameOrder,
+  leadsSolvedCount,
   START_MS,
 } from "@/lib/clues"
 import {
@@ -979,11 +981,19 @@ export async function getLeaderboard(nowMs: number = Date.now()): Promise<Leader
   }
   function userProgress(userId: string): { progress: number; reachedAt: number | null } {
     const rows = byUser.get(userId) ?? []
-    // Ignore the virtual finishing order when computing displayed progress.
-    const storedMax = rows.reduce((m, r) => (r.order <= total ? Math.max(m, r.order) : m), 0)
-    const progress = effectiveUnlockedCount(storedMax, nowMs, total)
+    // Real trail positions only; the endgame sentinels are handled separately
+    // below because they stand in for the last lead rather than being one.
+    const storedMax = rows.reduce((m, r) => (isEndgameOrder(r.order) ? m : Math.max(m, r.order)), 0)
+    // Any endgame scan means the final lead is behind them, so the count reads
+    // full even though that lead never writes a real unlock row of its own.
+    const inEndgame = rows.some((r) => isEndgameOrder(r.order))
+    const progress = leadsSolvedCount(storedMax, inEndgame, nowMs, total)
     if (progress === 0) return { progress: 0, reachedAt: null }
-    if (progress === 1) return { progress: 1, reachedAt: lead1Open ? START_MS : null }
+    if (progress === 1 && !inEndgame) {
+      return { progress: 1, reachedAt: lead1Open ? START_MS : null }
+    }
+    // Still timed by the last REAL lead they scanned into, so the arrival-time
+    // tiebreak keeps comparing like with like.
     const at = rows.find((r) => r.order === storedMax)?.at ?? null
     return { progress, reachedAt: at }
   }

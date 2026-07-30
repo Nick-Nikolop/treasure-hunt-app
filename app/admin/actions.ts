@@ -119,7 +119,7 @@ import {
   FINISH_ORDER,
   COMPASS_ORDER,
   TRAIL_END_ORDER,
-  effectiveUnlockedCount,
+  leadsSolvedCount,
   isLeadOneOpen,
   START_MS,
   isLeadIcon,
@@ -369,8 +369,16 @@ export async function getAdminData(): Promise<AdminData> {
     }
   }
   const liveTotal = editableLeads.length
+  /**
+   * True once a user has scanned any endgame QR. All three sit at the LAST lead
+   * or beyond it, so any of them proves the whole trail is solved - which is what
+   * lets the final lead be counted even though it never gets a real unlock row of
+   * its own (see `leadsSolvedCount`).
+   */
+  const inEndgame = (userId: string) =>
+    trailEndUsers.has(userId) || compassUsers.has(userId) || finishedUsers.has(userId)
   const progressOf = (userId: string) =>
-    effectiveUnlockedCount(storedByUser.get(userId) ?? 0, now, liveTotal)
+    leadsSolvedCount(storedByUser.get(userId) ?? 0, inEndgame(userId), now, liveTotal)
   /**
    * When a user arrived at their current lead. Mirrors the leaderboard rule in
    * lib/hunt.ts: lead 1 opens for everyone at once (so it carries the shared
