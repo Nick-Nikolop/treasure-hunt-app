@@ -62,6 +62,7 @@ import {
   adminResetTeamProgress,
   adminSaveHuntRules,
   getActivityLog,
+  getFinaleState,
   type AdminData,
   type AdminUserRow,
   type AdminTeamRow,
@@ -201,9 +202,29 @@ export function AdminDashboard({
     | { kind: "team"; id: string; label: string; current: number }
     | null
   >(null)
-  // Either a lead number as a string ("1".."10") or "compass" for the finale
-  // step. Lead 0 is not a real stop, so the lowest selectable value is 1.
+  // Either a lead number as a string ("1".."10"), or "hold" / "compass" /
+  // "treasure" for the endgame steps. Lead 0 is not a real stop, so the lowest
+  // selectable value is 1.
   const [progressValue, setProgressValue] = useState("1")
+  /**
+   * Whether the trail-end hold is on. Only then is "waiting on the hold" a real
+   * place a crew can sit, so the option is hidden otherwise rather than offering
+   * a state the hunt cannot currently produce. Read here rather than taken from
+   * `AdminData` because the hold is toggled from the Finale tab and changes
+   * independently of this payload.
+   */
+  const [holdEnabled, setHoldEnabled] = useState(false)
+  useEffect(() => {
+    let alive = true
+    getFinaleState()
+      .then((c) => {
+        if (alive) setHoldEnabled(c.holdEnabled)
+      })
+      .catch(() => {})
+    return () => {
+      alive = false
+    }
+  }, [])
   // Activity log: server-seeded first page, plus optional per-entity drill-down.
   // `activityKey` forces the panel to remount (reset its internal list) whenever
   // the seed changes.
@@ -992,11 +1013,14 @@ export function AdminDashboard({
             e.preventDefault()
             if (!progressTarget) return
             const { kind, id } = progressTarget
-            // Both finale stages imply every lead is solved, so they pin the
+            // Every endgame stage implies all leads are solved, so they pin the
             // lead number to the last one and let the stage carry the rest.
-            const finale = progressValue === "compass" || progressValue === "treasure"
+            const finale =
+              progressValue === "hold" ||
+              progressValue === "compass" ||
+              progressValue === "treasure"
             const lead = finale ? data.totalLeads : Number(progressValue)
-            const stage = finale ? (progressValue as "compass" | "treasure") : "lead"
+            const stage = finale ? (progressValue as "hold" | "compass" | "treasure") : "lead"
             runAction(
               () =>
                 kind === "team"
@@ -1028,6 +1052,11 @@ export function AdminDashboard({
                 </option>
               )
             })}
+            {/* Only offered while the hold is on: with the hold lifted there is
+                nothing to wait for, so a crew cannot sit here. */}
+            {holdEnabled && (
+              <option value="hold">The Hold (trail closed, waiting)</option>
+            )}
             <option value="compass">The Compass (all leads solved)</option>
             <option value="treasure">The Treasure (finished)</option>
           </select>
@@ -1036,7 +1065,9 @@ export function AdminDashboard({
               ? "Counts as finished, exactly like scanning the Treasure QR: it takes their place in the winner order by finish time."
               : progressValue === "compass"
                 ? "Every lead is solved and the compass is revealed. They now need to find the Compass QR. This does not finish the hunt: only that scan does."
-                : (() => {
+                : progressValue === "hold"
+                  ? "Every lead is solved and the trail is closed, but the compass step has not opened for them yet. This is where a crew waits while the hold is on, and it seals note 1 until you lift it."
+                  : (() => {
                     // The QR hidden AT a lead unlocks the NEXT lead, so a crew
                     // sitting on lead N hunts lead N's own QR to reach N+1.
                     const n = Number(progressValue)

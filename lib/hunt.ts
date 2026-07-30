@@ -269,10 +269,12 @@ async function trimAbove(userIds: string[], targetLead: number): Promise<void> {
 
 /**
  * Where in the hunt an admin is placing a crew. "lead" is one of the numbered
- * stops; "compass" is the finale step after every lead is solved; "treasure" is
- * the finish itself, which also grants a winner placement by finish order.
+ * stops; "hold" is the trail end, where every lead is solved but the compass
+ * step has not opened yet; "compass" is the finale step after the hold lifts;
+ * "treasure" is the finish itself, which also grants a winner placement by
+ * finish order.
  */
-export type ProgressStage = "lead" | "compass" | "treasure"
+export type ProgressStage = "lead" | "hold" | "compass" | "treasure"
 
 /**
  * Set the stored progress for a set of users. Used by admin tools. Adds missing
@@ -282,15 +284,23 @@ export type ProgressStage = "lead" | "compass" | "treasure"
  * Lead 1 is time-global and never stored, so a target of 0 or 1 both simply mean
  * "no QR leads held".
  *
- * For stage "compass", the crew is placed at the finale step: every lead is
- * marked solved and the compass row is stamped. `trimAbove` runs first and
- * clears the sentinel rows above the lead range, so this also removes any
- * existing finish row — correct, since the compass comes before the treasure.
+ * For stage "hold", the crew has closed the paper trail but the compass step has
+ * not opened for them: every lead is marked solved and the trail-end row is
+ * stamped, with NO compass row. This is the same state a real trail-end scan
+ * produces while the hold is on, and it is what makes a crew read as "waiting on
+ * the hold" rather than as hunting the compass.
  *
- * For stage "treasure", the crew is finished: every lead solved, the compass
- * stamped (you cannot reach the treasure without it) and the finish row stamped,
- * which is what earns their placement in the winner order. This is the same end
- * state a real treasure scan produces.
+ * For stage "compass", the crew is placed at the finale step: every lead is
+ * marked solved and the compass row is stamped. The trail-end row is stamped too,
+ * since the compass cannot be reached without closing the trail first. `trimAbove`
+ * runs first and clears the sentinel rows above the lead range, so this also
+ * removes any existing finish row — correct, since the compass comes before the
+ * treasure.
+ *
+ * For stage "treasure", the crew is finished: every lead solved, the trail end and
+ * compass stamped (you cannot reach the treasure without them) and the finish row
+ * stamped, which is what earns their placement in the winner order. This is the
+ * same end state a real treasure scan produces.
  */
 export async function setProgressForUsers(
   userIds: string[],
@@ -299,7 +309,9 @@ export async function setProgressForUsers(
   stage: ProgressStage = "lead",
 ): Promise<void> {
   const total = await getTotalLeads()
-  const finale = stage === "compass" || stage === "treasure"
+  // Every endgame stage sits past the last lead, so they all pin the target
+  // there and let the sentinel rows below carry the distinction.
+  const finale = stage === "hold" || stage === "compass" || stage === "treasure"
   const target = finale ? total : clampProgress(targetLead, total)
   const at = new Date()
   await trimAbove(userIds, target)
@@ -307,7 +319,14 @@ export async function setProgressForUsers(
   // Forward the caller's source (default "admin"): these rows are a manual
   // dashboard override, never an automated pass.
   const finaleSource: UnlockSource = source === "time" ? "time" : "admin"
-  if (finale) await insertCompassRows(userIds, at, finaleSource)
+  // The endgame rows are cumulative, mirroring the real scan order: closing the
+  // trail comes before the compass, which comes before the treasure. `trimAbove`
+  // has already cleared every sentinel, so stopping early is what steps a crew
+  // BACK down to an earlier rung.
+  if (finale) await insertTrailEndRows(userIds, at, finaleSource)
+  if (stage === "compass" || stage === "treasure") {
+    await insertCompassRows(userIds, at, finaleSource)
+  }
   if (stage === "treasure") await insertFinishRows(userIds, at, finaleSource)
 }
 

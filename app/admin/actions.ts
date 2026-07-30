@@ -1349,7 +1349,7 @@ export async function adminSetUserProgress(
   if (exists.length === 0) return { ok: false, error: "not_found" }
 
   // Both finale stages sit past the last lead, so they pin the target there.
-  const finale = stage === "compass" || stage === "treasure"
+  const finale = stage === "hold" || stage === "compass" || stage === "treasure"
   const lead = finale ? total : Math.floor(targetLead)
   // Move the whole crew together (solo players resolve to just themselves).
   const crew = await getCrewUserIds(targetUserId)
@@ -1362,7 +1362,9 @@ export async function adminSetUserProgress(
       ? "the treasure (finished)"
       : stage === "compass"
         ? "the compass"
-        : `lead No. ${String(lead).padStart(2, "0")}`
+        : stage === "hold"
+          ? "the trail end (waiting on the hold)"
+          : `lead No. ${String(lead).padStart(2, "0")}`
   await logActivity({
     category: "admin",
     action: reset ? "admin.progress_reset" : "admin.progress_set",
@@ -1407,8 +1409,8 @@ export async function adminSetTeamProgress(
     .from(team)
     .where(eq(team.id, teamId))
     .limit(1)
-  // Both finale stages sit past the last lead, so they pin the target there.
-  const finale = stage === "compass" || stage === "treasure"
+  // Every endgame stage sits past the last lead, so they pin the target there.
+  const finale = stage === "hold" || stage === "compass" || stage === "treasure"
   const lead = finale ? total : Math.floor(targetLead)
   await setProgressForUsers(
     memberRows.map((m) => m.userId),
@@ -1424,7 +1426,9 @@ export async function adminSetTeamProgress(
       ? "the treasure (finished)"
       : stage === "compass"
         ? "the compass"
-        : `lead No. ${String(lead).padStart(2, "0")}`
+        : stage === "hold"
+          ? "the trail end (waiting on the hold)"
+          : `lead No. ${String(lead).padStart(2, "0")}`
   await logActivity({
     category: "admin",
     action: reset ? "admin.team_progress_reset" : "admin.team_progress_set",
@@ -1529,7 +1533,7 @@ export async function adminRegenerateToken(leadOrder: number): Promise<ActionRes
   return { ok: true }
 }
 
-  // ── Leads: add / remove / reorder / stamp (admin) ───────────────────────────
+  // ── Leads: add / remove / reorder / stamp (admin) ──────────────────────────��
 
 /**
  * Reorder the whole sequence. `orderedIds` is the full list of lead ids in the
