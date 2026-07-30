@@ -196,6 +196,13 @@ export async function getCrewEffectiveProgress(
  * rows (with their original timestamps) are preserved; only missing leads are
  * inserted, stamped `at`. Idempotent.
  */
+/**
+ * How a lead was passed. Stored on every `lead_unlock` row and mirrored into the
+ * activity log, so the admin feed can say whether an explorer scanned the QR
+ * themselves or had a photo proof approved.
+ */
+export type UnlockSource = "qr" | "proof"
+
 async function ensureUpTo(
   userIds: string[],
   targetLead: number,
@@ -338,7 +345,11 @@ async function crewHasFinished(userIds: string[]): Promise<boolean> {
 }
 
 /** Stamp the finishing row for every crew member that doesn't have one yet. */
-async function insertFinishRows(userIds: string[], at: Date): Promise<void> {
+async function insertFinishRows(
+  userIds: string[],
+  at: Date,
+  source: UnlockSource = "qr",
+): Promise<void> {
   if (userIds.length === 0) return
   const existing = await db
     .select({ userId: leadUnlock.userId })
@@ -351,7 +362,7 @@ async function insertFinishRows(userIds: string[], at: Date): Promise<void> {
       id: randomUUID(),
       userId: uid,
       leadOrder: FINISH_ORDER,
-      source: "qr",
+      source,
       unlockedAt: at,
     }))
   if (values.length > 0) {
@@ -402,7 +413,11 @@ async function crewHasReachedTrailEnd(userIds: string[]): Promise<boolean> {
 }
 
 /** Stamp the trail-end row for every crew member that doesn't have one yet. */
-async function insertTrailEndRows(userIds: string[], at: Date): Promise<void> {
+async function insertTrailEndRows(
+  userIds: string[],
+  at: Date,
+  source: UnlockSource = "qr",
+): Promise<void> {
   if (userIds.length === 0) return
   const existing = await db
     .select({ userId: leadUnlock.userId })
@@ -415,7 +430,7 @@ async function insertTrailEndRows(userIds: string[], at: Date): Promise<void> {
       id: randomUUID(),
       userId: uid,
       leadOrder: TRAIL_END_ORDER,
-      source: "qr",
+      source,
       unlockedAt: at,
     }))
   if (values.length > 0) {
@@ -435,7 +450,11 @@ async function crewHasReachedCompass(userIds: string[]): Promise<boolean> {
 }
 
 /** Stamp the compass row for every crew member that doesn't have one yet. */
-async function insertCompassRows(userIds: string[], at: Date): Promise<void> {
+async function insertCompassRows(
+  userIds: string[],
+  at: Date,
+  source: UnlockSource = "qr",
+): Promise<void> {
   if (userIds.length === 0) return
   const existing = await db
     .select({ userId: leadUnlock.userId })
@@ -448,7 +467,7 @@ async function insertCompassRows(userIds: string[], at: Date): Promise<void> {
       id: randomUUID(),
       userId: uid,
       leadOrder: COMPASS_ORDER,
-      source: "qr",
+      source,
       unlockedAt: at,
     }))
   if (values.length > 0) {
@@ -457,8 +476,24 @@ async function insertCompassRows(userIds: string[], at: Date): Promise<void> {
 }
 
 /**
+ * Which endgame step an order refers to, for activity summaries. The finale is
+ * three separate steps that all count as "finished", so they must be named apart.
+ */
+function finaleStepName(leadOrder: number): string {
+  if (leadOrder === TRAIL_END_ORDER) return "trail-end"
+  if (leadOrder === COMPASS_ORDER) return "compass"
+  if (leadOrder === FINISH_ORDER) return "treasure"
+  return "finishing"
+}
+
+/**
  * Record a lead solve / finish in the activity log. The scanner is the actor;
  * a scan advances the whole crew, so we tag the scanner's team for context.
+ *
+ * `via` records HOW the lead was passed: "qr" for a QR the explorer scanned
+ * themselves, "proof" for a photo an admin reviewed and approved. The activity
+ * feed shows this, so it must never be assumed — a proof-approved lead read as
+ * "scanned" before this was threaded through.
  */
 async function logLeadSolved(
   userId: string,
@@ -466,6 +501,7 @@ async function logLeadSolved(
   country: string,
   countryEn: string,
   finished: boolean,
+  via: UnlockSource = "qr",
 ): Promise<void> {
   const snap = await resolveUserSnapshot(userId)
   const tm = await db
@@ -489,9 +525,15 @@ async function logLeadSolved(
     teamName,
     leadOrder: finished ? null : leadOrder,
     summary: finished
-      ? `${snap.name} scanned the finishing QR (${country})`
-      : `${snap.name} solved lead No. ${padded} (${country})`,
-    metadata: { source: "qr", country, countryEn, crewScan: true },
+      ? // All three finale steps are "finished" events, so name the step or the
+        // feed shows three identical rows for one crew's endgame.
+        via === "proof"
+        ? `${snap.name} passed ${finaleStepName(leadOrder)} via approved photo proof (${country})`
+        : `${snap.name} scanned the ${finaleStepName(leadOrder)} QR (${country})`
+      : via === "proof"
+        ? `${snap.name} passed lead No. ${padded} via approved photo proof (${country})`
+        : `${snap.name} solved lead No. ${padded} by scanning the QR (${country})`,
+    metadata: { source: via, country, countryEn, crewScan: via === "qr", step: leadOrder },
   })
 }
 
@@ -679,8 +721,8 @@ export async function approveLeadUnlock(
     if (await crewHasReachedTrailEnd(crew)) {
       return { status: "already", leadOrder: total, country: last.country, countryEn: last.countryEn }
     }
-    await insertTrailEndRows(crew, await stampAt(crew, now))
-    await logLeadSolved(userId, TRAIL_END_ORDER, last.country, last.countryEn, true)
+    await insertTrailEndRows(crew, await stampAt(crew, now), "proof")
+    await logLeadSolved(userId, TRAIL_END_ORDER, last.country, last.countryEn, true, "proof")
     return { status: "unlocked", leadOrder: total, country: last.country, countryEn: last.countryEn }
   }
 
@@ -698,8 +740,8 @@ export async function approveLeadUnlock(
     if (await crewHasReachedCompass(crew)) {
       return { status: "already", leadOrder: total, country: last.country, countryEn: last.countryEn }
     }
-    await insertCompassRows(crew, await stampAt(crew, now))
-    await logLeadSolved(userId, COMPASS_ORDER, last.country, last.countryEn, true)
+    await insertCompassRows(crew, await stampAt(crew, now), "proof")
+    await logLeadSolved(userId, COMPASS_ORDER, last.country, last.countryEn, true, "proof")
     return { status: "unlocked", leadOrder: total, country: last.country, countryEn: last.countryEn }
   }
 
@@ -719,8 +761,8 @@ export async function approveLeadUnlock(
     if (await crewHasFinished(crew)) {
       return { status: "already", leadOrder: total, country: last.country, countryEn: last.countryEn }
     }
-    await insertFinishRows(crew, await stampAt(crew, now))
-    await logLeadSolved(userId, FINISH_ORDER, last.country, last.countryEn, true)
+    await insertFinishRows(crew, await stampAt(crew, now), "proof")
+    await logLeadSolved(userId, FINISH_ORDER, last.country, last.countryEn, true, "proof")
     return { status: "unlocked", leadOrder: total, country: last.country, countryEn: last.countryEn }
   }
 
@@ -739,7 +781,7 @@ export async function approveLeadUnlock(
   }
 
   await ensureUpTo(crew, leadOrder, "proof", await stampAt(crew, now))
-  await logLeadSolved(userId, leadOrder, clue.country, clue.countryEn, false)
+  await logLeadSolved(userId, leadOrder, clue.country, clue.countryEn, false, "proof")
   return { status: "unlocked", leadOrder, country: clue.country, countryEn: clue.countryEn }
 }
 

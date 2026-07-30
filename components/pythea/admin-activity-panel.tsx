@@ -10,6 +10,8 @@ import {
   LogIn,
   ScrollText,
   ChevronDown,
+  Camera,
+  QrCode,
 } from "lucide-react"
 import { getActivityLog } from "@/app/admin/actions"
 import { type ActivityRow, type ActivityCategory, type ActivityPage } from "@/lib/activity"
@@ -42,6 +44,21 @@ function categoryMeta(category: string): {
     default:
       return { icon: ScrollText, tone: "text-muted-foreground", label: category }
   }
+}
+
+/**
+ * How the explorer passed the lead, for `lead` events only: "qr" when they
+ * scanned it themselves, "proof" when an admin approved their photo.
+ *
+ * Reads `metadata.source`, written by `logLeadSolved`. Returns null for anything
+ * that is not a lead solve/finish (team, auth and admin events have no method),
+ * and also for the handful of legacy rows recorded before the method was tracked,
+ * so an unknown row shows no badge rather than a wrong one.
+ */
+function passMethod(row: ActivityRow): "qr" | "proof" | null {
+  if (row.category !== "lead") return null
+  const src = (row.metadata as { source?: unknown } | null)?.source
+  return src === "proof" ? "proof" : src === "qr" ? "qr" : null
 }
 
 function fmtDateTime(d: Date | string) {
@@ -239,6 +256,7 @@ export function AdminActivityPanel({
 function ActivityItem({ row }: { row: ActivityRow }) {
   const meta = categoryMeta(row.category)
   const Icon = meta.icon
+  const via = passMethod(row)
   return (
     <li className="flex items-start gap-3 rounded-sm border border-border bg-card/40 px-3 py-2.5">
       <span
@@ -247,7 +265,32 @@ function ActivityItem({ row }: { row: ActivityRow }) {
         <Icon className="size-3.5" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="font-sans text-sm text-foreground">{row.summary}</p>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <p className="font-sans text-sm text-foreground">{row.summary}</p>
+          {/* How this lead was passed: scanned in person, or a photo an admin
+              approved. Only lead events carry this. */}
+          {via && (
+            <span
+              className={
+                via === "proof"
+                  ? "inline-flex shrink-0 items-center gap-1 rounded-full border border-sky-500/45 bg-sky-500/15 px-2 py-0.5 font-sans text-[10px] font-bold tracking-chip text-sky-400"
+                  : "inline-flex shrink-0 items-center gap-1 rounded-full border border-brass/45 bg-brass/15 px-2 py-0.5 font-sans text-[10px] font-bold tracking-chip text-brass"
+              }
+              title={
+                via === "proof"
+                  ? "Passed by photo proof, reviewed and approved by an admin"
+                  : "Passed by scanning the QR in person"
+              }
+            >
+              {via === "proof" ? (
+                <Camera className="size-3" aria-hidden />
+              ) : (
+                <QrCode className="size-3" aria-hidden />
+              )}
+              {via === "proof" ? "PHOTO PROOF" : "QR SCAN"}
+            </span>
+          )}
+        </div>
         <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 font-sans text-[11px] text-muted-foreground">
           <span className={`font-bold uppercase tracking-chip ${meta.tone}`}>{meta.label}</span>
           <span aria-hidden>·</span>
