@@ -701,6 +701,12 @@ const el = {
       "Το βλέπεις μόνο εσύ, ως admin. Για τους κανονικούς εξερευνητές αυτό το κουμπί δεν υπάρχει καθόλου. Τους εμφανίζεται μόνο όταν σκανάρουν το QR του τελευταίου στοιχείου, στο σημείο του: εκείνο το σκανάρισμα κλείνει το ίχνος και ξεκλειδώνει το πρώτο σημείωμα, που τους στέλνει στην πυξίδα.",
     adminNote2Hint:
       "Το βλέπεις μόνο εσύ, ως admin. Οι κανονικοί εξερευνητές δεν βλέπουν ποτέ το δεύτερο σημείωμα στο ημερολόγιο πριν από την ώρα του. Τους εμφανίζεται μόνο αφού σκανάρουν το QR της πυξίδας, και είναι αυτό που τους στέλνει στον θησαυρό.",
+    // Admin-only switcher for the rotating hiding hint on the first note
+    adminVariantLabel: "ΕΚΔΟΧΗ ΚΡΥΨΗΣ",
+    adminVariantHint:
+      "Κάθε πλήρωμα παίρνει μία από αυτές τις εκδοχές, με σειρά. Εδώ τις διαβάζεις όλες, χωρίς να αλλάξει τι θα πάρει το επόμενο πλήρωμα.",
+    adminVariantAssigned: "ΤΟ ΔΙΚΟ ΣΟΥ",
+    adminVariantUnassigned: "Δεν έχεις ακόμη δική σου εκδοχή, γιατί δεν έκλεισες το ίχνος ως εξερευνητής.",
     // Compass reveal (after the COMPASS QR is scanned — the note screen)
     trailEndKicker: "ΒΡΗΚΑΤΕ ΕΝΑ ΣΗΜΕΙΩΜΑ ΣΤΟ ΤΕΛΟΣ ΤΟΥ ΗΜΕΡΟΛΟΓΙΟΥ",
     trailEndTitle: "Το πρώτο σημείωμα του Πυθέα",
@@ -1721,6 +1727,12 @@ const en: Dictionary = {
       "Only you can see this, as an admin. For ordinary explorers this button does not exist at all. It appears for them only when they scan the final lead's QR at its own spot: that scan closes the trail and unlocks the first note, which sends them to the compass.",
     adminNote2Hint:
       "Only you can see this, as an admin. Ordinary explorers never see the second note in the journal before its time. It appears for them only after they scan the compass QR, and it is the one that sends them to the treasure.",
+    adminVariantLabel: "HIDING VERSION",
+    adminVariantHint:
+      "Every crew is handed one of these versions, in rotation. Reading them all here changes nothing about what the next crew is given.",
+    adminVariantAssigned: "YOURS",
+    adminVariantUnassigned:
+      "You have no version of your own yet, because you have not closed the trail as an explorer.",
     trailEndKicker: "YOU FOUND A NOTE AT THE END OF THE JOURNAL",
     trailEndTitle: "The first note of Pytheas",
     trailEndHint: "The journey across the map is complete. Now hunt for the compass in Kalamata.",

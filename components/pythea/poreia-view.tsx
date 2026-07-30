@@ -1246,7 +1246,11 @@ function SealedPageBody({
   )
 }
 
-type FinaleNotes = { note1: FinaleNote | null; note2: FinaleNote | null }
+type FinaleNotes = {
+  note1: FinaleNote | null
+  note2: FinaleNote | null
+  variants: { active: number; count: number; assigned: number | null } | null
+}
 /** A note already resolved to the reader's language. */
 type LocalNote = { body: string; cta: string; notice: string }
 
@@ -1259,10 +1263,17 @@ const NOTE1_SEEN_KEY = "pythea:note1-seen"
  * book and the final page itself) can be mounted at once, so without this they
  * would each fetch their own copy.
  */
-let notesRequest: Promise<FinaleNotes | null> | null = null
-function loadNotes(): Promise<FinaleNotes | null> {
-  notesRequest ??= getFinaleNotes()
-  return notesRequest
+const notesRequests = new Map<number | "own", Promise<FinaleNotes | null>>()
+function loadNotes(previewVariant?: number): Promise<FinaleNotes | null> {
+  // Keyed by the requested version, so an admin flipping between versions gets
+  // each one fetched once and then served from here on the way back.
+  const key = previewVariant ?? "own"
+  let req = notesRequests.get(key)
+  if (!req) {
+    req = getFinaleNotes(previewVariant)
+    notesRequests.set(key, req)
+  }
+  return req
 }
 
 /**
@@ -1270,19 +1281,25 @@ function loadNotes(): Promise<FinaleNotes | null> {
  * comes back null while it is still sealed: the server refuses to send a note
  * that has not been earned, so there is nothing to leak into the page.
  */
-function useFinaleNotes(): { note1: LocalNote | null; note2: LocalNote | null } {
+function useFinaleNotes(previewVariant?: number): {
+  note1: LocalNote | null
+  note2: LocalNote | null
+  variants: FinaleNotes["variants"]
+} {
   const { locale } = useI18n()
   const [notes, setNotes] = useState<FinaleNotes | null>(null)
 
   useEffect(() => {
     let alive = true
-    loadNotes().then((n) => {
+    loadNotes(previewVariant).then((n) => {
       if (alive && n) setNotes(n)
     })
     return () => {
       alive = false
     }
-  }, [])
+    // Re-runs when an admin picks a different version to proofread. The previous
+    // note stays on screen until the new one lands, so the page never blanks.
+  }, [previewVariant])
 
   const en = locale === "en"
   const pick = (n: FinaleNote | null | undefined): LocalNote | null =>
@@ -1294,7 +1311,11 @@ function useFinaleNotes(): { note1: LocalNote | null; note2: LocalNote | null } 
         }
       : null
 
-  return { note1: pick(notes?.note1), note2: pick(notes?.note2) }
+  return {
+    note1: pick(notes?.note1),
+    note2: pick(notes?.note2),
+    variants: notes?.variants ?? null,
+  }
 }
 
 /**
@@ -1307,6 +1328,7 @@ function NoteOverlay({
   cta,
   label,
   notice,
+  versions,
   ctaIcon: CtaIcon,
   onClose,
 }: {
@@ -1315,6 +1337,16 @@ function NoteOverlay({
   label: string
   /** Highlighted aside stamped inside the note, when the note has one. */
   notice?: string
+  /**
+   * Admin-only switcher for the first note's rotating hiding hint. Absent for
+   * ordinary explorers and for the second note, which has no versions.
+   */
+  versions?: {
+    count: number
+    active: number
+    assigned: number | null
+    onPick: (index: number) => void
+  }
   ctaIcon: typeof Compass
   onClose: () => void
 }) {
@@ -1341,6 +1373,10 @@ function NoteOverlay({
         <p className="mb-3 text-center font-sans text-[11px] font-bold tracking-chip text-[oklch(0.92_0.03_86)]">
           {label}
         </p>
+        {/* Deliberately styled as out-of-world admin chrome, not parchment: it is
+            a tool for the founder, not part of what Pytheas wrote. */}
+        {versions && <NoteVersionPicker {...versions} />}
+
         <HandwrittenNote body={body} signature={t.finale.signature} notice={notice} />
 
         {/* The marching order, shouted. Sits between the note and the close
@@ -1362,6 +1398,81 @@ function NoteOverlay({
           </button>
         </div>
       </div>
+    </div>
+  )
+}
+
+/**
+ * Admin-only switcher between the four rotating hiding hints on the first note.
+ *
+ * A crew is handed one version and keeps it, so without this the founder could
+ * only ever proofread their own, and would have to plant fake crews to read the
+ * other three. Picking here only ever PREVIEWS: the server peeks rather than
+ * assigns, so flipping through the versions never consumes a rotation slot and
+ * never changes which one the next real crew is given.
+ */
+function NoteVersionPicker({
+  count,
+  active,
+  assigned,
+  onPick,
+}: {
+  count: number
+  active: number
+  /** The version this admin's own crew actually holds, if any. */
+  assigned: number | null
+  onPick: (index: number) => void
+}) {
+  const { t } = useI18n()
+
+  return (
+    <div className="mb-3 rounded-sm border border-brass/35 bg-black/45 px-3 py-2.5">
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        <span className="font-sans text-[10px] font-bold tracking-chip text-brass">
+          {t.finale.adminVariantLabel}
+        </span>
+        <span className="rounded-full border border-white/25 px-2 py-0.5 font-sans text-[9px] font-bold tracking-chip text-white/55">
+          {t.finale.adminOnly}
+        </span>
+      </div>
+
+      <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5">
+        {Array.from({ length: count }, (_, i) => {
+          const on = i === active
+          const mine = assigned === i
+          return (
+            <button
+              key={i}
+              type="button"
+              onClick={() => onPick(i)}
+              aria-pressed={on}
+              title={mine ? t.finale.adminVariantAssigned : undefined}
+              className={`relative min-w-[38px] rounded-sm border px-2.5 py-1 font-sans text-[12px] font-black tabular-nums transition-colors ${
+                on
+                  ? "border-brass bg-brass text-primary-foreground"
+                  : "border-white/25 bg-white/10 text-white/75 hover:bg-white/20 hover:text-white"
+              }`}
+            >
+              {i + 1}
+              {/* Marks the version this admin's crew genuinely holds, so it is
+                  never confused with the one they are merely previewing. */}
+              {mine && (
+                <span
+                  aria-hidden
+                  className={`absolute -right-0.5 -top-0.5 size-1.5 rounded-full ${
+                    on ? "bg-primary-foreground" : "bg-brass"
+                  }`}
+                />
+              )}
+            </button>
+          )
+        })}
+      </div>
+
+      <p className="mt-2 text-center font-sans text-[10px] leading-relaxed text-white/55">
+        {t.finale.adminVariantHint}
+        {assigned === null && ` ${t.finale.adminVariantUnassigned}`}
+      </p>
     </div>
   )
 }
@@ -1523,7 +1634,11 @@ function FinaleNoteBar({
   isAdmin: boolean
 }) {
   const { t } = useI18n()
-  const { note1, note2 } = useFinaleNotes()
+  // Which rotating hint version an admin has asked to proofread. `undefined`
+  // means "whatever this crew would actually be shown", which is what every
+  // ordinary explorer always gets.
+  const [previewVariant, setPreviewVariant] = useState<number | undefined>(undefined)
+  const { note1, note2, variants } = useFinaleNotes(previewVariant)
   const [open, setOpen] = useState<null | 1 | 2 | "won">(null)
 
   // Only closing the FIRST note marks it as read. Closing the second one must
@@ -1586,6 +1701,19 @@ function FinaleNoteBar({
           cta={note1.cta}
           label={t.finale.noteLabel}
           notice={note1.notice}
+          // Present only when the server marked this viewer as an admin.
+          versions={
+            variants
+              ? {
+                  count: variants.count,
+                  // Driven by the local pick so the highlight moves the instant
+                  // it is clicked, rather than waiting for the new note to land.
+                  active: previewVariant ?? variants.assigned ?? 0,
+                  assigned: variants.assigned,
+                  onPick: setPreviewVariant,
+                }
+              : undefined
+          }
           ctaIcon={Compass}
           onClose={closeNote1}
         />
@@ -1673,7 +1801,10 @@ function FinalPageBody({
 
   // Pytheas's closing note lives on the back of this last page. It is
   // auto-revealed once on arrival, then stays re-openable via the pill below.
-  const { note1: note } = useFinaleNotes()
+  // Same admin version switcher as the note bar, so the picker does not appear
+  // on one route into the note and vanish on the other.
+  const [previewVariant, setPreviewVariant] = useState<number | undefined>(undefined)
+  const { note1: note, variants } = useFinaleNotes(previewVariant)
   const [noteOpen, setNoteOpen] = useState(false)
   const autoShown = useRef(false)
 
@@ -1719,6 +1850,16 @@ function FinalPageBody({
           cta={note.cta}
           label={t.finale.noteLabel}
           notice={note.notice}
+          versions={
+            variants
+              ? {
+                  count: variants.count,
+                  active: previewVariant ?? variants.assigned ?? 0,
+                  assigned: variants.assigned,
+                  onPick: setPreviewVariant,
+                }
+              : undefined
+          }
           ctaIcon={Compass}
           onClose={closeNote}
         />

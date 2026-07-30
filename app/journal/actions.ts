@@ -9,6 +9,7 @@ import { getFinaleConfig, composeCompassNote } from "@/lib/finale"
 import {
   getOrAssignCompassVariant,
   peekCompassVariant,
+  COMPASS_VARIANT_COUNT,
   resolveCrewKey,
 } from "@/lib/compass-variant"
 import { getAdminUser } from "@/lib/admin"
@@ -43,9 +44,15 @@ export type FinaleNote = {
  * journal without planting fake scans. The preview override counts too, so the
  * testing panel keeps working.
  */
-export async function getFinaleNotes(): Promise<{
+export async function getFinaleNotes(previewVariant?: number): Promise<{
   note1: FinaleNote | null
   note2: FinaleNote | null
+  /**
+   * Admin-only preview controls for note 1's rotating hint. Null for ordinary
+   * explorers, who must never learn that other versions exist, let alone read
+   * them: the four hints name four different hiding places.
+   */
+  variants: { active: number; count: number; assigned: number | null } | null
 } | null> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return null
@@ -67,11 +74,29 @@ export async function getFinaleNotes(): Promise<{
   // proofreading the note never consumes a slot and never shifts what the next
   // real crew is handed. With nothing assigned yet, they preview the first hint.
   let variantIndex = 0
+  let assigned: number | null = null
   if (trailEnd) {
     const crewKey = await resolveCrewKey(session.user.id)
-    variantIndex = bypass
-      ? ((await peekCompassVariant(crewKey)) ?? 0)
-      : await getOrAssignCompassVariant(crewKey)
+    if (bypass) {
+      assigned = await peekCompassVariant(crewKey)
+      // An explicit pick wins, so all four versions can be proofread from one
+      // account. Validated here rather than trusted: this is a server action a
+      // player could call directly, and an out-of-range index would silently
+      // read as version 1 instead of being refused.
+      const picked =
+        typeof previewVariant === "number" &&
+        Number.isInteger(previewVariant) &&
+        previewVariant >= 0 &&
+        previewVariant < COMPASS_VARIANT_COUNT
+          ? previewVariant
+          : null
+      variantIndex = picked ?? assigned ?? 0
+    } else {
+      // Ordinary explorers are ASSIGNED one and keep it forever, and any
+      // previewVariant they send is ignored: the note names a real hiding place,
+      // so letting a player choose would hand them all four.
+      variantIndex = await getOrAssignCompassVariant(crewKey)
+    }
   }
   const composed = composeCompassNote(finale, variantIndex)
 
@@ -94,6 +119,10 @@ export async function getFinaleNotes(): Promise<{
           ctaEn: finale.note2CtaEn,
         }
       : null,
+    variants:
+      bypass && trailEnd
+        ? { active: variantIndex, count: COMPASS_VARIANT_COUNT, assigned }
+        : null,
   }
 }
 
