@@ -128,6 +128,7 @@ import {
   FINISH_ORDER,
   COMPASS_ORDER,
   TRAIL_END_ORDER,
+  finaleOrderLabel,
   leadsSolvedCount,
   isLeadOneOpen,
   START_MS,
@@ -519,10 +520,13 @@ async function enrichProofs(rows: ProofRow[]): Promise<AdminProofRow[]> {
   const defs = await getLeadDefs()
   return rows.map((r) => {
     const def = defs.find((d) => d.order === r.leadOrder)
+    // Endgame proofs (trail end, compass, treasure) have no lead def, so name the
+    // step rather than falling through to a nonsense "No. 100001".
+    const fallback = finaleOrderLabel(r.leadOrder) ?? `No. ${String(r.leadOrder).padStart(2, "0")}`
     return {
       ...r,
-      country: def?.country ?? `No. ${String(r.leadOrder).padStart(2, "0")}`,
-      countryEn: def?.countryEn ?? `No. ${String(r.leadOrder).padStart(2, "0")}`,
+      country: def?.country ?? fallback,
+      countryEn: def?.countryEn ?? fallback,
     }
   })
 }
@@ -587,7 +591,9 @@ export async function adminDecideProof(
     unlock = res.status
   }
 
-  const padded = String(existing.leadOrder).padStart(2, "0")
+  // Same rule as the review card: an endgame proof gets named, not numbered.
+  const finaleName = finaleOrderLabel(existing.leadOrder)
+  const padded = finaleName ?? `No. ${String(existing.leadOrder).padStart(2, "0")}`
   await logActivity({
     category: "admin",
     action: decision === "approved" ? "admin.proof_approved" : "admin.proof_rejected",
@@ -597,8 +603,8 @@ export async function adminDecideProof(
     leadOrder: existing.leadOrder,
     summary:
       decision === "approved"
-        ? `${actorLabel(admin)} approved ${existing.userName}'s photo proof for lead No. ${padded}`
-        : `${actorLabel(admin)} rejected ${existing.userName}'s photo proof for lead No. ${padded}`,
+        ? `${actorLabel(admin)} approved ${existing.userName}'s photo proof for ${padded}`
+        : `${actorLabel(admin)} rejected ${existing.userName}'s photo proof for ${padded}`,
     metadata: { context: existing.context, reason: cleanReason, unlock },
   })
 

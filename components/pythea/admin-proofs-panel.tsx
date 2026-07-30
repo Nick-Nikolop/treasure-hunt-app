@@ -289,7 +289,9 @@ export function AdminProofsPanel() {
                   <div>
                     <p className="font-serif text-base font-bold text-foreground">{p.userName}</p>
                     <p className="mt-0.5 font-sans text-[11px] tracking-chip text-muted-foreground">
-                      LEAD No. {String(p.leadOrder).padStart(2, "0")} · {p.country}
+                      {finaleOrderLabel(p.leadOrder)
+                        ? p.country
+                        : `LEAD No. ${String(p.leadOrder).padStart(2, "0")} · ${p.country}`}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -304,11 +306,25 @@ export function AdminProofsPanel() {
                 </div>
 
                 <p className="mt-3 font-serif text-sm leading-relaxed text-muted-foreground">
-                  <span className="font-bold text-foreground">{p.userName}</span> scanned the QR of
-                  the {ordinal(p.leadOrder - 1)} lead in order to proceed to the{" "}
-                  {ordinal(p.leadOrder)} ({p.country}), submitting {p.photoUrls.length} photo
-                  {p.photoUrls.length === 1 ? "" : "s"} as proof of being there. Approving unlocks{" "}
-                  {p.country} and lets their crew continue.
+                  {finaleOrderLabel(p.leadOrder) ? (
+                    // The endgame QRs are steps, not numbered stops, so they get
+                    // named. Their orders are sentinels (100000+) and reading them
+                    // as positions produces "the 100001st lead".
+                    <>
+                      <span className="font-bold text-foreground">{p.userName}</span> scanned the{" "}
+                      {p.country} QR, submitting {p.photoUrls.length} photo
+                      {p.photoUrls.length === 1 ? "" : "s"} as proof of being there. Approving marks{" "}
+                      {p.country} as reached for their crew.
+                    </>
+                  ) : (
+                    <>
+                      <span className="font-bold text-foreground">{p.userName}</span> scanned the QR
+                      of the {ordinal(p.leadOrder - 1)} lead in order to proceed to the{" "}
+                      {ordinal(p.leadOrder)} ({p.country}), submitting {p.photoUrls.length} photo
+                      {p.photoUrls.length === 1 ? "" : "s"} as proof of being there. Approving
+                      unlocks {p.country} and lets their crew continue.
+                    </>
+                  )}
                 </p>
 
                 {p.note && (
@@ -531,7 +547,10 @@ export function AdminProofsPanel() {
                     )}
                     <div>
                       <p className="font-serif text-sm text-foreground">
-                        {p.userName} · No. {String(p.leadOrder).padStart(2, "0")} · {p.country}
+                        {p.userName} ·{" "}
+                        {finaleOrderLabel(p.leadOrder)
+                          ? p.country
+                          : `No. ${String(p.leadOrder).padStart(2, "0")} · ${p.country}`}
                       </p>
                       {p.status === "rejected" && p.reason && (
                         <p className="font-sans text-[11px] text-muted-foreground">{p.reason}</p>

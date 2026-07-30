@@ -135,7 +135,7 @@ const RAW_CLUES: Omit<
     icon: "Home",
     body: [
       "Αφήνοντας πίσω μου την Ασία, γύρισα στην Ευρώπη. Πρώτη μου στάση ήταν η Γαλλία, χώρα των τεχνών, των ιδεών και των μεγάλων περιπάτων.",
-      "Εκεί κατάλαβα κάτι σημαντικό: πως κάθε ταξίδι, όσο μακρινό κι αν είναι, στο τέλος οδηγεί σε ένα σπίτι. Κι έτσι, όταν θέλησα να κρύψω το επόμενο στοιχείο, διάλεξα ένα μέρος στην Καλαμάτα που ψιθυρίζει τη γαλλική λέξη για το σπίτι.",
+      "Εκεί κατάλαβα κάτι σημαντικό: πως κάθε ταξίδι, όσο μακρινό κι αν είναι, στο τέλος οδηγεί σε ένα σπίτι. Κι έτσι, όταν θέλησα να κρύψω το επόμενο στοιχείο, διάλεξα ένα μέρος στην Καλαμάτα που ψιθυρίζει τη γαλλ��κή λέξη για το σπίτι.",
       "Αν καταλάβεις πού κατοικεί η Γαλλία μέσα στην πόλη, θα βρεις και το επόμενο ίχνος του χάρτη.",
     ],
     bodyEn: [
@@ -224,7 +224,7 @@ const RAW_CLUES: Omit<
     subtitleEn: "The land of great distances",
     icon: "Package",
     body: [
-      "Από την Αίγυπτο στράφηκα προς τον βορρά και έφτασα στη Ρωσία. Μια χώρα αχανής, γεμάτη χειμώνες, ιστορίες, μουσικές και προϊόντα που ταξιδεύουν μακριά από τον τόπο τους.",
+      "Από την Αίγυπτο στράφηκα προς τον βορρά και έφτασα στη Ρωσία. Μια χώρα αχανής, γεμάτη χειμώνες, ισ��ορίες, μουσικές και προϊόντα που ταξιδεύουν μακριά από τον τόπο τους.",
       "Συνηθίζω να λέω πως μια χώρα δεν τη θυμάσαι μόνο από τα μνημεία της, αλλά και από τις γεύσεις, τις μυρωδιές και τα μικρά πράγματα που κουβαλούν οι άνθρωποι μαζί τους.",
       "Έτσι, στην Καλαμάτα, το επόμενο ίχνος το άφησα εκεί όπου κάτι από τη Ρωσία συνεχίζει να φτάνει στην πόλη, σαν μικρό φορτίο από έναν πολύ μεγάλο τόπο.",
     ],
@@ -329,6 +329,26 @@ export const TRAIL_END_ORDER = 100002
 
 /** The legacy finish sentinel used before the lead count became dynamic. */
 export const LEGACY_FINISH_ORDER = TOTAL_CLUES + 1
+
+/** True when an order is one of the three endgame sentinels, not a real lead. */
+export function isFinaleOrder(order: number): boolean {
+  return order === FINISH_ORDER || order === COMPASS_ORDER || order === TRAIL_END_ORDER
+}
+
+/**
+ * Display name for an endgame sentinel, or null for a real lead position.
+ *
+ * These orders are IDENTITIES, not positions, so anything that renders an order
+ * as a number ("lead No. 07") produces nonsense for them: the compass would read
+ * as "lead No. 100001". Use this first and fall back to the numbered form only
+ * when it returns null.
+ */
+export function finaleOrderLabel(order: number): string | null {
+  if (order === TRAIL_END_ORDER) return "The Trail End"
+  if (order === COMPASS_ORDER) return "The Compass"
+  if (order === FINISH_ORDER) return "The Treasure"
+  return null
+}
 
 // ── Standings ───────────────────────────────────────────────────────────────
 //
