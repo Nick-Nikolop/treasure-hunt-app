@@ -89,15 +89,16 @@ export async function getFinaleNotes(previewVariant?: number): Promise<{
     bypass ? Promise.resolve(true) : hasReachedCompass(session.user.id),
   ])
 
+  // Admins and the preview override are never held, so the finale stays fully
+  // proofreadable from the journal while real crews are parked at lead 10.
+  const held = !bypass && trailEnd && isTrailEndHeld(finale)
+  const note1Open = trailEnd && !held
+
   // Which of the four rotating hints this crew reads. A real crew is assigned one
   // on first read and keeps it forever; an admin/preview only PEEKS, so
   // proofreading the note never consumes a slot and never shifts what the next
   // real crew is handed. With nothing assigned yet, they preview the first hint.
-  // Admins and the preview override are never held, so the finale stays fully
-  // proofreadable from the journal while real crews are parked.
-  const held = !bypass && trailEnd && isTrailEndHeld(finale)
-  const note1Open = trailEnd && !held
-
+  //
   // Deliberately gated on `note1Open`, not `trailEnd`: assigning a rotating hint
   // to a held crew would burn a rotation slot for a note they cannot read yet.
   // They are assigned one when the hold lifts and they actually open it.

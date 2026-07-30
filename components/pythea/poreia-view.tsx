@@ -1403,6 +1403,58 @@ function NoteOverlay({
 }
 
 /**
+ * The hold slip, shown in place of note 1 while the trail-end hold is on.
+ *
+ * Same overlay chrome as the note so it feels like part of the journal, but with
+ * NO call-to-action button: while held there is genuinely nothing to go and do,
+ * and a brass CTA here would read as "go find the compass", which is the exact
+ * opposite of the message.
+ */
+function HoldOverlay({
+  title,
+  body,
+  onClose,
+}: {
+  title: string
+  body: string
+  onClose: () => void
+}) {
+  const { t } = useI18n()
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose()
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [onClose])
+
+  return (
+    <div
+      className="fixed inset-0 z-[80] flex items-center justify-center overflow-y-auto bg-black/55 p-4 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+      onClick={onClose}
+    >
+      <div className="my-auto w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+        <HoldPaper title={title} body={body} />
+
+        <div className="mt-4 flex justify-center">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-white/30 bg-white/10 px-6 py-2 font-sans text-[11px] font-bold tracking-chip text-white transition-colors hover:bg-white/20"
+          >
+            {t.finale.close}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/**
  * Admin-only switcher between the four rotating hiding hints on the first note.
  *
  * A crew is handed one version and keeps it, so without this the founder could
