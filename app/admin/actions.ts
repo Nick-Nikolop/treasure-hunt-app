@@ -109,7 +109,9 @@ import {
 import { del } from "@vercel/blob"
 import {
   getAnalyticsSnapshot,
+  getActivitySeries,
   getPresence,
+  type ActivitySeries,
   type AnalyticsSnapshot,
   type PresenceSummary,
 } from "@/lib/analytics"
@@ -274,6 +276,12 @@ export type AdminData = {
   activity: ActivityPage
   /** Live headcount + per-user last-seen, for the Users tab. */
   presence: PresenceSummary
+  /**
+   * Default active-users history (last 24 hours) for the Users tab chart. The
+   * chart swaps this out via `adminGetActivitySeries` when the range changes, so
+   * this is only the first paint.
+   */
+  activitySeries: ActivitySeries
   /** Behavioural analytics snapshot (default 14-day window) for the Analytics tab. */
   analytics: AnalyticsSnapshot
   /** Phased-rollout control state for the Phase tab. */
@@ -462,7 +470,21 @@ export async function getAdminData(): Promise<AdminData> {
     phase: await getPhaseAdminData(),
     pendingProofCount: await getPendingProofCount(),
     presence,
+    activitySeries: await getActivitySeries("hour", 24),
   }
+}
+
+/**
+ * Active-users history for the Users tab chart. Kept separate from
+ * `adminGetAnalytics` so changing the chart range does not re-run the whole
+ * (heavy) analytics snapshot. `getActivitySeries` clamps `points` itself.
+ */
+export async function adminGetActivitySeries(
+  granularity: "hour" | "day",
+  points: number,
+): Promise<ActivitySeries> {
+  await requireAdmin()
+  return getActivitySeries(granularity, points)
 }
 
 // ── Photo-proof review ───────────────────────────────────────────────────────

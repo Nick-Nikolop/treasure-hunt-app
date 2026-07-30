@@ -42,6 +42,7 @@ import { AdminCampaignsPanel } from "@/components/pythea/admin-campaigns-panel"
 import { AdminLeadsPanel } from "@/components/pythea/admin-leads-panel"
 import { AdminActivityPanel } from "@/components/pythea/admin-activity-panel"
 import { AdminAnalyticsPanel } from "@/components/pythea/admin-analytics-panel"
+import { AdminActivityChart } from "@/components/pythea/admin-activity-chart"
 import { AdminPhasePanel } from "@/components/pythea/admin-phase-panel"
 import { AdminLocationPanel } from "@/components/pythea/admin-location-panel"
 import { AdminFinalePanel } from "@/components/pythea/admin-finale-panel"
@@ -96,16 +97,33 @@ function fmtDate(d: Date | string) {
   return date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })
 }
 
-/** Compact "how long ago", e.g. "just now", "4m", "3h", "2d". */
+/**
+ * Two-unit "how long ago": "just now", "4m ago", "2h 12m ago", "3d 4h ago",
+ * "2mo 5d ago". Carrying the second unit matters here, because "2h ago" could
+ * mean anything from 2:00 to 2:59 and admins use this to judge whether someone
+ * is mid-hunt. The smaller unit is dropped when it is 0 ("3h ago", not
+ * "3h 0m ago") and past a month the day remainder stops being useful.
+ */
 function fmtAgo(ms: number) {
-  const mins = Math.floor(ms / 60_000)
+  const mins = Math.floor(Math.max(0, ms) / 60_000)
   if (mins < 1) return "just now"
   if (mins < 60) return `${mins}m ago`
+
   const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return `${hrs}h ago`
+  if (hrs < 24) {
+    const m = mins % 60
+    return m === 0 ? `${hrs}h ago` : `${hrs}h ${m}m ago`
+  }
+
   const days = Math.floor(hrs / 24)
-  if (days < 30) return `${days}d ago`
-  return `${Math.floor(days / 30)}mo ago`
+  if (days < 30) {
+    const h = hrs % 24
+    return h === 0 ? `${days}d ago` : `${days}d ${h}h ago`
+  }
+
+  const months = Math.floor(days / 30)
+  const d = days % 30
+  return d === 0 ? `${months}mo ago` : `${months}mo ${d}d ago`
 }
 
 type PresenceState = "online" | "idle" | "offline" | "never"
@@ -545,6 +563,13 @@ export function AdminDashboard({
             </p>
           </div>
         </section>
+      )}
+
+      {/* Active-users history, Users tab only */}
+      {tab === "users" && (
+        <div className="mt-3">
+          <AdminActivityChart initial={data.activitySeries} />
+        </div>
       )}
 
       {/* Content */}

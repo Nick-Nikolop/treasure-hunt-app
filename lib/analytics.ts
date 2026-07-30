@@ -491,6 +491,104 @@ export async function getPresence(): Promise<PresenceSummary> {
   }
 }
 
+// ── Active-users history (the Users-tab chart) ──────────────────────────────
+
+/** One time bucket of the activity chart. */
+export type ActivityBucket = {
+  /** ISO start of the bucket, in UTC. The client formats it for display. */
+  bucket: string
+  /** Distinct signed-in users (excluding deleted accounts) active in it. */
+  users: number
+  /** Distinct signed-out devices active in it. */
+  anon: number
+  /** Raw event volume, which shows intensity rather than reach. */
+  events: number
+}
+
+export type ActivitySeries = {
+  granularity: "hour" | "day"
+  buckets: ActivityBucket[]
+  /** Busiest bucket by signed-in users, for annotating the chart. */
+  peak: ActivityBucket | null
+  /** Distinct users across the WHOLE window (not a sum of buckets). */
+  uniqueUsers: number
+}
+
+/**
+ * Distinct active users per hour or per day.
+ *
+ * Two things worth knowing about this query:
+ *
+ * 1. It zero-fills via `generate_series`. Grouping raw events would silently
+ *    OMIT quiet buckets, and a line chart would then join 9am straight to 5pm as
+ *    if the gap never happened, overstating activity. Empty buckets must exist
+ *    and be 0.
+ * 2. Distinct counts cannot be summed. A user active in six different hours is
+ *    six bucket-hits but one person, so `uniqueUsers` is computed over the whole
+ *    window separately rather than by adding the buckets up.
+ *
+ * The `user` join mirrors `getPresence`: events outlive deleted accounts, and
+ * counting ghosts here would disagree with the headline numbers above the chart.
+ */
+export async function getActivitySeries(
+  granularity: "hour" | "day" = "hour",
+  points = granularity === "hour" ? 24 : 30,
+): Promise<ActivitySeries> {
+  // `points` is clamped and interpolated as a literal because Postgres will not
+  // accept a bound parameter inside an interval literal.
+  const n = Math.max(2, Math.min(granularity === "hour" ? 72 : 180, Math.floor(points)))
+  const unit = granularity === "hour" ? "hour" : "day"
+  const step = sql.raw(`interval '1 ${unit}'`)
+  const span = sql.raw(`interval '${n - 1} ${unit}'`)
+  const trunc = sql.raw(`'${unit}'`)
+
+  const res = await db.execute(sql`
+    WITH buckets AS (
+      SELECT generate_series(
+        date_trunc(${trunc}, now()) - ${span},
+        date_trunc(${trunc}, now()),
+        ${step}
+      ) AS bucket
+    )
+    SELECT b.bucket,
+           count(DISTINCT e."userId") FILTER (WHERE u.id IS NOT NULL)::int AS users,
+           count(DISTINCT e."anonId") FILTER (WHERE e."userId" IS NULL
+                                                AND e."anonId" IS NOT NULL)::int AS anon,
+           count(e.id)::int AS events
+      FROM buckets b
+      LEFT JOIN ${analyticsEvent} e
+             ON e."createdAt" >= b.bucket
+            AND e."createdAt" < b.bucket + ${step}
+      LEFT JOIN "user" u ON u.id = e."userId"
+     GROUP BY b.bucket
+     ORDER BY b.bucket`)
+
+  const buckets: ActivityBucket[] = (res.rows as Record<string, unknown>[]).map((r) => ({
+    bucket: new Date(r.bucket as string).toISOString(),
+    users: Number(r.users ?? 0),
+    anon: Number(r.anon ?? 0),
+    events: Number(r.events ?? 0),
+  }))
+
+  const uniq = await db.execute(sql`
+    SELECT count(DISTINCT e."userId")::int AS n
+      FROM ${analyticsEvent} e
+      JOIN "user" u ON u.id = e."userId"
+     WHERE e."createdAt" >= date_trunc(${trunc}, now()) - ${span}`)
+
+  const peak = buckets.reduce<ActivityBucket | null>(
+    (best, b) => (b.users > (best?.users ?? -1) ? b : best),
+    null,
+  )
+
+  return {
+    granularity,
+    buckets,
+    peak: peak && peak.users > 0 ? peak : null,
+    uniqueUsers: Number((uniq.rows as { n?: number }[])[0]?.n ?? 0),
+  }
+}
+
 /** One call that assembles everything the Analytics dashboard tab renders. */
 export async function getAnalyticsSnapshot(days = 14): Promise<AnalyticsSnapshot> {
   const [overview, timeline, topEvents, topPages, devices, browsers, auth, scan, recent] =
