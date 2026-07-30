@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react"
 import QRCodeLib from "qrcode"
 import { MapPin, RefreshCw, QrCode, ExternalLink, Copy, Check, Crosshair, Radio } from "lucide-react"
 import { ModalShell } from "@/components/pythea/modal-shell"
+import { AdminScanLookup } from "@/components/pythea/admin-scan-lookup"
 import { generateLocationQr, getLocationState } from "@/app/admin/actions"
 
 type State = Awaited<ReturnType<typeof getLocationState>>
@@ -118,6 +119,9 @@ export function AdminLocationPanel() {
 
   return (
     <div className="mt-6 flex flex-col gap-6">
+      {/* Founder-only: look up where a person or crew scanned from. */}
+      <AdminScanLookup />
+
       <div className="rounded-md border border-border bg-background/40 p-5">
         <div className="flex items-center gap-2">
           <Crosshair className="size-5 text-brass" aria-hidden />

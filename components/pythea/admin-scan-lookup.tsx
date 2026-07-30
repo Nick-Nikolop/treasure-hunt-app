@@ -344,7 +344,8 @@ function PingMapPopup({ ping, onClose }: { ping: ScanPingRow | null; onClose: ()
           </div>
           <p className="mt-1 font-sans text-xs text-muted-foreground">
             {ping.userName}
-            {ping.teamName && ` \u00B7 ${ping.teamName}`} \u00B7 {fmtTime(ping.createdAt)}
+            {ping.teamName && ` \u00B7 ${ping.teamName}`}
+            {` \u00B7 ${fmtTime(ping.createdAt)}`}
           </p>
 
           <div className="mt-4 grid grid-cols-2 gap-2">
