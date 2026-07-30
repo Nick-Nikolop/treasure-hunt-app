@@ -155,7 +155,17 @@ async function doSeed(): Promise<void> {
   // with the sentinel the user already owns. Skipping those users is the correct
   // outcome twice over: the sentinel already records that they finished, and
   // their lead row stays intact instead of being swallowed by the migration.
-  if (FINISH_ORDER !== LEGACY_FINISH_ORDER) {
+  //
+  // The `> liveTotal` guard is what makes this safe, and it is load-bearing.
+  // LEGACY_FINISH_ORDER is derived from the SEED count (9), so it equals 10 -
+  // which is a real position now that the trail has ten leads. Without the
+  // guard this "one-time backfill" re-runs on every call and silently promotes
+  // a crew's genuine lead-10 progress into a finish row, i.e. an honest crew
+  // that has only just closed the trail reads as having found the treasure and
+  // skips the whole finale. Only run while the legacy order still sits beyond
+  // the end of the trail, where it cannot be anything but a leftover marker.
+  const liveTotal = current.length
+  if (FINISH_ORDER !== LEGACY_FINISH_ORDER && LEGACY_FINISH_ORDER > liveTotal) {
     await db.execute(
       sql`UPDATE "lead_unlock" SET "leadOrder" = ${FINISH_ORDER}
           WHERE "leadOrder" = ${LEGACY_FINISH_ORDER}

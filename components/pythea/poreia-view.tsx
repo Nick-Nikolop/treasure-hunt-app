@@ -127,7 +127,13 @@ type Page =
   // superadmin. It renders exactly like a real entry plus an admin-only notice.
   | { kind: "clue"; clue: Clue; adminLocked?: boolean }
   | { kind: "sealed"; gate: "time" | "qr"; unlockMs?: number; notStarted: boolean; order: number }
-  | { kind: "final"; stamps: MapStop[]; trailEndReached: boolean }
+  | {
+      kind: "final"
+      stamps: MapStop[]
+      trailEndReached: boolean
+      compassReached: boolean
+      finished: boolean
+    }
 
 const FLIP_DURATION = 1.5
 
@@ -213,9 +219,21 @@ export function PoreiaView({
     for (const clue of adminPreview ?? []) {
       list.push({ kind: "clue", clue, adminLocked: true })
     }
-    if (allDone) list.push({ kind: "final", stamps: stops, trailEndReached })
+    if (allDone) {
+      list.push({ kind: "final", stamps: stops, trailEndReached, compassReached, finished })
+    }
     return list
-  }, [unlocked, adminPreview, next, notStarted, allDone, total, trailEndReached])
+  }, [
+    unlocked,
+    adminPreview,
+    next,
+    notStarted,
+    allDone,
+    total,
+    trailEndReached,
+    compassReached,
+    finished,
+  ])
 
   // Deep link: /journal?page=N opens directly on that page (used by the
   // "open" cards on the home page). Initialised lazily so we land on the
@@ -924,7 +942,12 @@ function JournalPage({
           />
         )}
         {page.kind === "final" && (
-          <FinalPageBody stamps={page.stamps} trailEndReached={page.trailEndReached} />
+          <FinalPageBody
+            stamps={page.stamps}
+            trailEndReached={page.trailEndReached}
+            compassReached={page.compassReached}
+            finished={page.finished}
+          />
         )}
       </div>
 
@@ -1884,12 +1907,42 @@ function WonOverlay({ onClose }: { onClose: () => void }) {
   )
 }
 
+/**
+ * A quiet pill for the last journal page. `NotePill` is brass-on-dark for the
+ * page furniture around the book; this one is ink-on-parchment because it sits
+ * ON the paper, where brass would look like a sticker.
+ */
+function PaperPill({
+  icon: Icon,
+  label,
+  onClick,
+}: {
+  icon: typeof Compass
+  label: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group inline-flex items-center gap-2 rounded-full border border-ink/25 bg-ink/[0.04] px-4 py-2 font-sans text-[11px] font-bold tracking-chip text-ink/70 transition-colors hover:bg-ink/[0.09] hover:text-ink"
+    >
+      <Icon className="size-3.5 transition-transform group-hover:-rotate-6" aria-hidden />
+      {label}
+    </button>
+  )
+}
+
 function FinalPageBody({
   stamps,
   trailEndReached,
+  compassReached,
+  finished,
 }: {
   stamps: MapStop[]
   trailEndReached: boolean
+  compassReached: boolean
+  finished: boolean
 }) {
   const { t, locale } = useI18n()
 
@@ -1898,8 +1951,9 @@ function FinalPageBody({
   // Same admin version switcher as the note bar, so the picker does not appear
   // on one route into the note and vanish on the other.
   const [previewVariant, setPreviewVariant] = useState<number | undefined>(undefined)
-  const { note1: note, variants } = useFinaleNotes(previewVariant)
-  const [noteOpen, setNoteOpen] = useState(false)
+  const { note1: note, note2, variants, held, hold } = useFinaleNotes(previewVariant)
+  // One slot, so two overlays can never stack on this page.
+  const [open, setOpen] = useState<null | 1 | 2 | "hold" | "won">(null)
   const autoShown = useRef(false)
 
   useEffect(() => {
@@ -1907,15 +1961,23 @@ function FinalPageBody({
     const seen = typeof window !== "undefined" && localStorage.getItem(NOTE1_SEEN_KEY)
     if (!seen) {
       autoShown.current = true
-      setNoteOpen(true)
+      setOpen(1)
     }
   }, [note, trailEndReached])
 
-  const openNote = useCallback(() => setNoteOpen(true), [])
+  const openNote = useCallback(() => setOpen(1), [])
   const closeNote = useCallback(() => {
-    setNoteOpen(false)
+    setOpen(null)
     if (typeof window !== "undefined") localStorage.setItem(NOTE1_SEEN_KEY, "1")
   }, [])
+
+  // Everything the crew has actually earned, shown side by side rather than one
+  // at a time: this page is the keepsake they come back to, so a crew holding
+  // both notes should be able to re-read either one from here, and a finished
+  // crew should still reach its notes and not just the trophy.
+  const showHold = held && hold !== null && trailEndReached
+  const showNote1 = note !== null && trailEndReached
+  const showNote2 = note2 !== null && compassReached
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center text-center">
@@ -1927,18 +1989,52 @@ function FinalPageBody({
         {t.journal.finalBody}
       </p>
 
-      {note && trailEndReached && (
-        <button
-          type="button"
-          onClick={openNote}
-          className="group mt-6 inline-flex items-center gap-2 rounded-full border border-ink/25 bg-ink/[0.04] px-4 py-2 font-sans text-[11px] font-bold tracking-chip text-ink/70 transition-colors hover:bg-ink/[0.09] hover:text-ink"
-        >
-          <ScrollText className="size-3.5 transition-transform group-hover:-rotate-6" />
-          {t.finale.openNote}
-        </button>
+      {(showHold || showNote1 || showNote2 || finished) && (
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
+          {showHold && (
+            <PaperPill icon={Hourglass} label={t.finale.holdShort} onClick={() => setOpen("hold")} />
+          )}
+          {showNote1 && (
+            <PaperPill
+              icon={ScrollText}
+              // Only needs telling apart from note 2 once note 2 is in hand.
+              label={showNote2 ? t.finale.note1Short : t.finale.openNote}
+              onClick={openNote}
+            />
+          )}
+          {showNote2 && (
+            <PaperPill icon={Gem} label={t.finale.note2Short} onClick={() => setOpen(2)} />
+          )}
+          {/* Inked solid, so the trophy still reads as the prize among the
+              quieter paper pills beside it. */}
+          {finished && (
+            <button
+              type="button"
+              onClick={() => setOpen("won")}
+              className="group inline-flex items-center gap-2 rounded-full border border-ink/70 bg-ink/85 px-4 py-2 font-sans text-[11px] font-bold tracking-chip text-parchment transition-transform hover:scale-[1.03]"
+            >
+              <Trophy className="size-3.5 transition-transform group-hover:-rotate-6" aria-hidden />
+              {t.finale.wonShort}
+            </button>
+          )}
+        </div>
       )}
 
-      {noteOpen && note && trailEndReached && (
+      {open === 2 && note2 && (
+        <NoteOverlay
+          body={note2.body}
+          cta={note2.cta}
+          label={t.finale.note2Label}
+          ctaIcon={Gem}
+          onClose={() => setOpen(null)}
+        />
+      )}
+      {open === "hold" && hold && (
+        <HoldOverlay title={hold.title} body={hold.body} onClose={() => setOpen(null)} />
+      )}
+      {open === "won" && <WonOverlay onClose={() => setOpen(null)} />}
+
+      {open === 1 && note && trailEndReached && (
         <NoteOverlay
           body={note.body}
           cta={note.cta}
