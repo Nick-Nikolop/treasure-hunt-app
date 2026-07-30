@@ -628,12 +628,32 @@ export type ApproveUnlockResult =
  * ordering is still enforced against the crew's current progress at approval
  * time, but the solve cooldown is intentionally skipped (a human already
  * vetted this). No token is needed; the lead is addressed by its position.
+ *
+ * `submittedAt` is when the explorer actually sent their photos. When given, the
+ * unlock is stamped with THAT moment instead of the approval moment, so a slow
+ * manual review never costs anyone time on the journal or the leaderboard. Only
+ * the stored timestamp is backdated: every ordering check below still runs
+ * against real "now", so a backdated stamp can't unlock anything out of turn.
  */
 export async function approveLeadUnlock(
   userId: string,
   leadOrder: number,
+  submittedAt?: Date | null,
 ): Promise<ApproveUnlockResult> {
   const defs = await getLeadDefs()
+
+  /**
+   * The timestamp to stamp rows with: the submission moment, clamped into a sane
+   * window. It is never allowed past real "now" (a clock skew shouldn't create a
+   * future solve) nor before the crew's latest existing unlock (which would make
+   * this lead appear to be solved before the one preceding it).
+   */
+  async function stampAt(crew: string[], nowMs: number): Promise<Date> {
+    const submitted = submittedAt?.getTime()
+    if (submitted === undefined || !Number.isFinite(submitted)) return new Date(nowMs)
+    const floor = (await crewLastUnlockMs(crew)) ?? 0
+    return new Date(Math.min(Math.max(submitted, floor), nowMs))
+  }
 
   // Approving a proof filed against the trail-end QR stamps the trail-end row.
   if (leadOrder === TRAIL_END_ORDER) {
@@ -649,7 +669,7 @@ export async function approveLeadUnlock(
     if (await crewHasReachedTrailEnd(crew)) {
       return { status: "already", leadOrder: total, country: last.country, countryEn: last.countryEn }
     }
-    await insertTrailEndRows(crew, new Date(now))
+    await insertTrailEndRows(crew, await stampAt(crew, now))
     await logLeadSolved(userId, TRAIL_END_ORDER, last.country, last.countryEn, true)
     return { status: "unlocked", leadOrder: total, country: last.country, countryEn: last.countryEn }
   }
@@ -668,7 +688,7 @@ export async function approveLeadUnlock(
     if (await crewHasReachedCompass(crew)) {
       return { status: "already", leadOrder: total, country: last.country, countryEn: last.countryEn }
     }
-    await insertCompassRows(crew, new Date(now))
+    await insertCompassRows(crew, await stampAt(crew, now))
     await logLeadSolved(userId, COMPASS_ORDER, last.country, last.countryEn, true)
     return { status: "unlocked", leadOrder: total, country: last.country, countryEn: last.countryEn }
   }
@@ -689,7 +709,7 @@ export async function approveLeadUnlock(
     if (await crewHasFinished(crew)) {
       return { status: "already", leadOrder: total, country: last.country, countryEn: last.countryEn }
     }
-    await insertFinishRows(crew, new Date(now))
+    await insertFinishRows(crew, await stampAt(crew, now))
     await logLeadSolved(userId, FINISH_ORDER, last.country, last.countryEn, true)
     return { status: "unlocked", leadOrder: total, country: last.country, countryEn: last.countryEn }
   }
@@ -708,7 +728,7 @@ export async function approveLeadUnlock(
     return { status: "out_of_order", required: leadOrder - 1, current, leadOrder }
   }
 
-  await ensureUpTo(crew, leadOrder, "proof", new Date(now))
+  await ensureUpTo(crew, leadOrder, "proof", await stampAt(crew, now))
   await logLeadSolved(userId, leadOrder, clue.country, clue.countryEn, false)
   return { status: "unlocked", leadOrder, country: clue.country, countryEn: clue.countryEn }
 }

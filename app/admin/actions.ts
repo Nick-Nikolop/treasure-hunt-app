@@ -538,8 +538,10 @@ export async function adminListProofs(): Promise<AdminProofsData> {
 /**
  * Approve or reject a pending photo proof. On approve, unlock the lead for the
  * submitter's crew (order still enforced at approval time; the solve cooldown is
- * skipped since a human vetted it). Superadmin only. Idempotent: a proof that was
- * already decided by another admin is reported as such.
+ * skipped since a human vetted it) and stamp the unlock with the moment the
+ * photos were SENT rather than reviewed, so review lag costs no time. Superadmin
+ * only. Idempotent: a proof that was already decided by another admin is
+ * reported as such.
  */
 export async function adminDecideProof(
   id: string,
@@ -562,7 +564,9 @@ export async function adminDecideProof(
 
   let unlock: string | undefined
   if (decision === "approved") {
-    const res = await approveLeadUnlock(existing.userId, existing.leadOrder)
+    // Credit the moment they SENT the photos, not the moment we got round to
+    // reviewing them, so waiting on a manual check never costs anyone time.
+    const res = await approveLeadUnlock(existing.userId, existing.leadOrder, existing.createdAt)
     unlock = res.status
   }
 
@@ -1862,7 +1866,7 @@ export async function adminSaveLeadGeo(input: {
   return { ok: true }
 }
 
-// ── Finale (the compass + winner screen) ───────────────────────────────────
+// ── Finale (the compass + winner screen) ──────────────────────────────────
 
 /** Read the finale configuration (compass GPS + editable notes) for the admin. */
 export async function getFinaleState(): Promise<FinaleConfig> {
