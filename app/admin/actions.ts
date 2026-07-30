@@ -1862,7 +1862,7 @@ export async function adminSaveLeadGeo(input: {
   return { ok: true }
 }
 
-// ── Finale (the compass + winner screen) ───────��────────────────────────────
+// ── Finale (the compass + winner screen) ───────────────────────────────────
 
 /** Read the finale configuration (compass GPS + editable notes) for the admin. */
 export async function getFinaleState(): Promise<FinaleConfig> {

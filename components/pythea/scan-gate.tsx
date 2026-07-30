@@ -20,6 +20,9 @@ import {
   Copy,
   Check,
   LogOut,
+  Crosshair,
+  Maximize,
+  Sparkles,
 } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
 import { ScanResult } from "@/components/pythea/scan-result"
@@ -454,12 +457,51 @@ export function ScanGate({
         </div>
       )}
 
+      {/* Every phase except the spinner offers the photo route, so the two-shot
+          guidance is visible before they even open the camera. */}
+      {state.phase !== "checking" && <TwoShotTip className="mt-6" />}
+
       {isSuperAdmin && state.phase === "intro" && (
         <p className="mt-4 font-sans text-[10px] tracking-chip text-muted-foreground/60">
           {g.adminHint}
         </p>
       )}
     </motion.div>
+  )
+}
+
+/**
+ * Vibrant brass callout telling explorers what the two ideal proof photos are:
+ * a close-up of the QR itself, plus a wider shot of the surrounding area. Solid
+ * brass fill (with dark text for contrast) so it reads as guidance rather than
+ * an error, and stands out against the dark card. Shown both where the photo
+ * option is offered and inside the upload form itself.
+ */
+function TwoShotTip({ className = "" }: { className?: string }) {
+  const { t } = useI18n()
+  const p = t.scan.proof
+  const rows = [
+    { icon: Crosshair, text: p.tipClose },
+    { icon: Maximize, text: p.tipWide },
+  ]
+
+  return (
+    <div className={`rounded-sm bg-brass px-4 py-3 text-left ${className}`}>
+      <p className="flex items-center gap-1.5 font-sans text-[11px] font-bold tracking-chip text-primary-foreground">
+        <Sparkles className="size-3.5 shrink-0" aria-hidden />
+        {p.tipLabel}
+      </p>
+      <ul className="mt-2 flex flex-col gap-1.5">
+        {rows.map(({ icon: Icon, text }) => (
+          <li key={text} className="flex items-start gap-2">
+            <Icon className="mt-0.5 size-3.5 shrink-0 text-primary-foreground/80" aria-hidden />
+            <span className="font-sans text-xs font-semibold leading-relaxed text-primary-foreground">
+              {text}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }
 
@@ -617,6 +659,8 @@ function ProofForm({
           {p.help}
         </p>
       </div>
+
+      <TwoShotTip className="mt-5" />
 
       {/* Thumbnails + add tile */}
       <div className="mt-6 grid grid-cols-3 gap-2">
