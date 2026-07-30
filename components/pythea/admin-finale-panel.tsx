@@ -1,8 +1,25 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react"
-import { Compass, MapPin, Save, Loader2, Check, ScrollText, Trophy, Clock } from "lucide-react"
-import { getFinaleState, adminSaveFinale } from "@/app/admin/actions"
+import {
+  Compass,
+  MapPin,
+  Save,
+  Loader2,
+  Check,
+  ScrollText,
+  Trophy,
+  Clock,
+  Shuffle,
+  RotateCcw,
+  Users,
+} from "lucide-react"
+import {
+  getFinaleState,
+  adminSaveFinale,
+  adminListCompassVariants,
+  type CompassVariantRow,
+} from "@/app/admin/actions"
 
 /**
  * Finale COPY only. The two QR locations are deliberately absent: each one is
@@ -14,6 +31,14 @@ type Draft = {
   note1En: string
   note1Cta: string
   note1CtaEn: string
+  /**
+   * The four rotating hiding hints, in rotation order. Position matters: a crew's
+   * stored assignment is an index into this list, so editing entry 3 rewrites what
+   * every crew already holding variant 3 reads.
+   */
+  compassHints: { el: string; en: string }[]
+  compassReturn: string
+  compassReturnEn: string
   note2: string
   note2En: string
   note2Cta: string
@@ -31,6 +56,9 @@ const EMPTY: Draft = {
   note1En: "",
   note1Cta: "",
   note1CtaEn: "",
+  compassHints: [],
+  compassReturn: "",
+  compassReturnEn: "",
   note2: "",
   note2En: "",
   note2Cta: "",
@@ -54,6 +82,8 @@ export function AdminFinalePanel() {
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
+  /** Who currently holds which hint. Read-only; loading this assigns nothing. */
+  const [assigned, setAssigned] = useState<CompassVariantRow[]>([])
   const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -66,6 +96,9 @@ export function AdminFinalePanel() {
           note1En: c.note1En,
           note1Cta: c.note1Cta,
           note1CtaEn: c.note1CtaEn,
+          compassHints: c.compassHints.map((h) => ({ el: h.el, en: h.en })),
+          compassReturn: c.compassReturn,
+          compassReturnEn: c.compassReturnEn,
           note2: c.note2,
           note2En: c.note2En,
           note2Cta: c.note2Cta,
@@ -79,6 +112,13 @@ export function AdminFinalePanel() {
         setLoaded(true)
       })
       .catch(() => setLoaded(true))
+    // Separate request: if the assignment list fails the copy editor must still
+    // open, since this list is only informational.
+    adminListCompassVariants()
+      .then((rows) => {
+        if (alive) setAssigned(rows)
+      })
+      .catch(() => {})
     return () => {
       alive = false
     }
@@ -92,6 +132,15 @@ export function AdminFinalePanel() {
 
   const set = useCallback(<K extends keyof Draft>(key: K, value: string) => {
     setDraft((d) => ({ ...d, [key]: value }))
+    setSaved(false)
+  }, [])
+
+  /** Edit one hint in place, keeping rotation order (the index is the variant). */
+  const setHint = useCallback((index: number, lang: "el" | "en", value: string) => {
+    setDraft((d) => ({
+      ...d,
+      compassHints: d.compassHints.map((h, i) => (i === index ? { ...h, [lang]: value } : h)),
+    }))
     setSaved(false)
   }, [])
 
@@ -168,6 +217,108 @@ export function AdminFinalePanel() {
           enPlaceholder="NOW YOU MUST FIND MY COMPASS"
           onChange={(key, value) => set(key === "el" ? "note1Cta" : "note1CtaEn", value)}
         />
+
+        {/* The rotating closing paragraph. Lives inside the note-1 section since
+            it is literally appended to that note. */}
+        <div className="mt-5 border-t border-border pt-4">
+          <div className="flex items-center gap-2">
+            <Shuffle className="size-4 text-brass" aria-hidden />
+            <span className="font-sans text-xs font-bold uppercase tracking-chip text-foreground">
+              Rotating hiding hint
+            </span>
+          </div>
+          <p className="mb-4 mt-1.5 max-w-prose font-sans text-[13px] leading-relaxed text-muted-foreground">
+            The last paragraph of the note above. Each crew is handed{" "}
+            <strong className="text-foreground">one</strong> of these in strict
+            rotation, and keeps it forever, so the compass can sit in four
+            different spots at once. The first crew to reach the note gets No. 1,
+            the next gets No. 2, and so on, wrapping back around after No. 4.
+            Teammates share their crew&apos;s hint.
+          </p>
+          <p className="mb-4 max-w-prose font-sans text-[13px] leading-relaxed text-muted-foreground">
+            Order matters: editing No. 3 rewrites what every crew already holding
+            No. 3 reads. Leave one blank to restore its default wording.
+          </p>
+
+          <div className="flex flex-col gap-4">
+            {draft.compassHints.map((h, i) => {
+              const holders = assigned.filter((a) => a.variant === i + 1)
+              return (
+                <div key={i} className="rounded-sm border border-border bg-background/40 p-4">
+                  <div className="mb-3 flex flex-wrap items-center gap-2">
+                    <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-sm bg-brass font-sans text-[11px] font-black text-primary-foreground">
+                      {i + 1}
+                    </span>
+                    <span className="font-sans text-xs font-bold uppercase tracking-chip text-muted-foreground">
+                      Version No. {i + 1}
+                    </span>
+                    {/* Which crews got this one, so the founder knows where the
+                        compass currently needs to be. */}
+                    {holders.length > 0 ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-brass/45 bg-brass/15 px-2.5 py-0.5 font-sans text-[10px] font-bold tracking-chip text-brass">
+                        <Users className="size-3" aria-hidden />
+                        {holders.length} {holders.length === 1 ? "CREW" : "CREWS"}
+                      </span>
+                    ) : (
+                      <span className="rounded-full border border-border px-2.5 py-0.5 font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
+                        NOT HANDED OUT YET
+                      </span>
+                    )}
+                  </div>
+
+                  {holders.length > 0 && (
+                    <p className="mb-3 font-sans text-[12px] leading-relaxed text-muted-foreground">
+                      {holders.map((a) => a.name).join(" · ")}
+                    </p>
+                  )}
+
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <Field label="ΕΛΛΗΝΙΚΑ">
+                      <textarea
+                        value={h.el}
+                        onChange={(e) => setHint(i, "el", e.target.value)}
+                        rows={3}
+                        className="w-full resize-y rounded-sm border border-border bg-background px-3 py-2 font-serif text-sm leading-relaxed text-foreground outline-none focus:border-brass"
+                      />
+                    </Field>
+                    <Field label="ENGLISH">
+                      <textarea
+                        value={h.en}
+                        onChange={(e) => setHint(i, "en", e.target.value)}
+                        rows={3}
+                        className="w-full resize-y rounded-sm border border-border bg-background px-3 py-2 font-serif text-sm leading-relaxed text-foreground outline-none focus:border-brass"
+                      />
+                    </Field>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* The shared courtesy line, one edit for all four variants. */}
+        <div className="mt-5 border-t border-border pt-4">
+          <div className="flex items-center gap-2">
+            <RotateCcw className="size-4 text-brass" aria-hidden />
+            <span className="font-sans text-xs font-bold uppercase tracking-chip text-foreground">
+              Put-it-back request
+            </span>
+          </div>
+          <p className="mb-3 mt-1.5 max-w-prose font-sans text-[13px] leading-relaxed text-muted-foreground">
+            Highlighted under the note for{" "}
+            <strong className="text-foreground">every</strong> version, asking the
+            crew to return the compass so later explorers can still find it. Edited
+            once here. Leave blank to hide it entirely.
+          </p>
+          <BilingualNote
+            value={{ el: draft.compassReturn, en: draft.compassReturnEn }}
+            rows={3}
+            onChange={(el, en) => {
+              set("compassReturn", el)
+              set("compassReturnEn", en)
+            }}
+          />
+        </div>
       </Section>
 
       {/* Note 2 — compass scan */}
