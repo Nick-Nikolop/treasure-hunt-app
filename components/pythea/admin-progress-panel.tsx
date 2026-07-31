@@ -469,14 +469,25 @@ function ordinal(n: number): string {
   return `${n}th`
 }
 
-/** Short local date + time an entrant arrived, or a dash when unknown. */
+/**
+ * Short date + time an entrant arrived, or a dash when unknown.
+ *
+ * The locale and time zone are PINNED. Passing `undefined` makes the formatter
+ * follow whatever environment renders it, so the server produced UTC and the
+ * browser then re-rendered the same row in Athens time: every arrival visibly
+ * jumped a few hours the instant the page hydrated. The hunt runs in Athens, so
+ * that is the one correct zone to show, on both sides of the render.
+ */
+const ATHENS_TZ = "Europe/Athens"
+
 function formatArrival(ms: number | null): string {
   if (ms === null) return "—"
-  return new Date(ms).toLocaleString(undefined, {
+  return new Date(ms).toLocaleString("en-US", {
     day: "2-digit",
     month: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: ATHENS_TZ,
   })
 }
 
