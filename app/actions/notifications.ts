@@ -8,6 +8,7 @@ import { finaleOrderNames } from "@/lib/clues"
 import { getFinaleConfig, isTrailEndHeld } from "@/lib/finale"
 import { HOLD_RESUME_AT_MS } from "@/lib/hold-resume"
 import { getCrewUserIds, getCrewTrailEndAt } from "@/lib/hunt"
+import { isHoldBypassedForAny } from "@/lib/maintenance"
 
 /**
  * A decided photo-proof the explorer hasn't acknowledged yet, shaped for the
@@ -89,6 +90,10 @@ export async function getHoldWait(): Promise<{ show: boolean; resumeAtMs: number
   // everyone, so the whole crew is waiting together.
   const crew = await getCrewUserIds(session.user.id)
   const reachedAt = await getCrewTrailEndAt(crew)
+
+  // The bypass crew is not queued, so "come back later" would be a lie: their
+  // compass step is already open. Suppressed here rather than left to the client.
+  if (await isHoldBypassedForAny(crew)) return { show: false, resumeAtMs: HOLD_RESUME_AT_MS }
 
   return { show: reachedAt !== null, resumeAtMs: HOLD_RESUME_AT_MS }
 }

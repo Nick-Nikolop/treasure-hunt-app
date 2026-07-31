@@ -6,6 +6,7 @@ import { COMPASS_ORDER, FINISH_ORDER, TRAIL_END_ORDER } from "@/lib/clues"
 import { getTotalLeads } from "@/lib/leads"
 import { getCrewUserIds, setProgressForUsers } from "@/lib/hunt"
 import { getFinaleConfig, isTrailEndHeld } from "@/lib/finale"
+import { isHoldBypassedForAny } from "@/lib/maintenance"
 import { getCrewGrants, getAllGrants, type FinaleGrants } from "@/lib/finale-grants"
 import { logActivity } from "@/lib/activity"
 
@@ -101,8 +102,16 @@ export async function reconcileFinalePlacement(userId: string): Promise<void> {
     // Not past the end of the trail yet: leave the crew completely alone.
     if (!isPastTrailEnd(orders)) return
 
-    const [finale, grants] = await Promise.all([getFinaleConfig(), getCrewGrants(userId)])
-    const held = isTrailEndHeld(finale)
+    const [finale, grants, holdBypassed] = await Promise.all([
+      getFinaleConfig(),
+      getCrewGrants(userId),
+      isHoldBypassedForAny(crew),
+    ])
+    // The bypass crew is exempt from the hold here too, not just at the scan
+    // gates. This pass TRIMS rows above the computed placement, so treating them
+    // as held would delete the compass row they were just allowed to earn, on
+    // their very next journal render.
+    const held = !holdBypassed && isTrailEndHeld(finale)
 
     const from = placementFromRows(orders)
     const to = placementForGrants(grants, held)
@@ -239,7 +248,9 @@ async function runSweep(): Promise<void> {
       }
 
       const from = placementFromRows(orders)
-      const to = placementForGrants(grants, held)
+      // Per crew, since the bypass account must not be dragged back to the hold
+      // by the global sweep either (see the note in `reconcileFinalePlacement`).
+      const to = placementForGrants(grants, held && !(await isHoldBypassedForAny(crew)))
       if (from === to) continue
 
       await setProgressForUsers(crew, total, "admin", to)

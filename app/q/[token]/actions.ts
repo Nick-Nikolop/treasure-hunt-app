@@ -23,6 +23,7 @@ import {
 } from "@/lib/proofs"
 import { logActivity } from "@/lib/activity"
 import { recordScanPing } from "@/lib/scan-ping"
+import { isHoldBypassedForUser } from "@/lib/maintenance"
 
 /**
  * Client payload for a location-gated scan: either the explorer's reported
@@ -153,7 +154,12 @@ export async function getFinaleSummary(): Promise<FinaleSummary | null> {
   // has to be enforced here too. Sealing only the journal would leave the hint
   // readable straight off this response the moment the trail-end QR is scanned.
   // Admins are exempt, so the finale stays proofreadable.
-  const held = admin === null && isTrailEndHeld(finale)
+  // Honours the per-account hold bypass too, so the test account is handed note 1
+  // here exactly as an ordinary crew will be once the hold lifts.
+  const held =
+    admin === null &&
+    isTrailEndHeld(finale) &&
+    !(await isHoldBypassedForUser(session.user.id))
 
   // Only composed when the note is actually being handed over. Assigning while
   // held would burn a rotation slot on a hint the crew cannot read yet, and would

@@ -35,6 +35,7 @@ import {
 import { haversineMeters } from "@/lib/geo"
 import { getFinaleConfig, isTrailEndHeld } from "@/lib/finale"
 import { getCrewGrants, setFinaleGrant } from "@/lib/finale-grants"
+import { isHoldBypassedForAny } from "@/lib/maintenance"
 import { getSolveCooldownSeconds } from "@/lib/hunt-config"
 import { logActivity, resolveUserSnapshot } from "@/lib/activity"
 import { and, asc, eq, gt, inArray } from "drizzle-orm"
@@ -786,7 +787,11 @@ export async function unlockByToken(
     // learns the spot some other way still cannot jump the queue. Crews already
     // holding the compass are unaffected, since the idempotent re-scan below is
     // only reached once this row exists.
-    if (!(await crewHasReachedCompass(crew)) && isTrailEndHeld(await getFinaleConfig())) {
+    if (
+      !(await crewHasReachedCompass(crew)) &&
+      isTrailEndHeld(await getFinaleConfig()) &&
+      !(await isHoldBypassedForAny(crew))
+    ) {
       return { status: "held" }
     }
     // The compass step also needs the note-2 grant. Without it the crew has not
@@ -1065,7 +1070,9 @@ export async function resolveScanContext(
     // Falling through to "direct" is correct: it answers with the proper
     // out_of_order or held message instead of collecting a dead photo.
     if (!(await crewHasReachedTrailEnd(crew))) return { mode: "direct" }
-    if (isTrailEndHeld(finale)) return { mode: "direct" }
+    if (isTrailEndHeld(finale) && !(await isHoldBypassedForAny(crew))) {
+      return { mode: "direct" }
+    }
     return { mode: "verify", leadOrder: COMPASS_ORDER, proofOnly: true }
   }
 

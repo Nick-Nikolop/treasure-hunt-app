@@ -15,6 +15,7 @@ import {
 import { getAdminUser } from "@/lib/admin"
 import { hasReachedCompass, hasReachedTrailEnd } from "@/lib/hunt"
 import { getCrewGrants } from "@/lib/finale-grants"
+import { isHoldBypassedForUser } from "@/lib/maintenance"
 
 /** One handwritten note plus the shouted call-to-action stamped under it. */
 export type FinaleNote = {
@@ -100,7 +101,12 @@ export async function getFinaleNotes(previewVariant?: number): Promise<{
 
   // Admins and the preview override are never held, so the finale stays fully
   // proofreadable from the journal while real crews are parked at lead 10.
-  const held = !bypass && trailEnd && isTrailEndHeld(finale)
+  // The hold-bypass account is exempt from the QUEUE ONLY, never from the grants.
+  // `bypass` above fakes progress and skips grants so admins can proofread, which
+  // is the opposite of what a test account needs; this one leaves every real gate
+  // standing, so it is folded in here and NOT into `mayNote1`/`mayNote2`.
+  const holdBypassed = await isHoldBypassedForUser(session.user.id)
+  const held = !bypass && !holdBypassed && trailEnd && isTrailEndHeld(finale)
   const note1Open = trailEnd && !held && mayNote1
 
   // Which of the four rotating hints this crew reads. A real crew is assigned one
