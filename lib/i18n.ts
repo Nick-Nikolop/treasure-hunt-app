@@ -721,8 +721,7 @@ const el = {
     // waiting on the hold: when the hunt picks up again
     resumeTitle: "Το κυνήγι συνεχίζεται",
     resumeWhen: "31 Ιουλίου, 18:00 (ώρα Ελλάδας)",
-    resumeBody:
-      "Έκλεισες την πορεία και περιμένεις στο σημείο συνάντησης. Συνεχίζουμε με το τελευταίο σκέλος στις 18:00, ώρα Ελλάδας.",
+    resumeBody: "Συνεχίζουμε με το τελευταίο σκέλος στις 18:00, ώρα Ελλάδας.",
     resumeCountdownLabel: "ΑΠΟΜΕΝΟΥΝ",
     resumeDays: "ΗΜΕΡΕΣ",
     resumeHours: "ΩΡΕΣ",
@@ -1778,8 +1777,7 @@ const en: Dictionary = {
     // waiting on the hold: when the hunt picks up again
     resumeTitle: "The hunt continues",
     resumeWhen: "31 July, 6:00 PM (Greek time)",
-    resumeBody:
-      "You have closed the trail and you are waiting at the meeting point. We carry on with the final stretch at 6:00 PM, Greek time.",
+    resumeBody: "We carry on with the final stretch at 6:00 PM, Greek time.",
     resumeCountdownLabel: "TIME REMAINING",
     resumeDays: "DAYS",
     resumeHours: "HOURS",
