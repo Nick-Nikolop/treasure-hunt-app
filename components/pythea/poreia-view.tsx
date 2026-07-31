@@ -1293,13 +1293,18 @@ type LocalNote = { body: string; cta: string; notice: string }
 const NOTE1_SEEN_KEY = "pythea:note1-seen"
 
 /**
- * Kill switches for the trophy pill and the two note pills.
+ * Global panic switches for the trophy pill and the two note pills.
  *
- * Both were forced off while crews carried finish/compass rows they had never
- * earned, so the UI was promoting them to "treasure found". Those rows have been
- * cleared (every affected crew is back to waiting on the hold), so the switches
- * are on again and the real earned states show normally. Flip either to false to
- * seal that screen off instantly if bad progress ever appears again.
+ * These are BLUNT overrides that sit on top of the real gate. The real gate is
+ * per-team and lives on the server: the finale tab grants each crew note1 /
+ * note2 / treasure, and the journal only sends the note text (and only marks a
+ * crew `finished`) once that crew is BOTH at the step AND granted. So with these
+ * at true, an ungranted crew still sees nothing because its `note`/`note2` come
+ * back null and `finished` is false.
+ *
+ * Leave them at true for normal operation. Flip either to false ONLY as an
+ * emergency "seal this screen for everyone at once" kill switch, independent of
+ * grants, if something goes wrong mid-event.
  */
 const SHOW_WON_BUTTON = true
 const SHOW_NOTE_BUTTONS = true
