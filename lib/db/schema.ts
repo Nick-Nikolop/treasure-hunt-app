@@ -97,6 +97,23 @@ export const leadUnlock = pgTable("lead_unlock", {
   source: text("source").notNull().default("qr"),
 })
 
+// Per-user permission to SEE one of the three sealed finale reveals: the first
+// note (`note1`), the second note (`note2`) and the winner/treasure screen
+// (`treasure`). A row means "granted". No row means hidden, so the default for
+// everyone is hard-sealed. This is a second lock ON TOP of in-game progress: a
+// crew must BOTH have reached the step AND be granted here before anything
+// shows, which is what stops a crew from ever surfacing a reveal on its own (the
+// bug where crews hit "treasure found" overnight with no admin action).
+//
+// A crew shares progress, so a grant is written for every current member; the
+// read side treats the crew as granted if any member has the row.
+export const finaleGrant = pgTable("finale_grant", {
+  userId: text("userId").notNull(),
+  view: text("view").notNull(), // 'note1' | 'note2' | 'treasure'
+  grantedAt: timestamp("grantedAt").notNull().defaultNow(),
+  grantedBy: text("grantedBy"),
+})
+
 // The admin-managed leads of the hunt. This is the runtime source of truth for
 // the set of stops, their order, their journal copy and stamp image. Seeded once from the hardcoded defaults in lib/clues.ts.
 //

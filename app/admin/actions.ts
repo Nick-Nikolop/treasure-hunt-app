@@ -13,6 +13,12 @@ import {
 } from "@/lib/admin"
 import { siteUrl } from "@/lib/site-url"
 import { getFinaleConfig, setFinaleConfig, type FinaleConfig } from "@/lib/finale"
+import {
+  setFinaleGrant,
+  getAllGrants,
+  FINALE_VIEWS,
+  type FinaleView,
+} from "@/lib/finale-grants"
 import { listCompassVariantAssignments } from "@/lib/compass-variant"
 import {
   createLocationQr,
@@ -134,7 +140,7 @@ import {
   START_MS,
   isLeadIcon,
 } from "@/lib/clues"
-import { and, asc, desc, eq, inArray } from "drizzle-orm"
+import { and, asc, desc, eq, inArray, isNull } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { randomUUID } from "node:crypto"
 
@@ -1980,6 +1986,116 @@ export async function adminListCompassVariants(): Promise<CompassVariantRow[]> {
   })
 }
 
+// ── Finale view grants ────────────────────────────────────────────────────
+// Per-entrant permission to SEE note1 / note2 / the treasure screen. A grant
+// is a display permission on top of in-game progress: a crew must BOTH have
+// reached the step AND be granted here before anything shows.
+
+export type FinaleAudienceEntrant = {
+  kind: "team" | "solo"
+  /** Team id, or the user id for a solo. */
+  id: string
+  name: string
+  /** Every user id the grant is written for (all crew members, or the solo). */
+  userIds: string[]
+  grants: { note1: boolean; note2: boolean; treasure: boolean }
+}
+
+/**
+ * Everyone who can be granted a finale view: every team, plus every user with
+ * no team, each carrying their current grant state. A crew is "granted" when
+ * any member holds the row (matching how the read side folds a crew).
+ */
+export async function adminListFinaleAudience(): Promise<FinaleAudienceEntrant[]> {
+  await requireAdmin()
+  const [teams, members, solos, all] = await Promise.all([
+    db.select({ id: team.id, name: team.name }).from(team).orderBy(asc(team.createdAt)),
+    db
+      .select({ teamId: teamMember.teamId, userId: teamMember.userId })
+      .from(teamMember),
+    db
+      .select({ id: user.id, name: user.name, email: user.email })
+      .from(user)
+      .leftJoin(teamMember, eq(teamMember.userId, user.id))
+      .where(isNull(teamMember.teamId)),
+    getAllGrants(),
+  ])
+
+  const anyOf = (ids: string[], set: Set<string>) => ids.some((id) => set.has(id))
+
+  const teamEntrants: FinaleAudienceEntrant[] = teams.map((t) => {
+    const userIds = members.filter((m) => m.teamId === t.id).map((m) => m.userId)
+    return {
+      kind: "team",
+      id: t.id,
+      name: t.name,
+      userIds,
+      grants: {
+        note1: anyOf(userIds, all.note1),
+        note2: anyOf(userIds, all.note2),
+        treasure: anyOf(userIds, all.treasure),
+      },
+    }
+  })
+
+  const soloEntrants: FinaleAudienceEntrant[] = solos.map((u) => ({
+    kind: "solo",
+    id: u.id,
+    name: u.name || u.email,
+    userIds: [u.id],
+    grants: {
+      note1: all.note1.has(u.id),
+      note2: all.note2.has(u.id),
+      treasure: all.treasure.has(u.id),
+    },
+  }))
+
+  return [...teamEntrants, ...soloEntrants]
+}
+
+/** Grant or revoke one finale view for a whole crew (team) or a solo user. */
+export async function adminSetFinaleGrant(input: {
+  kind: "team" | "solo"
+  id: string
+  view: FinaleView
+  granted: boolean
+}): Promise<ActionResult> {
+  const admin = await requireAdmin()
+  if (!FINALE_VIEWS.includes(input.view)) return { ok: false, error: "bad_value" }
+
+  let userIds: string[]
+  let label: string
+  if (input.kind === "team") {
+    const rows = await db
+      .select({ userId: teamMember.userId })
+      .from(teamMember)
+      .where(eq(teamMember.teamId, input.id))
+    if (rows.length === 0) return { ok: false, error: "empty_team" }
+    userIds = rows.map((r) => r.userId)
+    const t = await db.select({ name: team.name }).from(team).where(eq(team.id, input.id)).limit(1)
+    label = `team "${t[0]?.name ?? "?"}"`
+  } else {
+    userIds = [input.id]
+    const u = await db.select({ name: user.name, email: user.email }).from(user).where(eq(user.id, input.id)).limit(1)
+    label = u[0]?.name || u[0]?.email || "?"
+  }
+
+  await setFinaleGrant({ userIds, view: input.view, granted: input.granted, grantedBy: admin.id })
+
+  await logActivity({
+    category: "admin",
+    action: input.granted ? "admin.finale_grant" : "admin.finale_revoke",
+    ...adminActor(admin),
+    teamId: input.kind === "team" ? input.id : null,
+    summary: `${adminActor(admin).actorName} ${input.granted ? "granted" : "revoked"} ${input.view} for ${label}`,
+    metadata: { view: input.view, granted: input.granted, memberCount: userIds.length },
+  })
+
+  revalidatePath("/admin")
+  revalidatePath("/journal")
+  return { ok: true }
+}
+
 /** Parse one lat/lng/radius trio from string inputs. Returns nulls when blank
  *  (clears the gate) or an error code when a provided value is out of range. */
 function parseGate(
@@ -2155,6 +2271,23 @@ export async function adminSetTrailEndHold(input: { enabled: boolean }): Promise
       ? `${adminActor(admin).actorName} sealed the first note again after lead 10`
       : `${adminActor(admin).actorName} lifted the hold after lead 10, releasing the first note`,
   })
+
+  // Lifting the hold is a BULK grant-all of note 1: every crew currently waiting
+  // (holds the trail-end row) is granted note1 in one go, which is what actually
+  // reveals the note now that reveals are grant-gated. Without this, lifting the
+  // hold would change nothing on screen. Admins can still fine-tune individuals
+  // afterward from the finale audience list.
+  if (!enabled) {
+    const held = await db
+      .select({ userId: leadUnlock.userId })
+      .from(leadUnlock)
+      .where(eq(leadUnlock.leadOrder, TRAIL_END_ORDER))
+    const userIds = [...new Set(held.map((r) => r.userId))]
+    if (userIds.length > 0) {
+      await setFinaleGrant({ userIds, view: "note1", granted: true, grantedBy: admin.id })
+    }
+  }
+
   revalidatePath("/admin")
   revalidatePath("/journal")
   return { ok: true }

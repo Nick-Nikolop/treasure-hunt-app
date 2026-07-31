@@ -17,6 +17,7 @@ import {
   hasFinished,
 } from "@/lib/hunt"
 import { getAdminUser } from "@/lib/admin"
+import { getCrewGrants } from "@/lib/finale-grants"
 import { getLeadDefs } from "@/lib/leads"
 import { getLeadBgWashPct, getCompassOpacityPct } from "@/lib/hunt-config"
 import { getPhaseContext } from "@/lib/phase-guard"
@@ -106,10 +107,13 @@ export default async function PoreiaPage() {
     ? state.unlockedCount >= state.total
     : await hasReachedCompass(session.user.id)
 
-  // The winner pill is shown only to a crew that really holds the finish row, so
-  // it is deliberately NOT faked by the superadmin progress override: admins
-  // proofread the winner screen with the labelled preview button instead.
-  const finished = await hasFinished(session.user.id)
+  // The winner pill needs BOTH: the crew really holds the finish row AND an
+  // admin granted the treasure view in the finale tab. This is the safety lock
+  // for the overnight bug where crews reached "treasure found" with no admin
+  // action. It is deliberately NOT faked by the superadmin progress override:
+  // admins proofread the winner screen with the labelled preview button instead.
+  const grants = await getCrewGrants(session.user.id)
+  const finished = grants.treasure && (await hasFinished(session.user.id))
   const isAdmin = (await getAdminUser()) !== null
 
   // Superadmins can page through leads the crew has not unlocked yet, so the

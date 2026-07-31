@@ -17,6 +17,9 @@ import {
   Lock,
   Unlock,
   TriangleAlert,
+  Eye,
+  Search,
+  UserRound,
 } from "lucide-react"
 import {
   getFinaleState,
@@ -24,8 +27,12 @@ import {
   adminSetTrailEndHold,
   adminCountHeldCrews,
   adminListCompassVariants,
+  adminListFinaleAudience,
+  adminSetFinaleGrant,
   type CompassVariantRow,
+  type FinaleAudienceEntrant,
 } from "@/app/admin/actions"
+import type { FinaleView } from "@/lib/finale-grants"
 
 /**
  * Finale COPY only. The two QR locations are deliberately absent: each one is
@@ -398,7 +405,7 @@ export function AdminFinalePanel() {
           hint="The same shouted banner as above, one beat later: the compass is in hand, so point them at the treasure itself. Shown right under the compass note."
           el={draft.note2Cta}
           en={draft.note2CtaEn}
-          elPlaceholder="ΤΩΡΑ ΠΡΕΠΕΙ ΝΑ ΒΡΕΙΣ ΤΟΝ ΘΗΣΑΥΡΟ ΜΟΥ"
+          elPlaceholder="��ΩΡΑ ΠΡΕΠΕΙ ΝΑ ΒΡΕΙΣ ΤΟΝ ΘΗΣΑΥΡΟ ΜΟΥ"
           enPlaceholder="NOW YOU MUST FIND MY TREASURE"
           onChange={(key, value) => set(key === "el" ? "note2Cta" : "note2CtaEn", value)}
         />
@@ -518,6 +525,12 @@ export function AdminFinalePanel() {
         </div>
       </Section>
 
+      {/* Who can see the three reveals. This is the hard gate: nothing shows for
+          a crew until it is BOTH at the step AND granted here. */}
+      <Section icon={Eye} title="6 · Who can see the reveals">
+        <FinaleAudience />
+      </Section>
+
       {/* Confirmation before releasing everyone. Deliberately only on the way
           OFF: sealing again is harmless, unsealing cannot be taken back. */}
       {confirmLift !== null && (
@@ -599,6 +612,228 @@ export function AdminFinalePanel() {
           {pending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
           Save finale
         </button>
+      </div>
+    </div>
+  )
+}
+
+/** The three reveals, in the order a crew meets them, with a short label. */
+const VIEW_META: { view: FinaleView; label: string }[] = [
+  { view: "note1", label: "Note 1" },
+  { view: "note2", label: "Note 2" },
+  { view: "treasure", label: "Treasure" },
+]
+
+/**
+ * Per-entrant grant board. Self-loading: fetches every team + solo and their
+ * current grant state, then toggles one (crew, view) at a time. Optimistic, with
+ * a rollback if the server refuses. A grant only DECIDES a reveal together with
+ * real in-game progress, so the note above the list spells that out.
+ */
+function FinaleAudience() {
+  const [rows, setRows] = useState<FinaleAudienceEntrant[] | null>(null)
+  const [failed, setFailed] = useState(false)
+  const [query, setQuery] = useState("")
+  /** Keys ("kind:id:view") with a request in flight, so each toggle can spin. */
+  const [busy, setBusy] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    let alive = true
+    adminListFinaleAudience()
+      .then((r) => {
+        if (alive) setRows(r)
+      })
+      .catch(() => {
+        if (alive) setFailed(true)
+      })
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  const toggle = useCallback(
+    async (entrant: FinaleAudienceEntrant, view: FinaleView) => {
+      const key = `${entrant.kind}:${entrant.id}:${view}`
+      const next = !entrant.grants[view]
+      setBusy((b) => new Set(b).add(key))
+      // Optimistic flip.
+      setRows((cur) =>
+        cur
+          ? cur.map((e) =>
+              e.kind === entrant.kind && e.id === entrant.id
+                ? { ...e, grants: { ...e.grants, [view]: next } }
+                : e,
+            )
+          : cur,
+      )
+      const res = await adminSetFinaleGrant({
+        kind: entrant.kind,
+        id: entrant.id,
+        view,
+        granted: next,
+      })
+      if (!res.ok) {
+        // Roll back on refusal.
+        setRows((cur) =>
+          cur
+            ? cur.map((e) =>
+                e.kind === entrant.kind && e.id === entrant.id
+                  ? { ...e, grants: { ...e.grants, [view]: !next } }
+                  : e,
+              )
+            : cur,
+        )
+      }
+      setBusy((b) => {
+        const n = new Set(b)
+        n.delete(key)
+        return n
+      })
+    },
+    [],
+  )
+
+  if (failed) {
+    return (
+      <p className="font-sans text-sm text-red-400">
+        Could not load the audience list. Reload the tab to try again.
+      </p>
+    )
+  }
+  if (!rows) {
+    return (
+      <div className="flex items-center gap-2 font-sans text-sm text-muted-foreground">
+        <Loader2 className="size-4 animate-spin" />
+        Loading teams…
+      </div>
+    )
+  }
+
+  const q = query.trim().toLowerCase()
+  const shown = q ? rows.filter((e) => e.name.toLowerCase().includes(q)) : rows
+  const teams = shown.filter((e) => e.kind === "team")
+  const solos = shown.filter((e) => e.kind === "solo")
+
+  return (
+    <div>
+      <p className="mb-4 max-w-prose font-sans text-sm leading-relaxed text-muted-foreground">
+        A reveal shows only when a crew has{" "}
+        <strong className="text-foreground">both</strong> reached that step in the
+        game <strong className="text-foreground">and</strong> been granted it here.
+        With nothing granted, every note and the treasure screen stay hidden, even
+        for a crew that has scanned ahead. Toggling a team covers all its members.
+      </p>
+
+      {rows.length > 8 && (
+        <div className="relative mb-4">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Filter by name…"
+            className="w-full rounded-sm border border-border bg-background py-2 pl-9 pr-3 font-sans text-sm text-foreground outline-none focus:border-brass"
+          />
+        </div>
+      )}
+
+      {shown.length === 0 ? (
+        <p className="font-sans text-sm text-muted-foreground">No entrants match.</p>
+      ) : (
+        <div className="flex flex-col gap-4">
+          {teams.length > 0 && (
+            <AudienceGroup
+              label="Teams"
+              count={teams.length}
+              entrants={teams}
+              busy={busy}
+              onToggle={toggle}
+            />
+          )}
+          {solos.length > 0 && (
+            <AudienceGroup
+              label="Solo players"
+              count={solos.length}
+              entrants={solos}
+              busy={busy}
+              onToggle={toggle}
+            />
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function AudienceGroup({
+  label,
+  count,
+  entrants,
+  busy,
+  onToggle,
+}: {
+  label: string
+  count: number
+  entrants: FinaleAudienceEntrant[]
+  busy: Set<string>
+  onToggle: (e: FinaleAudienceEntrant, view: FinaleView) => void
+}) {
+  return (
+    <div>
+      <div className="mb-2 flex items-center gap-2">
+        <span className="font-sans text-xs font-bold uppercase tracking-chip text-muted-foreground">
+          {label}
+        </span>
+        <span className="rounded-full border border-border px-2 py-0.5 font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
+          {count}
+        </span>
+      </div>
+      <div className="flex flex-col gap-2">
+        {entrants.map((e) => (
+          <div
+            key={`${e.kind}:${e.id}`}
+            className="flex flex-wrap items-center justify-between gap-3 rounded-sm border border-border bg-background/60 p-3"
+          >
+            <div className="flex min-w-0 items-center gap-2">
+              {e.kind === "team" ? (
+                <Users className="size-4 shrink-0 text-brass" aria-hidden />
+              ) : (
+                <UserRound className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+              )}
+              <span className="truncate font-sans text-sm font-bold text-foreground">{e.name}</span>
+            </div>
+            <div className="flex shrink-0 items-center gap-1.5">
+              {VIEW_META.map(({ view, label: vl }) => {
+                const on = e.grants[view]
+                const key = `${e.kind}:${e.id}:${view}`
+                const spinning = busy.has(key)
+                return (
+                  <button
+                    key={view}
+                    type="button"
+                    onClick={() => onToggle(e, view)}
+                    disabled={spinning}
+                    aria-pressed={on}
+                    className={`inline-flex items-center gap-1.5 rounded-sm px-2.5 py-1.5 font-sans text-[11px] font-bold tracking-chip transition-colors disabled:opacity-50 ${
+                      on
+                        ? "bg-brass text-background"
+                        : "border border-border bg-background text-muted-foreground hover:border-brass hover:text-foreground"
+                    }`}
+                  >
+                    {spinning ? (
+                      <Loader2 className="size-3 animate-spin" />
+                    ) : on ? (
+                      <Check className="size-3" />
+                    ) : (
+                      <Lock className="size-3" />
+                    )}
+                    {vl}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )

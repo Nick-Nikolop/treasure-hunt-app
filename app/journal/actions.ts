@@ -14,6 +14,7 @@ import {
 } from "@/lib/compass-variant"
 import { getAdminUser } from "@/lib/admin"
 import { hasReachedCompass, hasReachedTrailEnd } from "@/lib/hunt"
+import { getCrewGrants } from "@/lib/finale-grants"
 
 /** One handwritten note plus the shouted call-to-action stamped under it. */
 export type FinaleNote = {
@@ -83,16 +84,24 @@ export async function getFinaleNotes(previewVariant?: number): Promise<{
   const overrideActive = isOverrideAuthorized() && store.get(PREVIEW_COOKIE)?.value !== undefined
   const bypass = admin || overrideActive
 
-  const [finale, trailEnd, compass] = await Promise.all([
+  const [finale, trailEnd, compass, grants] = await Promise.all([
     getFinaleConfig(),
     bypass ? Promise.resolve(true) : hasReachedTrailEnd(session.user.id),
     bypass ? Promise.resolve(true) : hasReachedCompass(session.user.id),
+    getCrewGrants(session.user.id),
   ])
+
+  // A reveal needs BOTH: the crew reached the step AND an admin granted it in the
+  // finale tab. Admins/preview bypass the grant so the finale stays proofreadable.
+  // Sealing here on the SERVER (not just hiding a button) is what guarantees the
+  // note text never reaches an ungranted crew's browser.
+  const mayNote1 = bypass || grants.note1
+  const mayNote2 = bypass || grants.note2
 
   // Admins and the preview override are never held, so the finale stays fully
   // proofreadable from the journal while real crews are parked at lead 10.
   const held = !bypass && trailEnd && isTrailEndHeld(finale)
-  const note1Open = trailEnd && !held
+  const note1Open = trailEnd && !held && mayNote1
 
   // Which of the four rotating hints this crew reads. A real crew is assigned one
   // on first read and keeps it forever; an admin/preview only PEEKS, so
@@ -143,14 +152,15 @@ export async function getFinaleNotes(previewVariant?: number): Promise<{
           noticeEn: finale.compassReturnEn,
         }
       : null,
-    note2: compass
-      ? {
-          body: finale.note2,
-          bodyEn: finale.note2En,
-          cta: finale.note2Cta,
-          ctaEn: finale.note2CtaEn,
-        }
-      : null,
+    note2:
+      compass && mayNote2
+        ? {
+            body: finale.note2,
+            bodyEn: finale.note2En,
+            cta: finale.note2Cta,
+            ctaEn: finale.note2CtaEn,
+          }
+        : null,
     variants:
       bypass && trailEnd
         ? { active: variantIndex, count: COMPASS_VARIANT_COUNT, assigned }
