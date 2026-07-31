@@ -148,7 +148,10 @@ export async function getFinaleNotes(previewVariant?: number): Promise<{
       variantIndex = await getOrAssignCompassVariant(crewKey)
     }
   }
-  const composed = composeNote2WithHint(finale, variantIndex)
+  // Built only when note 2 is actually open. Composing it unconditionally would
+  // leave the hiding place sitting in a local for every caller, one careless edit
+  // away from being spread into the response.
+  const composed = note2Open ? composeNote2WithHint(finale, variantIndex) : null
 
   return {
     // Sealed on the SERVER, not merely hidden in the UI, so the text never
@@ -162,12 +165,11 @@ export async function getFinaleNotes(previewVariant?: number): Promise<{
           ctaEn: finale.note1CtaEn,
         }
       : null,
-    note2: note2Open
+    note2: note2Open && composed
       ? {
           // Carries the rotating hint, so this body is the one that names a real
-          // hiding place. Composed only inside this branch: building it for an
-          // ungated viewer would ship the hint in the response even if the UI
-          // never drew it.
+          // hiding place. `composed` is null unless note 2 is open, so the hint
+          // cannot reach a viewer who has not earned it.
           body: composed.body,
           bodyEn: composed.bodyEn,
           cta: finale.note2Cta,
