@@ -46,12 +46,16 @@ export const MAINTENANCE_BYPASS_EMAILS: string[] = ["webmasteerrass@gmail.com"]
 /**
  * Accounts for which the trail-end HOLD is lifted.
  *
- * DELIBERATELY EMPTY (07-31). The founder's alt was removed so it plays the
- * finale exactly as a real crew does: it must close the trail, take its place
- * in the queue, and wait for the hold to be released like everyone else. Add an
- * email here only to deliberately let one account jump the queue.
+ * Holds the founder's alt (07-31) as a REHEARSAL of the post-lift flow: it sees
+ * exactly what every crew will see the moment the real hold is released, without
+ * releasing it for anyone else. Everything downstream stays real, so this only
+ * rehearses the sealed-note step, not the finale gates behind it.
+ *
+ * This is NOT the real switch. That is `holdEnabled` in `score_config`, flipped
+ * by the admin Lift-hold button, which also stamps `holdLiftedAt` and promotes
+ * every held crew at once. Empty this list again once testing is done.
  */
-export const HOLD_BYPASS_EMAILS: string[] = []
+export const HOLD_BYPASS_EMAILS: string[] = ["webmasteerrass@gmail.com"]
 
 export function isMaintenanceBypassEmail(email: string | null | undefined): boolean {
   if (!email) return false
