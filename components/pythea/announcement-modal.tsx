@@ -1,19 +1,45 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { usePathname } from "next/navigation"
 import { AnimatePresence, motion } from "framer-motion"
 import { Megaphone, X } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
 
 /**
+ * Event any component can fire to force the announcement open, regardless of the
+ * appearance cap below. The journal label uses it. Shared constant so the
+ * emitter and listener can never drift on the event name.
+ */
+export const ANNOUNCEMENT_OPEN_EVENT = "pythea:announcement:open"
+
+/**
+ * How many times the notice auto-appears before it goes quiet. After this many
+ * loads/navigations it no longer opens on its own, but the journal label still
+ * re-opens it on demand (that path ignores the cap).
+ */
+const MAX_APPEARANCES = 5
+
+/**
+ * Versioned by content: bump this string to re-show a NEW announcement to
+ * everyone (it resets the per-browser counter to zero for the new key).
+ */
+const COUNT_KEY = "pythea:announcement:serbia-qr:count"
+
+function readCount(): number {
+  try {
+    return Number(localStorage.getItem(COUNT_KEY)) || 0
+  } catch {
+    return 0
+  }
+}
+
+/**
  * A site-wide announcement shown on every page, to everyone.
  *
- * Deliberately NOT persisted: it opens on each fresh load AND on every client
- * navigation (keyed off the pathname), and closing it only clears it for the
- * current view. This matches the brief exactly -- the notice should resurface
- * on a refresh or when the visitor moves to another page -- and a localStorage
- * flag would silence the one message everyone is meant to see.
+ * It auto-opens on each fresh load AND on every client navigation (keyed off the
+ * pathname), up to MAX_APPEARANCES times per browser, then stops appearing on
+ * its own. The journal label re-opens it after that via ANNOUNCEMENT_OPEN_EVENT.
  *
  * The wrong/right QR digits are rendered here as fixed spans (red 2, green 1)
  * rather than living in i18n, since a bare numeral needs no translation and the
@@ -23,14 +49,37 @@ export function AnnouncementModal() {
   const { t } = useI18n()
   const a = t.announcement
   const pathname = usePathname()
-  const [open, setOpen] = useState(true)
+  // Starts closed: localStorage is client-only, so the auto-open decision is
+  // deferred to the effect below to avoid an SSR/hydration mismatch.
+  const [open, setOpen] = useState(false)
 
-  // Re-open on every route change. The root layout does not remount across
-  // client navigations, so a plain mount-only effect would fire once; keying on
-  // the pathname makes "go to another page" resurface the notice as asked.
+  // Dedupe the auto-open per pathname. React Strict Mode double-invokes effects
+  // in dev, so without this guard a single view would count as two appearances
+  // and burn through the cap twice as fast.
+  const countedFor = useRef<string | null>(null)
+
   useEffect(() => {
+    if (countedFor.current === pathname) return
+    countedFor.current = pathname
+
+    const count = readCount()
+    if (count >= MAX_APPEARANCES) return
+
     setOpen(true)
+    try {
+      localStorage.setItem(COUNT_KEY, String(count + 1))
+    } catch {
+      // Private mode / storage blocked: it will simply keep appearing, which is
+      // the safer failure for a message everyone is meant to see.
+    }
   }, [pathname])
+
+  // On-demand re-open (journal label). Deliberately ignores the appearance cap.
+  useEffect(() => {
+    const reopen = () => setOpen(true)
+    window.addEventListener(ANNOUNCEMENT_OPEN_EVENT, reopen)
+    return () => window.removeEventListener(ANNOUNCEMENT_OPEN_EVENT, reopen)
+  }, [])
 
   const dismiss = useCallback(() => setOpen(false), [])
 

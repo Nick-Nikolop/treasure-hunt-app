@@ -45,6 +45,7 @@ import { useLiteMode } from "@/components/pythea/lite-mode-provider"
 import { JournalCover } from "@/components/pythea/journal-cover"
 import { JournalWidgets } from "@/components/pythea/journal-widgets"
 import { HowToPlayLauncher } from "@/components/pythea/how-to-play-modal"
+import { AnnouncementLabel } from "@/components/pythea/announcement-label"
 import type { StandingsSummary } from "@/lib/hunt"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { track } from "@/lib/analytics-client"
@@ -481,6 +482,11 @@ export function PoreiaView({
           behind so the seven steps can be re-read at any time. Sits above the
           book: it explains how to read what follows, so it belongs before it. */}
       <HowToPlayLauncher endsAt={huntEndsAt} />
+
+      {/* Re-open the site announcement on demand, above the book and below the
+          how-to-play launcher. Available to every player, forever, even after
+          the popup's auto-appearances have run out. Not in the top bar. */}
+      <AnnouncementLabel />
 
       {/* The book, centered. Pages are bound on the left; a turned page rotates
           around the spine and tucks behind the journal. The stage clips at the
