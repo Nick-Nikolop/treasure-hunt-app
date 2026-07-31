@@ -23,7 +23,11 @@ import {
   Crosshair,
   Maximize,
   Sparkles,
+  PenLine,
+  Landmark,
+  Footprints,
 } from "lucide-react"
+import { MAX_PROOF_BYTES, maxProofPhotos } from "@/lib/proof-limits"
 import { useI18n } from "@/components/pythea/language-provider"
 import { ScanResult } from "@/components/pythea/scan-result"
 import { upload } from "@vercel/blob/client"
@@ -179,6 +183,8 @@ export function ScanGate({
         context={state.context}
         replace={replace}
         isSuperAdmin={isSuperAdmin}
+        // Finale marks: more photos, and the explanation becomes mandatory.
+        finale={proofOnly}
         // On a photo-only mark there is no location card to go back to, so
         // "cancel" would otherwise drop them onto the GPS retry screen the whole
         // flow is meant to avoid. Offer a way out of the hunt page instead.
@@ -529,6 +535,58 @@ function TwoShotTip({ className = "" }: { className?: string }) {
   )
 }
 
+/**
+ * The richer, vibrant guide shown on the two finale marks, where photos plus the
+ * written explanation ARE the whole submission (there is no GPS check to fall
+ * back on). Four labelled shot tiles, each a large glyph over a tinted plate, so
+ * a crew can see at a glance what to capture.
+ *
+ * Deliberately built from icon tiles rather than sample photographs: real example
+ * shots of the compass spot would give away the very location the crew is meant
+ * to find, and hand-drawn SVG scenery is off-limits per the design rules.
+ */
+function FinaleShotGuide({ className = "" }: { className?: string }) {
+  const { t } = useI18n()
+  const f = t.scan.proof.finale
+  const shots = [
+    { icon: Crosshair, title: f.shotMarkTitle, body: f.shotMarkBody },
+    { icon: Maximize, title: f.shotWideTitle, body: f.shotWideBody },
+    { icon: Landmark, title: f.shotAroundTitle, body: f.shotAroundBody },
+    { icon: Footprints, title: f.shotYouTitle, body: f.shotYouBody },
+  ]
+
+  return (
+    <div className={`overflow-hidden rounded-sm border border-brass ${className}`}>
+      <div className="flex items-center gap-1.5 bg-brass px-4 py-2.5">
+        <Sparkles className="size-3.5 shrink-0 text-primary-foreground" aria-hidden />
+        <p className="font-sans text-[11px] font-bold tracking-chip text-primary-foreground">
+          {f.shotsLabel}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-px bg-border">
+        {shots.map(({ icon: Icon, title, body }) => (
+          <div key={title} className="flex flex-col gap-2 bg-card px-3 py-3.5">
+            <div className="flex h-14 items-center justify-center rounded-sm border border-teal/50 bg-teal/[0.1]">
+              <Icon className="size-7 text-teal" strokeWidth={1.5} aria-hidden />
+            </div>
+            <p className="font-sans text-[11px] font-bold leading-snug tracking-chip text-brass">
+              {title}
+            </p>
+            <p className="text-pretty font-serif text-xs leading-relaxed text-muted-foreground">
+              {body}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <p className="border-t border-border bg-background px-4 py-2.5 text-pretty font-serif text-xs leading-relaxed text-foreground/75">
+        {f.shotsFoot}
+      </p>
+    </div>
+  )
+}
+
 /** The "prove it with photos instead" secondary button. */
 function ProofButton({ onClick }: { onClick: () => void }) {
   const { t } = useI18n()
@@ -544,19 +602,20 @@ function ProofButton({ onClick }: { onClick: () => void }) {
   )
 }
 
-const MAX_PROOF_PHOTOS = 3
-const MAX_PROOF_BYTES = 10 * 1024 * 1024
-
 /**
- * Photo-proof upload form. Lets the explorer attach 1-3 images (<=10 MB each)
- * plus an optional note, then submits them for manual review. Client-side
- * validation mirrors the server action so mistakes are caught before upload.
+ * Photo-proof upload form. Lets the explorer attach images (<=10 MB each) plus a
+ * note, then submits them for manual review. Client-side validation mirrors the
+ * server action so mistakes are caught before upload.
+ *
+ * On the finale marks (`finale`) this is not a fallback but the ONLY way through,
+ * so it allows more photos and makes the written explanation required.
  */
 function ProofForm({
   token,
   context,
   replace,
   isSuperAdmin,
+  finale = false,
   exitToJournal = false,
   onCancel,
   onSubmitted,
@@ -565,6 +624,11 @@ function ProofForm({
   context: ProofContext
   replace: boolean
   isSuperAdmin: boolean
+  /**
+   * Finale mark (compass or treasure): no GPS exists for these, so the photos and
+   * the written explanation are the whole submission and the note is mandatory.
+   */
+  finale?: boolean
   /** Render the secondary action as a journal link instead of a cancel button. */
   exitToJournal?: boolean
   onCancel: () => void
@@ -572,6 +636,10 @@ function ProofForm({
 }) {
   const { t } = useI18n()
   const p = t.scan.proof
+  const maxPhotos = maxProofPhotos(finale)
+  // Finale copy is a separate block: it asks for the story of the find, where the
+  // ordinary strings only ask for a "note for the admin".
+  const f = p.finale
   const [files, setFiles] = useState<File[]>([])
   const [previews, setPreviews] = useState<string[]>([])
   const [note, setNote] = useState("")
@@ -586,20 +654,20 @@ function ProofForm({
     setError(null)
     const incoming = Array.from(list)
     const next: File[] = [...files]
-    for (const f of incoming) {
-      if (next.length >= MAX_PROOF_PHOTOS) {
-        setError(p.errTooMany)
+    for (const file of incoming) {
+      if (next.length >= maxPhotos) {
+        setError(p.errTooMany(maxPhotos))
         break
       }
-      if (!f.type.startsWith("image/")) {
+      if (!file.type.startsWith("image/")) {
         setError(p.errType)
         continue
       }
-      if (f.size > MAX_PROOF_BYTES) {
+      if (file.size > MAX_PROOF_BYTES) {
         setError(p.errSize)
         continue
       }
-      next.push(f)
+      next.push(file)
     }
     setFiles(next)
     setPreviews(next.map((f) => URL.createObjectURL(f)))
@@ -612,9 +680,17 @@ function ProofForm({
     setPreviews(next.map((f) => URL.createObjectURL(f)))
   }
 
+  const noteMissing = finale && note.trim().length === 0
+
   async function submit() {
     if (files.length === 0) {
       setError(p.errNoFiles)
+      return
+    }
+    // Mirrors the server's `note_required`: on a finale mark the explanation is
+    // the only account of HOW they found the spot, so it cannot be skipped.
+    if (noteMissing) {
+      setError(f.errNote)
       return
     }
     setBusy(true)
@@ -649,6 +725,10 @@ function ProofForm({
       } else if (resp.reason === "duplicate") {
         // Already have a pending proof for this lead: treat as submitted.
         onSubmitted()
+      } else if (resp.reason === "note_required") {
+        setError(f.errNote)
+      } else if (resp.reason === "too_many") {
+        setError(p.errTooMany(maxPhotos))
       } else if (resp.reason === "error") {
         setError(p.errGeneric)
         if (isSuperAdmin && resp.detail) setErrorDetail(resp.detail)
@@ -678,16 +758,20 @@ function ProofForm({
         <div className="mx-auto flex size-14 items-center justify-center rounded-full border border-border bg-background">
           <Camera className="size-8 text-brass" aria-hidden />
         </div>
-        <p className="mt-5 font-sans text-[11px] font-bold tracking-chip text-brass">{p.label}</p>
+        <p className="mt-5 font-sans text-[11px] font-bold tracking-chip text-brass">
+          {finale ? f.label : p.label}
+        </p>
         <h1 className="mt-2 text-balance font-serif text-2xl font-black text-foreground md:text-3xl">
-          {p.title}
+          {finale ? f.title : p.title}
         </h1>
         <p className="mx-auto mt-3 max-w-sm text-pretty font-serif text-sm leading-relaxed text-muted-foreground md:text-base">
-          {p.help}
+          {finale ? f.help(maxPhotos) : p.help}
         </p>
       </div>
 
-      <TwoShotTip className="mt-5" />
+      {/* The finale marks get their own richer guide with example imagery, since
+          these photos are the entire submission rather than a GPS fallback. */}
+      {finale ? <FinaleShotGuide className="mt-5" /> : <TwoShotTip className="mt-5" />}
 
       {/* Thumbnails + add tile */}
       <div className="mt-6 grid grid-cols-3 gap-2">
@@ -705,7 +789,7 @@ function ProofForm({
             </button>
           </div>
         ))}
-        {files.length < MAX_PROOF_PHOTOS && (
+        {files.length < maxPhotos && (
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
@@ -713,6 +797,9 @@ function ProofForm({
           >
             <ImagePlus className="size-6" />
             <span className="font-sans text-[10px] font-bold tracking-chip">{p.add}</span>
+            <span className="font-mono text-[10px] tabular-nums text-muted-foreground/70">
+              {files.length}/{maxPhotos}
+            </span>
           </button>
         )}
       </div>
@@ -728,17 +815,53 @@ function ProofForm({
       />
 
       <p className="mt-2 font-sans text-[10px] tracking-chip text-muted-foreground/70">
-        {p.limit}
+        {p.limit(maxPhotos)}
       </p>
 
-      <textarea
-        value={note}
-        onChange={(e) => setNote(e.target.value)}
-        placeholder={p.notePlaceholder}
-        rows={2}
-        maxLength={500}
-        className="mt-4 w-full resize-none rounded-sm border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none placeholder:text-muted-foreground/60 focus:border-brass"
-      />
+      {finale ? (
+        // Required, and framed as its own titled block so it reads as part of the
+        // submission rather than an afterthought tacked under the photos.
+        <div className="mt-5 rounded-sm border border-teal/60 bg-teal/[0.07] px-4 py-3.5">
+          <label
+            htmlFor="proof-story"
+            className="flex items-center gap-1.5 font-sans text-[11px] font-bold tracking-chip text-teal"
+          >
+            <PenLine className="size-3.5 shrink-0" aria-hidden />
+            {f.storyLabel}
+          </label>
+          <p className="mt-1.5 text-pretty font-serif text-sm leading-relaxed text-foreground/80">
+            {f.storyHelp}
+          </p>
+          <textarea
+            id="proof-story"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder={f.storyPlaceholder}
+            rows={4}
+            maxLength={500}
+            required
+            aria-describedby="proof-story-count"
+            className="mt-3 w-full resize-none rounded-sm border border-border bg-background px-3 py-2 font-sans text-sm leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/60 focus:border-teal"
+          />
+          <div
+            id="proof-story-count"
+            className="mt-1.5 flex items-center justify-between gap-2 font-mono text-[10px] tabular-nums text-muted-foreground/70"
+          >
+            <span>{noteMissing ? f.storyRequired : f.storyOk}</span>
+            <span>{note.trim().length}/500</span>
+          </div>
+        </div>
+      ) : (
+        <textarea
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder={p.notePlaceholder}
+          rows={2}
+          maxLength={500}
+          aria-label={p.notePlaceholder}
+          className="mt-4 w-full resize-none rounded-sm border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none placeholder:text-muted-foreground/60 focus:border-brass"
+        />
+      )}
 
       {error && (
         <p className="mt-3 rounded-sm border border-destructive/40 bg-destructive/10 px-3 py-2 font-sans text-xs text-destructive">
@@ -752,7 +875,7 @@ function ProofForm({
         <button
           type="button"
           onClick={submit}
-          disabled={busy || files.length === 0}
+          disabled={busy || files.length === 0 || noteMissing}
           className="inline-flex items-center justify-center gap-2 rounded-sm bg-brass px-5 py-3 font-sans text-xs font-bold tracking-chip text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           {busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}

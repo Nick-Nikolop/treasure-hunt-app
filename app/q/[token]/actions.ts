@@ -21,6 +21,7 @@ import {
   deletePendingCrewProofs,
   type ProofContext,
 } from "@/lib/proofs"
+import { maxProofPhotos } from "@/lib/proof-limits"
 import { logActivity } from "@/lib/activity"
 import { recordScanPing } from "@/lib/scan-ping"
 import { isHoldBypassedForUser } from "@/lib/maintenance"
@@ -219,18 +220,25 @@ export async function bypassCooldownScan(token: string): Promise<BypassCooldownR
   return { ok: true, result }
 }
 
-// Photo-proof fallback: at most 3 images. The images themselves are uploaded
-// directly from the browser to Blob (see app/api/proof-upload/route.ts); this
-// action only receives their resulting URLs, keeping the payload tiny and
-// avoiding the Server Action request-body limit.
-const MAX_PROOF_PHOTOS = 3
+// Photo-proof fallback. The images themselves are uploaded directly from the
+// browser to Blob (see app/api/proof-upload/route.ts); this action only receives
+// their resulting URLs, keeping the payload tiny and avoiding the Server Action
+// request-body limit. The photo ceiling is per-mark: see lib/proof-limits.ts.
 const PROOF_CONTEXTS: ProofContext[] = ["denied", "too_far"]
 
 export type SubmitProofResponse =
   | { ok: true }
   | {
       ok: false
-      reason: "auth" | "not_verify" | "duplicate" | "no_files" | "too_many" | "bad_url"
+      reason:
+        | "auth"
+        | "not_verify"
+        | "duplicate"
+        | "no_files"
+        | "too_many"
+        | "bad_url"
+        // Finale marks only, where the written explanation is mandatory.
+        | "note_required"
     }
   // Unexpected failure. `detail` is only populated for superadmins, so a
   // technical message can be surfaced (and copied) to them.
@@ -329,15 +337,24 @@ export async function submitLocationProof(
   if (ctx.mode !== "verify") return { ok: false, reason: "not_verify" }
   const leadOrder = ctx.leadOrder
 
+  // Re-derived from the server's own scan context, never taken from the request:
+  // the finale marks allow more photos AND require the written explanation, so a
+  // crafted payload must not be able to claim either concession for itself.
+  const finale = ctx.proofOnly === true
+
   const context: ProofContext = PROOF_CONTEXTS.includes(input.context as ProofContext)
     ? (input.context as ProofContext)
     : "denied"
   const noteRaw = (input.note ?? "").trim()
   const note = noteRaw ? noteRaw.slice(0, 500) : null
 
+  // On the finale marks the note carries how they found the spot, which is the
+  // part a reviewer cannot get from the pictures alone. Optional everywhere else.
+  if (finale && !note) return { ok: false, reason: "note_required" }
+
   const photoUrls = Array.isArray(input.photoUrls) ? input.photoUrls : []
   if (photoUrls.length === 0) return { ok: false, reason: "no_files" }
-  if (photoUrls.length > MAX_PROOF_PHOTOS) return { ok: false, reason: "too_many" }
+  if (photoUrls.length > maxProofPhotos(finale)) return { ok: false, reason: "too_many" }
   if (!photoUrls.every(isValidProofUrl)) return { ok: false, reason: "bad_url" }
 
   // One pending proof per lead per crew. If replacing, delete the crew's current
