@@ -27,7 +27,7 @@ import {
   Landmark,
   Footprints,
 } from "lucide-react"
-import { MAX_PROOF_BYTES, maxProofPhotos } from "@/lib/proof-limits"
+import { MAX_PROOF_BYTES, maxProofPhotos, maxProofNoteChars } from "@/lib/proof-limits"
 import { useI18n } from "@/components/pythea/language-provider"
 import { ScanResult } from "@/components/pythea/scan-result"
 import { upload } from "@vercel/blob/client"
@@ -637,6 +637,8 @@ function ProofForm({
   const { t } = useI18n()
   const p = t.scan.proof
   const maxPhotos = maxProofPhotos(finale)
+  // Finale asks for a SHORT explanation (100 chars), ordinary notes stay roomy.
+  const maxNoteChars = maxProofNoteChars(finale)
   // Finale copy is a separate block: it asks for the story of the find, where the
   // ordinary strings only ask for a "note for the admin".
   const f = p.finale
@@ -837,8 +839,9 @@ function ProofForm({
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder={f.storyPlaceholder}
-            rows={4}
-            maxLength={500}
+            // 3 rows so a full 100-char answer is visible without scrolling.
+            rows={3}
+            maxLength={maxNoteChars}
             required
             aria-describedby="proof-story-count"
             className="mt-3 w-full resize-none rounded-sm border border-border bg-background px-3 py-2 font-sans text-sm leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/60 focus:border-teal"
@@ -848,7 +851,9 @@ function ProofForm({
             className="mt-1.5 flex items-center justify-between gap-2 font-mono text-[10px] tabular-nums text-muted-foreground/70"
           >
             <span>{noteMissing ? f.storyRequired : f.storyOk}</span>
-            <span>{note.trim().length}/500</span>
+            <span>
+              {note.trim().length}/{maxNoteChars}
+            </span>
           </div>
         </div>
       ) : (
@@ -857,7 +862,7 @@ function ProofForm({
           onChange={(e) => setNote(e.target.value)}
           placeholder={p.notePlaceholder}
           rows={2}
-          maxLength={500}
+          maxLength={maxNoteChars}
           aria-label={p.notePlaceholder}
           className="mt-4 w-full resize-none rounded-sm border border-border bg-background px-3 py-2 font-sans text-sm text-foreground outline-none placeholder:text-muted-foreground/60 focus:border-brass"
         />

@@ -21,7 +21,7 @@ import {
   deletePendingCrewProofs,
   type ProofContext,
 } from "@/lib/proofs"
-import { maxProofPhotos } from "@/lib/proof-limits"
+import { maxProofPhotos, maxProofNoteChars } from "@/lib/proof-limits"
 import { logActivity } from "@/lib/activity"
 import { recordScanPing } from "@/lib/scan-ping"
 import { isHoldBypassedForUser } from "@/lib/maintenance"
@@ -345,8 +345,10 @@ export async function submitLocationProof(
   const context: ProofContext = PROOF_CONTEXTS.includes(input.context as ProofContext)
     ? (input.context as ProofContext)
     : "denied"
+  // Truncated to the same ceiling the form enforces (100 on a finale mark, 500
+  // elsewhere), since `maxLength` is only a browser convenience.
   const noteRaw = (input.note ?? "").trim()
-  const note = noteRaw ? noteRaw.slice(0, 500) : null
+  const note = noteRaw ? noteRaw.slice(0, maxProofNoteChars(finale)) : null
 
   // On the finale marks the note carries how they found the spot, which is the
   // part a reviewer cannot get from the pictures alone. Optional everywhere else.

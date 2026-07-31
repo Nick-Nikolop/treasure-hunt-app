@@ -24,6 +24,23 @@ export const MAX_FINALE_PROOF_PHOTOS = 5
 export const MAX_PROOF_BYTES = 10 * 1024 * 1024
 
 /**
+ * Ordinary marks: an optional free-text note to the admin, room to ramble.
+ */
+export const MAX_PROOF_NOTE_CHARS = 500
+
+/**
+ * The finale marks ask for a SHORT explanation of how they reached the spot.
+ * Kept deliberately tight so the answer stays a sentence or two, since the
+ * photos carry the actual evidence and a reviewer reads these at a glance.
+ */
+export const MAX_FINALE_NOTE_CHARS = 100
+
+/** How many characters of explanation this mark accepts. */
+export function maxProofNoteChars(finale: boolean): number {
+  return finale ? MAX_FINALE_NOTE_CHARS : MAX_PROOF_NOTE_CHARS
+}
+
+/**
  * How many photos this mark accepts. `finale` is the same `proofOnly` flag that
  * `resolveScanContext` returns, so the server can re-derive the limit itself
  * rather than trusting a number sent up from the browser.

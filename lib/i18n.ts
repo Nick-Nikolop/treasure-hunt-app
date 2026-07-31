@@ -846,10 +846,8 @@ const el = {
         shotsFoot:
           "Δεν χρειάζονται και οι τέσσερις. Όσο περισσότερα δείχνεις, τόσο πιο εύκολα επιβεβαιώνεται η εύρεση.",
         storyLabel: "ΠΩΣ ΤΟ ΒΡΗΚΕΣ",
-        storyHelp:
-          "Περίγραψέ μας τη διαδρομή σου: τι σε οδήγησε εκεί, πού ακριβώς ήταν κρυμμένο και πώς το εντόπισες.",
-        storyPlaceholder:
-          "Ξεκινήσαμε από... Καταλάβαμε ότι το σημείο ήταν... Το βρήκαμε κάτω από...",
+        storyHelp: "Πως έφτασες εδώ; Δώστε μας μια σύντομη περιγραφή.",
+        storyPlaceholder: "Ακολουθήσαμε τον οδηγό και το βρήκαμε κάτω από...",
         storyRequired: "Υποχρεωτικό πεδίο",
         storyOk: "Ευχαριστούμε, αυτό μας βοηθάει πολύ",
         errNote: "Γράψε μας πώς βρήκες το σημείο πριν την υποβολή.",
@@ -1938,9 +1936,8 @@ const en: Dictionary = {
         shotsFoot:
           "You don't need all four. The more you show, the easier the find is to confirm.",
         storyLabel: "HOW YOU FOUND IT",
-        storyHelp:
-          "Walk us through it: what led you there, where exactly it was hidden, and how you spotted it.",
-        storyPlaceholder: "We started from... We worked out the spot was... We found it under...",
+        storyHelp: "How did you get here? Give us a short description.",
+        storyPlaceholder: "We followed the clue and found it under...",
         storyRequired: "Required",
         storyOk: "Thank you, this helps us a lot",
         errNote: "Tell us how you found the spot before submitting.",
