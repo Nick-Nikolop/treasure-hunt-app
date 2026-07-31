@@ -773,6 +773,13 @@ const el = {
     outOfOrderTitle: "Δεν είναι η σειρά αυτού του σημαδιού",
     outOfOrderBody: (nextLead: number) =>
       `Πρέπει πρώτα να βρεις το σημάδι Νο. ${String(nextLead).padStart(2, "0")}. Ακολούθησε τα σημάδια με τη σειρά.`,
+    // The finale QRs (trail end, compass, treasure) are NOT numbered marks, so
+    // they must never be described as "go find mark No. N" - that sent a player
+    // hunting for the very lead they were already standing on.
+    outOfOrderTrailBody: (current: number, total: number) =>
+      `Πρέπει πρώτα να ολοκληρώσεις και τα ${total} σημάδια της πορείας. Η ομάδα σου βρίσκεται στο ${current}.`,
+    outOfOrderFinaleBody:
+      "Αυτό το σημάδι ανήκει σε επόμενο στάδιο του φινάλε. Πρέπει πρώτα να ολοκληρώσεις το προηγούμενο βήμα.",
     invalidLabel: "ΑΓΝΩΣΤΟ ΣΗΜΑΔΙ",
     invalidTitle: "Αυτός ο κωδικός δεν αναγνωρίζεται",
     invalidBody:
@@ -1835,6 +1842,11 @@ const en: Dictionary = {
     outOfOrderTitle: "This mark is out of order",
     outOfOrderBody: (nextLead: number) =>
       `You need to find mark No. ${String(nextLead).padStart(2, "0")} first. Follow the marks in order.`,
+    // See the Greek note above: the finale QRs are not numbered marks.
+    outOfOrderTrailBody: (current: number, total: number) =>
+      `You need to complete all ${total} marks of the trail first. Your team is at ${current}.`,
+    outOfOrderFinaleBody:
+      "This mark belongs to a later stage of the finale. You need to complete the previous step first.",
     invalidLabel: "UNKNOWN MARK",
     invalidTitle: "This code is not recognised",
     invalidBody:

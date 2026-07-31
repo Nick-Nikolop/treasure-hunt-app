@@ -18,7 +18,7 @@ import {
 import { useI18n } from "@/components/pythea/language-provider"
 import { WinnerReveal, CompassReveal, TrailEndReveal } from "@/components/pythea/winner-reveal"
 import type { UnlockResult } from "@/lib/hunt"
-import { LEADERBOARD_VISIBLE } from "@/lib/clues"
+import { LEADERBOARD_VISIBLE, isEndgameOrder } from "@/lib/clues"
 import { bypassCooldownScan } from "@/app/q/[token]/actions"
 import { track } from "@/lib/analytics-client"
 import { EV } from "@/lib/analytics-events"
@@ -127,9 +127,19 @@ export function ScanResult({
           icon: <Lock className="size-9 text-muted-foreground" aria-hidden />,
           label: s.outOfOrderLabel,
           title: s.outOfOrderTitle,
-          // Point players to the lead they should actually be finding next
+          // Numbered marks point players at the lead they should be finding next
           // (one past where their crew currently is), not the scanned link's lead.
-          body: s.outOfOrderBody(result.current + 1),
+          //
+          // The finale QRs are a different shape and need their own wording. They
+          // carry a sentinel order, not a position, so "go find mark No. N" is
+          // actively wrong for them: scanning the trail-end QR one lead early
+          // rendered "find mark No. 10" while the player was standing AT mark 10,
+          // which reads like corrupted progress rather than "not yet".
+          body: isEndgameOrder(result.leadOrder)
+            ? result.current < result.required
+              ? s.outOfOrderTrailBody(result.current, result.required)
+              : s.outOfOrderFinaleBody
+            : s.outOfOrderBody(result.current + 1),
           showLeaderboard: false,
         }
       case "invalid":
