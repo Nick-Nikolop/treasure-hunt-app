@@ -27,8 +27,14 @@ export const JOURNAL_MAINTENANCE = true
  * be checked exactly as an ordinary player sees it.
  *
  * Compared lowercased, since email casing is not guaranteed to be normalised.
+ *
+ * DELIBERATELY EMPTY (07-31). The founder's alt was removed so it plays the
+ * finale exactly as a real crew does: this list is the SAME allow-list that
+ * lifts the trail-end hold (see `isHoldBypassedForUser` below), so any entry
+ * here silently skips the queue as well as the maintenance screen. Re-add an
+ * email only for a testing window, and remember it grants BOTH concessions.
  */
-export const MAINTENANCE_BYPASS_EMAILS = ["webmasteerrass@gmail.com"]
+export const MAINTENANCE_BYPASS_EMAILS: string[] = []
 
 export function isMaintenanceBypassEmail(email: string | null | undefined): boolean {
   if (!email) return false
