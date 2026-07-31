@@ -585,8 +585,7 @@ export type AdminGalleryData = {
  * after a rename. Joining on `userId` keeps them together.
  */
 export async function adminListProofGallery(): Promise<AdminGalleryData> {
-  // TEMP-VERIFY: relaxed in dev to eyeball the timestamps. RESTORE.
-  if (process.env.NODE_ENV !== "development") await requireAdmin()
+  await requireAdmin()
 
   const rows = await getAllProofs()
   const enriched = await enrichProofs(rows)
@@ -660,8 +659,7 @@ const PROOF_HISTORY_PAGE = 10
  * arbitrary number off the wire would otherwise become an unbounded query.
  */
 export async function adminListProofs(recentLimit?: number): Promise<AdminProofsData> {
-  // TEMP-VERIFY: relaxed in dev to eyeball the timestamps. RESTORE.
-  if (process.env.NODE_ENV !== "development") await requireAdmin()
+  await requireAdmin()
   const requested = Number.isFinite(recentLimit) ? Math.trunc(recentLimit as number) : PROOF_HISTORY_PAGE
   const limit = Math.min(Math.max(requested, PROOF_HISTORY_PAGE), 500)
   const [pending, recent, recentTotal] = await Promise.all([
