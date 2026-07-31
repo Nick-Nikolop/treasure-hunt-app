@@ -19,7 +19,7 @@ import { user } from "@/lib/db/schema"
  *     trail is being repaired. Admins and the bypass account DO still trigger
  *     those sweeps, so keep admin visits to a minimum during the window.
  */
-export const JOURNAL_MAINTENANCE = true
+export const JOURNAL_MAINTENANCE = false
 
 /**
  * These two allow-lists were ONE list until 07-31, which made the two very
