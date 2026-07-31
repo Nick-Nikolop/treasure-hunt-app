@@ -164,18 +164,22 @@ async function doSeed(): Promise<void> {
   // that has only just closed the trail reads as having found the treasure and
   // skips the whole finale. Only run while the legacy order still sits beyond
   // the end of the trail, where it cannot be anything but a leftover marker.
-  const liveTotal = current.length
-  if (FINISH_ORDER !== LEGACY_FINISH_ORDER && LEGACY_FINISH_ORDER > liveTotal) {
-    await db.execute(
-      sql`UPDATE "lead_unlock" SET "leadOrder" = ${FINISH_ORDER}
-          WHERE "leadOrder" = ${LEGACY_FINISH_ORDER}
-            AND NOT EXISTS (
-              SELECT 1 FROM "lead_unlock" existing
-              WHERE existing."userId" = "lead_unlock"."userId"
-                AND existing."leadOrder" = ${FINISH_ORDER}
-            )`,
-    )
-  }
+  // RETIRED, DELIBERATELY. This one-time backfill has already run to completion:
+  // the table holds no rows between the last lead and the sentinels, so there is
+  // no legacy marker left anywhere to migrate.
+  //
+  // It is not merely redundant, it is a live hazard, so it is gone rather than
+  // left guarded. LEGACY_FINISH_ORDER is derived from the SEED count (9) and so
+  // equals 10, which is Finland's REAL position on the ten-lead trail. The
+  // `> liveTotal` guard reads 10 > 10 = false today, which is the only reason
+  // this is dormant. Delete any single lead and liveTotal becomes 9, the guard
+  // flips to true, and every genuine lead-10 row gets promoted to a finish row:
+  // crews who had only just closed the trail would read as having found the
+  // treasure and would skip the entire finale. One lead edit was all it took.
+  //
+  // If a legacy marker ever needs migrating again, do it as an explicit one-off
+  // script against a known row set, never as a guard that re-evaluates on every
+  // call to this function.
 
   // Backfill hint.leadId from its legacy leadOrder association.
   const hintsToFix = await db

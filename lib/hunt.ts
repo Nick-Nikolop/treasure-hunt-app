@@ -578,6 +578,36 @@ async function insertTrailEndRows(
   }
 }
 
+/**
+ * Close the paper trail for a crew: mark every numbered lead as held AND stamp
+ * the trail-end row, in that order.
+ *
+ * THE INVARIANT: holding the trail-end row means "this crew finished the whole
+ * trail", so it must never exist without the lead rows underneath it.
+ *
+ * It used to be possible to break that. `getCrewEffectiveProgress` takes the max
+ * over ALL stored rows including the sentinels, and `clampProgress` folds 100002
+ * down to the lead total — so the moment ONE member held a trail-end row the
+ * whole crew read as "every lead held", which let the remaining endgame writes
+ * through while the real lead-10 row was never created. The crew then showed a
+ * full 10/10 that was really the sentinel being borrowed as a lead number, and
+ * any later `trimAbove` would drop them back down out of nowhere.
+ *
+ * Stamping the leads with the SAME `at` as the trail end is deliberate: arrival
+ * order is derived from the highest real lead's timestamp, so the backfilled row
+ * has to carry the moment the crew actually got there, not the moment we wrote it.
+ */
+async function closeTrailFor(
+  userIds: string[],
+  at: Date,
+  source: UnlockSource,
+  prior?: StampSnapshot,
+): Promise<void> {
+  if (userIds.length === 0) return
+  await ensureUpTo(userIds, await getTotalLeads(), source, at, prior)
+  await insertTrailEndRows(userIds, at, source, prior)
+}
+
 /** Whether any member of the crew has scanned the compass QR. */
 async function crewHasReachedCompass(userIds: string[]): Promise<boolean> {
   if (userIds.length === 0) return false
@@ -727,7 +757,7 @@ export async function unlockByToken(
       return { status: "out_of_order", required: total, current, leadOrder: TRAIL_END_ORDER }
     }
     if (!(await crewHasReachedTrailEnd(crew))) {
-      await insertTrailEndRows(crew, new Date(now), source)
+      await closeTrailFor(crew, new Date(now), source)
       await logLeadSolved(userId, TRAIL_END_ORDER, last.country, last.countryEn, true, source)
     }
     return { status: "trail_end_reached" }
@@ -889,7 +919,7 @@ export async function approveLeadUnlock(
     if (await crewHasReachedTrailEnd(crew)) {
       return { status: "already", leadOrder: total, country: last.country, countryEn: last.countryEn }
     }
-    await insertTrailEndRows(crew, await stampAt(crew, now), "proof")
+    await closeTrailFor(crew, await stampAt(crew, now), "proof")
     await logLeadSolved(userId, TRAIL_END_ORDER, last.country, last.countryEn, true, "proof")
     return { status: "unlocked", leadOrder: total, country: last.country, countryEn: last.countryEn }
   }
