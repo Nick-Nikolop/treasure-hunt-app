@@ -24,9 +24,10 @@ export type FinaleNote = {
   cta: string
   ctaEn: string
   /**
-   * Optional highlighted aside under the note. Used by the compass note for the
-   * "put it back where you found it" request, which is a message from us to the
-   * crew rather than part of Pytheas's handwriting.
+   * Optional highlighted aside under the note. Used by NOTE 2 for the "put it
+   * back where you found it" request, which is a message from us to the crew
+   * rather than part of Pytheas's handwriting. It belongs on note 2 because that
+   * is the note handed over once the compass is actually in their hands.
    */
   notice?: string
   noticeEn?: string
@@ -154,8 +155,6 @@ export async function getFinaleNotes(previewVariant?: number): Promise<{
           bodyEn: composed.bodyEn,
           cta: finale.note1Cta,
           ctaEn: finale.note1CtaEn,
-          notice: finale.compassReturn,
-          noticeEn: finale.compassReturnEn,
         }
       : null,
     note2:
@@ -165,6 +164,10 @@ export async function getFinaleNotes(previewVariant?: number): Promise<{
             bodyEn: finale.note2En,
             cta: finale.note2Cta,
             ctaEn: finale.note2CtaEn,
+            // Rides on note 2, not note 1: the crew only HAS the compass once
+            // they have found it, so asking for it back any earlier is premature.
+            notice: finale.compassReturn,
+            noticeEn: finale.compassReturnEn,
           }
         : null,
     variants:

@@ -102,7 +102,7 @@ export type FinaleSummary = {
    */
   note1: string
   note1En: string
-  /** The shared "put the compass back" aside shown under the compass note. */
+  /** The shared "put the compass back" aside, shown under NOTE 2. */
   compassReturn: string
   compassReturnEn: string
   /** The call-to-action stamped under the first note, both languages. */
@@ -173,8 +173,11 @@ export async function getFinaleSummary(): Promise<FinaleSummary | null> {
     totalFinishers: placement.totalFinishers,
     note1: composed.body,
     note1En: composed.bodyEn,
-    compassReturn: held ? "" : finale.compassReturn,
-    compassReturnEn: held ? "" : finale.compassReturnEn,
+    // NOT blanked while held, unlike note 1's body and CTA: this rides on note 2
+    // now, which a held crew cannot have reached anyway, and unlike the hiding
+    // hint it gives away nothing about where anything is.
+    compassReturn: finale.compassReturn,
+    compassReturnEn: finale.compassReturnEn,
     note1Cta: held ? "" : finale.note1Cta,
     note1CtaEn: held ? "" : finale.note1CtaEn,
     note2: finale.note2,

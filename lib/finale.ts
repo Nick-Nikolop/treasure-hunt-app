@@ -53,9 +53,11 @@ const DEFAULT_COMPASS_HINTS: { el: string; en: string }[] = [
 ]
 
 /**
- * Courtesy line appended to EVERY variant, asking the crew to put the compass
- * back so later explorers can still find it. One shared sentence rather than
- * four copies, so editing it once updates every variant.
+ * Courtesy line asking the crew to put the compass back so later explorers can
+ * still find it. One shared sentence, edited once, rather than a copy per note.
+ *
+ * Stamped under NOTE 2, not note 1: note 1 only sends them hunting, so the crew
+ * does not physically have the compass until note 2 is revealed.
  */
 const DEFAULT_COMPASS_RETURN =
   "Καλό θα ήταν να επιστραφεί η πυξίδα στην αρχική της τοποθεσία, εκεί όπου τη βρήκατε, ώστε να την αξιοποιήσουν και οι υπόλοιποι εξερευνητές."

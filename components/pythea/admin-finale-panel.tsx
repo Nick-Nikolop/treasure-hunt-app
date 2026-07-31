@@ -363,29 +363,6 @@ export function AdminFinalePanel() {
           </div>
         </div>
 
-        {/* The shared courtesy line, one edit for all four variants. */}
-        <div className="mt-5 border-t border-border pt-4">
-          <div className="flex items-center gap-2">
-            <RotateCcw className="size-4 text-brass" aria-hidden />
-            <span className="font-sans text-xs font-bold uppercase tracking-chip text-foreground">
-              Put-it-back request
-            </span>
-          </div>
-          <p className="mb-3 mt-1.5 max-w-prose font-sans text-[13px] leading-relaxed text-muted-foreground">
-            Highlighted under the note for{" "}
-            <strong className="text-foreground">every</strong> version, asking the
-            crew to return the compass so later explorers can still find it. Edited
-            once here. Leave blank to hide it entirely.
-          </p>
-          <BilingualNote
-            value={{ el: draft.compassReturn, en: draft.compassReturnEn }}
-            rows={3}
-            onChange={(el, en) => {
-              set("compassReturn", el)
-              set("compassReturnEn", en)
-            }}
-          />
-        </div>
       </Section>
 
       {/* Note 2 — compass scan */}
@@ -409,6 +386,31 @@ export function AdminFinalePanel() {
           enPlaceholder="NOW YOU MUST FIND MY TREASURE"
           onChange={(key, value) => set(key === "el" ? "note2Cta" : "note2CtaEn", value)}
         />
+
+        {/* Lives here, not under note 1: the crew only physically holds the
+            compass once this note is revealed, so that is the moment to ask for
+            it back. One edit, shown to every crew whatever hint they were given. */}
+        <div className="mt-5 border-t border-border pt-4">
+          <div className="flex items-center gap-2">
+            <RotateCcw className="size-4 text-brass" aria-hidden />
+            <span className="font-sans text-xs font-bold uppercase tracking-chip text-foreground">
+              Put-it-back request
+            </span>
+          </div>
+          <p className="mb-3 mt-1.5 max-w-prose font-sans text-[13px] leading-relaxed text-muted-foreground">
+            Highlighted under the note above, asking the crew to return the compass
+            so later explorers can still find it. Shown once the compass is actually
+            in their hands. Leave blank to hide it entirely.
+          </p>
+          <BilingualNote
+            value={{ el: draft.compassReturn, en: draft.compassReturnEn }}
+            rows={3}
+            onChange={(el, en) => {
+              set("compassReturn", el)
+              set("compassReturnEn", en)
+            }}
+          />
+        </div>
       </Section>
 
       {/* Winner screen */}

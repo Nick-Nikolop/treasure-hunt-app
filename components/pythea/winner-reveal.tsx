@@ -60,9 +60,6 @@ export function TrailEndReveal() {
 
   const note1 = data ? (locale === "en" ? data.note1En : data.note1) : ""
   const note1Cta = data ? (locale === "en" ? data.note1CtaEn : data.note1Cta) : ""
-  // The "put it back" request rides inside the note itself, so a crew reads it in
-  // the same breath as the hiding hint they were handed.
-  const compassReturn = data ? (locale === "en" ? data.compassReturnEn : data.compassReturn) : ""
 
   // The trail closed, but the next step has not opened yet. The scan still
   // counted (their trail-end time is banked, which is what protects the head
@@ -129,7 +126,7 @@ export function TrailEndReveal() {
         {f.trailEndTitle}
       </h2>
 
-      <HandwrittenNote body={note1} signature={f.signature} notice={compassReturn} />
+      <HandwrittenNote body={note1} signature={f.signature} />
 
       {/* Same brass banner as the other two beats. Here the target is the
           compass, so it carries the compass icon. */}
@@ -180,6 +177,9 @@ export function CompassReveal() {
 
   const note2 = data ? (locale === "en" ? data.note2En : data.note2) : ""
   const note2Cta = data ? (locale === "en" ? data.note2CtaEn : data.note2Cta) : ""
+  // The "put it back" request rides on THIS note, the one handed over the moment
+  // the compass is found: asking for it back before they hold it made no sense.
+  const compassReturn = data ? (locale === "en" ? data.compassReturnEn : data.compassReturn) : ""
 
   return (
     <motion.div
@@ -204,7 +204,7 @@ export function CompassReveal() {
         {f.compassTitle}
       </h2>
 
-      <HandwrittenNote body={note2} signature={f.signature} />
+      <HandwrittenNote body={note2} signature={f.signature} notice={compassReturn} />
 
       {/* The next marching order, shouted — same brass banner the journal note
           uses, one beat later: the compass is found, the treasure is the target.

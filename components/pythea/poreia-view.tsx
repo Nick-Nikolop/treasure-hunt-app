@@ -1856,6 +1856,7 @@ function FinaleNoteBar({
           body={note2.body}
           cta={note2.cta}
           label={t.finale.note2Label}
+          notice={note2.notice}
           ctaIcon={Gem}
           onClose={closeNote2}
         />
@@ -2071,6 +2072,7 @@ function FinalPageBody({
           body={note2.body}
           cta={note2.cta}
           label={t.finale.note2Label}
+          notice={note2.notice}
           ctaIcon={Gem}
           onClose={() => setOpen(null)}
         />
