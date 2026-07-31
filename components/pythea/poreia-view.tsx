@@ -1293,6 +1293,16 @@ type LocalNote = { body: string; cta: string; notice: string }
 const NOTE1_SEEN_KEY = "pythea:note1-seen"
 
 /**
+ * Hard off-switch for the "you found the treasure" trophy pill/overlay.
+ *
+ * Some crews were wrongly promoted to a finished (treasure) state, so their
+ * `finished` flag is true even though they never actually won. Until that data
+ * is cleaned up, force the winner button off everywhere so no crew is shown a
+ * trophy it did not earn. Flip back to true once the bad finish rows are gone.
+ */
+const SHOW_WON_BUTTON = false
+
+/**
  * A single shared request for the notes. Several entry points (the bar above the
  * book and the final page itself) can be mounted at once, so without this they
  * would each fetch their own copy.
@@ -1759,7 +1769,8 @@ function FinaleNoteBar({
   // The winner pill is earned, never previewed: admins already have their own
   // clearly-labelled preview button at the foot of the journal, so showing this
   // one to them too would just be a second, unlabelled copy of the same screen.
-  const showWon = finished
+  // Also hard-gated off while bad finish rows exist (see SHOW_WON_BUTTON).
+  const showWon = SHOW_WON_BUTTON && finished
   // A held crew gets the hold slip where note 1's pill would be. Gated on the
   // real trail-end, never on `isAdmin`, because the server already exempts admins
   // from the hold: for them `held` is false and note 1 shows as usual.
@@ -1987,6 +1998,8 @@ function FinalPageBody({
   const showHold = held && hold !== null && trailEndReached
   const showNote1 = note !== null && trailEndReached
   const showNote2 = note2 !== null && compassReached
+  // Hard-gated off while wrongly-finished crews exist (see SHOW_WON_BUTTON).
+  const showWon = SHOW_WON_BUTTON && finished
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center text-center">
@@ -1998,7 +2011,7 @@ function FinalPageBody({
         {t.journal.finalBody}
       </p>
 
-      {(showHold || showNote1 || showNote2 || finished) && (
+      {(showHold || showNote1 || showNote2 || showWon) && (
         <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
           {showHold && (
             <PaperPill
@@ -2021,7 +2034,7 @@ function FinalPageBody({
           )}
           {/* Inked solid, so the trophy still reads as the prize among the
               quieter paper pills beside it. */}
-          {finished && (
+          {showWon && (
             <button
               type="button"
               onClick={() => setOpen("won")}

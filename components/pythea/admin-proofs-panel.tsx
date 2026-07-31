@@ -27,6 +27,7 @@ import {
   adminDeleteProofs,
   type AdminProofRow,
 } from "@/app/admin/actions"
+import { finaleOrderLabel } from "@/lib/clues"
 
 const POLL_MS = 8000
 
