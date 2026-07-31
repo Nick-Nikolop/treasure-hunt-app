@@ -7,13 +7,6 @@ import { Megaphone, X } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
 
 /**
- * Event any component can fire to re-open the announcement (e.g. the journal
- * label). Kept as a shared constant so the emitter and listener can never drift
- * on the event name.
- */
-export const ANNOUNCEMENT_OPEN_EVENT = "pythea:announcement:open"
-
-/**
  * A site-wide announcement shown on every page, to everyone.
  *
  * Deliberately NOT persisted: it opens on each fresh load AND on every client
@@ -38,13 +31,6 @@ export function AnnouncementModal() {
   useEffect(() => {
     setOpen(true)
   }, [pathname])
-
-  // Let other parts of the app (the journal label) re-open it on demand.
-  useEffect(() => {
-    const reopen = () => setOpen(true)
-    window.addEventListener(ANNOUNCEMENT_OPEN_EVENT, reopen)
-    return () => window.removeEventListener(ANNOUNCEMENT_OPEN_EVENT, reopen)
-  }, [])
 
   const dismiss = useCallback(() => setOpen(false), [])
 
