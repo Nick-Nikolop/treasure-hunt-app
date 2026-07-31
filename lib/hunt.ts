@@ -231,11 +231,58 @@ export type UnlockSource =
   | "admin"
   | "time"
 
+/**
+ * The original `unlockedAt` of every row these users currently hold, keyed
+ * `userId:leadOrder`.
+ *
+ * Taken BEFORE any delete/insert cycle so re-placement can restore the real
+ * arrival time instead of stamping "now". Without this, moving a crew between
+ * finale rungs (by hand or by the automated pass) rewrote when they got there,
+ * which is how the recorded Finland arrival times were lost.
+ */
+export type StampSnapshot = Map<string, Date>
+
+async function snapshotStamps(userIds: string[]): Promise<StampSnapshot> {
+  const out: StampSnapshot = new Map()
+  if (userIds.length === 0) return out
+  const rows = await db
+    .select({
+      userId: leadUnlock.userId,
+      leadOrder: leadUnlock.leadOrder,
+      unlockedAt: leadUnlock.unlockedAt,
+    })
+    .from(leadUnlock)
+    .where(inArray(leadUnlock.userId, userIds))
+  for (const r of rows) {
+    const key = `${r.userId}:${r.leadOrder}`
+    // Keep the EARLIEST stamp per row: crew members scan seconds apart and the
+    // first one is what really marks the crew's arrival.
+    const seen = out.get(key)
+    if (!seen || r.unlockedAt < seen) out.set(key, r.unlockedAt)
+  }
+  return out
+}
+
+/**
+ * The timestamp a rebuilt row should carry: its original if we have one in the
+ * snapshot, otherwise the fresh `at`. `prior` is keyed by user AND lead order, so
+ * a crew that never held the row still gets a truthful "now".
+ */
+function stampFor(
+  prior: StampSnapshot | undefined,
+  userId: string,
+  leadOrder: number,
+  at: Date,
+): Date {
+  return prior?.get(`${userId}:${leadOrder}`) ?? at
+}
+
 async function ensureUpTo(
   userIds: string[],
   targetLead: number,
   source: string,
   at: Date,
+  prior?: StampSnapshot,
 ): Promise<void> {
   const target = clampProgress(targetLead, await getTotalLeads())
   if (target < 2 || userIds.length === 0) return
@@ -251,7 +298,14 @@ async function ensureUpTo(
   for (const uid of userIds) {
     for (let order = 2; order <= target; order++) {
       if (!have.has(`${uid}:${order}`)) {
-        values.push({ id: randomUUID(), userId: uid, leadOrder: order, source, unlockedAt: at })
+        values.push({
+          id: randomUUID(),
+          userId: uid,
+          leadOrder: order,
+          source,
+          // Restore the original arrival time when this row is being rebuilt.
+          unlockedAt: stampFor(prior, uid, order, at),
+        })
       }
     }
   }
@@ -315,8 +369,17 @@ export async function setProgressForUsers(
   const finale = stage === "hold" || stage === "compass" || stage === "treasure"
   const target = finale ? total : clampProgress(targetLead, total)
   const at = new Date()
+
+  // ARRIVAL TIMES MUST SURVIVE RE-PLACEMENT.
+  // `trimAbove` DELETES rows and the inserts below re-create them, so stamping
+  // `at` on every insert silently rewrote a crew's arrival times to "now" on
+  // every automated pass or dashboard nudge. Snapshot what is stored FIRST and
+  // hand it down, so any row that already existed keeps its ORIGINAL timestamp
+  // and only genuinely new rows are stamped `at`.
+  const prior = await snapshotStamps(userIds)
+
   await trimAbove(userIds, target)
-  await ensureUpTo(userIds, target, source, at)
+  await ensureUpTo(userIds, target, source, at, prior)
   // Forward the caller's source (default "admin"): these rows are a manual
   // dashboard override, never an automated pass.
   const finaleSource: UnlockSource = source === "time" ? "time" : "admin"
@@ -324,11 +387,11 @@ export async function setProgressForUsers(
   // trail comes before the compass, which comes before the treasure. `trimAbove`
   // has already cleared every sentinel, so stopping early is what steps a crew
   // BACK down to an earlier rung.
-  if (finale) await insertTrailEndRows(userIds, at, finaleSource)
+  if (finale) await insertTrailEndRows(userIds, at, finaleSource, prior)
   if (stage === "compass" || stage === "treasure") {
-    await insertCompassRows(userIds, at, finaleSource)
+    await insertCompassRows(userIds, at, finaleSource, prior)
   }
-  if (stage === "treasure") await insertFinishRows(userIds, at, finaleSource)
+  if (stage === "treasure") await insertFinishRows(userIds, at, finaleSource, prior)
 }
 
 export type UnlockResult =
@@ -403,6 +466,7 @@ async function insertFinishRows(
   userIds: string[],
   at: Date,
   source: UnlockSource = "gps",
+  prior?: StampSnapshot,
 ): Promise<void> {
   if (userIds.length === 0) return
   const existing = await db
@@ -417,7 +481,7 @@ async function insertFinishRows(
       userId: uid,
       leadOrder: FINISH_ORDER,
       source,
-      unlockedAt: at,
+      unlockedAt: stampFor(prior, uid, FINISH_ORDER, at),
     }))
   if (values.length > 0) {
     await db.insert(leadUnlock).values(values).onConflictDoNothing()
@@ -491,6 +555,7 @@ async function insertTrailEndRows(
   userIds: string[],
   at: Date,
   source: UnlockSource = "gps",
+  prior?: StampSnapshot,
 ): Promise<void> {
   if (userIds.length === 0) return
   const existing = await db
@@ -505,7 +570,8 @@ async function insertTrailEndRows(
       userId: uid,
       leadOrder: TRAIL_END_ORDER,
       source,
-      unlockedAt: at,
+      // This row IS the Finland arrival time, so preserving it is the whole point.
+      unlockedAt: stampFor(prior, uid, TRAIL_END_ORDER, at),
     }))
   if (values.length > 0) {
     await db.insert(leadUnlock).values(values).onConflictDoNothing()
@@ -528,6 +594,7 @@ async function insertCompassRows(
   userIds: string[],
   at: Date,
   source: UnlockSource = "gps",
+  prior?: StampSnapshot,
 ): Promise<void> {
   if (userIds.length === 0) return
   const existing = await db
@@ -542,7 +609,7 @@ async function insertCompassRows(
       userId: uid,
       leadOrder: COMPASS_ORDER,
       source,
-      unlockedAt: at,
+      unlockedAt: stampFor(prior, uid, COMPASS_ORDER, at),
     }))
   if (values.length > 0) {
     await db.insert(leadUnlock).values(values).onConflictDoNothing()
