@@ -65,6 +65,21 @@ function placementFromRows(orders: Set<number>): FinalePlacement {
 }
 
 /**
+ * Has this crew closed the trail?
+ *
+ * Any ONE of the three endgame rows counts, NOT the trail-end row specifically.
+ * Crews that finished under the older flow hold the compass/finish row with no
+ * trail-end row at all, and requiring trail-end made this pass skip exactly the
+ * crews most in need of correction (two teams were sitting on the winner screen,
+ * invisible to both the sweep and the admin list).
+ */
+export function isPastTrailEnd(orders: Set<number>): boolean {
+  return (
+    orders.has(TRAIL_END_ORDER) || orders.has(COMPASS_ORDER) || orders.has(FINISH_ORDER)
+  )
+}
+
+/**
  * Put one crew where its grants say it belongs. Cheap and idempotent: two reads,
  * and a write ONLY when the placement actually changes, so the common case (a
  * crew already in the right spot) costs nothing and never logs.
@@ -84,7 +99,7 @@ export async function reconcileFinalePlacement(userId: string): Promise<void> {
     const orders = new Set(rows.map((r) => r.leadOrder))
 
     // Not past the end of the trail yet: leave the crew completely alone.
-    if (!orders.has(TRAIL_END_ORDER)) return
+    if (!isPastTrailEnd(orders)) return
 
     const [finale, grants] = await Promise.all([getFinaleConfig(), getCrewGrants(userId)])
     const held = isTrailEndHeld(finale)
@@ -210,8 +225,8 @@ async function runSweep(): Promise<void> {
     const teamNames = new Map<string, string>()
 
     for (const [key, orders] of crewOrders) {
-      // Only crews that closed the trail.
-      if (!orders.has(TRAIL_END_ORDER)) continue
+      // Only crews that closed the trail (any endgame row counts, see above).
+      if (!isPastTrailEnd(orders)) continue
 
       const isSolo = key.startsWith("solo:")
       const crew = isSolo ? [key.slice(5)] : (membersOf.get(key) ?? [])

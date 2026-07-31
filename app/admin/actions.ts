@@ -2052,8 +2052,12 @@ export async function adminListFinaleAudience(): Promise<FinaleAudienceEntrant[]
   const compassers = new Set<string>()
   const finishers = new Set<string>()
   for (const r of atEnd) {
-    if (r.leadOrder === TRAIL_END_ORDER) trailEnders.add(r.userId)
-    else if (r.leadOrder === COMPASS_ORDER) compassers.add(r.userId)
+    // ANY endgame row means this user closed the trail, so it qualifies them for
+    // this list. Crews that finished under the older flow hold a compass/finish
+    // row with NO trail-end row, and keying off trail-end alone hid exactly the
+    // crews that most needed managing (two were parked on the winner screen).
+    trailEnders.add(r.userId)
+    if (r.leadOrder === COMPASS_ORDER) compassers.add(r.userId)
     else if (r.leadOrder === FINISH_ORDER) finishers.add(r.userId)
   }
 
