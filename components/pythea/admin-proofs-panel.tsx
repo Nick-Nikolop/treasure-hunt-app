@@ -76,10 +76,69 @@ function gapLabel(later: Date | string, earlier: Date | string): string {
   return m % 60 === 0 ? `${h}h` : `${h}h ${m % 60}m`
 }
 
+/**
+ * The hunt runs on Athens wall-clock, so that is the only zone these stamps may
+ * be read in. Every formatter below pins it explicitly rather than letting
+ * `Intl` fall back to the viewer's zone: an admin reviewing from another country
+ * would otherwise audit a race using times shifted by hours, and the same value
+ * would render differently on the server than in the browser.
+ *
+ * Pinning the zone (rather than hardcoding an offset) also keeps EET/EEST
+ * daylight saving correct for free.
+ */
+const ATHENS_TZ = "Europe/Athens"
+
+/**
+ * `hourCycle: "h23"` rather than `hour12: false`, which renders midnight as
+ * "24:00:00" in en-GB on some engines.
+ */
+const ATHENS_STAMP = new Intl.DateTimeFormat("en-GB", {
+  timeZone: ATHENS_TZ,
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hourCycle: "h23",
+})
+
+const ATHENS_CLOCK = new Intl.DateTimeFormat("en-GB", {
+  timeZone: ATHENS_TZ,
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hourCycle: "h23",
+})
+
+/** Full Athens date + time to the second, for the audit trail. */
+function athensStamp(d: Date | string): string {
+  const t = typeof d === "string" ? new Date(d) : d
+  return ATHENS_STAMP.format(t)
+}
+
 /** Exact clock time, so the admin can audit the order rather than trust it. */
 function clockTime(d: Date | string): string {
   const t = typeof d === "string" ? new Date(d) : d
-  return t.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+  return ATHENS_CLOCK.format(t)
+}
+
+/**
+ * One labelled timestamp. `at` is nullable because a decided row could in
+ * principle carry no `decidedAt`, and inventing a date for it would corrupt the
+ * very audit trail this is here to provide.
+ */
+function Stamp({ label, at }: { label: string; at: Date | string | null }) {
+  return (
+    <span className="inline-flex items-baseline gap-1 whitespace-nowrap">
+      <span className="font-bold tracking-chip text-muted-foreground/50">{label}</span>
+      {at ? (
+        <span className="tabular-nums text-muted-foreground/80">{athensStamp(at)}</span>
+      ) : (
+        <span className="italic text-muted-foreground/40">not recorded</span>
+      )}
+    </span>
+  )
 }
 
 type QueueInfo = {
@@ -261,6 +320,9 @@ export function AdminProofsPanel() {
           <span className="rounded-full bg-brass/15 px-2 py-0.5 font-sans text-[10px] font-bold tracking-chip text-brass">
             {pending.length}
           </span>
+          <span className="font-sans text-[10px] tracking-chip text-muted-foreground/40">
+            TIMES: ATHENS
+          </span>
         </div>
 
         {blocked && (
@@ -332,6 +394,12 @@ export function AdminProofsPanel() {
                       {finaleOrderLabel(p.leadOrder)
                         ? p.country
                         : `LEAD No. ${String(p.leadOrder).padStart(2, "0")} · ${p.country}`}
+                    </p>
+                    {/* Shown outright, not just as a hover title: when two crews
+                        race the same lead, the exact filing second decides who was
+                        first, and a tooltip is no place to keep the deciding fact. */}
+                    <p className="mt-1 font-sans text-[10px]">
+                      <Stamp label="SENT" at={p.createdAt} />
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -494,6 +562,11 @@ export function AdminProofsPanel() {
               <span className="font-sans text-[10px] tracking-chip text-muted-foreground/70">
                 {recent.length} / {data.recentTotal}
               </span>
+              {/* Names the zone once here instead of stamping an abbreviation onto
+                  every row, which would also have to flip EET/EEST twice a year. */}
+              <span className="font-sans text-[10px] tracking-chip text-muted-foreground/40">
+                TIMES: ATHENS
+              </span>
               <button
                 type="button"
                 onClick={toggleAll}
@@ -615,6 +688,13 @@ export function AdminProofsPanel() {
                             Rejected with no feedback
                           </p>
                         ))}
+                      {/* Both ends of the decision, to the second. Wraps rather
+                          than sitting in the cramped right-hand column, so a long
+                          stamp cannot squeeze the status badge off the row. */}
+                      <p className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 font-sans text-[10px]">
+                        <Stamp label="SENT" at={p.createdAt} />
+                        <Stamp label="REVIEWED" at={p.decidedAt} />
+                      </p>
                     </div>
                   </div>
                   <div className="shrink-0 text-right">

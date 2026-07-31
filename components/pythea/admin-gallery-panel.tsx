@@ -48,34 +48,63 @@ type Shot = {
   proof: AdminGalleryProof
 }
 
-function clockTime(d: Date | string): string {
-  const t = typeof d === "string" ? new Date(d) : d
-  return t.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
-}
+/**
+ * The hunt runs on Athens wall-clock, so every stamp here pins that zone rather
+ * than inheriting the viewer's. This is not only cosmetic: `dayKey` buckets the
+ * "By day" grouping, so reading the date in a non-Athens zone would file proofs
+ * submitted near midnight under the WRONG DAY, and the same value would render
+ * differently server-side than in the browser.
+ *
+ * Pinning the zone (not an offset) keeps EET/EEST daylight saving correct.
+ */
+const ATHENS_TZ = "Europe/Athens"
+
+/** `hourCycle: "h23"` because `hour12: false` renders midnight as "24:00". */
+const ATHENS_FULL = new Intl.DateTimeFormat("en-GB", {
+  timeZone: ATHENS_TZ,
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hourCycle: "h23",
+})
+
+const ATHENS_DAY = new Intl.DateTimeFormat("en-GB", {
+  timeZone: ATHENS_TZ,
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+})
+
+/**
+ * ISO `YYYY-MM-DD` in Athens. `en-CA` is used because it formats as ISO, which
+ * sorts correctly as a plain string; `getDate()` and friends would silently read
+ * the viewer's zone instead.
+ */
+const ATHENS_DAY_KEY = new Intl.DateTimeFormat("en-CA", {
+  timeZone: ATHENS_TZ,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+})
 
 function fullStamp(d: Date | string): string {
   const t = typeof d === "string" ? new Date(d) : d
-  return t.toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  })
+  return ATHENS_FULL.format(t)
 }
 
 function dayLabel(d: Date | string): string {
   const t = typeof d === "string" ? new Date(d) : d
-  return t.toLocaleDateString(undefined, {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  })
+  return ATHENS_DAY.format(t)
 }
 
 /** Sort key for day groups: newest day first, independent of locale wording. */
 function dayKey(d: Date | string): string {
   const t = typeof d === "string" ? new Date(d) : d
-  return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`
+  return ATHENS_DAY_KEY.format(t)
 }
 
 const STATUS_TABS: { key: StatusFilter; label: string }[] = [
@@ -247,6 +276,12 @@ export function AdminGalleryPanel() {
         <Stat icon={Users} label="Crews" value={teams.length} />
         <Stat icon={MapPin} label="Leads" value={leads.length} />
       </div>
+
+      {/* Names the zone once, rather than stamping an abbreviation onto every row
+          that would also have to flip EET/EEST twice a year. */}
+      <p className="font-sans text-[10px] tracking-chip text-muted-foreground/40">
+        ALL TIMES IN ATHENS TIME (EUROPE/ATHENS)
+      </p>
 
       {/* Filters */}
       <div className="flex flex-col gap-3 rounded-sm border border-border bg-card p-3">
@@ -642,6 +677,12 @@ function PhotoTile({
     <button
       type="button"
       onClick={onOpen}
+      // Grid tiles are thumbnails with no room for a full stamp, so the exact
+      // Athens times ride along as a tooltip; the rows density and the lightbox
+      // both show them outright.
+      title={`${proof.userName} · ${proof.country}\nSent ${fullStamp(proof.createdAt)}${
+        proof.decidedAt ? `\nReviewed ${fullStamp(proof.decidedAt)}` : ""
+      }`}
       className="group relative aspect-square overflow-hidden rounded-sm border border-border bg-background transition-colors hover:border-brass"
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -732,9 +773,12 @@ function ProofRowCard({
             <MapPin className="size-3.5" />
             {proof.country}
           </span>
-          <span className="inline-flex items-center gap-1">
+          {/* `fullStamp` already carries the time to the second, so the old
+              trailing `clockTime` here only repeated it. */}
+          <span className="inline-flex items-center gap-1 whitespace-nowrap">
             <Clock className="size-3.5" />
-            {fullStamp(proof.createdAt)} · {clockTime(proof.createdAt)}
+            <span className="font-bold tracking-chip text-muted-foreground/50">SENT</span>
+            <span className="tabular-nums">{fullStamp(proof.createdAt)}</span>
           </span>
           <ContextChip context={proof.context} />
         </div>
@@ -746,10 +790,18 @@ function ProofRowCard({
             Rejected: {proof.reason}
           </p>
         )}
-        {proof.reviewerName && (
+        {/* Keyed off status, not `reviewerName`: a decided proof missing the
+            reviewer's name would otherwise hide its review time entirely, which is
+            the one fact this line exists to record. */}
+        {proof.status !== "pending" && (
           <p className="mt-1 font-sans text-[11px] text-muted-foreground">
-            Reviewed by {proof.reviewerName}
-            {proof.decidedAt ? ` · ${fullStamp(proof.decidedAt)}` : ""}
+            <span className="font-bold tracking-chip text-muted-foreground/50">REVIEWED </span>
+            {proof.decidedAt ? (
+              <span className="tabular-nums">{fullStamp(proof.decidedAt)}</span>
+            ) : (
+              <span className="italic text-muted-foreground/50">time not recorded</span>
+            )}
+            {proof.reviewerName ? ` · by ${proof.reviewerName}` : ""}
           </p>
         )}
       </div>
