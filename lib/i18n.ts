@@ -965,6 +965,12 @@ const el = {
       "Το κυνήγι του Πυθέα έχει ξεκινήσει, γι' αυτό δεν δημιουργούνται πλέον νέοι λογαριασμοί. Αν έχεις ήδη λογαριασμό, συνδέσου για να συνεχίσεις την πορεία σου.",
     closedSignIn: "Σύνδεση",
     closedHome: "Επιστροφή στην αρχική",
+    // journal maintenance window
+    maintEyebrow: "ΣΥΝΤΗΡΗΣΗ",
+    maintTitle: "Η σελίδα βρίσκεται σε συντήρηση",
+    maintBody:
+      "Κάνουμε κάποιες διορθώσεις στην πορεία. Η σελίδα θα επιστρέψει το συντομότερο δυνατό. Η πρόοδός σου είναι ασφαλής.",
+    maintHome: "Επιστροφή στην αρχική",
     // sign in
     signInEyebrow: "ΚΑΛΩΣ ΗΡΘΕΣ ΠΙΣΩ",
     signInTitle: "Σύνδεση",
@@ -2020,6 +2026,12 @@ const en: Dictionary = {
       "The hunt for Pytheas is already under way, so new accounts are no longer being created. If you already have an account, sign in to carry on with your course.",
     closedSignIn: "Sign in",
     closedHome: "Back to home",
+    // journal maintenance window
+    maintEyebrow: "MAINTENANCE",
+    maintTitle: "This page is under maintenance",
+    maintBody:
+      "We are making some fixes to the trail. The page will be back as soon as possible. Your progress is safe.",
+    maintHome: "Back to home",
     // sign in
     signInEyebrow: "WELCOME BACK",
     signInTitle: "Sign in",

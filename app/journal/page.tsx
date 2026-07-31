@@ -23,6 +23,8 @@ import { getLeadDefs } from "@/lib/leads"
 import { getLeadBgWashPct, getCompassOpacityPct } from "@/lib/hunt-config"
 import { getPhaseContext } from "@/lib/phase-guard"
 import { getFinaleConfig } from "@/lib/finale"
+import { JOURNAL_MAINTENANCE, isMaintenanceBypassEmail } from "@/lib/maintenance"
+import { JournalMaintenanceDialog } from "@/components/pythea/journal-maintenance-dialog"
 
 // Recompute against the live server clock, the player's stored progress, and
 // the per-browser testing cookie.
@@ -46,6 +48,24 @@ export default async function PoreiaPage() {
   // The journal is gated: only registered, signed-in accounts can view it.
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) redirect("/sign-in?redirect=/journal")
+
+  // Maintenance window: withhold the journal entirely while the trail is being
+  // repaired. This deliberately returns BEFORE any progress is read and before
+  // `reconcileFinalePlacement` / `sweepFinalePlacements` further down, so a
+  // blocked visit cannot rewrite anyone's placement rows mid-repair. Superadmins
+  // and the bypass account carry on as normal.
+  if (JOURNAL_MAINTENANCE) {
+    const bypass =
+      isMaintenanceBypassEmail(session.user.email) || (await getAdminUser()) !== null
+    if (!bypass) {
+      return (
+        <>
+          <Atmosphere />
+          <JournalMaintenanceDialog />
+        </>
+      )
+    }
+  }
 
   // Pass the server-resolved user to the topbar for a flash-free first paint.
   const initialUser = {
