@@ -15,6 +15,7 @@ import {
   Inbox,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Trash2,
   Square,
   CheckSquare,
@@ -30,6 +31,16 @@ import {
 import { finaleOrderLabel } from "@/lib/clues"
 
 const POLL_MS = 8000
+
+/**
+ * How many decided proofs to reveal per "show more".
+ *
+ * Duplicated from the server action rather than imported, because a
+ * `"use server"` module can only export async functions. The server clamps to its
+ * own copy as the floor, so the two agreeing is a nicety, not a correctness
+ * requirement: a mismatch changes the step size, never the safety of the query.
+ */
+const PROOF_HISTORY_PAGE = 10
 
 function timeAgo(d: Date | string): string {
   const then = typeof d === "string" ? new Date(d) : d
@@ -111,10 +122,25 @@ function buildQueue(pending: AdminProofRow[]): Map<string, QueueInfo> {
 type Lightbox = { urls: string[]; index: number } | null
 
 export function AdminProofsPanel() {
-  const [data, setData] = useState<{ pending: AdminProofRow[]; recent: AdminProofRow[] }>({
+  const [data, setData] = useState<{
+    pending: AdminProofRow[]
+    recent: AdminProofRow[]
+    recentTotal: number
+  }>({
     pending: [],
     recent: [],
+    recentTotal: 0,
   })
+  /**
+   * How many decided rows to ask for. Held in a ref as well as state because the
+   * background poll calls `load` on an interval: reading the count off state
+   * inside `load` would need it in the dep array, which would tear down and
+   * recreate the interval on every expansion, and a stale closure would quietly
+   * snap the list back to the first page mid-review.
+   */
+  const [recentLimit, setRecentLimit] = useState(PROOF_HISTORY_PAGE)
+  const recentLimitRef = useRef(PROOF_HISTORY_PAGE)
+  const [expanding, setExpanding] = useState(false)
   const [loaded, setLoaded] = useState(false)
   const [lightbox, setLightbox] = useState<Lightbox>(null)
   const [rejecting, setRejecting] = useState<string | null>(null)
@@ -131,7 +157,7 @@ export function AdminProofsPanel() {
 
   const load = useCallback(async () => {
     try {
-      const next = await adminListProofs()
+      const next = await adminListProofs(recentLimitRef.current)
       setData(next)
       setLoaded(true)
       initialised.current = true
@@ -139,6 +165,19 @@ export function AdminProofsPanel() {
       // Non-admin/transient: leave state as-is.
     }
   }, [])
+
+  /** Reveal the next page of decided history, keeping what is already on screen. */
+  const showMore = useCallback(async () => {
+    const next = recentLimitRef.current + PROOF_HISTORY_PAGE
+    recentLimitRef.current = next
+    setRecentLimit(next)
+    setExpanding(true)
+    try {
+      await load()
+    } finally {
+      setExpanding(false)
+    }
+  }, [load])
 
   useEffect(() => {
     void load()
@@ -448,8 +487,13 @@ export function AdminProofsPanel() {
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <h2 className="font-sans text-xs font-bold tracking-chip text-muted-foreground">
-                RECENTLY DECIDED
+                DECIDED HISTORY
               </h2>
+              {/* Says how much of the archive is on screen, so a short list is
+                  never mistaken for the whole history. */}
+              <span className="font-sans text-[10px] tracking-chip text-muted-foreground/70">
+                {recent.length} / {data.recentTotal}
+              </span>
               <button
                 type="button"
                 onClick={toggleAll}
@@ -553,9 +597,24 @@ export function AdminProofsPanel() {
                           ? p.country
                           : `No. ${String(p.leadOrder).padStart(2, "0")} · ${p.country}`}
                       </p>
-                      {p.status === "rejected" && p.reason && (
-                        <p className="font-sans text-[11px] text-muted-foreground">{p.reason}</p>
-                      )}
+                      {/* A rejection with no note read as a bare "REJECTED" with
+                          nothing beside it, indistinguishable from feedback that
+                          failed to load. Live data says every rejection so far has
+                          no reason recorded, so this is the normal case, not an
+                          edge one, and it has to say so out loud. */}
+                      {p.status === "rejected" &&
+                        (p.reason && p.reason.trim().length > 0 ? (
+                          <p className="font-sans text-[11px] text-muted-foreground">
+                            <span className="font-bold tracking-chip text-amber-500/80">
+                              FEEDBACK:{" "}
+                            </span>
+                            {p.reason}
+                          </p>
+                        ) : (
+                          <p className="font-sans text-[11px] italic text-muted-foreground/60">
+                            Rejected with no feedback
+                          </p>
+                        ))}
                     </div>
                   </div>
                   <div className="shrink-0 text-right">
@@ -573,6 +632,18 @@ export function AdminProofsPanel() {
                     )}
                   </div>
                 </div>
+
+                {/* What the explorer wrote when they filed it. Shown in the same
+                    quoted style as the pending queue, so the note that justified a
+                    decision stays readable next to the decision itself instead of
+                    being lost the moment it is judged. */}
+                {p.note && p.note.trim().length > 0 && (
+                  <p className="mt-2 ml-7 rounded-sm border border-border bg-background px-3 py-2 font-serif text-sm italic text-muted-foreground">
+                    {"\u201C"}
+                    {p.note}
+                    {"\u201D"}
+                  </p>
+                )}
 
                 {/* Submitted photos stay viewable after a decision. */}
                 {p.photoUrls.length > 0 && (
@@ -597,6 +668,29 @@ export function AdminProofsPanel() {
               </li>
             ))}
           </ul>
+
+          {/* Only offered while rows remain, and it names the exact number left so
+              you can tell "3 more" from "300 more" before clicking. */}
+          {data.recentTotal > recent.length && (
+            <div className="mt-3 flex justify-center">
+              <button
+                type="button"
+                onClick={() => void showMore()}
+                disabled={expanding}
+                className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-background px-4 py-2 font-sans text-[10px] font-bold tracking-chip text-muted-foreground transition-colors hover:border-brass hover:text-brass disabled:opacity-50"
+              >
+                {expanding ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <ChevronDown className="size-3.5" />
+                )}
+                SHOW {Math.min(PROOF_HISTORY_PAGE, data.recentTotal - recent.length)} MORE
+                <span className="font-normal text-muted-foreground/60">
+                  ({data.recentTotal - recent.length} left)
+                </span>
+              </button>
+            </div>
+          )}
         </section>
       )}
 

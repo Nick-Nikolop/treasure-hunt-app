@@ -11,7 +11,7 @@
 
 import { db } from "@/lib/db"
 import { proofSubmission } from "@/lib/db/schema"
-import { and, desc, eq, inArray, isNull, ne } from "drizzle-orm"
+import { and, desc, eq, inArray, isNull, ne, sql } from "drizzle-orm"
 import { randomUUID } from "node:crypto"
 
 export type ProofContext = "denied" | "too_far"
@@ -166,14 +166,41 @@ export async function getPendingProofCount(): Promise<number> {
   return rows.length
 }
 
-/** The most recently decided submissions (approved/rejected), newest first. */
-export async function getRecentDecidedProofs(limit = 20): Promise<ProofRow[]> {
-  const rows = await db
+/**
+ * Decided submissions (approved/rejected), newest first, capped to `limit`.
+ *
+ * Excludes pending IN SQL rather than filtering afterwards. The previous version
+ * pulled 200 rows and dropped the pending ones in JS, which breaks quietly:
+ * Postgres sorts `DESC` with NULLS FIRST and pending rows have no `decidedAt`, so
+ * they sat at the TOP of that window and ate it. Enough pending proofs would have
+ * returned an empty decided list from a table full of decided rows.
+ *
+ * `NULLS LAST` guards the same class of bug from the other side: today every
+ * decided row does have a timestamp (verified in SQL), but one that somehow
+ * lacked it would otherwise pin to the top and masquerade as the newest decision.
+ */
+export async function getDecidedProofs(limit = 20): Promise<ProofRow[]> {
+  return db
     .select()
     .from(proofSubmission)
-    .orderBy(desc(proofSubmission.decidedAt))
-    .limit(200)
-  return rows.filter((r) => r.status !== "pending").slice(0, limit)
+    .where(ne(proofSubmission.status, "pending"))
+    .orderBy(sql`${proofSubmission.decidedAt} DESC NULLS LAST`, desc(proofSubmission.createdAt))
+    .limit(limit)
+}
+
+/**
+ * How many decided submissions exist in total.
+ *
+ * The UI needs this to say how much history is still hidden: a bare "show more"
+ * button cannot tell whether it reveals 3 rows or 300, and without the total
+ * there is no way to know when to stop offering it.
+ */
+export async function getDecidedProofCount(): Promise<number> {
+  const rows = await db
+    .select({ id: proofSubmission.id })
+    .from(proofSubmission)
+    .where(ne(proofSubmission.status, "pending"))
+  return rows.length
 }
 
 /**

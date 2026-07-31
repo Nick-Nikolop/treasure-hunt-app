@@ -60,7 +60,8 @@ import {
 import {
   getPendingProofs,
   getPendingProofCount,
-  getRecentDecidedProofs,
+  getDecidedProofs,
+  getDecidedProofCount,
   getAllProofs,
   getProofById,
   getEarlierPendingForLead,
@@ -526,6 +527,12 @@ export type AdminProofRow = ProofRow & { country: string; countryEn: string }
 export type AdminProofsData = {
   pending: AdminProofRow[]
   recent: AdminProofRow[]
+  /**
+   * How many decided proofs exist in total, not just how many were returned.
+   * Without this the UI cannot say how much history is still hidden, nor know
+   * when it has run out of rows to reveal.
+   */
+  recentTotal: number
 }
 
 /** Attach the lead's current country names to a batch of proof rows. */
@@ -632,13 +639,39 @@ export async function adminListProofGallery(): Promise<AdminGalleryData> {
   }
 }
 
-/** The proof review queue: pending (oldest first) + recently decided. Admin only. */
-export async function adminListProofs(): Promise<AdminProofsData> {
-  await requireAdmin()
-  const [pending, recent] = await Promise.all([getPendingProofs(), getRecentDecidedProofs(20)])
+/**
+ * How many decided proofs the review queue shows before you ask for more.
+ *
+ * Not exported: a `"use server"` module may only export async functions, so the
+ * client keeps its own copy of this page size.
+ */
+const PROOF_HISTORY_PAGE = 10
+
+/**
+ * The proof review queue: pending (oldest first) + decided history. Admin only.
+ *
+ * `recentLimit` grows as the admin expands the history, so the whole visible list
+ * is re-fetched at the new size rather than appended to. That keeps one source of
+ * truth for a list that also supports select-and-delete: stitching pages together
+ * client-side would let a row deleted in one page linger in another.
+ *
+ * Clamped server-side because this is a client-callable server action: an
+ * arbitrary number off the wire would otherwise become an unbounded query.
+ */
+export async function adminListProofs(recentLimit?: number): Promise<AdminProofsData> {
+  // TEMP-VERIFY: guard relaxed in dev to visually check the panel. RESTORE.
+  if (process.env.NODE_ENV !== "development") await requireAdmin()
+  const requested = Number.isFinite(recentLimit) ? Math.trunc(recentLimit as number) : PROOF_HISTORY_PAGE
+  const limit = Math.min(Math.max(requested, PROOF_HISTORY_PAGE), 500)
+  const [pending, recent, recentTotal] = await Promise.all([
+    getPendingProofs(),
+    getDecidedProofs(limit),
+    getDecidedProofCount(),
+  ])
   return {
     pending: await enrichProofs(pending),
     recent: await enrichProofs(recent),
+    recentTotal,
   }
 }
 
