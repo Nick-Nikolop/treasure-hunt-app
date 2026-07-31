@@ -1,6 +1,8 @@
 import { betterAuth } from "better-auth"
+import { APIError } from "better-auth/api"
 import { Pool } from "pg"
 import { logActivity } from "@/lib/activity"
+import { REGISTRATION_OPEN } from "@/lib/registration"
 
 // Relay a transactional email to the Google Apps Script web app. The script
 // routes by `type` ("registration" -> Registration Logs sheet, "password_reset"
@@ -92,6 +94,17 @@ export const auth = betterAuth({
         // termsVersion (it always does from our forms), record when we saw it
         // so the acceptance time can't be spoofed from the browser.
         before: async (newUser) => {
+          // Registration is closed once the hunt starts. This is the REAL gate:
+          // hiding the form only stops the honest path, while this rejects any
+          // direct POST to the sign-up endpoint too. Throwing here aborts the
+          // insert, so no half-created account is left behind.
+          if (!REGISTRATION_OPEN) {
+            throw new APIError("FORBIDDEN", {
+              code: "REGISTRATION_CLOSED",
+              message: "Registration is closed: the hunt has already begun.",
+            })
+          }
+
           const u = newUser as { termsVersion?: string | null }
           if (u.termsVersion) {
             return { data: { ...newUser, acceptedTermsAt: new Date() } }

@@ -405,7 +405,7 @@ export function AdminFinalePanel() {
           hint="The same shouted banner as above, one beat later: the compass is in hand, so point them at the treasure itself. Shown right under the compass note."
           el={draft.note2Cta}
           en={draft.note2CtaEn}
-          elPlaceholder="��ΩΡΑ ΠΡΕΠΕΙ ΝΑ ΒΡΕΙΣ ΤΟΝ ΘΗΣΑΥΡΟ ΜΟΥ"
+          elPlaceholder="ΩΡΑ ΠΡΕΠΕΙ ΝΑ ΒΡΕΙΣ ΤΟΝ ΘΗΣΑΥΡΟ ΜΟΥ"
           enPlaceholder="NOW YOU MUST FIND MY TREASURE"
           onChange={(key, value) => set(key === "el" ? "note2Cta" : "note2CtaEn", value)}
         />

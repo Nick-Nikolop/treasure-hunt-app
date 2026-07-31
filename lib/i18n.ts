@@ -947,6 +947,13 @@ const el = {
     signUpLoading: "Γίνεται εγγραφή...",
     haveAccount: "Έχεις ήδη λογαριασμό;",
     goToSignIn: "Σύνδεση",
+    // registration closed (the hunt has started)
+    closedEyebrow: "ΤΟ ΚΥΝΗΓΙ ΞΕΚΙΝΗΣΕ",
+    closedTitle: "Οι εγγραφές έκλεισαν",
+    closedBody:
+      "Το κυνήγι του Πυθέα έχει ξεκινήσει, γι' αυτό δεν δημιουργούνται πλέον νέοι λογαριασμοί. Αν έχεις ήδη λογαριασμό, συνδέσου για να συνεχίσεις την πορεία σου.",
+    closedSignIn: "Σύνδεση",
+    closedHome: "Επιστροφή στην αρχική",
     // sign in
     signInEyebrow: "ΚΑΛΩΣ ΗΡΘΕΣ ΠΙΣΩ",
     signInTitle: "Σύνδεση",
@@ -1984,6 +1991,13 @@ const en: Dictionary = {
     signUpLoading: "Creating account...",
     haveAccount: "Already have an account?",
     goToSignIn: "Sign in",
+    // registration closed (the hunt has started)
+    closedEyebrow: "THE HUNT HAS BEGUN",
+    closedTitle: "Registration is closed",
+    closedBody:
+      "The hunt for Pytheas is already under way, so new accounts are no longer being created. If you already have an account, sign in to carry on with your course.",
+    closedSignIn: "Sign in",
+    closedHome: "Back to home",
     // sign in
     signInEyebrow: "WELCOME BACK",
     signInTitle: "Sign in",

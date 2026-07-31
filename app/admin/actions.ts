@@ -1551,7 +1551,7 @@ export async function adminRegenerateToken(leadOrder: number): Promise<ActionRes
   return { ok: true }
 }
 
-  // ── Leads: add / remove / reorder / stamp (admin) ──────────────────────────��
+  // ── Leads: add / remove / reorder / stamp (admin) ───────────────────────────
 
 /**
  * Reorder the whole sequence. `orderedIds` is the full list of lead ids in the

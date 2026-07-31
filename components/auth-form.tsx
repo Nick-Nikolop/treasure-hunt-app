@@ -12,6 +12,7 @@ import { ConsentCheckbox } from "@/components/pythea/consent-checkbox"
 import { track, trackTiming } from "@/lib/analytics-client"
 import { EV } from "@/lib/analytics-events"
 import { TERMS_VERSION } from "@/lib/legal"
+import { REGISTRATION_OPEN } from "@/lib/registration"
 
 type Mode = "sign-in" | "sign-up"
 
@@ -78,6 +79,11 @@ export function AuthForm({ mode }: { mode: Mode }) {
   // Map Better Auth error codes/messages onto localized copy.
   function localizeError(code?: string, message?: string) {
     const c = (code ?? "").toUpperCase()
+    // The server refuses sign-ups once the hunt starts. A cached page could
+    // still hold the old form, so translate that rejection instead of showing
+    // the raw English message.
+    if (c.includes("REGISTRATION_CLOSED") || /registration is closed/i.test(message ?? ""))
+      return a.closedTitle
     if (c.includes("EXIST") || /exist/i.test(message ?? "")) return a.errEmailTaken
     if (c.includes("NOT_VERIFIED") || /not verified|verify/i.test(message ?? ""))
       return a.errEmailNotVerified
@@ -553,19 +559,23 @@ export function AuthForm({ mode }: { mode: Mode }) {
             </button>
           </form>
 
-          <p className="mt-6 text-center font-serif text-sm text-muted-foreground">
-            {isSignUp ? `${a.haveAccount} ` : `${a.noAccount} `}
-            <Link
-              href={`${isSignUp ? "/sign-in" : "/sign-up"}${
-                searchParams.get("redirect")
-                  ? `?redirect=${encodeURIComponent(searchParams.get("redirect")!)}`
-                  : ""
-              }`}
-              className="font-bold text-brass underline-offset-4 hover:underline"
-            >
-              {isSignUp ? a.goToSignIn : a.goToSignUp}
-            </Link>
-          </p>
+          {/* Only offer the switch to sign-up while registration is open; on the
+              sign-in screen it would otherwise point at the closed notice. */}
+          {(isSignUp || REGISTRATION_OPEN) && (
+            <p className="mt-6 text-center font-serif text-sm text-muted-foreground">
+              {isSignUp ? `${a.haveAccount} ` : `${a.noAccount} `}
+              <Link
+                href={`${isSignUp ? "/sign-in" : "/sign-up"}${
+                  searchParams.get("redirect")
+                    ? `?redirect=${encodeURIComponent(searchParams.get("redirect")!)}`
+                    : ""
+                }`}
+                className="font-bold text-brass underline-offset-4 hover:underline"
+              >
+                {isSignUp ? a.goToSignIn : a.goToSignUp}
+              </Link>
+            </p>
+          )}
 
           <p className="mt-4 text-center">
             <Link

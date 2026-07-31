@@ -3,6 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { useI18n } from "@/components/pythea/language-provider"
+import { REGISTRATION_OPEN } from "@/lib/registration"
 
 export function SiteFooter() {
   const { t } = useI18n()
@@ -14,9 +15,11 @@ export function SiteFooter() {
     { href: "/guide", label: t.footer.linkHow },
     { href: "/#faq", label: t.footer.linkFaq },
   ]
+  // Registration closes once the hunt starts, so drop the sign-up link rather
+  // than advertise a route that only explains it is shut.
   const accountLinks = [
     { href: "/journal", label: t.footer.linkJournal },
-    { href: "/sign-up", label: t.footer.linkSignUp },
+    ...(REGISTRATION_OPEN ? [{ href: "/sign-up", label: t.footer.linkSignUp }] : []),
     { href: "/sign-in", label: t.footer.linkSignIn },
   ]
   const legalLinks = [

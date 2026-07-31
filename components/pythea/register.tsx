@@ -5,6 +5,7 @@ import { motion } from "framer-motion"
 import { Anchor, BookOpen, Compass, Mail, UserPlus, Users } from "lucide-react"
 import { useSession } from "@/lib/auth-client"
 import { useI18n } from "@/components/pythea/language-provider"
+import { REGISTRATION_OPEN } from "@/lib/registration"
 
 const PERK_ICONS = [Compass, Users, Mail]
 
@@ -120,16 +121,25 @@ export function Register({
                 {t.crew.subtitle}
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-                <Link
-                  href="/sign-up"
-                  className="inline-flex items-center justify-center gap-2 rounded-sm bg-brass px-6 py-3.5 font-sans text-sm font-bold tracking-chip text-primary-foreground transition-transform hover:-translate-y-0.5"
-                >
-                  <UserPlus className="size-4" />
-                  {t.crew.ctaSignUp}
-                </Link>
+                {/* With registration closed, sign-in becomes the primary action
+                    and the sign-up CTA is dropped instead of leading to a
+                    "closed" notice. */}
+                {REGISTRATION_OPEN && (
+                  <Link
+                    href="/sign-up"
+                    className="inline-flex items-center justify-center gap-2 rounded-sm bg-brass px-6 py-3.5 font-sans text-sm font-bold tracking-chip text-primary-foreground transition-transform hover:-translate-y-0.5"
+                  >
+                    <UserPlus className="size-4" />
+                    {t.crew.ctaSignUp}
+                  </Link>
+                )}
                 <Link
                   href="/sign-in"
-                  className="inline-flex items-center justify-center gap-2 rounded-sm border border-border px-6 py-3.5 font-sans text-sm font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass"
+                  className={
+                    REGISTRATION_OPEN
+                      ? "inline-flex items-center justify-center gap-2 rounded-sm border border-border px-6 py-3.5 font-sans text-sm font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass"
+                      : "inline-flex items-center justify-center gap-2 rounded-sm bg-brass px-6 py-3.5 font-sans text-sm font-bold tracking-chip text-primary-foreground transition-transform hover:-translate-y-0.5"
+                  }
                 >
                   {t.crew.ctaSignIn}
                 </Link>
