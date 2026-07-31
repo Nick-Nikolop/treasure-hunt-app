@@ -61,6 +61,7 @@ import {
   getPendingProofs,
   getPendingProofCount,
   getRecentDecidedProofs,
+  getAllProofs,
   getProofById,
   getEarlierPendingForLead,
   decideProof,
@@ -541,6 +542,94 @@ async function enrichProofs(rows: ProofRow[]): Promise<AdminProofRow[]> {
       countryEn: def?.countryEn ?? fallback,
     }
   })
+}
+
+/**
+ * A proof row carrying everything the gallery filters on: the lead's country
+ * (from `enrichProofs`) plus the submitter's email and crew, neither of which
+ * lives on the submission itself and so has to be joined in.
+ *
+ * `teamName` is null for a solo explorer. That is a real state rather than
+ * missing data, so the UI labels it instead of hiding the row.
+ */
+export type AdminGalleryProof = AdminProofRow & {
+  email: string
+  teamId: string | null
+  teamName: string | null
+  photoCount: number
+}
+
+export type AdminGalleryData = {
+  proofs: AdminGalleryProof[]
+  /** Every crew that has filed at least one proof, for the team filter. */
+  teams: { id: string; name: string }[]
+  /** Every lead that has at least one proof, in trail order. */
+  leads: { order: number; label: string }[]
+  totalPhotos: number
+}
+
+/**
+ * The COMPLETE proof archive for the gallery tab: every submission ever filed,
+ * with its photos, submitter email and crew. Admin only.
+ *
+ * The submitter is joined per row rather than read off the submission, because
+ * `userName` there is a SNAPSHOT of the display name at upload time: filtering by
+ * person off that string alone would split one explorer into several buckets
+ * after a rename. Joining on `userId` keeps them together.
+ */
+export async function adminListProofGallery(): Promise<AdminGalleryData> {
+  await requireAdmin()
+
+  const rows = await getAllProofs()
+  const enriched = await enrichProofs(rows)
+
+  // One query for every submitter, rather than one per row.
+  const userIds = [...new Set(rows.map((r) => r.userId))]
+  const people =
+    userIds.length > 0
+      ? await db
+          .select({
+            id: user.id,
+            email: user.email,
+            teamId: team.id,
+            teamName: team.name,
+          })
+          .from(user)
+          .leftJoin(teamMember, eq(teamMember.userId, user.id))
+          .leftJoin(team, eq(team.id, teamMember.teamId))
+          .where(inArray(user.id, userIds))
+      : []
+  const byUser = new Map(people.map((p) => [p.id, p]))
+
+  const proofs: AdminGalleryProof[] = enriched.map((r) => {
+    const p = byUser.get(r.userId)
+    return {
+      ...r,
+      // A removed account leaves its proofs behind, so say so rather than
+      // dropping the row out of what is meant to be a complete archive.
+      email: p?.email ?? "(account removed)",
+      teamId: p?.teamId ?? null,
+      teamName: p?.teamName ?? null,
+      photoCount: r.photoUrls.length,
+    }
+  })
+
+  const teamMap = new Map<string, string>()
+  for (const p of proofs) if (p.teamId && p.teamName) teamMap.set(p.teamId, p.teamName)
+
+  const leadMap = new Map<number, string>()
+  for (const p of proofs) leadMap.set(p.leadOrder, p.country)
+
+  return {
+    proofs,
+    teams: [...teamMap.entries()]
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name)),
+    leads: [...leadMap.entries()]
+      .map(([order, label]) => ({ order, label }))
+      .sort((a, b) => a.order - b.order),
+    totalPhotos: proofs.reduce((n, p) => n + p.photoCount, 0),
+  }
 }
 
 /** The proof review queue: pending (oldest first) + recently decided. Admin only. */

@@ -176,6 +176,21 @@ export async function getRecentDecidedProofs(limit = 20): Promise<ProofRow[]> {
   return rows.filter((r) => r.status !== "pending").slice(0, limit)
 }
 
+/**
+ * EVERY submission ever filed, newest first, pending included.
+ *
+ * Deliberately uncapped, unlike `getRecentDecidedProofs`, because this feeds the
+ * gallery, whose whole purpose is to be the complete archive: a cap there would
+ * silently hide history, which is exactly the confusion the review queue's
+ * 20-row window already causes.
+ *
+ * Ordered by `createdAt` rather than `decidedAt` so pending rows (which have no
+ * `decidedAt`) sort alongside decided ones instead of clumping at one end.
+ */
+export async function getAllProofs(): Promise<ProofRow[]> {
+  return db.select().from(proofSubmission).orderBy(desc(proofSubmission.createdAt))
+}
+
 /** A single submission by id. */
 export async function getProofById(id: string): Promise<ProofRow | null> {
   const rows = await db.select().from(proofSubmission).where(eq(proofSubmission.id, id)).limit(1)

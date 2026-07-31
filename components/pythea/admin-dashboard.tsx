@@ -30,9 +30,11 @@ import {
   MapPin,
   Compass,
   Camera,
+  Images,
   Gauge,
 } from "lucide-react"
 import { AdminProofsPanel } from "@/components/pythea/admin-proofs-panel"
+import { AdminGalleryPanel } from "@/components/pythea/admin-gallery-panel"
 import { AdminProgressPanel } from "@/components/pythea/admin-progress-panel"
 import { ModalShell } from "@/components/pythea/modal-shell"
 import { ConfirmDialog } from "@/components/pythea/confirm-dialog"
@@ -84,6 +86,7 @@ type Tab =
   | "location"
   | "finale"
   | "proofs"
+  | "gallery"
 
 type ActivityFilter = { kind: "user" | "team"; id: string; label: string } | null
 
@@ -457,6 +460,11 @@ export function AdminDashboard({
             </span>
           )}
         </TabButton>
+        {/* Sits next to Proofs because they read the same table, but this one is
+            the whole archive rather than the work queue. */}
+        <TabButton active={tab === "gallery"} onClick={() => setTab("gallery")} icon={Images}>
+          Gallery
+        </TabButton>
         {isBootstrap && (
           <TabButton
             active={tab === "location"}
@@ -767,6 +775,8 @@ export function AdminDashboard({
           <AdminPhasePanel data={data.phase} />
         ) : tab === "proofs" ? (
           <AdminProofsPanel />
+        ) : tab === "gallery" ? (
+          <AdminGalleryPanel />
         ) : tab === "location" && isBootstrap ? (
           <AdminLocationPanel />
         ) : tab === "finale" ? (
