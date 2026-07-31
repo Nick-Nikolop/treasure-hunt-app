@@ -18,7 +18,7 @@ import {
 } from "@/lib/hunt"
 import { getAdminUser } from "@/lib/admin"
 import { getCrewGrants } from "@/lib/finale-grants"
-import { reconcileFinalePlacement } from "@/lib/finale-placement"
+import { reconcileFinalePlacement, sweepFinalePlacements } from "@/lib/finale-placement"
 import { getLeadDefs } from "@/lib/leads"
 import { getLeadBgWashPct, getCompassOpacityPct } from "@/lib/hunt-config"
 import { getPhaseContext } from "@/lib/phase-guard"
@@ -93,12 +93,19 @@ export default async function PoreiaPage() {
   // and how many other teams / solo players share the user's current lead.
   const standings = await getStandingsSummary(session.user.id, state.total, now)
 
-  // Put the crew where its grants say it belongs BEFORE reading any of the flags
+  // Put THIS crew where its grants say it belongs BEFORE reading any of the flags
   // below, so a refresh reflects the correction immediately instead of rendering
   // one load behind. Only crews past the end of the trail are touched, and a
   // no-op costs two reads. This is what stops crews drifting upward on their own:
   // whatever a scan did, the next page load pulls them back to their granted rung.
   await reconcileFinalePlacement(session.user.id)
+
+  // Then sweep EVERY other crew at the end of the trail or beyond. Checking only
+  // the visitor would leave a misplaced crew wrong until it happens to open a page
+  // itself, so a crew that drifted and then stopped playing would never be fixed.
+  // The sweep is batched and throttled, and is not awaited: nobody should wait on
+  // other crews' bookkeeping to see their own journal.
+  void sweepFinalePlacements()
 
   // Pytheas's first note is released by the trail-end QR hidden at the LAST
   // lead's own spot, not merely by the last page being revealed. Under the

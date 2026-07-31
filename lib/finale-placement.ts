@@ -6,7 +6,7 @@ import { COMPASS_ORDER, FINISH_ORDER, TRAIL_END_ORDER } from "@/lib/clues"
 import { getTotalLeads } from "@/lib/leads"
 import { getCrewUserIds, setProgressForUsers } from "@/lib/hunt"
 import { getFinaleConfig, isTrailEndHeld } from "@/lib/finale"
-import { getCrewGrants, type FinaleGrants } from "@/lib/finale-grants"
+import { getCrewGrants, getAllGrants, type FinaleGrants } from "@/lib/finale-grants"
 import { logActivity } from "@/lib/activity"
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -131,5 +131,138 @@ export async function reconcileFinalePlacement(userId: string): Promise<void> {
     })
   } catch (err) {
     console.warn("[v0] reconcileFinalePlacement failed", err)
+  }
+}
+
+// ─── Global sweep ────────────────────────────────────────────────────────
+// Checking only the crew that happened to open the journal is not enough: a crew
+// sitting in the wrong place stays wrong until IT loads a page, so a crew that
+// drifted overnight and then stopped playing would never be corrected. Any
+// journal load therefore sweeps EVERY crew at the end of the trail or beyond.
+//
+// The sweep is batched (a handful of queries for the whole field, not per crew)
+// and throttled, because a busy moment can mean many crews loading at once and
+// they would otherwise each kick off a duplicate pass.
+
+/** Minimum gap between sweeps, per server instance. */
+const SWEEP_INTERVAL_MS = 15_000
+let lastSweepAt = 0
+/** Shared in-flight sweep, so concurrent loads join one pass instead of racing. */
+let sweepInFlight: Promise<void> | null = null
+
+/**
+ * Re-place every crew that has closed the trail. Throttled: returns immediately
+ * if a sweep ran recently or is already running, so this is safe to call from
+ * every journal render.
+ */
+export async function sweepFinalePlacements(): Promise<void> {
+  if (sweepInFlight) return sweepInFlight
+  if (Date.now() - lastSweepAt < SWEEP_INTERVAL_MS) return
+  sweepInFlight = runSweep().finally(() => {
+    lastSweepAt = Date.now()
+    sweepInFlight = null
+  })
+  return sweepInFlight
+}
+
+async function runSweep(): Promise<void> {
+  try {
+    // One read each for the whole field, rather than per crew.
+    const [endRows, members, grantSets, finale, total] = await Promise.all([
+      db
+        .select({ userId: leadUnlock.userId, leadOrder: leadUnlock.leadOrder })
+        .from(leadUnlock)
+        .where(
+          inArray(leadUnlock.leadOrder, [TRAIL_END_ORDER, COMPASS_ORDER, FINISH_ORDER]),
+        ),
+      db
+        .select({ teamId: teamMember.teamId, userId: teamMember.userId })
+        .from(teamMember),
+      getAllGrants(),
+      getFinaleConfig(),
+      getTotalLeads(),
+    ])
+    if (endRows.length === 0) return
+
+    const held = isTrailEndHeld(finale)
+
+    // userId -> its team, and teamId -> all of its members.
+    const teamOf = new Map<string, string>()
+    const membersOf = new Map<string, string[]>()
+    for (const m of members) {
+      teamOf.set(m.userId, m.teamId)
+      const list = membersOf.get(m.teamId)
+      if (list) list.push(m.userId)
+      else membersOf.set(m.teamId, [m.userId])
+    }
+
+    // Fold the sentinel rows into crews. A crew shares progress, so any member's
+    // row counts for the whole crew, exactly as the per-crew checks treat it.
+    const crewOrders = new Map<string, Set<number>>()
+    for (const r of endRows) {
+      const key = teamOf.get(r.userId) ?? `solo:${r.userId}`
+      const set = crewOrders.get(key)
+      if (set) set.add(r.leadOrder)
+      else crewOrders.set(key, new Set([r.leadOrder]))
+    }
+
+    const anyOf = (ids: string[], set: Set<string>) => ids.some((id) => set.has(id))
+    const teamNames = new Map<string, string>()
+
+    for (const [key, orders] of crewOrders) {
+      // Only crews that closed the trail.
+      if (!orders.has(TRAIL_END_ORDER)) continue
+
+      const isSolo = key.startsWith("solo:")
+      const crew = isSolo ? [key.slice(5)] : (membersOf.get(key) ?? [])
+      if (crew.length === 0) continue
+
+      const grants: FinaleGrants = {
+        note1: anyOf(crew, grantSets.note1),
+        note2: anyOf(crew, grantSets.note2),
+        treasure: anyOf(crew, grantSets.treasure),
+      }
+
+      const from = placementFromRows(orders)
+      const to = placementForGrants(grants, held)
+      if (from === to) continue
+
+      await setProgressForUsers(crew, total, "admin", to)
+
+      let teamName: string | null = null
+      if (!isSolo) {
+        if (!teamNames.has(key)) {
+          const t = await db
+            .select({ name: team.name })
+            .from(team)
+            .where(eq(team.id, key))
+            .limit(1)
+          teamNames.set(key, t[0]?.name ?? "Team")
+        }
+        teamName = teamNames.get(key) ?? null
+      }
+
+      await logActivity({
+        category: "auto",
+        action: "auto.replacement",
+        teamId: isSolo ? null : key,
+        teamName,
+        targetUserId: isSolo ? crew[0] : null,
+        summary: `${teamName ?? "Solo player"} moved from ${PLACEMENT_LABEL[from]} to ${PLACEMENT_LABEL[to]}${
+          held ? " (hold is on)" : ""
+        }`,
+        metadata: {
+          from,
+          to,
+          held,
+          grants,
+          crewSize: crew.length,
+          reason: held ? "hold_active" : "grants",
+          sweep: true,
+        },
+      })
+    }
+  } catch (err) {
+    console.warn("[v0] sweepFinalePlacements failed", err)
   }
 }
