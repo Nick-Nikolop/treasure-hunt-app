@@ -1,9 +1,13 @@
 // ─────────────────────────────────────────────────────────────────────────
 //  Round-robin compass hint variants.
 //
-//  The compass note closes with ONE of four hiding hints, handed out in strict
-//  rotation: the first crew to reach the trail end gets variant 1, the next gets
-//  variant 2, and so on, wrapping back around after the fourth.
+//  NOTE 2 (the compass-scan note) closes with ONE of four hiding hints, handed
+//  out in strict rotation: the first crew to scan the compass gets variant 1, the
+//  next gets variant 2, and so on, wrapping back around after the fourth.
+//
+//  The hints rode on note 1 until 07-31, so the assignment used to happen at the
+//  trail end. Nothing in this module changed with that move; only the caller's
+//  gate did. The table and sequence keep their "compass" names.
 //
 //  Two properties matter and both are enforced here rather than in the UI:
 //

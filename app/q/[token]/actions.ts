@@ -10,10 +10,15 @@ import {
   unlockByToken,
   getCrewUserIds,
   getFinishPlacement,
+  hasReachedCompass,
   type UnlockResult,
 } from "@/lib/hunt"
-import { getFinaleConfig, composeCompassNote, isTrailEndHeld } from "@/lib/finale"
-import { getOrAssignCompassVariant, resolveCrewKey } from "@/lib/compass-variant"
+import { getFinaleConfig, composeNote2WithHint, isTrailEndHeld } from "@/lib/finale"
+import {
+  getOrAssignCompassVariant,
+  peekCompassVariant,
+  resolveCrewKey,
+} from "@/lib/compass-variant"
 import { getLeadDefs } from "@/lib/leads"
 import {
   createProofSubmission,
@@ -144,15 +149,16 @@ export async function getFinaleSummary(): Promise<FinaleSummary | null> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return null
 
-  const [placement, finale, crewKey, admin] = await Promise.all([
+  const [placement, finale, crewKey, admin, compassFound] = await Promise.all([
     getFinishPlacement(session.user.id),
     getFinaleConfig(),
     resolveCrewKey(session.user.id),
     getAdminUser(),
+    hasReachedCompass(session.user.id),
   ])
 
   // The SECOND place note 1 is handed out (the journal is the other), so the hold
-  // has to be enforced here too. Sealing only the journal would leave the hint
+  // has to be enforced here too. Sealing only the journal would leave note 1
   // readable straight off this response the moment the trail-end QR is scanned.
   // Admins are exempt, so the finale stays proofreadable.
   // Honours the per-account hold bypass too, so the test account is handed note 1
@@ -162,18 +168,32 @@ export async function getFinaleSummary(): Promise<FinaleSummary | null> {
     isTrailEndHeld(finale) &&
     !(await isHoldBypassedForUser(session.user.id))
 
-  // Only composed when the note is actually being handed over. Assigning while
-  // held would burn a rotation slot on a hint the crew cannot read yet, and would
-  // shift which hint the next real crew receives.
-  const composed = held
-    ? { body: "", bodyEn: "" }
-    : composeCompassNote(finale, await getOrAssignCompassVariant(crewKey))
+  // The rotating hint moved to note 2 on 07-31, so the assignment follows it here
+  // too. Assigned ONLY once the compass is really found: this same payload feeds
+  // the trail-end screen, so assigning any earlier would burn a rotation slot on
+  // text the crew cannot read yet and shift which hint the next crew receives.
+  // Admins PEEK, so proofreading the finale never consumes a slot either (it did
+  // before this move, because the old call site ran for every non-held viewer).
+  const variantIndex = compassFound
+    ? await getOrAssignCompassVariant(crewKey)
+    : ((await peekCompassVariant(crewKey)) ?? 0)
+
+  // Note 2 is the note that now names a real hiding place, so its composed body
+  // is built only for someone entitled to read it. Everyone else still gets the
+  // plain configured text, exactly as before, because the trail-end screen reads
+  // this same response and must not receive the hint in it.
+  const composedNote2 =
+    compassFound || admin !== null
+      ? composeNote2WithHint(finale, variantIndex)
+      : { body: finale.note2, bodyEn: finale.note2En }
 
   return {
     place: placement.place,
     totalFinishers: placement.totalFinishers,
-    note1: composed.body,
-    note1En: composed.bodyEn,
+    // Verbatim now: note 1 no longer carries any rotating text. Still blanked
+    // while held, since it is what sends a crew hunting in the first place.
+    note1: held ? "" : finale.note1,
+    note1En: held ? "" : finale.note1En,
     // NOT blanked while held, unlike note 1's body and CTA: this rides on note 2
     // now, which a held crew cannot have reached anyway, and unlike the hiding
     // hint it gives away nothing about where anything is.
@@ -181,8 +201,8 @@ export async function getFinaleSummary(): Promise<FinaleSummary | null> {
     compassReturnEn: finale.compassReturnEn,
     note1Cta: held ? "" : finale.note1Cta,
     note1CtaEn: held ? "" : finale.note1CtaEn,
-    note2: finale.note2,
-    note2En: finale.note2En,
+    note2: composedNote2.body,
+    note2En: composedNote2.bodyEn,
     note2Cta: finale.note2Cta,
     note2CtaEn: finale.note2CtaEn,
     winner: finale.winner,

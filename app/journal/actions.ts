@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache"
 import { auth } from "@/lib/auth"
 import { isOverrideAuthorized, PREVIEW_COOKIE } from "@/lib/clues"
 import { getTotalLeads } from "@/lib/leads"
-import { getFinaleConfig, composeCompassNote, isTrailEndHeld } from "@/lib/finale"
+import { getFinaleConfig, composeNote2WithHint, isTrailEndHeld } from "@/lib/finale"
 import {
   getOrAssignCompassVariant,
   peekCompassVariant,
@@ -63,7 +63,7 @@ export async function getFinaleNotes(previewVariant?: number): Promise<{
   note1: FinaleNote | null
   note2: FinaleNote | null
   /**
-   * Admin-only preview controls for note 1's rotating hint. Null for ordinary
+   * Admin-only preview controls for note 2's rotating hint. Null for ordinary
    * explorers, who must never learn that other versions exist, let alone read
    * them: the four hints name four different hiding places.
    */
@@ -109,18 +109,23 @@ export async function getFinaleNotes(previewVariant?: number): Promise<{
   const holdBypassed = await isHoldBypassedForUser(session.user.id)
   const held = !bypass && !holdBypassed && trailEnd && isTrailEndHeld(finale)
   const note1Open = trailEnd && !held && mayNote1
+  // Note 2 carries the rotating hint since 07-31. It needs the compass to have
+  // been physically found, which already implies the trail end and the hold, so
+  // there is no `held` term here: a held crew cannot have scanned the compass.
+  const note2Open = compass && mayNote2
 
   // Which of the four rotating hints this crew reads. A real crew is assigned one
   // on first read and keeps it forever; an admin/preview only PEEKS, so
   // proofreading the note never consumes a slot and never shifts what the next
   // real crew is handed. With nothing assigned yet, they preview the first hint.
   //
-  // Deliberately gated on `note1Open`, not `trailEnd`: assigning a rotating hint
-  // to a held crew would burn a rotation slot for a note they cannot read yet.
-  // They are assigned one when the hold lifts and they actually open it.
+  // Deliberately gated on `note2Open`, the note the hint actually rides on, so a
+  // crew is never assigned a slot for text they cannot read yet: that would shift
+  // which hint the next real crew receives. Same reasoning that previously gated
+  // this on note 1 rather than on `trailEnd`.
   let variantIndex = 0
   let assigned: number | null = null
-  if (note1Open) {
+  if (note2Open) {
     const crewKey = await resolveCrewKey(session.user.id)
     if (bypass) {
       assigned = await peekCompassVariant(crewKey)
@@ -143,35 +148,38 @@ export async function getFinaleNotes(previewVariant?: number): Promise<{
       variantIndex = await getOrAssignCompassVariant(crewKey)
     }
   }
-  const composed = composeCompassNote(finale, variantIndex)
+  const composed = composeNote2WithHint(finale, variantIndex)
 
   return {
-    // Sealed on the SERVER, not merely hidden in the UI: this note names a real
-    // hiding place in Kalamata, so shipping it to a held crew's browser would
-    // hand them the compass location through devtools.
+    // Sealed on the SERVER, not merely hidden in the UI, so the text never
+    // reaches an unearned crew's browser where devtools would read it straight
+    // out of the network response.
     note1: note1Open
       ? {
-          body: composed.body,
-          bodyEn: composed.bodyEn,
+          body: finale.note1,
+          bodyEn: finale.note1En,
           cta: finale.note1Cta,
           ctaEn: finale.note1CtaEn,
         }
       : null,
-    note2:
-      compass && mayNote2
-        ? {
-            body: finale.note2,
-            bodyEn: finale.note2En,
-            cta: finale.note2Cta,
-            ctaEn: finale.note2CtaEn,
-            // Rides on note 2, not note 1: the crew only HAS the compass once
-            // they have found it, so asking for it back any earlier is premature.
-            notice: finale.compassReturn,
-            noticeEn: finale.compassReturnEn,
-          }
-        : null,
+    note2: note2Open
+      ? {
+          // Carries the rotating hint, so this body is the one that names a real
+          // hiding place. Composed only inside this branch: building it for an
+          // ungated viewer would ship the hint in the response even if the UI
+          // never drew it.
+          body: composed.body,
+          bodyEn: composed.bodyEn,
+          cta: finale.note2Cta,
+          ctaEn: finale.note2CtaEn,
+          // Rides on note 2, not note 1: the crew only HAS the compass once
+          // they have found it, so asking for it back any earlier is premature.
+          notice: finale.compassReturn,
+          noticeEn: finale.compassReturnEn,
+        }
+      : null,
     variants:
-      bypass && trailEnd
+      bypass && compass
         ? { active: variantIndex, count: COMPASS_VARIANT_COUNT, assigned }
         : null,
     held,

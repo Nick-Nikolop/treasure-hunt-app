@@ -28,10 +28,13 @@ const DEFAULT_NOTE1_EN =
   'This is roughly where my journal ends. So you will wonder, "well then, where is this treasure of Pytheas?". Do not worry, the treasure is not the journey this time, as you know from the usual cliches.\n\nTo be able to find the treasure, though, you will need my compass. I have hidden it very well.\n\nMy compass is only for those who know how to observe, and not merely to look. For those who do not rush, but pay attention and piece together even the smallest detail of their journey. I leave it to you. I believe you will find my compass; somewhere inside Kalamata it lies, after all.'
 
 /**
- * The four hiding hints that close the compass note, handed out in strict
- * rotation (see lib/compass-variant.ts). Each crew reads exactly one, and always
- * the same one, so these must stay four entries: the assignment stored per crew
- * is an index into this list.
+ * The four hints that close NOTE 2, handed out in strict rotation (see
+ * lib/compass-variant.ts). Each crew reads exactly one, and always the same one,
+ * so these must stay four entries: the assignment stored per crew is an index
+ * into this list.
+ *
+ * They rode on note 1 until 07-31. The wording below is still the original
+ * compass wording, kept verbatim on purpose: only the position moved.
  */
 const DEFAULT_COMPASS_HINTS: { el: string; en: string }[] = [
   {
@@ -409,14 +412,23 @@ export async function getFinaleConfig(): Promise<FinaleConfig> {
 }
 
 /**
- * The compass note as a specific crew must read it: the shared body, then the
- * ONE rotating hiding hint that crew was assigned, as a closing paragraph.
+ * NOTE 2 as a specific crew must read it: the shared body, then the ONE rotating
+ * hint that crew was assigned, as a closing paragraph.
+ *
+ * MOVED OFF NOTE 1 on 07-31, while the hold had never been lifted, so no crew had
+ * yet read a hint in the old position and the rotation could be reset clean. The
+ * rotation mechanism is untouched; only the note it rides on changed. Two
+ * consequences follow from that and are relied on by the callers:
+ *
+ *   - note 1 now has no rotating text at all, so it is used verbatim,
+ *   - a crew is assigned its variant when NOTE 2 opens, not at the trail end, so
+ *     the rotation order follows who reaches note 2 first.
  *
  * The courtesy "put it back" line is deliberately NOT folded in here. It is
  * returned separately (see `compassReturn`) because it is rendered as a
  * highlighted aside rather than another paragraph of Pytheas's handwriting.
  */
-export function composeCompassNote(
+export function composeNote2WithHint(
   cfg: FinaleConfig,
   variantIndex: number,
 ): { body: string; bodyEn: string } {
@@ -426,15 +438,15 @@ export function composeCompassNote(
         cfg.compassHints.length
       : 0
   const hint = cfg.compassHints[i]
-  if (!hint) return { body: cfg.note1, bodyEn: cfg.note1En }
+  if (!hint) return { body: cfg.note2, bodyEn: cfg.note2En }
   const join = (base: string, tail: string) => {
     const b = base.trimEnd()
     const s = tail.trim()
     return s.length > 0 ? `${b}\n\n${s}` : b
   }
   return {
-    body: join(cfg.note1, hint.el),
-    bodyEn: join(cfg.note1En, hint.en),
+    body: join(cfg.note2, hint.el),
+    bodyEn: join(cfg.note2En, hint.en),
   }
 }
 
