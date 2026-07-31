@@ -29,11 +29,13 @@ export const MAX_PROOF_BYTES = 10 * 1024 * 1024
 export const MAX_PROOF_NOTE_CHARS = 500
 
 /**
- * The finale marks ask for a SHORT explanation of how they reached the spot.
- * Kept deliberately tight so the answer stays a sentence or two, since the
- * photos carry the actual evidence and a reviewer reads these at a glance.
+ * The finale marks (compass + treasure) ask for a SHORT explanation of how they
+ * reached the spot. Kept tight so the answer stays a couple of sentences, since
+ * the photos carry the actual evidence and a reviewer reads these at a glance.
+ * Both the client `maxLength` and the server-side truncation derive from this,
+ * so this constant is the only place the ceiling lives.
  */
-export const MAX_FINALE_NOTE_CHARS = 100
+export const MAX_FINALE_NOTE_CHARS = 200
 
 /** How many characters of explanation this mark accepts. */
 export function maxProofNoteChars(finale: boolean): number {

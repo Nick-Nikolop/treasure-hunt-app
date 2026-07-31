@@ -60,11 +60,14 @@ const STAMP_SRC: Record<string, string> = {
   Ισπανία: "/stamps/spain.png",
   Αίγυπτος: "/stamps/egypt.png",
   Ρωσία: "/stamps/russia.png",
+  Αγγλία: "/stamps/england.png",
+  Τουρκία: "/stamps/turkey.png",
   Φινλανδία: "/stamps/finland.png",
 }
 
-/** A small set of natural-looking tilt angles, picked by clue order. */
-const STAMP_ROTATION = [-6, 5, -4, 7, -7, 4, -5, 6, -3]
+/** A small set of natural-looking tilt angles, picked by clue order. One per
+ *  lead (10) so no two stamps in the final collage share a tilt. */
+const STAMP_ROTATION = [-6, 5, -4, 7, -7, 4, -5, 6, -3, 3]
 
 /** The background art for a clue page: the lead's own uploaded image, else the
  *  bundled landmark for that lead's identity. Resolved by lead id (never by

@@ -637,7 +637,8 @@ function ProofForm({
   const { t } = useI18n()
   const p = t.scan.proof
   const maxPhotos = maxProofPhotos(finale)
-  // Finale asks for a SHORT explanation (100 chars), ordinary notes stay roomy.
+  // Finale asks for a SHORT explanation (see MAX_FINALE_NOTE_CHARS), ordinary
+  // notes stay roomy. The exact ceiling lives in lib/proof-limits.ts.
   const maxNoteChars = maxProofNoteChars(finale)
   // Finale copy is a separate block: it asks for the story of the find, where the
   // ordinary strings only ask for a "note for the admin".
@@ -839,8 +840,8 @@ function ProofForm({
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder={f.storyPlaceholder}
-            // 3 rows so a full 100-char answer is visible without scrolling.
-            rows={3}
+            // 4 rows so a full 200-char answer is visible without scrolling.
+            rows={4}
             maxLength={maxNoteChars}
             required
             aria-describedby="proof-story-count"
