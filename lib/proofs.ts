@@ -206,10 +206,10 @@ export async function getDecidedProofCount(): Promise<number> {
 /**
  * EVERY submission ever filed, newest first, pending included.
  *
- * Deliberately uncapped, unlike `getRecentDecidedProofs`, because this feeds the
+ * Deliberately uncapped, unlike `getDecidedProofs`, because this feeds the
  * gallery, whose whole purpose is to be the complete archive: a cap there would
- * silently hide history, which is exactly the confusion the review queue's
- * 20-row window already causes.
+ * silently hide history, which is the confusion the review queue's paged window
+ * used to cause before it grew a "show more".
  *
  * Ordered by `createdAt` rather than `decidedAt` so pending rows (which have no
  * `decidedAt`) sort alongside decided ones instead of clumping at one end.
