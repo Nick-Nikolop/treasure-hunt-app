@@ -885,6 +885,14 @@ const el = {
     retryHint: "Μπορείς να ξαναδοκιμάσεις τον έλεγχο τοποθεσίας ή να στείλεις νέες φωτογραφίες.",
     dismiss: "Κλείσιμο",
   },
+  announcement: {
+    label: "ΣΗΜΑΝΤΙΚΗ ΑΝΑΚΟΙΝΩΣΗ",
+    bodyBefore: "Έχει εντοπιστεί τυπογραφικό λάθος. Το QR της Σερβίας, αντί για ",
+    bodyMiddle: ", θα έπρεπε να γράφει ",
+    bodyAfter: ".",
+    apology: "Συγνώμη για την αναστάτωση.",
+    sign: "Happy hunting!",
+  },
   hint: {
     eyebrow: "ΜΙΑ ΒΟΗΘΕΙΑ",
     forLead: (n: string, country: string) => `Για το σημάδι Νο. ${n} · ${country}`,
@@ -1974,6 +1982,14 @@ const en: Dictionary = {
     viewCta: "OPEN THE JOURNAL",
     retryHint: "You can retry the location check or send new photos.",
     dismiss: "Dismiss",
+  },
+  announcement: {
+    label: "IMPORTANT ANNOUNCEMENT",
+    bodyBefore: "A typo has been found. Serbia's QR, instead of ",
+    bodyMiddle: ", should read ",
+    bodyAfter: ".",
+    apology: "Sorry for the confusion.",
+    sign: "Happy hunting!",
   },
   hint: {
     eyebrow: "A HELPING HAND",

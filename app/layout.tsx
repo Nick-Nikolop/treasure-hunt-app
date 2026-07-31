@@ -12,6 +12,7 @@ import { NotificationProvider } from '@/components/pythea/notification-provider'
 import { HoldReleaseToast } from '@/components/pythea/hold-release-toast'
 import { HoldWaitNotice } from '@/components/pythea/hold-wait-notice'
 import { AdminAlertsWidget } from '@/components/pythea/admin-alerts-widget'
+import { AnnouncementModal } from '@/components/pythea/announcement-modal'
 import { ContactWidget } from '@/components/pythea/contact-widget'
 import { getPhaseContext, getPublicPhase } from '@/lib/phase-guard'
 import { DEFAULT_LOCALE, isLocale, LANG_COOKIE, type Locale } from '@/lib/i18n'
@@ -182,6 +183,11 @@ export default async function RootLayout({
                 for the same reason, and it reappears on every load by design. */}
             <HoldWaitNotice />
             <AdminAlertsWidget />
+            {/* Site-wide notice, shown to everyone on every page. Reappears on
+                each load / navigation by design (see the component); the journal
+                label re-opens it after dismissal. Inside LanguageProvider so it
+                reads localised copy. */}
+            <AnnouncementModal />
             {/* Inside LanguageProvider: it reads localised copy. */}
             <ContactWidget />
           </LanguageProvider>

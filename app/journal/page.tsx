@@ -4,6 +4,7 @@ import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
 import { Atmosphere } from "@/components/pythea/atmosphere"
 import { SiteHeader } from "@/components/pythea/site-header"
+import { AnnouncementLabel } from "@/components/pythea/announcement-label"
 import { PoreiaView } from "@/components/pythea/poreia-view"
 import { SiteFooter } from "@/components/pythea/site-footer"
 import { ClueControls } from "@/components/pythea/clue-controls"
@@ -170,6 +171,9 @@ export default async function PoreiaPage() {
         progress={{ unlocked: state.unlockedCount, total: state.total, current }}
       />
       <div className="flex min-h-screen flex-col">
+        {/* Always-available way to re-read the site announcement after it has
+            been dismissed. Shown to every player, no admin gating. */}
+        <AnnouncementLabel />
         <PoreiaView
           unlocked={unlocked}
           locked={state.locked}
