@@ -1,11 +1,12 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Hourglass, BellRing, X } from "lucide-react"
+import { Hourglass, BellRing, Clock, X } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
 import { getFinaleNotes } from "@/app/journal/actions"
 import { HoldPaper } from "@/components/pythea/hold-paper"
 import { HoldReleaseToast } from "@/components/pythea/hold-release-toast"
+import { HoldWaitNotice } from "@/components/pythea/hold-wait-notice"
 
 /**
  * Admin-only test buttons for the trail-end hold, at the foot of the journal.
@@ -47,7 +48,7 @@ export function HoldPreviewButtons() {
   }, [locale])
   const j = t.journal
   const f = t.finale
-  const [open, setOpen] = useState<null | "paper" | "alert">(null)
+  const [open, setOpen] = useState<null | "paper" | "alert" | "wait">(null)
 
   useEffect(() => {
     if (open === null) return
@@ -84,6 +85,12 @@ export function HoldPreviewButtons() {
             label={f.adminTestRelease}
             badge={f.adminTestLabel}
             onClick={() => setOpen("alert")}
+          />
+          <TestButton
+            icon={Clock}
+            label={f.adminTestWait}
+            badge={f.adminTestLabel}
+            onClick={() => setOpen("wait")}
           />
         </div>
         <span className="max-w-xs text-pretty font-sans text-[11px] leading-relaxed tracking-chip text-muted-foreground/70">
@@ -143,6 +150,10 @@ export function HoldPreviewButtons() {
       {/* The real toast component, so what an admin proofreads here is exactly
           what a released crew is shown. Dismissing it writes no flag. */}
       {open === "alert" && <HoldReleaseToast onDismiss={() => setOpen(null)} preview />}
+
+      {/* Same again for the waiting notice, which a held crew sees on every load
+          until the hold is lifted. */}
+      {open === "wait" && <HoldWaitNotice onDismiss={() => setOpen(null)} preview />}
     </>
   )
 }

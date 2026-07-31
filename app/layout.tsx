@@ -10,6 +10,7 @@ import { AnalyticsProvider } from '@/components/pythea/analytics-provider'
 import { CookieConsent } from '@/components/pythea/cookie-consent'
 import { NotificationProvider } from '@/components/pythea/notification-provider'
 import { HoldReleaseToast } from '@/components/pythea/hold-release-toast'
+import { HoldWaitNotice } from '@/components/pythea/hold-wait-notice'
 import { AdminAlertsWidget } from '@/components/pythea/admin-alerts-widget'
 import { ContactWidget } from '@/components/pythea/contact-widget'
 import { getPhaseContext, getPublicPhase } from '@/lib/phase-guard'
@@ -176,6 +177,10 @@ export default async function RootLayout({
             {/* Global so a held crew is told the way opened wherever they are
                 waiting, not only if they happen to be on the journal. */}
             <HoldReleaseToast />
+            {/* The mirror of the toast above: while the hold is still on, a crew
+                that closed the trail is reminded when the hunt resumes. Global
+                for the same reason, and it reappears on every load by design. */}
+            <HoldWaitNotice />
             <AdminAlertsWidget />
             {/* Inside LanguageProvider: it reads localised copy. */}
             <ContactWidget />

@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth"
 import { getMyUnacknowledgedDecisions, acknowledgeDecision } from "@/lib/proofs"
 import { getLeadDefs } from "@/lib/leads"
 import { getFinaleConfig, isTrailEndHeld } from "@/lib/finale"
+import { HOLD_RESUME_AT_MS } from "@/lib/hold-resume"
 import { getCrewUserIds, getCrewTrailEndAt } from "@/lib/hunt"
 
 /**
@@ -55,6 +56,34 @@ export async function acknowledgeMyDecision(id: string): Promise<{ ok: boolean }
   if (!session?.user) return { ok: false }
   await acknowledgeDecision(id, session.user.id)
   return { ok: true }
+}
+
+/**
+ * Whether this explorer is currently WAITING on the hold, and so should be told
+ * when the hunt resumes.
+ *
+ * The exact mirror of `getHoldRelease`: that one fires once the hold is lifted,
+ * this one while it is still on. A crew qualifies only if the trail end is held
+ * AND they have already closed the trail, so nobody still mid-trail is told to
+ * wait for something that does not concern them yet.
+ *
+ * `resumeAtMs` is sent from the server as a fixed UTC instant, so the countdown
+ * cannot drift with a visitor's own clock or time zone.
+ */
+export async function getHoldWait(): Promise<{ show: boolean; resumeAtMs: number }> {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session?.user) return { show: false, resumeAtMs: HOLD_RESUME_AT_MS }
+
+  const cfg = await getFinaleConfig()
+  // The hold is off (or was never on): there is no wait to explain.
+  if (!isTrailEndHeld(cfg)) return { show: false, resumeAtMs: HOLD_RESUME_AT_MS }
+
+  // Crew-wide, like the release alert: one teammate's scan closes the trail for
+  // everyone, so the whole crew is waiting together.
+  const crew = await getCrewUserIds(session.user.id)
+  const reachedAt = await getCrewTrailEndAt(crew)
+
+  return { show: reachedAt !== null, resumeAtMs: HOLD_RESUME_AT_MS }
 }
 
 /**
