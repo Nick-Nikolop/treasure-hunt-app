@@ -350,6 +350,26 @@ export function finaleOrderLabel(order: number): string | null {
   return null
 }
 
+/**
+ * Player-facing name for an endgame sentinel in both languages, or null for a
+ * real lead position.
+ *
+ * The English half duplicates `finaleOrderLabel` on purpose: that one feeds the
+ * admin panels, where English is fine, while this one reaches explorers and so
+ * has to be translated.
+ *
+ * The Greek is deliberately NEUTER ("to simadi..."), because the copy that
+ * consumes this already hardcodes the article, e.g. "To {country} xekleidothike".
+ * A feminine noun like "pyxida" would render "To pyxida" and read as broken
+ * Greek, so each name is phrased as a neuter "simadi" of something.
+ */
+export function finaleOrderNames(order: number): { el: string; en: string } | null {
+  if (order === TRAIL_END_ORDER) return { el: "τελευταίο σημάδι της πορείας", en: "The Trail End" }
+  if (order === COMPASS_ORDER) return { el: "σημάδι της πυξίδας", en: "The Compass" }
+  if (order === FINISH_ORDER) return { el: "σημάδι του θησαυρού", en: "The Treasure" }
+  return null
+}
+
 // ── Standings ───────────────────────────────────────────────────────────────
 //
 // There are no points in this hunt. A standing is decided by exactly two

@@ -4,6 +4,7 @@ import { headers } from "next/headers"
 import { auth } from "@/lib/auth"
 import { getMyUnacknowledgedDecisions, acknowledgeDecision } from "@/lib/proofs"
 import { getLeadDefs } from "@/lib/leads"
+import { finaleOrderNames } from "@/lib/clues"
 import { getFinaleConfig, isTrailEndHeld } from "@/lib/finale"
 import { HOLD_RESUME_AT_MS } from "@/lib/hold-resume"
 import { getCrewUserIds, getCrewTrailEndAt } from "@/lib/hunt"
@@ -38,12 +39,18 @@ export async function getMyDecisionNotifications(): Promise<DecisionNotification
   const defs = await getLeadDefs()
   return rows.map((r) => {
     const def = defs.find((d) => d.order === r.leadOrder)
+    // The finale stops (trail end, compass, treasure) carry a sentinel ORDER
+    // rather than a position, and no lead def will ever match them. Falling
+    // through to the numbered form printed the raw sentinel at the explorer,
+    // e.g. "No. 100002 is unlocked", which reads like a broken app. Name them.
+    const finale = finaleOrderNames(r.leadOrder)
+    const fallback = `No. ${String(r.leadOrder).padStart(2, "0")}`
     return {
       id: r.id,
       status: r.status as "approved" | "rejected",
       leadOrder: r.leadOrder,
-      country: def?.country ?? `No. ${String(r.leadOrder).padStart(2, "0")}`,
-      countryEn: def?.countryEn ?? `No. ${String(r.leadOrder).padStart(2, "0")}`,
+      country: def?.country ?? finale?.el ?? fallback,
+      countryEn: def?.countryEn ?? finale?.en ?? fallback,
       reason: r.reason,
       decidedAtMs: r.decidedAt ? r.decidedAt.getTime() : null,
     }
