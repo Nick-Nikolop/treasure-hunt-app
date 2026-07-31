@@ -1303,6 +1303,15 @@ const NOTE1_SEEN_KEY = "pythea:note1-seen"
 const SHOW_WON_BUTTON = false
 
 /**
+ * Hard off-switch for the two note pills and their overlays.
+ *
+ * Same reason as SHOW_WON_BUTTON: crews reached states they should not have, so
+ * the notes (which reveal the compass and treasure locations) must stay sealed
+ * until progress is cleaned up. Flip back to true to hand the notes out again.
+ */
+const SHOW_NOTE_BUTTONS = false
+
+/**
  * A single shared request for the notes. Several entry points (the bar above the
  * book and the final page itself) can be mounted at once, so without this they
  * would each fetch their own copy.
@@ -1764,8 +1773,9 @@ function FinaleNoteBar({
 
   // A pill is shown when the note has been earned, or to an admin previewing it.
   // The note body itself is only ever present when the server chose to send it.
-  const show1 = note1 !== null && (trailEndReached || isAdmin)
-  const show2 = note2 !== null && (compassReached || isAdmin)
+  // Both hard-gated off for now (see SHOW_NOTE_BUTTONS).
+  const show1 = SHOW_NOTE_BUTTONS && note1 !== null && (trailEndReached || isAdmin)
+  const show2 = SHOW_NOTE_BUTTONS && note2 !== null && (compassReached || isAdmin)
   // The winner pill is earned, never previewed: admins already have their own
   // clearly-labelled preview button at the foot of the journal, so showing this
   // one to them too would just be a second, unlabelled copy of the same screen.
@@ -1977,13 +1987,23 @@ function FinalPageBody({
   const autoShown = useRef(false)
 
   useEffect(() => {
-    if (!note || autoShown.current || !trailEndReached) return
+    if (autoShown.current || !trailEndReached) return
+    // A held crew has note1 === null on purpose (the server seals it), so gating
+    // this on `note` alone left them with NOTHING opening on arrival. Show the
+    // hold slip in its place, since for them that IS the arrival message.
+    if (held && hold) {
+      autoShown.current = true
+      setOpen("hold")
+      return
+    }
+    // Note 1 is hard-gated off for now, so it must not auto-reveal either.
+    if (!SHOW_NOTE_BUTTONS || !note) return
     const seen = typeof window !== "undefined" && localStorage.getItem(NOTE1_SEEN_KEY)
     if (!seen) {
       autoShown.current = true
       setOpen(1)
     }
-  }, [note, trailEndReached])
+  }, [note, trailEndReached, held, hold])
 
   const openNote = useCallback(() => setOpen(1), [])
   const closeNote = useCallback(() => {
@@ -1996,8 +2016,9 @@ function FinalPageBody({
   // both notes should be able to re-read either one from here, and a finished
   // crew should still reach its notes and not just the trophy.
   const showHold = held && hold !== null && trailEndReached
-  const showNote1 = note !== null && trailEndReached
-  const showNote2 = note2 !== null && compassReached
+  // Both hard-gated off for now (see SHOW_NOTE_BUTTONS).
+  const showNote1 = SHOW_NOTE_BUTTONS && note !== null && trailEndReached
+  const showNote2 = SHOW_NOTE_BUTTONS && note2 !== null && compassReached
   // Hard-gated off while wrongly-finished crews exist (see SHOW_WON_BUTTON).
   const showWon = SHOW_WON_BUTTON && finished
 
