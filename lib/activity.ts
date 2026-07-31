@@ -15,7 +15,9 @@ import { activityLog, user } from "@/lib/db/schema"
 import { and, desc, eq, ilike, inArray, lt, or, type SQL } from "drizzle-orm"
 import { randomUUID } from "node:crypto"
 
-export type ActivityCategory = "lead" | "team" | "admin" | "auth"
+// "auto" is written by the system with no admin behind it: currently the finale
+// re-placement pass that keeps each crew standing where its grants say it should.
+export type ActivityCategory = "lead" | "team" | "admin" | "auth" | "auto"
 
 /** A single event to record. Only `category`, `action` and `summary` are required. */
 export type ActivityInput = {

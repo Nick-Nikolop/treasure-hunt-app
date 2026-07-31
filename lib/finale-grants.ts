@@ -1,8 +1,10 @@
 import "server-only"
 import { and, eq, inArray } from "drizzle-orm"
 import { db } from "@/lib/db"
-import { finaleGrant } from "@/lib/db/schema"
-import { getCrewUserIds } from "@/lib/hunt"
+// NOTE: this module must NOT import from "@/lib/hunt". hunt.ts writes a grant when
+// an admin approves a finale photo, so importing a helper back from there would
+// form a cycle. The crew is resolved with a local query instead.
+import { finaleGrant, teamMember } from "@/lib/db/schema"
 
 /**
  * The three sealed finale reveals an admin can hand out per crew:
@@ -23,13 +25,34 @@ export type FinaleGrants = { note1: boolean; note2: boolean; treasure: boolean }
 const NONE: FinaleGrants = { note1: false, note2: false, treasure: false }
 
 /**
+ * Every user id that shares this user's progress: their team's members, or just
+ * themselves when solo. Mirrors `getCrewUserIds` in lib/hunt, duplicated here
+ * only to keep this module free of the cycle described above.
+ */
+async function crewIds(userId: string): Promise<string[]> {
+  const mine = await db
+    .select({ teamId: teamMember.teamId })
+    .from(teamMember)
+    .where(eq(teamMember.userId, userId))
+    .limit(1)
+  const teamId = mine[0]?.teamId
+  if (!teamId) return [userId]
+  const mates = await db
+    .select({ userId: teamMember.userId })
+    .from(teamMember)
+    .where(eq(teamMember.teamId, teamId))
+  const ids = mates.map((m) => m.userId)
+  return ids.length ? ids : [userId]
+}
+
+/**
  * Which reveals the signed-in user's CREW has been granted. A crew shares
  * progress, so a grant to any member counts for all of them: we check every
  * member's rows, not just this user's, so a member who joined or was toggled
  * separately can never desync the crew.
  */
 export async function getCrewGrants(userId: string): Promise<FinaleGrants> {
-  const crew = await getCrewUserIds(userId)
+  const crew = await crewIds(userId)
   if (crew.length === 0) return NONE
   const rows = await db
     .select({ view: finaleGrant.view })

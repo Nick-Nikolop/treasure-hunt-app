@@ -16,6 +16,7 @@ import {
   ChevronDown,
   Camera,
   QrCode,
+  Wand2,
 } from "lucide-react"
 import { getActivityLog } from "@/app/admin/actions"
 import { type ActivityRow, type ActivityCategory, type ActivityPage } from "@/lib/activity"
@@ -28,6 +29,7 @@ const CATEGORY_TABS: { key: CategoryFilter; label: string }[] = [
   { key: "team", label: "Teams" },
   { key: "admin", label: "Admin" },
   { key: "auth", label: "Auth" },
+  { key: "auto", label: "Automated re-placement" },
 ]
 
 /** Small icon + tone per category for the row marker and chips. */
@@ -45,6 +47,8 @@ function categoryMeta(category: string): {
       return { icon: Shield, tone: "text-destructive", label: "Admin" }
     case "auth":
       return { icon: LogIn, tone: "text-muted-foreground", label: "Auth" }
+    case "auto":
+      return { icon: Wand2, tone: "text-sky-400", label: "Re-placement" }
     default:
       return { icon: ScrollText, tone: "text-muted-foreground", label: category }
   }

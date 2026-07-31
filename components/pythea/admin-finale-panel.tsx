@@ -617,6 +617,13 @@ export function AdminFinalePanel() {
   )
 }
 
+/** Short label for the rung a crew is standing on. */
+const PLACEMENT_LABEL: Record<"hold" | "compass" | "treasure", string> = {
+  hold: "WAITING",
+  compass: "TREASURE HUNT",
+  treasure: "WON",
+}
+
 /** The three reveals, in the order a crew meets them, with a short label. */
 const VIEW_META: { view: FinaleView; label: string }[] = [
   { view: "note1", label: "Note 1" },
@@ -716,12 +723,20 @@ function FinaleAudience() {
 
   return (
     <div>
-      <p className="mb-4 max-w-prose font-sans text-sm leading-relaxed text-muted-foreground">
+      <p className="mb-2 max-w-prose font-sans text-sm leading-relaxed text-muted-foreground">
         A reveal shows only when a crew has{" "}
         <strong className="text-foreground">both</strong> reached that step in the
         game <strong className="text-foreground">and</strong> been granted it here.
         With nothing granted, every note and the treasure screen stay hidden, even
         for a crew that has scanned ahead. Toggling a team covers all its members.
+      </p>
+      <p className="mb-4 max-w-prose font-sans text-sm leading-relaxed text-muted-foreground">
+        Grants also decide <strong className="text-foreground">where</strong> a crew
+        stands: note 1 keeps them hunting the compass, note 1 + 2 moves them to the
+        treasure hunt, and all three opens the winner screen. Each crew is put back
+        on its granted rung the next time it loads the journal, logged under{" "}
+        <strong className="text-foreground">Automated re-placement</strong> in
+        Activity. Only crews that have closed the trail are listed here.
       </p>
 
       {rows.length > 8 && (
@@ -801,6 +816,21 @@ function AudienceGroup({
                 <UserRound className="size-4 shrink-0 text-muted-foreground" aria-hidden />
               )}
               <span className="truncate font-sans text-sm font-bold text-foreground">{e.name}</span>
+              {/* Where they stand now. When the grants imply a different rung the
+                  chip says so, since the move only lands on their next load. */}
+              <span
+                className="shrink-0 rounded-full border border-border px-2 py-0.5 font-sans text-[10px] font-bold tracking-chip text-muted-foreground"
+                title={
+                  e.placement === e.expected
+                    ? "Standing where its grants say it should"
+                    : "Grants moved this crew; it lands there on its next journal load"
+                }
+              >
+                {PLACEMENT_LABEL[e.placement]}
+                {e.placement !== e.expected && (
+                  <span className="text-brass"> → {PLACEMENT_LABEL[e.expected]}</span>
+                )}
+              </span>
             </div>
             <div className="flex shrink-0 items-center gap-1.5">
               {VIEW_META.map(({ view, label: vl }) => {

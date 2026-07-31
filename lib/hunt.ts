@@ -34,6 +34,7 @@ import {
 } from "@/lib/leads"
 import { haversineMeters } from "@/lib/geo"
 import { getFinaleConfig, isTrailEndHeld } from "@/lib/finale"
+import { getCrewGrants, setFinaleGrant } from "@/lib/finale-grants"
 import { getSolveCooldownSeconds } from "@/lib/hunt-config"
 import { logActivity, resolveUserSnapshot } from "@/lib/activity"
 import { and, asc, eq, gt, inArray } from "drizzle-orm"
@@ -691,6 +692,12 @@ export async function unlockByToken(
     if (!(await crewHasReachedCompass(crew)) && isTrailEndHeld(await getFinaleConfig())) {
       return { status: "held" }
     }
+    // The compass step also needs the note-2 grant. Without it the crew has not
+    // been let onto this rung, so let the scan bounce here rather than write a row
+    // the re-placement pass would silently undo on the next journal load.
+    if (!(await crewHasReachedCompass(crew)) && !(await getCrewGrants(userId)).note2) {
+      return { status: "held" }
+    }
     if (!(await crewHasReachedCompass(crew))) {
       await insertCompassRows(crew, new Date(now), source)
       await logLeadSolved(userId, COMPASS_ORDER, last.country, last.countryEn, true, source)
@@ -722,6 +729,11 @@ export async function unlockByToken(
         country: last.country,
         countryEn: last.countryEn,
       }
+    }
+    // Winning also needs the treasure grant, for the same reason as the compass:
+    // this is the scan that crowns a winner, so it must not fire on its own.
+    if (!(await getCrewGrants(userId)).treasure) {
+      return { status: "held" }
     }
     await insertFinishRows(crew, new Date(now), source)
     await logLeadSolved(userId, FINISH_ORDER, last.country, last.countryEn, true, source)
@@ -829,6 +841,11 @@ export async function approveLeadUnlock(
     if (await crewHasReachedCompass(crew)) {
       return { status: "already", leadOrder: total, country: last.country, countryEn: last.countryEn }
     }
+    // An admin approving the photo IS the decision to let this crew onto the
+    // compass rung, so record the matching grant. Without it the re-placement pass
+    // would read the crew as ungranted and pull it straight back down, undoing the
+    // approval on the crew's next journal load.
+    await setFinaleGrant({ userIds: crew, view: "note2", granted: true })
     await insertCompassRows(crew, await stampAt(crew, now), "proof")
     await logLeadSolved(userId, COMPASS_ORDER, last.country, last.countryEn, true, "proof")
     return { status: "unlocked", leadOrder: total, country: last.country, countryEn: last.countryEn }
@@ -850,6 +867,9 @@ export async function approveLeadUnlock(
     if (await crewHasFinished(crew)) {
       return { status: "already", leadOrder: total, country: last.country, countryEn: last.countryEn }
     }
+    // Same as the compass: approving the winning photo is the admin granting the
+    // treasure screen, so write the grant alongside the row.
+    await setFinaleGrant({ userIds: crew, view: "treasure", granted: true })
     await insertFinishRows(crew, await stampAt(crew, now), "proof")
     await logLeadSolved(userId, FINISH_ORDER, last.country, last.countryEn, true, "proof")
     return { status: "unlocked", leadOrder: total, country: last.country, countryEn: last.countryEn }

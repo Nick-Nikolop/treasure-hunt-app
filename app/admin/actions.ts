@@ -12,13 +12,19 @@ import {
   type AdminUser,
 } from "@/lib/admin"
 import { siteUrl } from "@/lib/site-url"
-import { getFinaleConfig, setFinaleConfig, type FinaleConfig } from "@/lib/finale"
+import {
+  getFinaleConfig,
+  setFinaleConfig,
+  isTrailEndHeld,
+  type FinaleConfig,
+} from "@/lib/finale"
 import {
   setFinaleGrant,
   getAllGrants,
   FINALE_VIEWS,
   type FinaleView,
 } from "@/lib/finale-grants"
+import { placementForGrants, type FinalePlacement } from "@/lib/finale-placement"
 import { listCompassVariantAssignments } from "@/lib/compass-variant"
 import {
   createLocationQr,
@@ -1999,16 +2005,28 @@ export type FinaleAudienceEntrant = {
   /** Every user id the grant is written for (all crew members, or the solo). */
   userIds: string[]
   grants: { note1: boolean; note2: boolean; treasure: boolean }
+  /** Where the crew stands right now, from its sentinel rows. */
+  placement: FinalePlacement
+  /** Where its grants say it belongs; differs from `placement` until it reloads. */
+  expected: FinalePlacement
 }
 
 /**
- * Everyone who can be granted a finale view: every team, plus every user with
- * no team, each carrying their current grant state. A crew is "granted" when
- * any member holds the row (matching how the read side folds a crew).
+ * Everyone who can be granted a finale view, each carrying its current grant
+ * state and where it stands right now.
+ *
+ * Deliberately scoped to crews that have ALREADY closed the trail (they hold the
+ * trail-end sentinel), i.e. waiting on the hold or further along. Granting a
+ * reveal to a crew still working through the leads would do nothing visible
+ * anyway, since a reveal needs progress AND a grant, so listing everybody would
+ * just bury the handful of crews this screen exists to manage.
+ *
+ * A crew counts as granted when ANY member holds the row, matching how the read
+ * side folds a crew.
  */
 export async function adminListFinaleAudience(): Promise<FinaleAudienceEntrant[]> {
   await requireAdmin()
-  const [teams, members, solos, all] = await Promise.all([
+  const [teams, members, solos, all, atEnd, finale] = await Promise.all([
     db.select({ id: team.id, name: team.name }).from(team).orderBy(asc(team.createdAt)),
     db
       .select({ teamId: teamMember.teamId, userId: teamMember.userId })
@@ -2019,36 +2037,75 @@ export async function adminListFinaleAudience(): Promise<FinaleAudienceEntrant[]
       .leftJoin(teamMember, eq(teamMember.userId, user.id))
       .where(isNull(teamMember.teamId)),
     getAllGrants(),
+    // Every user past the end of the trail, plus which rung they sit on.
+    db
+      .select({ userId: leadUnlock.userId, leadOrder: leadUnlock.leadOrder })
+      .from(leadUnlock)
+      .where(
+        inArray(leadUnlock.leadOrder, [TRAIL_END_ORDER, COMPASS_ORDER, FINISH_ORDER]),
+      ),
+    getFinaleConfig(),
   ])
+
+  const held = isTrailEndHeld(finale)
+  const trailEnders = new Set<string>()
+  const compassers = new Set<string>()
+  const finishers = new Set<string>()
+  for (const r of atEnd) {
+    if (r.leadOrder === TRAIL_END_ORDER) trailEnders.add(r.userId)
+    else if (r.leadOrder === COMPASS_ORDER) compassers.add(r.userId)
+    else if (r.leadOrder === FINISH_ORDER) finishers.add(r.userId)
+  }
 
   const anyOf = (ids: string[], set: Set<string>) => ids.some((id) => set.has(id))
 
-  const teamEntrants: FinaleAudienceEntrant[] = teams.map((t) => {
-    const userIds = members.filter((m) => m.teamId === t.id).map((m) => m.userId)
-    return {
-      kind: "team",
-      id: t.id,
-      name: t.name,
-      userIds,
-      grants: {
+  /** Where the crew actually stands, for the chip on each row. */
+  const standing = (ids: string[]): FinalePlacement => {
+    if (anyOf(ids, finishers)) return "treasure"
+    if (anyOf(ids, compassers)) return "compass"
+    return "hold"
+  }
+
+  const build = (
+    kind: "team" | "solo",
+    id: string,
+    name: string,
+    userIds: string[],
+  ): FinaleAudienceEntrant => ({
+    kind,
+    id,
+    name,
+    userIds,
+    grants: {
+      note1: anyOf(userIds, all.note1),
+      note2: anyOf(userIds, all.note2),
+      treasure: anyOf(userIds, all.treasure),
+    },
+    placement: standing(userIds),
+    // Where the grants say it belongs, so the UI can flag a row that is about to
+    // be moved by the next page load the crew makes.
+    expected: placementForGrants(
+      {
         note1: anyOf(userIds, all.note1),
         note2: anyOf(userIds, all.note2),
         treasure: anyOf(userIds, all.treasure),
       },
-    }
+      held,
+    ),
   })
 
-  const soloEntrants: FinaleAudienceEntrant[] = solos.map((u) => ({
-    kind: "solo",
-    id: u.id,
-    name: u.name || u.email,
-    userIds: [u.id],
-    grants: {
-      note1: all.note1.has(u.id),
-      note2: all.note2.has(u.id),
-      treasure: all.treasure.has(u.id),
-    },
-  }))
+  const teamEntrants = teams
+    .map((t) => ({
+      t,
+      userIds: members.filter((m) => m.teamId === t.id).map((m) => m.userId),
+    }))
+    // Only crews that closed the trail.
+    .filter(({ userIds }) => anyOf(userIds, trailEnders))
+    .map(({ t, userIds }) => build("team", t.id, t.name, userIds))
+
+  const soloEntrants = solos
+    .filter((u) => trailEnders.has(u.id))
+    .map((u) => build("solo", u.id, u.name || u.email, [u.id]))
 
   return [...teamEntrants, ...soloEntrants]
 }
