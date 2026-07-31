@@ -64,9 +64,17 @@ type PendingInfo = {
 export function ScanGate({
   token,
   isSuperAdmin,
+  proofOnly = false,
 }: {
   token: string
   isSuperAdmin: boolean
+  /**
+   * The two finale marks (compass, treasure) take a photo and NOTHING else: no
+   * location button, no "share my position" step anywhere in the flow. They
+   * decide the winner, so a human confirms the crew was really there rather than
+   * trusting a self-serve GPS check.
+   */
+  proofOnly?: boolean
 }) {
   const { t } = useI18n()
   const g = t.scan.gate
@@ -80,6 +88,13 @@ export function ScanGate({
   // mark. If so, open on the "already submitted" card instead of asking again.
   useEffect(() => {
     let active = true
+    // On a photo-only mark the location card is skipped entirely: there is no
+    // GPS step to offer, so the camera form IS the gate. Context "denied" is
+    // reused because no position was ever collected, which is what that value
+    // means to the reviewer (and avoids inventing a third context value).
+    const start: GateState = proofOnly
+      ? { phase: "proof", context: "denied" }
+      : { phase: "intro" }
     getScanPendingProof(token)
       .then((res) => {
         if (!active) return
@@ -93,16 +108,16 @@ export function ScanGate({
           })
           setState({ phase: "already" })
         } else {
-          setState({ phase: "intro" })
+          setState(start)
         }
       })
       .catch(() => {
-        if (active) setState({ phase: "intro" })
+        if (active) setState(start)
       })
     return () => {
       active = false
     }
-  }, [token])
+  }, [token, proofOnly])
 
   // Send whatever payload (coords or admin-skip) to the server and route the
   // response into the right card. The server does the real unlock.
@@ -164,6 +179,10 @@ export function ScanGate({
         context={state.context}
         replace={replace}
         isSuperAdmin={isSuperAdmin}
+        // On a photo-only mark there is no location card to go back to, so
+        // "cancel" would otherwise drop them onto the GPS retry screen the whole
+        // flow is meant to avoid. Offer a way out of the hunt page instead.
+        exitToJournal={proofOnly && !replace}
         onCancel={() =>
           setState(
             replace
@@ -291,15 +310,20 @@ export function ScanGate({
           {t.scan.proof.reviewBody}
         </p>
         <div className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:justify-center">
-          <button
-            type="button"
-            onClick={requestLocation}
-            disabled={busy}
-            className="inline-flex items-center justify-center gap-2 rounded-sm bg-brass px-5 py-3 font-sans text-xs font-bold tracking-chip text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
-          >
-            <RotateCw className="size-4" />
-            {g.retry}
-          </button>
+          {/* No location retry on a photo-only mark: offering it here would put
+              the GPS route back in front of the crew right after they submitted
+              the photo that replaced it. */}
+          {!proofOnly && (
+            <button
+              type="button"
+              onClick={requestLocation}
+              disabled={busy}
+              className="inline-flex items-center justify-center gap-2 rounded-sm bg-brass px-5 py-3 font-sans text-xs font-bold tracking-chip text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+            >
+              <RotateCw className="size-4" />
+              {g.retry}
+            </button>
+          )}
           <Link
             href="/journal"
             className="inline-flex items-center justify-center gap-2 rounded-sm border border-border bg-background px-5 py-3 font-sans text-xs font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass"
@@ -533,6 +557,7 @@ function ProofForm({
   context,
   replace,
   isSuperAdmin,
+  exitToJournal = false,
   onCancel,
   onSubmitted,
 }: {
@@ -540,6 +565,8 @@ function ProofForm({
   context: ProofContext
   replace: boolean
   isSuperAdmin: boolean
+  /** Render the secondary action as a journal link instead of a cancel button. */
+  exitToJournal?: boolean
   onCancel: () => void
   onSubmitted: () => void
 }) {
@@ -731,14 +758,24 @@ function ProofForm({
           {busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
           {p.submit}
         </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          disabled={busy}
-          className="inline-flex items-center justify-center gap-2 rounded-sm border border-border bg-background px-5 py-3 font-sans text-xs font-bold tracking-chip text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
-        >
-          {p.cancel}
-        </button>
+        {exitToJournal ? (
+          <Link
+            href="/journal"
+            className="inline-flex items-center justify-center gap-2 rounded-sm border border-border bg-background px-5 py-3 font-sans text-xs font-bold tracking-chip text-muted-foreground transition-colors hover:border-brass hover:text-brass"
+          >
+            <LogOut className="size-4" />
+            {p.exit}
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={busy}
+            className="inline-flex items-center justify-center gap-2 rounded-sm border border-border bg-background px-5 py-3 font-sans text-xs font-bold tracking-chip text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+          >
+            {p.cancel}
+          </button>
+        )}
       </div>
     </motion.div>
   )

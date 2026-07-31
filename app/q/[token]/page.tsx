@@ -42,7 +42,11 @@ export default async function ScanPage({
       <Atmosphere />
       <div className="flex min-h-screen flex-col items-center justify-center px-5 py-16">
         {ctx.mode === "verify" ? (
-          <ScanGate token={token} isSuperAdmin={isSuperAdmin} />
+          <ScanGate
+            token={token}
+            isSuperAdmin={isSuperAdmin}
+            proofOnly={ctx.proofOnly === true}
+          />
         ) : (
           <ScanResult
             result={await unlockByToken(session.user.id, token, {}, "nogate")}

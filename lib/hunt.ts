@@ -882,7 +882,12 @@ export type ScanContext =
   | { mode: "direct" }
   // A valid in-order scan for a lead that has a location gate: the explorer
   // must prove they are near the mark before it is unlocked.
-  | { mode: "verify"; leadOrder: number }
+  //
+  // `proofOnly` marks the two finale marks (compass, treasure) where GPS is not
+  // offered at all and a photo is the ONLY way through. Those two decide the
+  // winner, so a self-serve location check is too weak a gate: a crew could pass
+  // it without ever being seen at the mark. A human approves them instead.
+  | { mode: "verify"; leadOrder: number; proofOnly?: boolean }
 
 /**
  * Decide, WITHOUT mutating anything, whether a scan needs a location check.
@@ -923,9 +928,11 @@ export async function resolveScanContext(
   // gated: the crew must have solved every lead and not yet reached the
   // compass. Everything else falls through to a direct unlock (which just
   // re-shows the note or a not-ready message).
+  // Photo only: no coords check, since GPS is never offered here. Gating on
+  // `hasCoords` would hand out a free direct unlock whenever the compass
+  // location happened to be unset, which is the opposite of a stricter gate.
   if (leadId === COMPASS_LEAD_ID) {
     const finale = await getFinaleConfig()
-    if (!finale.hasCoords) return { mode: "direct" }
     const crew = await getCrewUserIds(userId)
     const [current, total] = await Promise.all([
       getCrewEffectiveProgress(crew, nowMs),
@@ -933,18 +940,27 @@ export async function resolveScanContext(
     ])
     if (current < total) return { mode: "direct" }
     if (await crewHasReachedCompass(crew)) return { mode: "direct" }
-    return { mode: "verify", leadOrder: COMPASS_ORDER }
+    // These two MUST mirror the compass branch of unlockByToken: a photo is only
+    // worth collecting if approving it can actually grant the row. Without them a
+    // crew that has solved every lead but has not closed the trail (or is still
+    // held) is asked for a photo, and the later approval is refused as
+    // out_of_order, leaving an unapprovable proof and a crew that never moves.
+    // Falling through to "direct" is correct: it answers with the proper
+    // out_of_order or held message instead of collecting a dead photo.
+    if (!(await crewHasReachedTrailEnd(crew))) return { mode: "direct" }
+    if (isTrailEndHeld(finale)) return { mode: "direct" }
+    return { mode: "verify", leadOrder: COMPASS_ORDER, proofOnly: true }
   }
 
-  // The treasure/finish QR carries its own GPS gate. Only a genuine finishing
-  // scan is gated: the crew must have reached the compass and not yet finished.
+  // The treasure/finish QR is photo only, for the same reason as the compass:
+  // this scan decides the winner, so it needs a human to confirm the crew was
+  // really there. Only a genuine finishing scan is gated: the crew must have
+  // reached the compass and not yet finished.
   if (leadId === FINISH_LEAD_ID) {
-    const finale = await getFinaleConfig()
-    if (!finale.treasureHasCoords) return { mode: "direct" }
     const crew = await getCrewUserIds(userId)
     if (!(await crewHasReachedCompass(crew))) return { mode: "direct" }
     if (await crewHasFinished(crew)) return { mode: "direct" }
-    return { mode: "verify", leadOrder: FINISH_ORDER }
+    return { mode: "verify", leadOrder: FINISH_ORDER, proofOnly: true }
   }
 
   const defs = await getLeadDefs()

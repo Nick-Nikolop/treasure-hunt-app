@@ -1293,23 +1293,16 @@ type LocalNote = { body: string; cta: string; notice: string }
 const NOTE1_SEEN_KEY = "pythea:note1-seen"
 
 /**
- * Hard off-switch for the "you found the treasure" trophy pill/overlay.
+ * Kill switches for the trophy pill and the two note pills.
  *
- * Some crews were wrongly promoted to a finished (treasure) state, so their
- * `finished` flag is true even though they never actually won. Until that data
- * is cleaned up, force the winner button off everywhere so no crew is shown a
- * trophy it did not earn. Flip back to true once the bad finish rows are gone.
+ * Both were forced off while crews carried finish/compass rows they had never
+ * earned, so the UI was promoting them to "treasure found". Those rows have been
+ * cleared (every affected crew is back to waiting on the hold), so the switches
+ * are on again and the real earned states show normally. Flip either to false to
+ * seal that screen off instantly if bad progress ever appears again.
  */
-const SHOW_WON_BUTTON = false
-
-/**
- * Hard off-switch for the two note pills and their overlays.
- *
- * Same reason as SHOW_WON_BUTTON: crews reached states they should not have, so
- * the notes (which reveal the compass and treasure locations) must stay sealed
- * until progress is cleaned up. Flip back to true to hand the notes out again.
- */
-const SHOW_NOTE_BUTTONS = false
+const SHOW_WON_BUTTON = true
+const SHOW_NOTE_BUTTONS = true
 
 /**
  * A single shared request for the notes. Several entry points (the bar above the
