@@ -260,7 +260,10 @@ export function HandwrittenNote({
               </div>
             )}
 
-            {signature && (
+            {/* A signature signs a LETTER, so it is withheld when there is no prose
+                (note 2 before its countdown ends is lead-only). Every other note
+                has a body, so nothing else changes. */}
+            {signature && paragraphs.length > 0 && (
               // Held clear of the seal, which sits bottom-right.
               <div className="mt-8 flex flex-col items-start pr-16 md:mt-10 md:pr-24">
                 <p
