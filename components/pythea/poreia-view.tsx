@@ -46,6 +46,7 @@ import { JournalCover } from "@/components/pythea/journal-cover"
 import { JournalWidgets } from "@/components/pythea/journal-widgets"
 import { HowToPlayLauncher } from "@/components/pythea/how-to-play-modal"
 import { AnnouncementLabel } from "@/components/pythea/announcement-label"
+import { CompassPickupNotice } from "@/components/pythea/compass-pickup-notice"
 import type { StandingsSummary } from "@/lib/hunt"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { track } from "@/lib/analytics-client"
@@ -1399,6 +1400,7 @@ function NoteOverlay({
   cta,
   label,
   notice,
+  noticeContent,
   versions,
   ctaIcon: CtaIcon,
   onClose,
@@ -1408,6 +1410,11 @@ function NoteOverlay({
   label: string
   /** Highlighted aside stamped inside the note, when the note has one. */
   notice?: string
+  /**
+   * A richer aside rendered in the same spot as `notice` and taking precedence
+   * over it. Note 2 uses this for the live compass-pickup countdown.
+   */
+  noticeContent?: React.ReactNode
   /**
    * Admin-only switcher for the first note's rotating hiding hint. Absent for
    * ordinary explorers and for the second note, which has no versions.
@@ -1448,7 +1455,12 @@ function NoteOverlay({
             a tool for the founder, not part of what Pytheas wrote. */}
         {versions && <NoteVersionPicker {...versions} />}
 
-        <HandwrittenNote body={body} signature={t.finale.signature} notice={notice} />
+        <HandwrittenNote
+          body={body}
+          signature={t.finale.signature}
+          notice={notice}
+          noticeContent={noticeContent}
+        />
 
         {/* The marching order, shouted. Sits between the note and the close
             button so the journal cannot be dismissed without seeing it. */}
@@ -1865,7 +1877,7 @@ function FinaleNoteBar({
           body={note2.body}
           cta={note2.cta}
           label={t.finale.note2Label}
-          notice={note2.notice}
+          noticeContent={<CompassPickupNotice />}
           ctaIcon={Gem}
           onClose={closeNote2}
         />
@@ -2081,7 +2093,7 @@ function FinalPageBody({
           body={note2.body}
           cta={note2.cta}
           label={t.finale.note2Label}
-          notice={note2.notice}
+          noticeContent={<CompassPickupNotice />}
           ctaIcon={Gem}
           onClose={() => setOpen(null)}
         />
