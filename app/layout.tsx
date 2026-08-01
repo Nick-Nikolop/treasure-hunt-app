@@ -11,6 +11,7 @@ import { CookieConsent } from '@/components/pythea/cookie-consent'
 import { NotificationProvider } from '@/components/pythea/notification-provider'
 import { HoldReleaseToast } from '@/components/pythea/hold-release-toast'
 import { HoldWaitNotice } from '@/components/pythea/hold-wait-notice'
+import { CompassPickupPopup } from '@/components/pythea/compass-pickup-popup'
 import { AdminAlertsWidget } from '@/components/pythea/admin-alerts-widget'
 import { AnnouncementModal } from '@/components/pythea/announcement-modal'
 import { ContactWidget } from '@/components/pythea/contact-widget'
@@ -182,6 +183,11 @@ export default async function RootLayout({
                 that closed the trail is reminded when the hunt resumes. Global
                 for the same reason, and it reappears on every load by design. */}
             <HoldWaitNotice />
+            {/* Global so a crew waiting on the compass pickup sees the clock
+                wherever they are, not only on the journal. Shown ONLY to crews
+                who may open note 2 (checked server-side) and it stops for good
+                once the countdown ends. */}
+            <CompassPickupPopup />
             <AdminAlertsWidget />
             {/* Site-wide notice, shown to everyone on every page. Reappears on
                 each load / navigation by design (see the component); the journal

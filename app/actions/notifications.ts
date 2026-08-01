@@ -1,13 +1,15 @@
 "use server"
 
-import { headers } from "next/headers"
+import { headers, cookies } from "next/headers"
 import { auth } from "@/lib/auth"
+import { getAdminUser } from "@/lib/admin"
 import { getMyUnacknowledgedDecisions, acknowledgeDecision } from "@/lib/proofs"
 import { getLeadDefs } from "@/lib/leads"
-import { finaleOrderNames } from "@/lib/clues"
+import { finaleOrderNames, isOverrideAuthorized, PREVIEW_COOKIE } from "@/lib/clues"
 import { getFinaleConfig, isTrailEndHeld } from "@/lib/finale"
+import { getCrewGrants } from "@/lib/finale-grants"
 import { HOLD_RESUME_AT_MS } from "@/lib/hold-resume"
-import { getCrewUserIds, getCrewTrailEndAt } from "@/lib/hunt"
+import { getCrewUserIds, getCrewTrailEndAt, hasReachedCompass } from "@/lib/hunt"
 import { isHoldBypassedForAny } from "@/lib/maintenance"
 
 /**
@@ -96,6 +98,37 @@ export async function getHoldWait(): Promise<{ show: boolean; resumeAtMs: number
   if (await isHoldBypassedForAny(crew)) return { show: false, resumeAtMs: HOLD_RESUME_AT_MS }
 
   return { show: reachedAt !== null, resumeAtMs: HOLD_RESUME_AT_MS }
+}
+
+/**
+ * Whether this explorer may see the compass-pickup countdown popup.
+ *
+ * Exactly the same two conditions that open NOTE 2 in `getFinaleNotes`: the crew
+ * must have physically found the compass AND an admin must have granted `note2`.
+ * The popup carries the same countdown as the note, so anyone who cannot open the
+ * note has no business being nagged about a pickup they cannot attend yet.
+ *
+ * Deliberately does NOT return the pickup location, only permission plus the
+ * shared target instant. The address is a separate question, answered by the note
+ * once the countdown has run out.
+ */
+export async function getCompassPickupAccess(): Promise<{ show: boolean }> {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session?.user) return { show: false }
+
+  // Superadmins and the local/preview override see it without a real scan, so the
+  // popup stays proofreadable. Same bypass as the note it belongs to.
+  const admin = (await getAdminUser()) !== null
+  const store = await cookies()
+  const overrideActive = isOverrideAuthorized() && store.get(PREVIEW_COOKIE)?.value !== undefined
+  if (admin || overrideActive) return { show: true }
+
+  const [compass, grants] = await Promise.all([
+    hasReachedCompass(session.user.id),
+    getCrewGrants(session.user.id),
+  ])
+
+  return { show: compass && grants.note2 }
 }
 
 /**

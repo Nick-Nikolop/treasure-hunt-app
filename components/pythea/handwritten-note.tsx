@@ -113,7 +113,7 @@ export function HandwrittenNote({
   body,
   signature,
   notice,
-  noticeContent,
+  lead,
   media,
   mediaAfter,
   className = "",
@@ -131,12 +131,13 @@ export function HandwrittenNote({
    */
   notice?: string
   /**
-   * A richer aside rendered in the same position as `notice`, for cases that
-   * need more than a line of text (e.g. the compass-pickup countdown). When
-   * given it fully replaces `notice` and brings its own styling, so it is NOT
-   * wrapped in the brass card below.
+   * Pinned ABOVE the handwriting, bringing its own styling. NOTE 2 uses it for
+   * the compass-pickup block: a countdown before the deadline, and the pickup
+   * location afterwards. It sits at the top because until the countdown ends it
+   * is the note's only content, and the location it then reveals is the first
+   * thing a crew needs to read.
    */
-  noticeContent?: React.ReactNode
+  lead?: React.ReactNode
   /**
    * Something pasted into the note between paragraphs (NOTE 2 uses it for the
    * treasure equation plate).
@@ -222,6 +223,11 @@ export function HandwrittenNote({
           />
 
           <div className="relative">
+            {/* Pinned above the handwriting. Only spaced from the text when there
+                IS text: while the pickup countdown is the note's sole content a
+                trailing margin would leave a dead gap under it. */}
+            {lead && <div className={paragraphs.length > 0 ? "mb-6 md:mb-7" : ""}>{lead}</div>}
+
             {paragraphs.map((p, i) => (
               <React.Fragment key={i}>
                 <p
@@ -238,25 +244,21 @@ export function HandwrittenNote({
               </React.Fragment>
             ))}
 
-            {/* A rich aside (e.g. the pickup countdown) takes precedence and
-                brings its own styling; otherwise the plain string notice. */}
-            {noticeContent
-              ? noticeContent
-              : notice && notice.trim().length > 0 && (
-                  // Bright pinned aside. Sits on its own tinted card with a heavy
-                  // left rail so it separates cleanly from the italic hand above it.
-                  <div className="mt-7 rounded-sm border-2 border-brass/70 border-l-[6px] border-l-brass bg-brass/15 px-4 py-3 md:mt-8 md:px-5 md:py-3.5">
-                    <div className="flex items-start gap-2.5">
-                      <RotateCcw
-                        className="mt-0.5 size-4 shrink-0 text-brass md:size-[18px]"
-                        aria-hidden
-                      />
-                      <p className="text-pretty font-sans text-[14px] font-semibold leading-[1.65] text-ink md:text-[15px]">
-                        {notice}
-                      </p>
-                    </div>
-                  </div>
-                )}
+            {notice && notice.trim().length > 0 && (
+              // Bright pinned aside. Sits on its own tinted card with a heavy
+              // left rail so it separates cleanly from the italic hand above it.
+              <div className="mt-7 rounded-sm border-2 border-brass/70 border-l-[6px] border-l-brass bg-brass/15 px-4 py-3 md:mt-8 md:px-5 md:py-3.5">
+                <div className="flex items-start gap-2.5">
+                  <RotateCcw
+                    className="mt-0.5 size-4 shrink-0 text-brass md:size-[18px]"
+                    aria-hidden
+                  />
+                  <p className="text-pretty font-sans text-[14px] font-semibold leading-[1.65] text-ink md:text-[15px]">
+                    {notice}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {signature && (
               // Held clear of the seal, which sits bottom-right.

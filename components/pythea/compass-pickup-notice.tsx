@@ -4,54 +4,66 @@ import { useEffect, useState } from "react"
 import { MapPin, Clock, ExternalLink } from "lucide-react"
 import { Countdown } from "@/components/pythea/countdown"
 import { useI18n } from "@/components/pythea/language-provider"
+import { COMPASS_PICKUP_AT_MS, COMPASS_PICKUP_MAP_URL } from "@/lib/compass-pickup"
 
 /**
- * When the crew learns where to collect the physical compass.
+ * Whether the pickup point may be shown yet.
  *
- * 13:30 on 1 August 2026, Athens time. August is EEST (UTC+3), so the instant
- * is pinned as an explicit UTC millisecond value rather than a local
- * `new Date(...)`: that way every crew counts down to the SAME moment no matter
- * what timezone their phone is set to, and the reveal cannot flip early or late
- * for someone travelling or with a misconfigured clock.
+ * Resolved on the CLIENT only (never during SSR) so there is no hydration
+ * mismatch and no flash of a stale state. `null` means "not decided yet", which
+ * callers render as a stable placeholder rather than guessing.
+ *
+ * `force` is for the admin preview: it short-circuits the clock so the
+ * post-countdown note can be proofread before the deadline, without touching the
+ * real target time.
  */
-const PICKUP_TARGET_MS = Date.UTC(2026, 7, 1, 10, 30, 0, 0)
+export function useCompassPickupRevealed(force?: boolean): boolean | null {
+  const [revealed, setRevealed] = useState<boolean | null>(force ? true : null)
 
-/** The exact map pin for the pickup point, handed out once the countdown ends. */
-const PICKUP_MAP_URL = "https://maps.app.goo.gl/2TU24PKYxMA4qKNX6"
+  useEffect(() => {
+    if (force) {
+      setRevealed(true)
+      return
+    }
+    // Decide immediately for anyone arriving after the deadline, then let the
+    // countdown component drive the flip for anyone waiting on it.
+    setRevealed(Date.now() >= COMPASS_PICKUP_AT_MS)
+  }, [force])
+
+  return revealed
+}
 
 /**
- * Replaces the old static "please put the compass back" aside under NOTE 2.
+ * The compass-pickup block that rides inside NOTE 2.
  *
- * Before the deadline it shows only a countdown, deliberately withholding the
- * location so no crew can turn up early. The moment it hits zero it swaps in the
- * real pickup point and map link. Styled to match the brass pinned-aside on the
- * handwritten note, since it plays the same role: an organiser message pinned to
- * the page rather than part of Pytheas's handwriting.
+ * Before the deadline it shows ONLY a countdown, deliberately withholding the
+ * location so no crew can turn up early. Once it hits zero it swaps in the real
+ * pickup point and map link, and the rest of the note appears around it.
+ *
+ * Styled as a brass pinned aside because it is an organiser message attached to
+ * the page, not part of Pytheas's handwriting.
  */
-export function CompassPickupNotice({
-  targetMs = PICKUP_TARGET_MS,
+export function CompassPickupBlock({
+  force,
+  onReveal,
 }: {
-  /** Overridable only for previews/tests; production uses the fixed pickup time. */
-  targetMs?: number
+  /** Admin preview: show the pickup point regardless of the clock. */
+  force?: boolean
+  /** Fired when the countdown reaches zero, so the note can fill in around it. */
+  onReveal?: () => void
 }) {
   const { t } = useI18n()
   const f = t.finale
+  const revealed = useCompassPickupRevealed(force)
 
-  // Decide "revealed" on the client only, to avoid a hydration mismatch and any
-  // flash of a stale state. Until mounted we render the countdown shell.
-  const [mounted, setMounted] = useState(false)
-  const [revealed, setRevealed] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-    if (Date.now() >= targetMs) setRevealed(true)
-  }, [targetMs])
-
-  const showLocation = mounted && revealed
+  if (revealed === null) {
+    // Pre-decision placeholder: keeps the note's height stable for one frame.
+    return <div className="h-[104px]" aria-hidden />
+  }
 
   return (
-    <div className="mt-7 rounded-sm border-2 border-brass/70 border-l-[6px] border-l-brass bg-brass/15 px-4 py-3.5 md:mt-8 md:px-5 md:py-4">
-      {showLocation ? (
+    <div className="rounded-sm border-2 border-brass/70 border-l-[6px] border-l-brass bg-brass/15 px-4 py-3.5 md:px-5 md:py-4">
+      {revealed ? (
         <div className="flex items-start gap-2.5">
           <MapPin className="mt-0.5 size-4 shrink-0 text-brass md:size-[18px]" aria-hidden />
           <div className="min-w-0">
@@ -65,7 +77,7 @@ export function CompassPickupNotice({
               {f.pickupBody}
             </p>
             <a
-              href={PICKUP_MAP_URL}
+              href={COMPASS_PICKUP_MAP_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-3 inline-flex items-center gap-2 rounded-sm border-2 border-brass bg-brass px-3.5 py-2 font-sans text-[12px] font-black uppercase tracking-chip text-[oklch(0.2_0.03_60)] transition-colors hover:bg-brass/85 md:text-[13px]"
@@ -83,19 +95,14 @@ export function CompassPickupNotice({
               {f.pickupCountdownLabel}
             </p>
           </div>
-          {/* Only tick once mounted, and keep the shell height stable before then. */}
-          {mounted ? (
-            <div className="pl-[26px]">
-              <Countdown
-                targetMs={targetMs}
-                tone="ink"
-                size="sm"
-                onDone={() => setRevealed(true)}
-              />
-            </div>
-          ) : (
-            <div className="h-[52px] pl-[26px]" aria-hidden />
-          )}
+          <div className="pl-[26px]">
+            <Countdown
+              targetMs={COMPASS_PICKUP_AT_MS}
+              tone="ink"
+              size="sm"
+              onDone={onReveal}
+            />
+          </div>
         </div>
       )}
     </div>
