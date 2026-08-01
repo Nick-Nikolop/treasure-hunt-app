@@ -22,6 +22,13 @@ export const metadata: Metadata = {
 }
 
 export default async function LeaderboardPage() {
+  // Hunt closed: the standings are frozen and everyone belongs on the
+  // celebration landing. Checked FIRST (even before the visibility flag) so the
+  // ended state is authoritative if the board is ever flipped back on after the
+  // deadline. Superadmins bypass (huntClosed is false for them).
+  const phaseCtx = await getPhaseContext()
+  if (phaseCtx.huntClosed) redirect("/?ended=1")
+
   // The board is hidden for now. This runs BEFORE the session lookup on purpose,
   // so it applies to admins and superadmins too: nobody sees it while the flag
   // is off. The page below is left intact and comes back the moment it flips.
@@ -29,10 +36,6 @@ export default async function LeaderboardPage() {
 
   // Phase gate: phase 1 seals the site, phase 2 locks the leaderboard.
   // Superadmins bypass. Locked visitors are bounced home with the modal flag.
-  const phaseCtx = await getPhaseContext()
-  // Hunt closed: the standings are frozen and everyone belongs on the
-  // celebration landing. Superadmins bypass (huntClosed is false for them).
-  if (phaseCtx.huntClosed) redirect("/?ended=1")
   if (phaseCtx.siteLocked) redirect("/")
   if (phaseCtx.journalLocked) redirect("/?locked=leaderboard")
 

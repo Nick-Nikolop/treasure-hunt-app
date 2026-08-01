@@ -87,7 +87,10 @@ export function HuntCompleteBanner() {
                 {f.pickupAddress}
               </span>
             </span>
-            <span className="ml-auto shrink-0 self-center font-sans text-[10px] font-semibold tracking-chip text-brass opacity-70 transition-opacity group-hover:opacity-100">
+            {/* CTA label is hidden on the narrowest screens (the whole card is
+                the link) so the mono uppercase text cannot force horizontal
+                overflow; it returns from sm up where there is room. */}
+            <span className="ml-auto hidden shrink-0 self-center font-sans text-[10px] font-semibold tracking-chip text-brass opacity-70 transition-opacity group-hover:opacity-100 sm:block">
               {f.pickupCta}
             </span>
           </a>
