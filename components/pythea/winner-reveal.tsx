@@ -6,7 +6,7 @@ import { motion } from "framer-motion"
 import { BookOpen, Compass, Gem, ScrollText, Loader2, Hourglass } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
 import { HandwrittenNote } from "@/components/pythea/handwritten-note"
-import { CompassPickupNotice } from "@/components/pythea/compass-pickup-notice"
+import { useNote2Parts } from "@/components/pythea/note2-content"
 import { TreasureEquation } from "@/components/pythea/treasure-equation"
 import { HoldPaper } from "@/components/pythea/hold-paper"
 import { CompassRose } from "@/components/pythea/compass-rose"
@@ -170,6 +170,10 @@ export function CompassReveal() {
   const { t, locale } = useI18n()
   const f = t.finale
   const { data, loading } = useFinaleSummary()
+  // Above the early return: hooks cannot sit behind a conditional. Resolves the
+  // countdown-vs-location state of note 2 (no admin switch here, that lives in the
+  // journal where admins actually work).
+  const note2Parts = useNote2Parts()
 
   useEffect(() => {
     track(EV.huntFinished, { beat: "compass" }, { category: "hunt" })
@@ -204,14 +208,14 @@ export function CompassReveal() {
         {f.compassTitle}
       </h2>
 
-      {/* NOTE 2 now carries the treasure equation between its paragraphs, and a
-          live countdown to the compass pickup where the old aside used to sit. */}
+      {/* Until the pickup countdown ends this note is JUST that countdown; after
+          it, the pickup location leads and Pytheas's letter + the equation follow. */}
       <HandwrittenNote
-        body={f.note2Body}
+        body={note2Parts.body}
         signature={f.signature}
-        media={<TreasureEquation />}
-        mediaAfter={2}
-        noticeContent={<CompassPickupNotice />}
+        media={note2Parts.showMedia ? <TreasureEquation /> : undefined}
+        mediaAfter={1}
+        lead={note2Parts.lead}
       />
 
       {/* The next marching order, shouted — same brass banner the journal note

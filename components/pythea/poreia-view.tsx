@@ -46,7 +46,7 @@ import { JournalCover } from "@/components/pythea/journal-cover"
 import { JournalWidgets } from "@/components/pythea/journal-widgets"
 import { HowToPlayLauncher } from "@/components/pythea/how-to-play-modal"
 import { AnnouncementLabel } from "@/components/pythea/announcement-label"
-import { CompassPickupNotice } from "@/components/pythea/compass-pickup-notice"
+import { useNote2Parts, Note2PreviewToggle } from "@/components/pythea/note2-content"
 import { TreasureEquation } from "@/components/pythea/treasure-equation"
 import type { StandingsSummary } from "@/lib/hunt"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -1401,7 +1401,8 @@ function NoteOverlay({
   cta,
   label,
   notice,
-  noticeContent,
+  lead,
+  adminPreview,
   media,
   mediaAfter,
   versions,
@@ -1414,10 +1415,12 @@ function NoteOverlay({
   /** Highlighted aside stamped inside the note, when the note has one. */
   notice?: string
   /**
-   * A richer aside rendered in the same spot as `notice` and taking precedence
-   * over it. Note 2 uses this for the live compass-pickup countdown.
+   * Rendered ABOVE the handwriting, bringing its own styling. Note 2 uses it for
+   * the compass-pickup block: the countdown first, then the pickup location.
    */
-  noticeContent?: React.ReactNode
+  lead?: React.ReactNode
+  /** Admin-only chrome above the note (note 2's before/after countdown switch). */
+  adminPreview?: React.ReactNode
   /** Pasted into the note between paragraphs (note 2: the treasure equation). */
   media?: React.ReactNode
   /** 0-based index of the paragraph the `media` goes after. */
@@ -1461,12 +1464,13 @@ function NoteOverlay({
         {/* Deliberately styled as out-of-world admin chrome, not parchment: it is
             a tool for the founder, not part of what Pytheas wrote. */}
         {versions && <NoteVersionPicker {...versions} />}
+        {adminPreview}
 
         <HandwrittenNote
           body={body}
           signature={t.finale.signature}
           notice={notice}
-          noticeContent={noticeContent}
+          lead={lead}
           media={media}
           mediaAfter={mediaAfter}
         />
@@ -1789,6 +1793,9 @@ function FinaleNoteBar({
   const [previewVariant, setPreviewVariant] = useState<number | undefined>(undefined)
   const { note1, note2, variants, held, hold } = useFinaleNotes(previewVariant)
   const [open, setOpen] = useState<null | 1 | 2 | "won" | "hold">(null)
+  // Admins can jump note 2 to its post-countdown state to proofread it.
+  const [afterPickup, setAfterPickup] = useState(false)
+  const note2Parts = useNote2Parts(afterPickup)
 
   // Only closing the FIRST note marks it as read. Closing the second one must
   // not, or an admin previewing note 2 early would suppress the final page's
@@ -1883,12 +1890,18 @@ function FinaleNoteBar({
       )}
       {open === 2 && note2 && (
         <NoteOverlay
-          body={t.finale.note2Body}
+          body={note2Parts.body}
           cta={note2.cta}
           label={t.finale.note2Label}
-          media={<TreasureEquation />}
-          mediaAfter={2}
-          noticeContent={<CompassPickupNotice />}
+          media={note2Parts.showMedia ? <TreasureEquation /> : undefined}
+          mediaAfter={1}
+          lead={note2Parts.lead}
+          // `variants` is sent only to admins, so it doubles as the gate here.
+          adminPreview={
+            variants ? (
+              <Note2PreviewToggle after={afterPickup} onChange={setAfterPickup} />
+            ) : undefined
+          }
           ctaIcon={Gem}
           onClose={closeNote2}
         />
@@ -2013,6 +2026,10 @@ function FinalPageBody({
   // on one route into the note and vanish on the other.
   const [previewVariant, setPreviewVariant] = useState<number | undefined>(undefined)
   const { note1: note, note2, variants, held, hold } = useFinaleNotes(previewVariant)
+  // Same post-countdown preview as the note bar, so the switch does not appear on
+  // one route into note 2 and vanish on the other.
+  const [afterPickup, setAfterPickup] = useState(false)
+  const note2Parts = useNote2Parts(afterPickup)
   // One slot, so two overlays can never stack on this page.
   const [open, setOpen] = useState<null | 1 | 2 | "hold" | "won">(null)
   const autoShown = useRef(false)
@@ -2101,12 +2118,18 @@ function FinalPageBody({
 
       {open === 2 && note2 && (
         <NoteOverlay
-          body={t.finale.note2Body}
+          body={note2Parts.body}
           cta={note2.cta}
           label={t.finale.note2Label}
-          media={<TreasureEquation />}
-          mediaAfter={2}
-          noticeContent={<CompassPickupNotice />}
+          media={note2Parts.showMedia ? <TreasureEquation /> : undefined}
+          mediaAfter={1}
+          lead={note2Parts.lead}
+          // `variants` is sent only to admins, so it doubles as the gate here.
+          adminPreview={
+            variants ? (
+              <Note2PreviewToggle after={afterPickup} onChange={setAfterPickup} />
+            ) : undefined
+          }
           ctaIcon={Gem}
           onClose={() => setOpen(null)}
         />

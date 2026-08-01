@@ -744,6 +744,8 @@ const el = {
     pickupCountdownLabel: "Θα μάθετε σε ποιο σημείο θα λάβετε την πυξίδα σε:",
     pickupPopupLabel: "Η ΠΥΞΙΔΑ",
     adminTestPickup: "Μετά το countdown",
+    adminTestPickupLive: "Τώρα",
+    adminTestPickupLabel: "ΠΡΟΕΠΙΣΚΟΠΗΣΗ ΣΗΜΕΙΩΜΑΤΟΣ",
     // NOTE 2 body, rendered with the equation image after the 3rd paragraph.
     note2Body:
       "Συγχαρητήρια λοιπόν εξερευνητές, βρήκατε την πυξίδα μου.\n\nΤο θησαυρό μου τον έχω κρύψει μεταξύ Α και Β. Για να βρείτε τα σημεία αυτά πρέπει να λύσετε την παρακάτω εξίσωση:\n\nΗ λύση της εξίσωσης δεν είναι καθαρά μαθηματικη.\nΑν βρείτε τη λύση και χρησιμοποιήσετε την πυξίδα μου, ο θησαυρός θα σας αποκαλυφθει.",
@@ -1855,6 +1857,8 @@ const en: Dictionary = {
     pickupCountdownLabel: "You will learn at which point you will receive the compass in:",
     pickupPopupLabel: "THE COMPASS",
     adminTestPickup: "After countdown",
+    adminTestPickupLive: "Now",
+    adminTestPickupLabel: "NOTE PREVIEW",
     // NOTE 2 body, rendered with the equation image after the 3rd paragraph.
     note2Body:
       "Congratulations then, explorers, you found my compass.\n\nI have hidden my treasure between A and B. To find these points you must solve the equation below:\n\nThe solution to the equation is not purely mathematical.\nIf you find the solution and use my compass, the treasure will be revealed to you.",

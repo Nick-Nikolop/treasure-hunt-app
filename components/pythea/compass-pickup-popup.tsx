@@ -36,29 +36,19 @@ function readCount(): number {
  * Disappears for good once the countdown ends: at that point the note reveals the
  * location, so a popup counting down to a moment that has passed would be noise.
  */
-export function CompassPickupPopup({
-  onDismiss,
-  preview = false,
-}: {
-  /** Overrides dismissal, used by the admin preview. */
-  onDismiss?: () => void
-  /** Renders immediately without asking the server, for the admin test button. */
-  preview?: boolean
-} = {}) {
-  const { t } = useI18n()
-  const f = t.finale
+export function CompassPickupPopup() {
   const pathname = usePathname()
 
-  const [allowed, setAllowed] = useState(preview)
-  const [open, setOpen] = useState(preview)
+  // Admins pass the server check too, so they can proofread this simply by
+  // visiting the site; no separate preview path is needed.
+  const [allowed, setAllowed] = useState(false)
+  const [open, setOpen] = useState(false)
   // Latched so the popup closes itself the moment the countdown runs out, even
   // if it was already on screen when zero hit.
   const [expired, setExpired] = useState(false)
 
-  // One permission check per mount. Skipped entirely in preview so the admin
-  // button cannot depend on a real grant.
+  // One permission check per mount.
   useEffect(() => {
-    if (preview) return
     // Already past the deadline: never ask, never show.
     if (Date.now() >= COMPASS_PICKUP_AT_MS) return
     let alive = true
@@ -73,13 +63,13 @@ export function CompassPickupPopup({
     return () => {
       alive = false
     }
-  }, [preview])
+  }, [])
 
   // Auto-open per pathname, capped. Deduped against React Strict Mode's double
   // effect invocation in dev, which would otherwise burn two slots per view.
   const countedFor = useRef<string | null>(null)
   useEffect(() => {
-    if (preview || !allowed || expired) return
+    if (!allowed || expired) return
     if (countedFor.current === pathname) return
     countedFor.current = pathname
 
@@ -92,80 +82,93 @@ export function CompassPickupPopup({
     } catch {
       // Storage blocked: it keeps appearing, the safer failure for a reminder.
     }
-  }, [pathname, allowed, expired, preview])
+  }, [pathname, allowed, expired])
 
-  const dismiss = useCallback(() => {
-    setOpen(false)
-    onDismiss?.()
-  }, [onDismiss])
-
-  const showing = open && !expired
+  const dismiss = useCallback(() => setOpen(false), [])
 
   return (
     <AnimatePresence>
-      {showing && (
-        <motion.div
-          key="pickup-popup"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[82] flex items-end justify-center px-4 pb-6 sm:items-center sm:pb-0"
-        >
-          <button
-            type="button"
-            aria-label={t.notify.dismiss}
-            onClick={dismiss}
-            className="absolute inset-0 bg-background/70 backdrop-blur-sm"
-          />
-
-          <motion.div
-            initial={{ opacity: 0, y: 24, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 24, scale: 0.98 }}
-            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            role="alertdialog"
-            aria-modal="true"
-            className="relative w-full max-w-sm rounded-sm border border-brass bg-card px-6 py-8 text-center shadow-2xl md:px-8"
-          >
-            <button
-              type="button"
-              onClick={dismiss}
-              aria-label={t.notify.dismiss}
-              className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <X className="size-4" />
-            </button>
-
-            <div className="mx-auto flex size-16 items-center justify-center rounded-full border border-brass/40 bg-brass/10 text-brass">
-              <Compass className="size-8" aria-hidden />
-            </div>
-
-            <p className="mt-5 font-sans text-[11px] font-bold tracking-chip text-brass">
-              {f.pickupPopupLabel}
-            </p>
-
-            <p className="mx-auto mt-4 max-w-xs text-pretty font-serif text-base leading-relaxed text-foreground">
-              {f.pickupCountdownLabel}
-            </p>
-
-            <div className="mt-5">
-              <Countdown
-                targetMs={COMPASS_PICKUP_AT_MS}
-                size="sm"
-                onDone={() => setExpired(true)}
-              />
-            </div>
-
-            <button
-              type="button"
-              onClick={dismiss}
-              className="mt-6 inline-flex w-full items-center justify-center rounded-sm border border-border bg-background px-5 py-3 font-sans text-xs font-bold tracking-chip text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {t.notify.dismiss}
-            </button>
-          </motion.div>
-        </motion.div>
+      {open && !expired && (
+        <PickupPopupCard onDismiss={dismiss} onExpired={() => setExpired(true)} />
       )}
     </AnimatePresence>
+  )
+}
+
+/**
+ * The popup's markup, carrying no permission or frequency logic of its own.
+ *
+ * Split from the gated wrapper above so the visual can be rendered directly,
+ * without needing a session, a grant and a compass scan to line up first.
+ */
+export function PickupPopupCard({
+  onDismiss,
+  onExpired,
+}: {
+  onDismiss: () => void
+  /** Fired when the countdown hits zero, so the wrapper can retire the popup. */
+  onExpired: () => void
+}) {
+  const { t } = useI18n()
+  const f = t.finale
+
+  return (
+    <motion.div
+      key="pickup-popup"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[82] flex items-end justify-center px-4 pb-6 sm:items-center sm:pb-0"
+    >
+      <button
+        type="button"
+        aria-label={t.notify.dismiss}
+        onClick={onDismiss}
+        className="absolute inset-0 bg-background/70 backdrop-blur-sm"
+      />
+
+      <motion.div
+        initial={{ opacity: 0, y: 24, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 24, scale: 0.98 }}
+        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        role="alertdialog"
+        aria-modal="true"
+        className="relative w-full max-w-sm rounded-sm border border-brass bg-card px-6 py-8 text-center shadow-2xl md:px-8"
+      >
+        <button
+          type="button"
+          onClick={onDismiss}
+          aria-label={t.notify.dismiss}
+          className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <X className="size-4" />
+        </button>
+
+        <div className="mx-auto flex size-16 items-center justify-center rounded-full border border-brass/40 bg-brass/10 text-brass">
+          <Compass className="size-8" aria-hidden />
+        </div>
+
+        <p className="mt-5 font-sans text-[11px] font-bold tracking-chip text-brass">
+          {f.pickupPopupLabel}
+        </p>
+
+        <p className="mx-auto mt-4 max-w-xs text-pretty font-serif text-base leading-relaxed text-foreground">
+          {f.pickupCountdownLabel}
+        </p>
+
+        <div className="mt-5 flex justify-center">
+          <Countdown targetMs={COMPASS_PICKUP_AT_MS} size="sm" onDone={onExpired} />
+        </div>
+
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="mt-6 inline-flex w-full items-center justify-center rounded-sm border border-border bg-background px-5 py-3 font-sans text-xs font-bold tracking-chip text-muted-foreground transition-colors hover:text-foreground"
+        >
+          {t.notify.dismiss}
+        </button>
+      </motion.div>
+    </motion.div>
   )
 }

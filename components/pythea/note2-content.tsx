@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { Clock, FastForward } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
 import {
   CompassPickupBlock,
@@ -22,7 +23,7 @@ import {
 export function useNote2Parts(force?: boolean): {
   body: string
   lead: React.ReactNode
-  /** Null until the countdown ends, so the equation stays hidden with the text. */
+  /** False until the countdown ends, so the equation stays hidden with the text. */
   showMedia: boolean
 } {
   const { t } = useI18n()
@@ -41,4 +42,64 @@ export function useNote2Parts(force?: boolean): {
     lead: <CompassPickupBlock force={force} onReveal={() => setFlipped(true)} />,
     showMedia: open,
   }
+}
+
+/**
+ * Admin-only switch between the two states of note 2, so the post-countdown
+ * version can be proofread before the deadline.
+ *
+ * Same out-of-world chrome as `NoteVersionPicker` (dark panel, brass label, ADMIN
+ * badge) because it is founder tooling sitting above Pytheas's letter, not part of
+ * it. Changes nothing server-side: it only forces this one render.
+ */
+export function Note2PreviewToggle({
+  after,
+  onChange,
+}: {
+  after: boolean
+  onChange: (after: boolean) => void
+}) {
+  const { t } = useI18n()
+  const f = t.finale
+
+  const options: { key: boolean; label: string; icon: typeof Clock }[] = [
+    { key: false, label: f.adminTestPickupLive, icon: Clock },
+    { key: true, label: f.adminTestPickup, icon: FastForward },
+  ]
+
+  return (
+    <div className="mb-3 rounded-sm border border-brass/35 bg-black/45 px-3 py-2.5">
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        <span className="font-sans text-[10px] font-bold tracking-chip text-brass">
+          {f.adminTestPickupLabel}
+        </span>
+        <span className="rounded-full border border-white/25 px-2 py-0.5 font-sans text-[9px] font-bold tracking-chip text-white/55">
+          {f.adminOnly}
+        </span>
+      </div>
+
+      <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5">
+        {options.map((o) => {
+          const on = o.key === after
+          const Icon = o.icon
+          return (
+            <button
+              key={String(o.key)}
+              type="button"
+              onClick={() => onChange(o.key)}
+              aria-pressed={on}
+              className={`inline-flex items-center gap-1.5 rounded-sm border px-2.5 py-1 font-sans text-[11px] font-black transition-colors ${
+                on
+                  ? "border-brass bg-brass text-primary-foreground"
+                  : "border-white/25 bg-white/10 text-white/75 hover:bg-white/20 hover:text-white"
+              }`}
+            >
+              <Icon className="size-3.5" aria-hidden />
+              {o.label}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
 }
