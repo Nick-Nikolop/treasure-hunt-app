@@ -754,6 +754,14 @@ const el = {
     pickupAddress: "Navarinou 195",
     pickupBody: "Ελάτε στο συγκεκριμένο σημείο για να παραλάβετε την πυξίδα.",
     pickupCta: "ΑΝΟΙΓΜΑ ΣΤΟΝ ΧΑΡΤΗ",
+    // Celebration banner shown on the landing once the hunt has closed.
+    huntEnd: {
+      eyebrow: "ΤΟ ΚΥΝΗΓΙ ΟΛΟΚΛΗΡΩΘΗΚΕ",
+      title: "Το κυνήγι ολοκληρώθηκε!",
+      body: "Σας περιμένουμε στην τελετή ολοκλήρωσης, όπου θα ανακοινωθούν οι νικητές, στις 20:00 σήμερα (01 Αυγούστου).",
+      venueLabel: "ΣΗΜΕΙΟ ΣΥΝΑΝΤΗΣΗΣ",
+      imageAlt: "Εξερευνητές γιορτάζουν σε μια παραλία με φωτάκια, φωτιά και τον φάρο στο βάθος.",
+    },
     // Winner reveal (after the TREASURE QR is scanned — the finish)
     winnerKicker: "ΤΟ ΤΑΞΙΔΙ ΟΛΟΚΛΗΡΩΘΗΚΕ",
     winnerTitle: "Βρήκατε τον θησαυρό!",
@@ -1867,6 +1875,14 @@ const en: Dictionary = {
     pickupAddress: "Navarinou 195",
     pickupBody: "Come to this exact spot to collect the compass.",
     pickupCta: "OPEN IN MAPS",
+    // Celebration banner shown on the landing once the hunt has closed.
+    huntEnd: {
+      eyebrow: "THE HUNT IS COMPLETE",
+      title: "The hunt is complete!",
+      body: "We are waiting for you at the closing ceremony, where the winners will be announced, at 20:00 today (01 August).",
+      venueLabel: "MEETING POINT",
+      imageAlt: "Explorers celebrating on a beach with string lights, a campfire and the lighthouse in the background.",
+    },
     winnerKicker: "THE VOYAGE IS COMPLETE",
     winnerTitle: "You found the treasure!",
     place: (n: number) => {

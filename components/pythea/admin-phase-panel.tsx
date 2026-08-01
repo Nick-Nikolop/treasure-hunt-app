@@ -14,6 +14,8 @@ import {
   Download,
   Trash2,
   Loader2,
+  PartyPopper,
+  Flag,
 } from "lucide-react"
 import { ModalShell } from "@/components/pythea/modal-shell"
 import { adminSavePhase, adminRemovePhaseLead, type PhaseAdminData } from "@/app/admin/actions"
@@ -62,6 +64,10 @@ export function AdminPhasePanel({ data }: { data: PhaseAdminData }) {
   )
   const [journalSealed, setJournalSealed] = useState(data.settings.journalLockedManual)
   const [rostersFrozen, setRostersFrozen] = useState(data.settings.rostersLockedManual)
+  // Hunt-close instant as an Athens wall-clock <input> value ("" = no auto-close).
+  const [huntCloseLocal, setHuntCloseLocal] = useState(
+    data.huntCloseMs != null ? utcMsToAthensLocalInput(data.huntCloseMs) : "",
+  )
 
   // Double-confirmation state.
   const [reviewOpen, setReviewOpen] = useState(false)
@@ -69,7 +75,11 @@ export function AdminPhasePanel({ data }: { data: PhaseAdminData }) {
 
   const phase2Ms = athensLocalInputToUtcMs(phase2Local)
   const journalMs = athensLocalInputToUtcMs(journalLocal)
-  const validTimes = Number.isFinite(phase2Ms) && Number.isFinite(journalMs)
+  // Empty input = no auto-close (null). A filled input must parse to a real time.
+  const huntCloseMs = huntCloseLocal === "" ? null : athensLocalInputToUtcMs(huntCloseLocal)
+  const validClose = huntCloseMs === null || Number.isFinite(huntCloseMs)
+  const validTimes = Number.isFinite(phase2Ms) && Number.isFinite(journalMs) && validClose
+  const closeSavedLocal = data.huntCloseMs != null ? utcMsToAthensLocalInput(data.huntCloseMs) : ""
 
   // Live preview of the phase these settings would produce right now.
   const previewPhase: Phase | null = validTimes
@@ -84,7 +94,8 @@ export function AdminPhasePanel({ data }: { data: PhaseAdminData }) {
     phase2Local !== utcMsToAthensLocalInput(data.settings.phase2UnlockMs) ||
     journalLocal !== utcMsToAthensLocalInput(data.settings.journalUnlockMs) ||
     journalSealed !== data.settings.journalLockedManual ||
-    rostersFrozen !== data.settings.rostersLockedManual
+    rostersFrozen !== data.settings.rostersLockedManual ||
+    huntCloseLocal !== closeSavedLocal
 
   // True when this save would newly seal the journal. Drives the extra warning
   // in the review dialog, since that is the destructive direction.
@@ -114,6 +125,7 @@ export function AdminPhasePanel({ data }: { data: PhaseAdminData }) {
         journalUnlockMs: journalMs,
         journalLockedManual: journalSealed,
         rostersLockedManual: rostersFrozen,
+        huntCloseMs,
       })
       setReviewOpen(false)
       setConfirmText("")
@@ -434,6 +446,71 @@ export function AdminPhasePanel({ data }: { data: PhaseAdminData }) {
         )}
       </div>
 
+      {/* Hunt close. The terminal gate: past this instant journal, leaderboard
+          and scanning are all sealed and everyone is funnelled to the
+          celebration landing. Separate Athens wall-clock instant from the phase
+          countdowns above. */}
+      <div className="rounded-sm border border-border bg-card/40 p-4">
+        <h3 className="flex items-center gap-1.5 font-sans text-xs font-bold tracking-chip text-muted-foreground">
+          <PartyPopper className="size-3.5 text-brass" />
+          HUNT CLOSE (ATHENS TIME)
+        </h3>
+        <p className="mt-2 font-sans text-[13px] leading-relaxed text-muted-foreground">
+          When the hunt <strong>ends for good</strong>. Past this time the journal, leaderboard and
+          QR scanning are all sealed and every explorer is sent to the celebration landing. Leave
+          empty for no auto-close. Superadmins always bypass it, so you can keep testing after it
+          passes.
+        </p>
+
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-end">
+          <label className="flex flex-1 flex-col gap-1.5">
+            <span className="font-sans text-[13px] font-semibold text-foreground">Ends at</span>
+            <input
+              type="datetime-local"
+              value={huntCloseLocal}
+              onChange={(e) => setHuntCloseLocal(e.target.value)}
+              className="rounded-sm border border-border bg-background px-3 py-2 font-sans text-sm text-foreground focus:border-brass focus:outline-none"
+            />
+          </label>
+          <button
+            type="button"
+            onClick={() => setHuntCloseLocal("")}
+            disabled={huntCloseLocal === ""}
+            className="inline-flex items-center justify-center gap-1.5 rounded-sm border border-border px-3 py-2 font-sans text-xs font-bold tracking-chip text-foreground transition-colors hover:border-destructive hover:text-destructive disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <Trash2 className="size-3.5" />
+            Clear
+          </button>
+        </div>
+
+        <p className="mt-3 font-sans text-[12px] text-muted-foreground">
+          Currently live:{" "}
+          <strong className={data.huntCloseMs != null ? "text-brass" : "text-foreground"}>
+            {data.huntCloseMs != null ? fmtAthens(data.huntCloseMs) : "No auto-close"}
+          </strong>
+          {huntCloseLocal !== closeSavedLocal && (
+            <>
+              {" "}
+              &middot; pending change to{" "}
+              {huntCloseMs != null && Number.isFinite(huntCloseMs)
+                ? fmtAthens(huntCloseMs)
+                : "No auto-close"}
+            </>
+          )}
+        </p>
+
+        {/* Preview the celebration landing before the deadline actually hits. */}
+        <a
+          href="/?previewEnded=1"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 inline-flex items-center gap-1.5 rounded-sm border border-border px-3 py-1.5 font-sans text-xs font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass"
+        >
+          <Flag className="size-3.5" />
+          Preview the ended landing
+        </a>
+      </div>
+
       {/* Save */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
         <button
@@ -594,6 +671,20 @@ export function AdminPhasePanel({ data }: { data: PhaseAdminData }) {
               </div>
             </>
           )}
+          <div className="flex items-center justify-between gap-3">
+            <dt className="text-muted-foreground">Hunt closes</dt>
+            <dd className="font-bold text-foreground">
+              {huntCloseMs != null && Number.isFinite(huntCloseMs)
+                ? fmtAthens(huntCloseMs)
+                : "No auto-close"}
+              {huntCloseLocal !== closeSavedLocal && (
+                <span className="font-normal text-muted-foreground">
+                  {" "}
+                  (was {data.huntCloseMs != null ? fmtAthens(data.huntCloseMs) : "no auto-close"})
+                </span>
+              )}
+            </dd>
+          </div>
         </dl>
 
         {sealingNow && (

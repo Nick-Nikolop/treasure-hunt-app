@@ -16,6 +16,8 @@ import {
   getFinaleConfig,
   setFinaleConfig,
   isTrailEndHeld,
+  getHuntCloseMs,
+  setHuntCloseMs,
   type FinaleConfig,
 } from "@/lib/finale"
 import {
@@ -321,6 +323,8 @@ export type PhaseAdminData = {
   effectivePhase: 1 | 2 | 3
   /** The notify-later waitlist captured on the teaser (newest first). */
   waitlist: { email: string; createdAt: Date }[]
+  /** The hunt-close instant (epoch ms), or null when there is no auto-close. */
+  huntCloseMs: number | null
 }
 
 /** Load every user and team for the dashboard. Superadmin only. */
@@ -833,6 +837,7 @@ async function getPhaseAdminData(): Promise<PhaseAdminData> {
     settings,
     effectivePhase: computeEffectivePhase(settings, Date.now()),
     waitlist: await getPhaseLeads(),
+    huntCloseMs: await getHuntCloseMs(),
   }
 }
 
@@ -850,6 +855,11 @@ export async function adminSavePhase(input: {
   journalLockedManual: boolean
   /** Whether rosters freeze once the hunt goes live. Defaults ON. */
   rostersLockedManual: boolean
+  /**
+   * Hunt-close instant (epoch ms), or null for no auto-close. Undefined leaves
+   * the stored value untouched (so an older client that omits it is safe).
+   */
+  huntCloseMs?: number | null
 }): Promise<ActionResult> {
   const admin = await requireAdmin()
 
@@ -860,8 +870,17 @@ export async function adminSavePhase(input: {
   }
   if (typeof input.journalLockedManual !== "boolean") return { ok: false, error: "bad_value" }
   if (typeof input.rostersLockedManual !== "boolean") return { ok: false, error: "bad_value" }
+  // huntCloseMs: null clears it, a finite number sets it, undefined leaves it be.
+  if (
+    input.huntCloseMs !== undefined &&
+    input.huntCloseMs !== null &&
+    !Number.isFinite(input.huntCloseMs)
+  ) {
+    return { ok: false, error: "bad_value" }
+  }
 
   const before = await getPhaseSettings()
+  const beforeCloseMs = await getHuntCloseMs()
   await setPhaseOverride(input.override)
   await setPhaseUnlockTimes({
     phase2UnlockMs: input.phase2UnlockMs,
@@ -869,6 +888,9 @@ export async function adminSavePhase(input: {
   })
   await setJournalLockedManual(input.journalLockedManual)
   await setRostersLockedManual(input.rostersLockedManual)
+  if (input.huntCloseMs !== undefined) {
+    await setHuntCloseMs(input.huntCloseMs)
+  }
 
   const after: PhaseSettings = {
     override: input.override,
@@ -896,11 +918,19 @@ export async function adminSavePhase(input: {
       ? `; rosters ${after.rostersLockedManual ? "LOCK ON" : "LOCK OFF"}`
       : ""
 
+  // The hunt-close instant ends the whole event, so a change to it must be
+  // traceable. Only note it when the client actually sent a value.
+  const afterCloseMs = input.huntCloseMs === undefined ? beforeCloseMs : input.huntCloseMs
+  const closeNote =
+    input.huntCloseMs !== undefined && afterCloseMs !== beforeCloseMs
+      ? `; hunt close ${afterCloseMs == null ? "CLEARED" : new Date(afterCloseMs).toISOString()}`
+      : ""
+
   await logActivity({
     ...adminActor(admin),
     category: "admin",
     action: "phase_update",
-    summary: `Phase settings updated (override ${before.override} → ${after.override})${sealNote}${rosterNote}`,
+    summary: `Phase settings updated (override ${before.override} → ${after.override})${sealNote}${rosterNote}${closeNote}`,
   })
 
   // The gate is read on every request, but revalidate the key routes so any

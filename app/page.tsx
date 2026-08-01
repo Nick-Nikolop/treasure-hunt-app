@@ -14,6 +14,7 @@ import { FloatingCta } from "@/components/pythea/floating-cta"
 import { SiteFooter } from "@/components/pythea/site-footer"
 import { TeaserLanding } from "@/components/pythea/teaser-landing"
 import { LockedRedirectNotice } from "@/components/pythea/locked-redirect-notice"
+import { HuntCompleteBanner } from "@/components/pythea/hunt-complete-banner"
 import { getPhaseContext } from "@/lib/phase-guard"
 import { areRostersFrozen } from "@/lib/phase"
 import { cookies, headers } from "next/headers"
@@ -29,7 +30,11 @@ import { getFinaleConfig } from "@/lib/finale"
 // Recompute against the live clock on each request (for the countdown state).
 export const dynamic = "force-dynamic"
 
-export default async function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ previewEnded?: string }>
+}) {
   // Phase 1 seals the whole site behind the teaser for everyone except
   // superadmins. Resolve this first so we can short-circuit before doing the
   // rest of the home-page work.
@@ -49,6 +54,29 @@ export default async function Page() {
         role: (session.user as { role?: string | null }).role ?? null,
       }
     : null
+
+  // HUNT CLOSED: for a normal visitor `phaseCtx.huntClosed` is true past the
+  // close instant. Superadmins never get `huntClosed` (so the site stays usable
+  // for them), but they can preview the ended landing with ?previewEnded=1.
+  const sp = await searchParams
+  const previewEnded = phaseCtx.isSuperadmin && sp.previewEnded === "1"
+  const huntClosed = phaseCtx.huntClosed || previewEnded
+
+  if (huntClosed) {
+    // When the hunt is over the landing IS the announcement: the marketing
+    // sections (which mostly funnel into the now-sealed journal) are dropped and
+    // the celebration banner stands alone. It scrolls itself into view.
+    return (
+      <>
+        <Atmosphere />
+        <SiteHeader initialUser={initialUser} />
+        <main className="relative">
+          <HuntCompleteBanner />
+        </main>
+        <SiteFooter />
+      </>
+    )
+  }
 
   // The landing teaser is a public, global view. Only lead 1 is time-gated;
   // the rest are unlocked privately by each player scanning QR codes, so the

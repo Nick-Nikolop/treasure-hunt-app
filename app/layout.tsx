@@ -154,6 +154,10 @@ export default async function RootLayout({
     override: phaseCtx.settings.override,
     phase2UnlockMs: phaseCtx.settings.phase2UnlockMs,
     journalUnlockMs: phaseCtx.settings.journalUnlockMs,
+    // So an open tab redirects itself to the celebration landing the instant the
+    // hunt closes. Superadmins never get huntClosed, so they are not bounced.
+    huntCloseMs: phaseCtx.huntCloseMs,
+    isHuntClosedNow: phaseCtx.huntClosed,
   }
 
   return (
