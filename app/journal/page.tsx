@@ -42,6 +42,10 @@ export default async function PoreiaPage() {
   // locked. Superadmins bypass both. A locked visitor who reaches this URL
   // directly is bounced to the home page, flagged so the countdown modal opens.
   const phaseCtx = await getPhaseContext()
+  // The hunt has closed for good: nobody (bar superadmins) works the journal any
+  // more, everyone belongs on the celebration landing. Checked FIRST as the most
+  // terminal gate.
+  if (phaseCtx.huntClosed) redirect("/?ended=1")
   if (phaseCtx.siteLocked) redirect("/")
   if (phaseCtx.journalLocked) redirect("/?locked=journal")
 

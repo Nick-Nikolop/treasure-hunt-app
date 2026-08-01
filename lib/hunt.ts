@@ -33,7 +33,8 @@ import {
   TRAIL_END_LEAD_ID,
 } from "@/lib/leads"
 import { haversineMeters } from "@/lib/geo"
-import { getFinaleConfig, isTrailEndHeld } from "@/lib/finale"
+import { getFinaleConfig, isTrailEndHeld, getHuntCloseMs, isHuntClosed } from "@/lib/finale"
+import { getAdminUser } from "@/lib/admin"
 import { getCrewGrants, setFinaleGrant } from "@/lib/finale-grants"
 import { isHoldBypassedForAny } from "@/lib/maintenance"
 import { getSolveCooldownSeconds } from "@/lib/hunt-config"
@@ -729,6 +730,18 @@ export async function unlockByToken(
    */
   source: Exclude<UnlockSource, "proof"> = "nogate",
 ): Promise<UnlockResult> {
+  // HUNT CLOSED: once the hunt has ended, no scan of any kind records progress.
+  // The scan page + action already redirect closed visitors to the celebration
+  // landing, so this is defence in depth against a direct POST to the action.
+  // Superadmins are exempt so they can keep testing after the deadline. We reuse
+  // the terminal "invalid" result rather than adding a new status: it writes no
+  // progress and needs no new handling in any consumer, and a closed-hunt scan
+  // never reaches the UI anyway (the page redirects first).
+  const closeMs = await getHuntCloseMs()
+  if (isHuntClosed(closeMs) && (await getAdminUser()) === null) {
+    return { status: "invalid" }
+  }
+
   // Resolve the token to the STABLE lead id it was bound to. Progression is
   // then evaluated against that lead's CURRENT position, so a printed QR keeps
   // working no matter where the lead now sits in the sequence.

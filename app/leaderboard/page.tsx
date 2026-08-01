@@ -30,6 +30,9 @@ export default async function LeaderboardPage() {
   // Phase gate: phase 1 seals the site, phase 2 locks the leaderboard.
   // Superadmins bypass. Locked visitors are bounced home with the modal flag.
   const phaseCtx = await getPhaseContext()
+  // Hunt closed: the standings are frozen and everyone belongs on the
+  // celebration landing. Superadmins bypass (huntClosed is false for them).
+  if (phaseCtx.huntClosed) redirect("/?ended=1")
   if (phaseCtx.siteLocked) redirect("/")
   if (phaseCtx.journalLocked) redirect("/?locked=leaderboard")
 

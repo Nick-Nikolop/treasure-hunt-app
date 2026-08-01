@@ -213,6 +213,17 @@ export const scoreConfig = pgTable("score_config", {
   // When phase 2 → 3 auto-advances (the hunt fully opens and rosters freeze).
   // NULL falls back to the code default in lib/phase.ts.
   journalUnlockAt: timestamp("journalUnlockAt"),
+  // The instant the hunt CLOSES for good. Past it, journal/leaderboard/scanning
+  // are all sealed and everyone is funnelled to the celebration landing. NULL =
+  // no auto-close. Seeded ON at 2026-08-01T14:00Z (= 17:00 Athens) the first
+  // time the column appears; a later admin edit (incl. clearing it) always wins.
+  // NOTE: distinct from the finale config's free-text `huntEndsAt`, which is
+  // only the marketing "ends at" label shown on the hero, not an enforced gate.
+  huntCloseAt: timestamp("huntCloseAt"),
+  // One-shot latch so the default above is seeded exactly once. Flips true the
+  // first time the seed runs, so an admin clearing `huntCloseAt` back to NULL is
+  // never re-seeded on the next boot. See ensureFinaleColumns in lib/finale.ts.
+  huntCloseSeeded: boolean("huntCloseSeeded").notNull().default(false),
   // Manual seal for the journal + leaderboard. This is the ONLY thing that can
   // lock them: no phase, date or player progress ever does. Default false, so
   // the journal is open the moment the site is, and an admin has to flip this

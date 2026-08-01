@@ -254,7 +254,26 @@ function ensureFinaleColumns(): Promise<void> {
            ADD COLUMN IF NOT EXISTS "holdTitleEn" text,
            ADD COLUMN IF NOT EXISTS "holdBody" text,
            ADD COLUMN IF NOT EXISTS "holdBodyEn" text,
-           ADD COLUMN IF NOT EXISTS "holdLiftedAt" timestamptz`,
+           ADD COLUMN IF NOT EXISTS "holdLiftedAt" timestamptz,
+           ADD COLUMN IF NOT EXISTS "huntCloseAt" timestamptz,
+           ADD COLUMN IF NOT EXISTS "huntCloseSeeded" boolean NOT NULL DEFAULT false`,
+      )
+      .then(() =>
+        // Seed the hunt-close instant ON by default (17:00 Athens, 01 Aug 2026 =
+        // 14:00 UTC) exactly once. `huntCloseSeeded` is the one-shot latch: it
+        // flips true here regardless of the value written, so a later admin edit
+        // (including clearing the instant back to NULL) is NEVER re-seeded. The
+        // guard means an existing row that predates the feature gets the default
+        // on first boot, and a brand-new row is seeded when it is first created.
+        pool
+          .query(
+            `UPDATE "score_config"
+                SET "huntCloseAt" = TIMESTAMPTZ '2026-08-01T14:00:00Z',
+                    "huntCloseSeeded" = true
+              WHERE "id" = 'default'
+                AND "huntCloseSeeded" = false`,
+          )
+          .catch(() => undefined),
       )
       .then(() => undefined)
       .catch((err) => {
@@ -409,6 +428,46 @@ export async function getFinaleConfig(): Promise<FinaleConfig> {
     holdBodyEn: textOr(row?.hbe, DEFAULT_HOLD_BODY_EN),
     holdLiftedAt: row?.hla ?? null,
   }
+}
+
+/**
+ * The instant the hunt CLOSES for good, in epoch ms, or null for no auto-close.
+ *
+ * Lives on the finale/`score_config` row so it shares `ensureFinaleColumns` (the
+ * column is guaranteed to exist before this reads it). Distinct from the finale
+ * config's free-text `huntEndsAt`, which is only the hero's marketing label.
+ */
+export async function getHuntCloseMs(): Promise<number | null> {
+  await ensureFinaleColumns()
+  const res = await pool.query(
+    `SELECT "huntCloseAt" AS at FROM "score_config" WHERE id = 'default' LIMIT 1`,
+  )
+  const at = res.rows[0]?.at as Date | string | null | undefined
+  if (!at) return null
+  const ms = at instanceof Date ? at.getTime() : Date.parse(String(at))
+  return Number.isFinite(ms) ? ms : null
+}
+
+/** Set (or clear, with null) the hunt-close instant. Also latches the seed flag. */
+export async function setHuntCloseMs(ms: number | null): Promise<void> {
+  await ensureFinaleColumns()
+  const at = ms != null ? new Date(ms) : null
+  // Explicitly latch `huntCloseSeeded` so an admin who clears the instant back to
+  // NULL is not re-seeded with the default on the next boot.
+  await pool.query(
+    `INSERT INTO "score_config" ("id", "huntCloseAt", "huntCloseSeeded", "updatedAt")
+     VALUES ('default', $1, true, now())
+     ON CONFLICT ("id") DO UPDATE
+        SET "huntCloseAt" = EXCLUDED."huntCloseAt",
+            "huntCloseSeeded" = true,
+            "updatedAt" = now()`,
+    [at],
+  )
+}
+
+/** Pure predicate: is the hunt closed at `nowMs`? Null close instant = never. */
+export function isHuntClosed(closeMs: number | null, nowMs: number = Date.now()): boolean {
+  return closeMs != null && nowMs >= closeMs
 }
 
 /**

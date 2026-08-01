@@ -4,6 +4,7 @@ import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
 import { unlockByToken, resolveScanContext } from "@/lib/hunt"
 import { getAdminUser } from "@/lib/admin"
+import { getPhaseContext } from "@/lib/phase-guard"
 import { Atmosphere } from "@/components/pythea/atmosphere"
 import { ScanResult } from "@/components/pythea/scan-result"
 import { ScanGate } from "@/components/pythea/scan-gate"
@@ -23,6 +24,12 @@ export default async function ScanPage({
   params: Promise<{ token: string }>
 }) {
   const { token } = await params
+
+  // Hunt closed: scanning is over for everyone but superadmins. Send them to the
+  // celebration landing instead of rendering the scan UI. The mutation itself is
+  // also blocked in `unlockByToken` (defence in depth against a direct POST).
+  const phaseCtx = await getPhaseContext()
+  if (phaseCtx.huntClosed) redirect("/?ended=1")
 
   // The hunt is account-bound: a scan only counts for a signed-in explorer.
   // Logged-out visitors are sent to sign-in and bounced back to this scan.

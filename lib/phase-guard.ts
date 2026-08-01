@@ -2,6 +2,7 @@ import "server-only"
 
 import { getAdminUser } from "@/lib/admin"
 import { getPhaseSettings } from "@/lib/hunt-config"
+import { getHuntCloseMs, isHuntClosed } from "@/lib/finale"
 import {
   areRostersFrozen,
   computeEffectivePhase,
@@ -28,6 +29,18 @@ export type PhaseContext = {
   journalLocked: boolean
   /** True when the whole site is sealed behind the teaser for THIS viewer. */
   siteLocked: boolean
+  /**
+   * True when the hunt has CLOSED for good for THIS viewer (past the close
+   * instant, superadmins exempt). When set, journal/leaderboard/scanning are
+   * all sealed and the viewer belongs on the celebration landing.
+   */
+  huntClosed: boolean
+  /**
+   * The raw hunt-close instant (epoch ms) regardless of viewer, or null for no
+   * auto-close. Superadmins read this to preview the ended state and the admin
+   * panel reads it to show the configured time; the gate uses `huntClosed`.
+   */
+  huntCloseMs: number | null
 }
 
 /**
@@ -71,7 +84,11 @@ export async function areRostersLocked(): Promise<boolean> {
 
 export async function getPhaseContext(): Promise<PhaseContext> {
   const nowMs = Date.now()
-  const [admin, settings] = await Promise.all([getAdminUser(), getPhaseSettings()])
+  const [admin, settings, huntCloseMs] = await Promise.all([
+    getAdminUser(),
+    getPhaseSettings(),
+    getHuntCloseMs(),
+  ])
   const phase = computeEffectivePhase(settings, nowMs)
   const isSuperadmin = !!admin
   return {
@@ -82,5 +99,7 @@ export async function getPhaseContext(): Promise<PhaseContext> {
     // Sealed for the whole of phase 2; from phase 3 the manual admin seal decides.
     journalLocked: !isSuperadmin && isJournalLocked(phase, settings),
     siteLocked: !isSuperadmin && phase === 1,
+    huntClosed: !isSuperadmin && isHuntClosed(huntCloseMs, nowMs),
+    huntCloseMs,
   }
 }
