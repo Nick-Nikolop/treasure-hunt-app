@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState, useTransition } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import {
   Camera,
@@ -21,6 +21,9 @@ import {
   CheckSquare,
   Lock,
   ArrowDown,
+  Search,
+  SlidersHorizontal,
+  ArrowUpDown,
 } from "lucide-react"
 import {
   adminListProofs,
@@ -180,6 +183,34 @@ function buildQueue(pending: AdminProofRow[]): Map<string, QueueInfo> {
 
 type Lightbox = { urls: string[]; index: number } | null
 
+// --- Decided-history filter / sort vocabulary. ---
+type StatusFilter = "all" | "approved" | "rejected"
+type ContextFilter = "all" | "too_far" | "location_denied"
+type SortKey =
+  | "decided_desc"
+  | "decided_asc"
+  | "sent_desc"
+  | "sent_asc"
+  | "name_asc"
+  | "lead_asc"
+
+const SORT_LABELS: Record<SortKey, string> = {
+  decided_desc: "Reviewed · newest",
+  decided_asc: "Reviewed · oldest",
+  sent_desc: "Sent · newest",
+  sent_asc: "Sent · oldest",
+  name_asc: "Team / explorer · A–Z",
+  lead_asc: "Lead / stop · order",
+}
+
+/** Millis for a nullable date, with a fallback so nulls sort last, not first. */
+function ms(d: Date | string | null, fallback: number): number {
+  if (!d) return fallback
+  const t = typeof d === "string" ? new Date(d) : d
+  const n = t.getTime()
+  return Number.isFinite(n) ? n : fallback
+}
+
 export function AdminProofsPanel() {
   const [data, setData] = useState<{
     pending: AdminProofRow[]
@@ -213,6 +244,15 @@ export function AdminProofsPanel() {
   const [deleting, setDeleting] = useState(false)
   const [, startTransition] = useTransition()
   const initialised = useRef(false)
+
+  // --- Decided-history filter / search / sort (client-side over the full
+  // archive, which is auto-loaded below). ---
+  const [search, setSearch] = useState("")
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all")
+  const [contextFilter, setContextFilter] = useState<ContextFilter>("all")
+  // A specific lead/stop to narrow to, keyed by its numeric leadOrder ("all" = any).
+  const [leadFilter, setLeadFilter] = useState<string>("all")
+  const [sortKey, setSortKey] = useState<SortKey>("decided_desc")
 
   const load = useCallback(async () => {
     try {
@@ -268,6 +308,94 @@ export function AdminProofsPanel() {
   const queue = buildQueue(pending)
   const recent = data.recent
 
+  // Filters + search + sort run over the WHOLE decided archive, not just the
+  // current page, or they would silently lie by only searching the first 10
+  // rows. So once the total is known, pull the full archive in one go (capped at
+  // the action's 500 ceiling). Runs once; the SHOW MORE button remains as a
+  // fallback for the rare case of more than 500 decided proofs.
+  useEffect(() => {
+    if (!loaded) return
+    if (data.recentTotal > recentLimitRef.current && recentLimitRef.current < 500) {
+      const full = Math.min(500, data.recentTotal)
+      recentLimitRef.current = full
+      setRecentLimit(full)
+      void load()
+    }
+  }, [loaded, data.recentTotal, load])
+
+  // Distinct leads present in the decided archive, for the "stop" dropdown.
+  const leadOptions = useMemo(() => {
+    const seen = new Map<number, string>()
+    for (const r of recent) {
+      if (seen.has(r.leadOrder)) continue
+      seen.set(
+        r.leadOrder,
+        finaleOrderLabel(r.leadOrder)
+          ? r.country
+          : `No. ${String(r.leadOrder).padStart(2, "0")} · ${r.country}`,
+      )
+    }
+    return [...seen.entries()]
+      .sort((a, b) => a[0] - b[0])
+      .map(([order, label]) => ({ order, label }))
+  }, [recent])
+
+  const filtersActive =
+    search.trim() !== "" ||
+    statusFilter !== "all" ||
+    contextFilter !== "all" ||
+    leadFilter !== "all"
+
+  const filteredRecent = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    const rows = recent.filter((r) => {
+      if (statusFilter !== "all" && r.status !== statusFilter) return false
+      if (contextFilter !== "all" && r.context !== contextFilter) return false
+      if (leadFilter !== "all" && String(r.leadOrder) !== leadFilter) return false
+      if (q) {
+        const hay = [
+          r.userName,
+          r.country,
+          r.countryEn,
+          r.note ?? "",
+          r.reason ?? "",
+          r.reviewerName ?? "",
+        ]
+          .join(" ")
+          .toLowerCase()
+        if (!hay.includes(q)) return false
+      }
+      return true
+    })
+    const sorted = [...rows]
+    switch (sortKey) {
+      case "decided_desc":
+        sorted.sort((a, b) => ms(b.decidedAt, 0) - ms(a.decidedAt, 0))
+        break
+      case "decided_asc":
+        sorted.sort((a, b) => ms(a.decidedAt, Infinity) - ms(b.decidedAt, Infinity))
+        break
+      case "sent_desc":
+        sorted.sort((a, b) => ms(b.createdAt, 0) - ms(a.createdAt, 0))
+        break
+      case "sent_asc":
+        sorted.sort((a, b) => ms(a.createdAt, Infinity) - ms(b.createdAt, Infinity))
+        break
+      case "name_asc":
+        sorted.sort(
+          (a, b) =>
+            a.userName.localeCompare(b.userName) || ms(b.decidedAt, 0) - ms(a.decidedAt, 0),
+        )
+        break
+      case "lead_asc":
+        sorted.sort(
+          (a, b) => a.leadOrder - b.leadOrder || ms(b.decidedAt, 0) - ms(a.decidedAt, 0),
+        )
+        break
+    }
+    return sorted
+  }, [recent, search, statusFilter, contextFilter, leadFilter, sortKey])
+
   // Drop any selected ids that are no longer in the decided list (e.g. removed
   // by another admin or after our own delete).
   useEffect(() => {
@@ -288,9 +416,12 @@ export function AdminProofsPanel() {
     })
   }
 
-  const allSelected = recent.length > 0 && selected.size === recent.length
+  // Select-all works over the CURRENTLY FILTERED rows, so "select all → delete"
+  // deletes exactly what is on screen, never hidden rows behind an active filter.
+  const allSelected =
+    filteredRecent.length > 0 && filteredRecent.every((r) => selected.has(r.id))
   function toggleAll() {
-    setSelected(allSelected ? new Set() : new Set(recent.map((r) => r.id)))
+    setSelected(allSelected ? new Set() : new Set(filteredRecent.map((r) => r.id)))
   }
 
   function runDelete(mode: "selected" | "all") {
@@ -558,9 +689,12 @@ export function AdminProofsPanel() {
                 DECIDED HISTORY
               </h2>
               {/* Says how much of the archive is on screen, so a short list is
-                  never mistaken for the whole history. */}
+                  never mistaken for the whole history. While filtering, it names
+                  the matched count against the loaded total. */}
               <span className="font-sans text-[10px] tracking-chip text-muted-foreground/70">
-                {recent.length} / {data.recentTotal}
+                {filtersActive
+                  ? `${filteredRecent.length} of ${recent.length} match`
+                  : `${recent.length} / ${data.recentTotal}`}
               </span>
               {/* Names the zone once here instead of stamping an abbreviation onto
                   every row, which would also have to flip EET/EEST twice a year. */}
@@ -604,6 +738,94 @@ export function AdminProofsPanel() {
             </div>
           </div>
 
+          {/* Filter / search / sort toolbar. Operates on the full loaded
+              archive; results feed the list, the counts and select-all below. */}
+          <div className="mb-4 rounded-sm border border-border bg-card/40 p-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative min-w-[180px] flex-1">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/60" />
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search team, stop, note, reviewer…"
+                  className="w-full rounded-sm border border-border bg-background py-1.5 pl-8 pr-2 font-sans text-xs text-foreground outline-none placeholder:text-muted-foreground/50 focus:border-brass"
+                />
+              </div>
+
+              <div className="inline-flex items-center gap-1.5">
+                <SlidersHorizontal className="size-3.5 text-muted-foreground/60" />
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+                  aria-label="Filter by decision"
+                  className="rounded-sm border border-border bg-background px-2 py-1.5 font-sans text-xs text-foreground outline-none focus:border-brass"
+                >
+                  <option value="all">All decisions</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </div>
+
+              <select
+                value={contextFilter}
+                onChange={(e) => setContextFilter(e.target.value as ContextFilter)}
+                aria-label="Filter by scan context"
+                className="rounded-sm border border-border bg-background px-2 py-1.5 font-sans text-xs text-foreground outline-none focus:border-brass"
+              >
+                <option value="all">Any context</option>
+                <option value="too_far">Too far</option>
+                <option value="location_denied">Location denied</option>
+              </select>
+
+              <select
+                value={leadFilter}
+                onChange={(e) => setLeadFilter(e.target.value)}
+                aria-label="Filter by stop"
+                className="max-w-[200px] rounded-sm border border-border bg-background px-2 py-1.5 font-sans text-xs text-foreground outline-none focus:border-brass"
+              >
+                <option value="all">Any stop</option>
+                {leadOptions.map((o) => (
+                  <option key={o.order} value={String(o.order)}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+
+              <div className="inline-flex items-center gap-1.5">
+                <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
+                <select
+                  value={sortKey}
+                  onChange={(e) => setSortKey(e.target.value as SortKey)}
+                  aria-label="Sort"
+                  className="rounded-sm border border-border bg-background px-2 py-1.5 font-sans text-xs text-foreground outline-none focus:border-brass"
+                >
+                  {(Object.keys(SORT_LABELS) as SortKey[]).map((k) => (
+                    <option key={k} value={k}>
+                      {SORT_LABELS[k]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {filtersActive && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearch("")
+                    setStatusFilter("all")
+                    setContextFilter("all")
+                    setLeadFilter("all")
+                  }}
+                  className="inline-flex items-center gap-1 rounded-sm border border-border bg-background px-2.5 py-1.5 font-sans text-[10px] font-bold tracking-chip text-muted-foreground transition-colors hover:border-brass hover:text-brass"
+                >
+                  <X className="size-3" />
+                  CLEAR
+                </button>
+              )}
+            </div>
+          </div>
+
           {confirmDelete && (
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-sm border border-destructive/40 bg-destructive/10 px-4 py-3">
               <p className="font-sans text-xs text-destructive">
@@ -635,8 +857,16 @@ export function AdminProofsPanel() {
             </div>
           )}
 
+          {filteredRecent.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-sm border border-dashed border-border py-12 text-center">
+              <Search className="size-6 text-muted-foreground/50" />
+              <p className="mt-2 font-serif text-sm text-muted-foreground">
+                No decided proofs match these filters.
+              </p>
+            </div>
+          ) : (
           <ul className="divide-y divide-border rounded-sm border border-border">
-            {recent.map((p) => (
+            {filteredRecent.map((p) => (
               <li
                 key={p.id}
                 className={`px-4 py-3 transition-colors ${
@@ -748,10 +978,12 @@ export function AdminProofsPanel() {
               </li>
             ))}
           </ul>
+          )}
 
-          {/* Only offered while rows remain, and it names the exact number left so
-              you can tell "3 more" from "300 more" before clicking. */}
-          {data.recentTotal > recent.length && (
+          {/* Only offered while rows remain AND no filter is active (a filter runs
+              over the already-loaded archive, so paging in more is irrelevant).
+              Names the exact number left so you can tell "3 more" from "300 more". */}
+          {!filtersActive && data.recentTotal > recent.length && (
             <div className="mt-3 flex justify-center">
               <button
                 type="button"
