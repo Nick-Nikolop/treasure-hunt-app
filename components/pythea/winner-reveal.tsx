@@ -6,6 +6,7 @@ import { motion } from "framer-motion"
 import { BookOpen, Compass, Gem, ScrollText, Loader2, Hourglass } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
 import { HandwrittenNote } from "@/components/pythea/handwritten-note"
+import { CompassPickupNotice } from "@/components/pythea/compass-pickup-notice"
 import { HoldPaper } from "@/components/pythea/hold-paper"
 import { CompassRose } from "@/components/pythea/compass-rose"
 import { getFinaleSummary, type FinaleSummary } from "@/app/q/[token]/actions"
@@ -177,9 +178,6 @@ export function CompassReveal() {
 
   const note2 = data ? (locale === "en" ? data.note2En : data.note2) : ""
   const note2Cta = data ? (locale === "en" ? data.note2CtaEn : data.note2Cta) : ""
-  // The "put it back" request rides on THIS note, the one handed over the moment
-  // the compass is found: asking for it back before they hold it made no sense.
-  const compassReturn = data ? (locale === "en" ? data.compassReturnEn : data.compassReturn) : ""
 
   return (
     <motion.div
@@ -204,7 +202,9 @@ export function CompassReveal() {
         {f.compassTitle}
       </h2>
 
-      <HandwrittenNote body={note2} signature={f.signature} notice={compassReturn} />
+      {/* The old "put the compass back" aside is replaced by a live countdown to
+          the pickup time; when it ends it reveals where to collect the compass. */}
+      <HandwrittenNote body={note2} signature={f.signature} noticeContent={<CompassPickupNotice />} />
 
       {/* The next marching order, shouted — same brass banner the journal note
           uses, one beat later: the compass is found, the treasure is the target.

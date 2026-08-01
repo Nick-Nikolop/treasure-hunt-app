@@ -740,6 +740,12 @@ const el = {
     compassKicker: "ΒΡΗΚΑΤΕ ΤΗΝ ΠΥΞΙΔΑ",
     compassTitle: "Η πυξίδα του Πυθέα",
     compassHint: "Ο θησαυρός σας περιμένει. Ακολουθήστε την πυξίδα ως το τέλος.",
+    // Compass pickup: countdown under NOTE 2, then the pickup location reveal.
+    pickupCountdownLabel: "Θα μάθετε που θα λάβετε την πυξίδα σε:",
+    pickupTitle: "Lighthouse - The Urban Project",
+    pickupAddress: "Navarinou 195",
+    pickupBody: "Ελάτε στο συγκεκριμένο σημείο για να παραλάβετε την πυξίδα.",
+    pickupCta: "ΑΝΟΙΓΜΑ ΣΤΟΝ ΧΑΡΤΗ",
     // Winner reveal (after the TREASURE QR is scanned — the finish)
     winnerKicker: "ΤΟ ΤΑΞΙΔΙ ΟΛΟΚΛΗΡΩΘΗΚΕ",
     winnerTitle: "Βρήκατε τον θησαυρό!",
@@ -1839,6 +1845,12 @@ const en: Dictionary = {
     compassKicker: "YOU FOUND THE COMPASS",
     compassTitle: "The compass of Pytheas",
     compassHint: "The treasure awaits. Follow the compass to the very end.",
+    // Compass pickup: countdown under NOTE 2, then the pickup location reveal.
+    pickupCountdownLabel: "You will learn where to collect the compass in:",
+    pickupTitle: "Lighthouse - The Urban Project",
+    pickupAddress: "Navarinou 195",
+    pickupBody: "Come to this exact spot to collect the compass.",
+    pickupCta: "OPEN IN MAPS",
     winnerKicker: "THE VOYAGE IS COMPLETE",
     winnerTitle: "You found the treasure!",
     place: (n: number) => {

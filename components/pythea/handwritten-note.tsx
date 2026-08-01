@@ -112,6 +112,7 @@ export function HandwrittenNote({
   body,
   signature,
   notice,
+  noticeContent,
   className = "",
   animate = true,
 }: {
@@ -126,6 +127,13 @@ export function HandwrittenNote({
    * read as pinned to the page rather than written on it.
    */
   notice?: string
+  /**
+   * A richer aside rendered in the same position as `notice`, for cases that
+   * need more than a line of text (e.g. the compass-pickup countdown). When
+   * given it fully replaces `notice` and brings its own styling, so it is NOT
+   * wrapped in the brass card below.
+   */
+  noticeContent?: React.ReactNode
   className?: string
   animate?: boolean
 }) {
@@ -209,21 +217,25 @@ export function HandwrittenNote({
               </p>
             ))}
 
-            {notice && notice.trim().length > 0 && (
-              // Bright pinned aside. Sits on its own tinted card with a heavy
-              // left rail so it separates cleanly from the italic hand above it.
-              <div className="mt-7 rounded-sm border-2 border-brass/70 border-l-[6px] border-l-brass bg-brass/15 px-4 py-3 md:mt-8 md:px-5 md:py-3.5">
-                <div className="flex items-start gap-2.5">
-                  <RotateCcw
-                    className="mt-0.5 size-4 shrink-0 text-brass md:size-[18px]"
-                    aria-hidden
-                  />
-                  <p className="text-pretty font-sans text-[14px] font-semibold leading-[1.65] text-ink md:text-[15px]">
-                    {notice}
-                  </p>
-                </div>
-              </div>
-            )}
+            {/* A rich aside (e.g. the pickup countdown) takes precedence and
+                brings its own styling; otherwise the plain string notice. */}
+            {noticeContent
+              ? noticeContent
+              : notice && notice.trim().length > 0 && (
+                  // Bright pinned aside. Sits on its own tinted card with a heavy
+                  // left rail so it separates cleanly from the italic hand above it.
+                  <div className="mt-7 rounded-sm border-2 border-brass/70 border-l-[6px] border-l-brass bg-brass/15 px-4 py-3 md:mt-8 md:px-5 md:py-3.5">
+                    <div className="flex items-start gap-2.5">
+                      <RotateCcw
+                        className="mt-0.5 size-4 shrink-0 text-brass md:size-[18px]"
+                        aria-hidden
+                      />
+                      <p className="text-pretty font-sans text-[14px] font-semibold leading-[1.65] text-ink md:text-[15px]">
+                        {notice}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
             {signature && (
               // Held clear of the seal, which sits bottom-right.
