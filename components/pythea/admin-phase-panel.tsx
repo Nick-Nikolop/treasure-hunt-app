@@ -1,7 +1,8 @@
 "use client"
 
-import { useMemo, useState, useTransition } from "react"
+import { useEffect, useMemo, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
+import { Countdown } from "@/components/pythea/countdown"
 import {
   Layers,
   Save,
@@ -68,6 +69,13 @@ export function AdminPhasePanel({ data }: { data: PhaseAdminData }) {
   const [huntCloseLocal, setHuntCloseLocal] = useState(
     data.huntCloseMs != null ? utcMsToAthensLocalInput(data.huntCloseMs) : "",
   )
+  // Whether the SAVED close instant is already in the past. Computed after mount
+  // (never during render) so the server and first client paint agree, then the
+  // live <Countdown> flips it via onDone when it reaches zero.
+  const [closedNow, setClosedNow] = useState(false)
+  useEffect(() => {
+    setClosedNow(data.huntCloseMs != null && Date.now() >= data.huntCloseMs)
+  }, [data.huntCloseMs])
 
   // Double-confirmation state.
   const [reviewOpen, setReviewOpen] = useState(false)
@@ -498,6 +506,36 @@ export function AdminPhasePanel({ data }: { data: PhaseAdminData }) {
             </>
           )}
         </p>
+
+        {/* Live countdown to the SAVED close instant (not the pending edit), so
+            the admin can see the real time remaining tick down. Once it hits
+            zero it flips to a CLOSED badge and refreshes so the server state
+            (redirects, celebration landing) is reflected everywhere. */}
+        {data.huntCloseMs != null && (
+          <div className="mt-4">
+            {closedNow ? (
+              <span className="inline-flex items-center gap-1.5 rounded-sm border border-brass/40 bg-brass/10 px-3 py-1.5 font-sans text-xs font-bold tracking-chip text-brass">
+                <PartyPopper className="size-3.5" />
+                HUNT CLOSED &middot; celebration landing is live
+              </span>
+            ) : (
+              <>
+                <span className="mb-2 block font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
+                  TIME REMAINING
+                </span>
+                <Countdown
+                  targetMs={data.huntCloseMs}
+                  size="md"
+                  tone="dark"
+                  onDone={() => {
+                    setClosedNow(true)
+                    router.refresh()
+                  }}
+                />
+              </>
+            )}
+          </div>
+        )}
 
         {/* Preview the celebration landing before the deadline actually hits. */}
         <a
