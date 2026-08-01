@@ -1,5 +1,6 @@
 "use client"
 
+import React from "react"
 import { motion } from "framer-motion"
 import { RotateCcw } from "lucide-react"
 
@@ -113,6 +114,8 @@ export function HandwrittenNote({
   signature,
   notice,
   noticeContent,
+  media,
+  mediaAfter,
   className = "",
   animate = true,
 }: {
@@ -134,6 +137,16 @@ export function HandwrittenNote({
    * wrapped in the brass card below.
    */
   noticeContent?: React.ReactNode
+  /**
+   * Something pasted into the note between paragraphs (NOTE 2 uses it for the
+   * treasure equation plate).
+   */
+  media?: React.ReactNode
+  /**
+   * 0-based index of the paragraph the `media` is placed AFTER. Defaults to the
+   * last paragraph, so an out-of-range value can never drop the media.
+   */
+  mediaAfter?: number
   className?: string
   animate?: boolean
 }) {
@@ -145,6 +158,12 @@ export function HandwrittenNote({
   // A lead paragraph only earns bigger type when something follows it. On a
   // one-paragraph note it would just scale the whole card up.
   const hasLead = paragraphs.length > 1
+
+  // Clamped so a stale/out-of-range index still renders the plate (at the end)
+  // instead of silently dropping it.
+  const lastIndex = paragraphs.length - 1
+  const mediaIndex =
+    mediaAfter === undefined ? lastIndex : Math.min(Math.max(mediaAfter, 0), lastIndex)
 
   return (
     <motion.div
@@ -204,17 +223,19 @@ export function HandwrittenNote({
 
           <div className="relative">
             {paragraphs.map((p, i) => (
-              <p
-                key={i}
-                className={`whitespace-pre-line text-pretty font-serif italic leading-[1.8] ${
-                  hasLead && i === 0
-                    ? "text-[17.5px] text-ink/90 md:text-[21px]"
-                    : "text-[16.5px] text-ink/85 md:text-[19px]"
-                } ${i > 0 ? "mt-[1.15em]" : ""}`}
-                style={{ textShadow: "0 0.5px 0 oklch(0.16 0.018 62 / 0.14)" }}
-              >
-                {p}
-              </p>
+              <React.Fragment key={i}>
+                <p
+                  className={`whitespace-pre-line text-pretty font-serif italic leading-[1.8] ${
+                    hasLead && i === 0
+                      ? "text-[17.5px] text-ink/90 md:text-[21px]"
+                      : "text-[16.5px] text-ink/85 md:text-[19px]"
+                  } ${i > 0 ? "mt-[1.15em]" : ""}`}
+                  style={{ textShadow: "0 0.5px 0 oklch(0.16 0.018 62 / 0.14)" }}
+                >
+                  {p}
+                </p>
+                {media && i === mediaIndex && media}
+              </React.Fragment>
             ))}
 
             {/* A rich aside (e.g. the pickup countdown) takes precedence and

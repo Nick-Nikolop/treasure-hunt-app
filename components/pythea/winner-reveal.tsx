@@ -7,6 +7,7 @@ import { BookOpen, Compass, Gem, ScrollText, Loader2, Hourglass } from "lucide-r
 import { useI18n } from "@/components/pythea/language-provider"
 import { HandwrittenNote } from "@/components/pythea/handwritten-note"
 import { CompassPickupNotice } from "@/components/pythea/compass-pickup-notice"
+import { TreasureEquation } from "@/components/pythea/treasure-equation"
 import { HoldPaper } from "@/components/pythea/hold-paper"
 import { CompassRose } from "@/components/pythea/compass-rose"
 import { getFinaleSummary, type FinaleSummary } from "@/app/q/[token]/actions"
@@ -176,7 +177,8 @@ export function CompassReveal() {
 
   if (loading) return <FinaleLoader label={f.loading} />
 
-  const note2 = data ? (locale === "en" ? data.note2En : data.note2) : ""
+  // The note 2 BODY now comes from i18n (it carries the equation), while the CTA
+  // banner under it is still admin-editable copy from the finale config.
   const note2Cta = data ? (locale === "en" ? data.note2CtaEn : data.note2Cta) : ""
 
   return (
@@ -202,9 +204,15 @@ export function CompassReveal() {
         {f.compassTitle}
       </h2>
 
-      {/* The old "put the compass back" aside is replaced by a live countdown to
-          the pickup time; when it ends it reveals where to collect the compass. */}
-      <HandwrittenNote body={note2} signature={f.signature} noticeContent={<CompassPickupNotice />} />
+      {/* NOTE 2 now carries the treasure equation between its paragraphs, and a
+          live countdown to the compass pickup where the old aside used to sit. */}
+      <HandwrittenNote
+        body={f.note2Body}
+        signature={f.signature}
+        media={<TreasureEquation />}
+        mediaAfter={2}
+        noticeContent={<CompassPickupNotice />}
+      />
 
       {/* The next marching order, shouted — same brass banner the journal note
           uses, one beat later: the compass is found, the treasure is the target.

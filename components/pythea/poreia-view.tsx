@@ -47,6 +47,7 @@ import { JournalWidgets } from "@/components/pythea/journal-widgets"
 import { HowToPlayLauncher } from "@/components/pythea/how-to-play-modal"
 import { AnnouncementLabel } from "@/components/pythea/announcement-label"
 import { CompassPickupNotice } from "@/components/pythea/compass-pickup-notice"
+import { TreasureEquation } from "@/components/pythea/treasure-equation"
 import type { StandingsSummary } from "@/lib/hunt"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { track } from "@/lib/analytics-client"
@@ -1401,6 +1402,8 @@ function NoteOverlay({
   label,
   notice,
   noticeContent,
+  media,
+  mediaAfter,
   versions,
   ctaIcon: CtaIcon,
   onClose,
@@ -1415,6 +1418,10 @@ function NoteOverlay({
    * over it. Note 2 uses this for the live compass-pickup countdown.
    */
   noticeContent?: React.ReactNode
+  /** Pasted into the note between paragraphs (note 2: the treasure equation). */
+  media?: React.ReactNode
+  /** 0-based index of the paragraph the `media` goes after. */
+  mediaAfter?: number
   /**
    * Admin-only switcher for the first note's rotating hiding hint. Absent for
    * ordinary explorers and for the second note, which has no versions.
@@ -1460,6 +1467,8 @@ function NoteOverlay({
           signature={t.finale.signature}
           notice={notice}
           noticeContent={noticeContent}
+          media={media}
+          mediaAfter={mediaAfter}
         />
 
         {/* The marching order, shouted. Sits between the note and the close
@@ -1874,9 +1883,11 @@ function FinaleNoteBar({
       )}
       {open === 2 && note2 && (
         <NoteOverlay
-          body={note2.body}
+          body={t.finale.note2Body}
           cta={note2.cta}
           label={t.finale.note2Label}
+          media={<TreasureEquation />}
+          mediaAfter={2}
           noticeContent={<CompassPickupNotice />}
           ctaIcon={Gem}
           onClose={closeNote2}
@@ -2090,9 +2101,11 @@ function FinalPageBody({
 
       {open === 2 && note2 && (
         <NoteOverlay
-          body={note2.body}
+          body={t.finale.note2Body}
           cta={note2.cta}
           label={t.finale.note2Label}
+          media={<TreasureEquation />}
+          mediaAfter={2}
           noticeContent={<CompassPickupNotice />}
           ctaIcon={Gem}
           onClose={() => setOpen(null)}

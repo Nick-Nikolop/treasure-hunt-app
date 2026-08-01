@@ -742,6 +742,10 @@ const el = {
     compassHint: "Ο θησαυρός σας περιμένει. Ακολουθήστε την πυξίδα ως το τέλος.",
     // Compass pickup: countdown under NOTE 2, then the pickup location reveal.
     pickupCountdownLabel: "Θα μάθετε που θα λάβετε την πυξίδα σε:",
+    // NOTE 2 body, rendered with the equation image after the 3rd paragraph.
+    note2Body:
+      "Τελικα δεν την είχα κρύψει όσο καλά νόμιζα…\n\nΣυγχαρητήρια λοιπόν εξερευνητές, βρήκατε την πυξίδα μου.\n\nΤο θησαυρό μου τον έχω κρύψει μεταξύ Α και Β. Για να βρείτε τα σημεία αυτά πρέπει να λύσετε την παρακάτω εξίσωση:\n\nΗ λύση της εξίσωσης δεν είναι καθαρά μαθηματικη Αν βρείτε τη λύση και χρησιμοποιήσετε την πυξίδα μου, ο θησαυρός θα σας αποκαλυφθει.",
+    equationAlt: "Η εξίσωση του θησαυρού: ο πίνακας B με στροφές A(90°) και A(-90°).",
     pickupTitle: "Lighthouse - The Urban Project",
     pickupAddress: "Navarinou 195",
     pickupBody: "Ελάτε στο συγκεκριμένο σημείο για να παραλάβετε την πυξίδα.",
@@ -1847,6 +1851,10 @@ const en: Dictionary = {
     compassHint: "The treasure awaits. Follow the compass to the very end.",
     // Compass pickup: countdown under NOTE 2, then the pickup location reveal.
     pickupCountdownLabel: "You will learn where to collect the compass in:",
+    // NOTE 2 body, rendered with the equation image after the 3rd paragraph.
+    note2Body:
+      "Turns out I had not hidden it as well as I thought…\n\nCongratulations then, explorers, you found my compass.\n\nI have hidden my treasure between A and B. To find these points you must solve the equation below:\n\nThe solution to the equation is not purely mathematical. If you find the solution and use my compass, the treasure will be revealed to you.",
+    equationAlt: "The treasure equation: matrix B built from the rotations A(90°) and A(-90°).",
     pickupTitle: "Lighthouse - The Urban Project",
     pickupAddress: "Navarinou 195",
     pickupBody: "Come to this exact spot to collect the compass.",
