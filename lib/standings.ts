@@ -1,6 +1,7 @@
 import "server-only"
 
 import { db } from "@/lib/db"
+import { BOOTSTRAP_SUPERADMIN_EMAIL } from "@/lib/admin"
 import { user, team, teamMember, leadUnlock } from "@/lib/db/schema"
 import { getLeadDefs } from "@/lib/leads"
 import {
@@ -34,6 +35,28 @@ import {
  * inside a crew, which the live board folds into their team) so the ceremony can
  * honour individuals as well as crews.
  */
+
+/**
+ * Organiser accounts: kept out of the standings entirely, AND their crew is
+ * hidden along with them, since a crew containing an organiser is a test crew.
+ * Every `role === "superadmin"` account is treated the same way without being
+ * listed here; these are the extra alt accounts that run as ordinary users.
+ */
+const ORGANISER_EMAILS = new Set([
+  "nnikolopoulos@workearly.co",
+  "webmasteerrass@gmail.com",
+  BOOTSTRAP_SUPERADMIN_EMAIL,
+])
+
+/**
+ * Accounts treated as if they had never played: removed from the player table
+ * and from their crew's roster, but WITHOUT hiding the crew (the difference from
+ * an organiser account). The crew is then re-measured from its remaining members,
+ * so a ghost can never be the one holding the crew's rank or timestamp.
+ */
+const GHOST_EMAILS = new Set(["xrisaxristodoulea@gmail.com"])
+
+const normalEmail = (email: string) => email.trim().toLowerCase()
 
 /** Endgame steps in play order: the note, then the compass, then the treasure. */
 export type Stage = "none" | "trail_end" | "compass" | "treasure"
@@ -133,6 +156,7 @@ export async function getFinalStandings(nowMs: number = Date.now()): Promise<Fin
         name: user.name,
         firstName: user.firstName,
         email: user.email,
+        role: user.role,
       })
       .from(user),
     db.select({ userId: teamMember.userId, teamId: teamMember.teamId }).from(teamMember),
@@ -220,6 +244,19 @@ export async function getFinalStandings(nowMs: number = Date.now()): Promise<Fin
 
   const userById = new Map(users.map((u) => [u.id, u]))
 
+  // Organisers taint their whole crew; ghosts are only erased as individuals.
+  // `hiddenIds` is the union, i.e. every account that must not be NAMED anywhere.
+  const organiserIds = new Set(
+    users
+      .filter((u) => u.role === "superadmin" || ORGANISER_EMAILS.has(normalEmail(u.email)))
+      .map((u) => u.id),
+  )
+  const hiddenIds = new Set(
+    users
+      .filter((u) => organiserIds.has(u.id) || GHOST_EMAILS.has(normalEmail(u.email)))
+      .map((u) => u.id),
+  )
+
   // --- Teams: a crew is measured by its furthest member. ---
   const memberIdsOf = new Map<string, string[]>()
   const teamIdOfUser = new Map<string, string>()
@@ -231,8 +268,18 @@ export async function getFinalStandings(nowMs: number = Date.now()): Promise<Fin
   }
   const teamNameById = new Map(teams.map((t) => [t.id, t.name]))
 
-  const teamRows: StandingRow[] = teams.map((t) => {
-    const ids = memberIdsOf.get(t.id) ?? []
+  const teamRows: StandingRow[] = teams
+    .filter((t) => {
+      const roster = memberIdsOf.get(t.id) ?? []
+      // A crew carrying an organiser account is a test crew: drop it outright.
+      if (roster.some((id) => organiserIds.has(id))) return false
+      // A crew with nobody visible left has nothing to rank.
+      return roster.some((id) => !hiddenIds.has(id))
+    })
+    .map((t) => {
+    // Ghosts are stripped BEFORE measuring, so the crew's stage, progress and
+    // timestamp are all derived from its remaining members only.
+    const ids = (memberIdsOf.get(t.id) ?? []).filter((id) => !hiddenIds.has(id))
     const measured = ids.map(measure)
 
     const bestStageRank = measured.reduce((m, x) => Math.max(m, STAGE_RANK[x.stage]), 0)
@@ -271,11 +318,14 @@ export async function getFinalStandings(nowMs: number = Date.now()): Promise<Fin
         .filter((u): u is NonNullable<typeof u> => !!u)
         .map(displayName),
       teamName: null,
-    }
-  })
+      }
+    })
 
-  // --- Players: every registered person on their own merits. ---
-  const playerRows: StandingRow[] = users.map((u) => {
+  // --- Players: every registered person on their own merits, minus organisers
+  // and ghosts, who are absent from the ceremony entirely. ---
+  const playerRows: StandingRow[] = users
+    .filter((u) => !hiddenIds.has(u.id))
+    .map((u) => {
     const m = measure(u.id)
     const teamId = teamIdOfUser.get(u.id)
     return {
