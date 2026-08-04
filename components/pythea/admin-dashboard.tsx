@@ -32,6 +32,7 @@ import {
   Camera,
   Images,
   Gauge,
+  Medal,
 } from "lucide-react"
 import { AdminProofsPanel } from "@/components/pythea/admin-proofs-panel"
 import { AdminGalleryPanel } from "@/components/pythea/admin-gallery-panel"
@@ -477,10 +478,20 @@ export function AdminDashboard({
         {/* Finale is open to every superadmin: both of its actions (getFinaleState,
             adminSaveFinale) only require an admin, unlike the Location tab above
             whose actions are bootstrap-only. */}
-        <TabButton active={tab === "finale"} onClick={() => setTab("finale")} icon={Compass}>
-          Finale
-        </TabButton>
-      </div>
+          <TabButton active={tab === "finale"} onClick={() => setTab("finale")} icon={Compass}>
+            Finale
+          </TabButton>
+          {/* Not a tab: the closing-ceremony standings live on their own page so
+              they can be projected full-screen without the admin chrome. Styled
+              to match the tabs so it reads as part of the same bar. */}
+          <Link
+            href="/admin/standings"
+            className="inline-flex shrink-0 items-center gap-2 rounded-sm border border-brass/40 px-3 py-2 font-sans text-sm font-bold tracking-chip text-brass transition-colors hover:bg-brass hover:text-background sm:px-4"
+          >
+            <Medal className="size-4" />
+            Standings
+          </Link>
+        </div>
 
       {/* Same reconciliation as the Progress tab, phrased for whichever list is
           open, so a lower entrant count never reads as missing people. */}
