@@ -253,15 +253,30 @@ function StatTile({
 
 export function AdminStandingsView({ data }: { data: FinalStandings }) {
   const [view, setView] = useState<"teams" | "players">("teams")
-  const rows = view === "teams" ? data.teams : data.players
 
-  // Only crews/players who actually moved deserve a plinth, so an all-zero
-  // podium never crowns someone who never left the harbour. We take the top three
-  // DISTINCT positions and every row sharing them, so a tie (teammates who all
-  // scanned the treasure) never silently drops a co-winner into the list below.
-  // Capped so a pathological many-way tie cannot blow up the layout.
+  // Only crews/explorers who actually SOLVED something are ranked at all.
+  // Careful with the off-by-one: `progress` counts leads UNLOCKED, and lead 1 is
+  // handed to everyone at registration without a scan, so `progress === 1` means
+  // "signed up, never solved a thing". Solving the first stop unlocks lead 2, so
+  // the real threshold is > 1. (Anyone in the endgame has progress === total, so
+  // they always pass.) This drops ~60 crews and ~230 explorers who never left the
+  // harbour, instead of padding the table with identical rows.
+  const hasSolved = (r: StandingRow) => r.progress > 1
+  const rows = useMemo(
+    () => (view === "teams" ? data.teams : data.players).filter(hasSolved),
+    [view, data.teams, data.players],
+  )
+  // Counts shown in the header must agree with the table, so they count the
+  // ranked entries, not everyone who ever signed up.
+  const activeTeams = useMemo(() => data.teams.filter(hasSolved).length, [data.teams])
+  const activePlayers = useMemo(() => data.players.filter(hasSolved).length, [data.players])
+
+  // We take the top three DISTINCT positions and every row sharing them, so a
+  // tie (teammates who all scanned the treasure) never silently drops a
+  // co-winner into the list below. Capped so a pathological many-way tie cannot
+  // blow up the layout.
   const podium = useMemo(() => {
-    const moved = rows.filter((r) => r.progress > 0)
+    const moved = rows
     const top = [...new Set(moved.map((r) => r.position))].sort((a, b) => a - b).slice(0, 3)
     // Add one position-group at a time and stop before any group that would not
     // fit whole, so the podium never shows "3 of the 5 who tied".
@@ -303,13 +318,14 @@ export function AdminStandingsView({ data }: { data: FinalStandings }) {
             Το ταξίδι του Πυθέα
           </h1>
           <p className="mx-auto mt-2 max-w-[52ch] text-pretty font-serif text-sm leading-relaxed text-muted-foreground">
-            Η οριστική κατάταξη όλων των πληρωμάτων και των εξερευνητών, όπως την έγραψε το κυνήγι.
+            Η οριστική κατάταξη κάθε πληρώματος και εξερευνητή που έλυσε τουλάχιστον ένα στοιχείο, όπως
+            την έγραψε το κυνήγι.
           </p>
         </div>
 
         <div className="grid grid-cols-2 gap-2 p-3 sm:grid-cols-4 sm:p-4">
-          <StatTile icon={Users} value={data.stats.teamCount} label="ΠΛΗΡΩΜΑΤΑ" />
-          <StatTile icon={User} value={data.stats.playerCount} label="ΕΞΕΡΕΥΝΗΤΕΣ" />
+          <StatTile icon={Users} value={activeTeams} label="ΠΛΗΡΩΜΑΤΑ" />
+          <StatTile icon={User} value={activePlayers} label="ΕΞΕΡΕΥΝΗΤΕΣ" />
           <StatTile icon={ScrollText} value={data.stats.endgameTeams} label="ΣΤΟ ΦΙΝΑΛΕ" />
           <StatTile icon={Gem} value={data.stats.finishedTeams} label="ΟΛΟΚΛΗΡΩΣΑΝ" />
         </div>
