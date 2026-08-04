@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo } from "react"
 import Link from "next/link"
 import {
   ArrowLeft,
@@ -252,8 +252,6 @@ function StatTile({
 }
 
 export function AdminStandingsView({ data }: { data: FinalStandings }) {
-  const [view, setView] = useState<"teams" | "players">("teams")
-
   // Only crews/explorers who actually SOLVED something are ranked at all.
   // Careful with the off-by-one: `progress` counts leads UNLOCKED, and lead 1 is
   // handed to everyone at registration without a scan, so `progress === 1` means
@@ -262,14 +260,17 @@ export function AdminStandingsView({ data }: { data: FinalStandings }) {
   // they always pass.) This drops ~60 crews and ~230 explorers who never left the
   // harbour, instead of padding the table with identical rows.
   const hasSolved = (r: StandingRow) => r.progress > 1
-  const rows = useMemo(
-    () => (view === "teams" ? data.teams : data.players).filter(hasSolved),
-    [view, data.teams, data.players],
-  )
+  // ONE list, no tabs: crews plus any explorer who never joined a crew, already
+  // ranked together upstream so their positions are comparable.
+  const rows = useMemo(() => data.entries.filter(hasSolved), [data.entries])
   // Counts shown in the header must agree with the table, so they count the
   // ranked entries, not everyone who ever signed up.
-  const activeTeams = useMemo(() => data.teams.filter(hasSolved).length, [data.teams])
+  const activeTeams = useMemo(
+    () => rows.filter((r) => r.kind === "team").length,
+    [rows],
+  )
   const activePlayers = useMemo(() => data.players.filter(hasSolved).length, [data.players])
+  const soloShown = useMemo(() => rows.filter((r) => r.kind === "player").length, [rows])
 
   // We take the top three DISTINCT positions and every row sharing them, so a
   // tie (teammates who all scanned the treasure) never silently drops a
@@ -331,34 +332,8 @@ export function AdminStandingsView({ data }: { data: FinalStandings }) {
         </div>
       </header>
 
-      {/* Teams / players switch. */}
-      <div className="mt-6 inline-flex rounded-sm border border-border bg-card/50 p-1">
-        {(
-          [
-            { id: "teams" as const, label: "ΠΛΗΡΩΜΑΤΑ", icon: Users },
-            { id: "players" as const, label: "ΠΑΙΚΤΕΣ", icon: User },
-          ] satisfies { id: "teams" | "players"; label: string; icon: typeof Users }[]
-        ).map((t) => {
-          const Icon = t.icon
-          const active = view === t.id
-          return (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setView(t.id)}
-              className={`inline-flex items-center gap-1.5 rounded-sm px-3 py-1.5 font-sans text-[11px] font-bold tracking-chip transition-colors ${
-                active ? "bg-brass text-background" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Icon className="size-3.5" />
-              {t.label}
-            </button>
-          )
-        })}
-      </div>
-
       {podium.length > 0 && (
-        <section className="mt-4">
+        <section className="mt-8">
           <h2 className="mb-3 font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
             ΤΟ ΒΑΘΡΟ
           </h2>
@@ -373,6 +348,8 @@ export function AdminStandingsView({ data }: { data: FinalStandings }) {
           </h2>
           <span className="font-sans text-[10px] tracking-chip text-muted-foreground/70">
             {rows.length} ΣΥΝΟΛΟ
+            {/* Only worth saying when a lone explorer is actually in the list. */}
+            {soloShown > 0 && ` · ${soloShown} ΧΩΡΙΣ ΠΛΗΡΩΜΑ`}
           </span>
         </div>
         <StandingsList rows={rest} />

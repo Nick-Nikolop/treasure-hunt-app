@@ -97,6 +97,12 @@ export type StandingRow = {
 }
 
 export type FinalStandings = {
+  /**
+   * The one ranked ceremony list: every crew, plus any explorer who never joined
+   * a crew, ranked together so their positions are directly comparable. This is
+   * what the standings page renders.
+   */
+  entries: StandingRow[]
   teams: StandingRow[]
   players: StandingRow[]
   total: number
@@ -104,6 +110,8 @@ export type FinalStandings = {
   stats: {
     teamCount: number
     playerCount: number
+    /** Crewless explorers who made it into `entries`. */
+    soloCount: number
     finishedTeams: number
     /** Crews who reached at least the Trail End note. */
     endgameTeams: number
@@ -347,16 +355,30 @@ export async function getFinalStandings(nowMs: number = Date.now()): Promise<Fin
     }
   })
 
+  // --- Entries: the single ceremony list. Crews rank as crews, and an explorer
+  // who never joined one still deserves a place, so solo players are folded in
+  // beside the crews rather than hidden behind a separate tab. Note a player
+  // whose crew was hidden is NOT solo, so they stay out with their crew.
+  // Cloned because `rankAndPosition` stamps `position` in place and these same
+  // objects are also returned in `players` with their own within-kind ranking.
+  const entryRows: StandingRow[] = [
+    ...teamRows,
+    ...playerRows.filter((p) => !p.teamName),
+  ].map((r) => ({ ...r }))
+
   const rankedTeams = rankAndPosition(teamRows)
   const rankedPlayers = rankAndPosition(playerRows)
+  const rankedEntries = rankAndPosition(entryRows)
 
   return {
+    entries: rankedEntries,
     teams: rankedTeams,
     players: rankedPlayers,
     total,
     stats: {
       teamCount: rankedTeams.length,
       playerCount: rankedPlayers.length,
+      soloCount: rankedEntries.filter((e) => e.kind === "player").length,
       finishedTeams: rankedTeams.filter((t) => t.finished).length,
       endgameTeams: rankedTeams.filter((t) => t.stage !== "none").length,
     },
