@@ -64,6 +64,67 @@ function reachedCompass(row: StandingRow): boolean {
 }
 
 /**
+ * Per-digit correction for Alegreya Sans, measured off the rendered font at
+ * 100px (cap height 70): `s` scales the glyph up to cap height, `y` lifts the
+ * ones that hang below the baseline, expressed in the scaled glyph's own em.
+ */
+const FIGURE_FIX: Record<string, { s: number; y: number }> = {
+  "0": { s: 1.32, y: 0 },
+  "1": { s: 1.35, y: 0 },
+  "2": { s: 1.35, y: 0 },
+  "3": { s: 1.13, y: 0.09 },
+  "4": { s: 1.15, y: 0.09 },
+  "5": { s: 1.15, y: 0.09 },
+  "6": { s: 1.13, y: 0 },
+  "7": { s: 1.13, y: 0.09 },
+  "8": { s: 1.15, y: 0 },
+  "9": { s: 1.13, y: 0.08 },
+}
+
+/**
+ * Renders a label whose digits sit inline with capitals, e.g. "8 ΑΠΟ 10 ΓΡΙΦΟΥΣ".
+ *
+ * Alegreya Sans has exactly ONE figure set and it is OLDSTYLE: measured against a
+ * cap height of 70, the digits 0/1/2 are only 52 tall and 3/4/5/7/9 hang 9 units
+ * below the baseline. Next to uppercase Greek that reads as the numbers being in
+ * a different, smaller font, which is precisely what looked wrong.
+ *
+ * **`font-variant-numeric: lining-nums` cannot fix this.** The Google-hosted file
+ * ships no lining alternate, so that declaration (and `font-feature-settings:
+ * 'lnum'`) renders byte-identically. Verified by rendering the real element at
+ * 30px in all three modes. So each digit is instead optically normalised to cap
+ * height and dropped back onto the baseline.
+ *
+ * Letter-spacing needs no compensation: `tracking-chip` is an em value, which CSS
+ * resolves to px at the parent and inherits as that px, so the wide chip tracking
+ * stays even across the resized glyphs.
+ */
+function Figures({ children }: { children: string }) {
+  return (
+    <>
+      {[...children].map((ch, i) => {
+        const fix = FIGURE_FIX[ch]
+        if (!fix) return ch
+        return (
+          <span
+            key={i}
+            // inline-block only where a transform is actually needed, so the
+            // remaining digits stay ordinary inline text.
+            className={fix.y ? "inline-block" : undefined}
+            style={{
+              fontSize: `${fix.s}em`,
+              transform: fix.y ? `translateY(-${fix.y}em)` : undefined,
+            }}
+          >
+            {ch}
+          </span>
+        )
+      })}
+    </>
+  )
+}
+
+/**
  * One endgame milestone as a plain yes/no. A tick when it was reached, a dashed
  * ring when it was not, so the two states differ in shape as well as colour.
  */
@@ -160,7 +221,9 @@ function Podium({ rows }: { rows: StandingRow[] }) {
                   isWinner ? "text-brass" : "text-muted-foreground"
                 }`}
               >
-                {isWinner && !tied ? "ΝΙΚΗΤΗΣ" : `${row.position}Η ΘΕΣΗ${tied ? " ΕΞ ΙΣΟΥ" : ""}`}
+                <Figures>
+                  {isWinner && !tied ? "ΝΙΚΗΤΗΣ" : `${row.position}Η ΘΕΣΗ${tied ? " ΕΞ ΙΣΟΥ" : ""}`}
+                </Figures>
               </p>
               <p
                 className={`mt-1 text-balance font-serif font-bold leading-tight text-foreground ${
@@ -328,10 +391,10 @@ function GroupPanel({ group, headline }: { group: StandingsGroup; headline: bool
               gold ? "text-brass" : teal ? "text-teal" : "text-foreground"
             }`}
           >
-            {group.label}
+            <Figures>{group.label}</Figures>
           </h3>
-          <span className="shrink-0 rounded-sm border border-border bg-background/40 px-2 py-1 font-sans text-[10px] font-bold tabular-nums tracking-chip text-muted-foreground">
-            {n} {countWord}
+          <span className="shrink-0 rounded-sm border border-border bg-background/40 px-2 py-1 font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
+            <Figures>{`${n} ${countWord}`}</Figures>
           </span>
         </div>
 
