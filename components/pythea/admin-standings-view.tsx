@@ -5,60 +5,77 @@ import Link from "next/link"
 import {
   ArrowLeft,
   Award,
+  Check,
+  CircleDashed,
   Compass,
   Crown,
   Gem,
-  MapPin,
   Medal,
   ScrollText,
   Trophy,
   User,
   Users,
 } from "lucide-react"
-import type { FinalStandings, StandingRow, Stage } from "@/lib/standings"
+import type { FinalStandings, StandingRow } from "@/lib/standings"
 
 /**
  * The closing-ceremony standings board. Superadmin-only, rendered on its own
  * page so it can be projected full-screen without the admin chrome around it.
  *
- * Ranking is decided server-side in lib/standings.ts (stage, then progress, then
- * arrival time). This component only presents it.
+ * Ranking is still decided server-side in lib/standings.ts (stage, then progress,
+ * then who got there first), but arrival TIMES are deliberately never shown: the
+ * board reports what each crew achieved, not when. Every row reduces to three
+ * plain facts, riddles solved out of ten plus a yes/no on the compass and the
+ * treasure, and the stage is implied by them rather than repeated as a label.
  */
 
-const STAGE_META: Record<Stage, { el: string; icon: typeof Gem; tone: string }> = {
-  treasure: { el: "Βρήκε τον θησαυρό", icon: Gem, tone: "brass" },
-  compass: { el: "Έφτασε στην πυξίδα", icon: Compass, tone: "teal" },
-  trail_end: { el: "Βρήκε το 1ο σημείωμα", icon: ScrollText, tone: "muted" },
-  none: { el: "Στην πορεία", icon: MapPin, tone: "muted" },
+/**
+ * Riddles actually cracked, out of the ten on the trail.
+ *
+ * Careful with the off-by-one: `progress` counts leads UNLOCKED, and lead 1 is
+ * handed out at registration without anyone scanning anything, so it always runs
+ * one ahead of the riddles genuinely solved. Reaching any endgame step is only
+ * possible while standing on the final lead, so the whole trail is behind them
+ * and the count reads full.
+ */
+function riddlesSolved(row: StandingRow): number {
+  if (row.stage !== "none") return row.total
+  return Math.max(0, row.progress - 1)
 }
 
-/** Athens wall-clock, since the whole hunt was played in Greece. */
-function fmtAthens(ms: number | null): string {
-  if (ms === null) return "—"
-  return new Intl.DateTimeFormat("el-GR", {
-    timeZone: "Europe/Athens",
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(ms))
+/** The compass is behind anyone who went on to the treasure. */
+function reachedCompass(row: StandingRow): boolean {
+  return row.stage === "compass" || row.stage === "treasure"
 }
 
-function stageClasses(tone: string): string {
-  if (tone === "brass") return "border-brass/50 bg-brass/15 text-brass"
-  if (tone === "teal") return "border-teal/50 bg-teal/15 text-teal"
-  return "border-border bg-muted/30 text-muted-foreground"
-}
-
-function StageBadge({ stage }: { stage: Stage }) {
-  const meta = STAGE_META[stage]
-  const Icon = meta.icon
+/**
+ * One endgame milestone as a plain yes/no. A tick when it was reached, a dashed
+ * ring when it was not, so the two states differ in shape as well as colour.
+ */
+function Milestone({
+  label,
+  icon: Icon,
+  reached,
+}: {
+  label: string
+  icon: typeof Gem
+  reached: boolean
+}) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-sm border px-2 py-0.5 font-sans text-[10px] font-bold tracking-chip ${stageClasses(meta.tone)}`}
+      className={`inline-flex items-center gap-1 rounded-sm border px-1.5 py-1 font-sans text-[10px] font-bold tracking-chip ${
+        reached
+          ? "border-brass/50 bg-brass/15 text-brass"
+          : "border-border bg-muted/20 text-muted-foreground/60"
+      }`}
     >
-      <Icon className="size-3" />
-      {meta.el}
+      <Icon className="size-3 shrink-0" />
+      {label}
+      {reached ? (
+        <Check className="size-3.5 shrink-0" strokeWidth={3} />
+      ) : (
+        <CircleDashed className="size-3.5 shrink-0" />
+      )}
     </span>
   )
 }
@@ -143,12 +160,18 @@ function Podium({ rows }: { rows: StandingRow[] }) {
               {row.teamName && (
                 <p className="mt-1 font-sans text-[11px] text-muted-foreground">{row.teamName}</p>
               )}
-              <div className="mt-3 flex justify-center">
-                <StageBadge stage={row.stage} />
-              </div>
-              <p className="mt-2 font-sans text-[11px] tabular-nums text-muted-foreground">
-                {row.progress} / {row.total} στίγματα · {fmtAthens(row.decidedAt)}
+              {/* The headline number: riddles cracked out of the ten on the trail. */}
+              <p className="mt-3 font-serif text-3xl font-bold tabular-nums leading-none text-foreground">
+                {riddlesSolved(row)}
+                <span className="text-lg text-muted-foreground"> / {row.total}</span>
               </p>
+              <p className="mt-1 font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
+                ΓΡΙΦΟΙ
+              </p>
+              <div className="mt-3 flex flex-wrap justify-center gap-1.5">
+                <Milestone label="ΠΥΞΙΔΑ" icon={Compass} reached={reachedCompass(row)} />
+                <Milestone label="ΘΗΣΑΥΡΟΣ" icon={Gem} reached={row.finished} />
+              </div>
             </div>
           </div>
         )
@@ -196,32 +219,29 @@ function StandingsList({ rows }: { rows: StandingRow[] }) {
             )}
           </div>
 
-          <div className="hidden sm:block">
-            <StageBadge stage={row.stage} />
-          </div>
-
-          {/* Progress: the count, plus a thin bar so the spread reads at a glance. */}
+          {/* Riddles solved, with a bar built from the SAME figure so the two
+              can never disagree. */}
           <div className="w-[104px] shrink-0">
-            <div className="flex items-center justify-between gap-2">
-              <span className="font-sans text-[11px] font-bold tabular-nums text-foreground">
-                {row.progress}/{row.total}
-              </span>
-              {row.country && (
-                <span className="truncate font-sans text-[10px] text-muted-foreground">
-                  {row.country}
-                </span>
-              )}
-            </div>
+            <span className="font-sans text-xs font-bold tabular-nums text-foreground">
+              {riddlesSolved(row)}
+              <span className="text-muted-foreground">/{row.total}</span>
+              <span className="ml-1 font-normal text-[10px] text-muted-foreground">γρίφοι</span>
+            </span>
             <div className="mt-1 h-1.5 overflow-hidden rounded-sm bg-muted/40">
               <div
                 className={`h-full ${row.finished ? "bg-brass" : "bg-brass/55"}`}
-                style={{ width: `${row.total > 0 ? (row.progress / row.total) * 100 : 0}%` }}
+                style={{
+                  width: `${row.total > 0 ? (riddlesSolved(row) / row.total) * 100 : 0}%`,
+                }}
               />
             </div>
           </div>
 
-          <div className="w-[92px] shrink-0 text-right font-sans text-[11px] tabular-nums text-muted-foreground">
-            {fmtAthens(row.decidedAt)}
+          {/* Own line on narrow screens, so the crew name keeps enough room to
+              read in full instead of being truncated to three letters. */}
+          <div className="flex w-full shrink-0 gap-1.5 sm:w-auto">
+            <Milestone label="ΠΥΞΙΔΑ" icon={Compass} reached={reachedCompass(row)} />
+            <Milestone label="ΘΗΣΑΥΡΟΣ" icon={Gem} reached={row.finished} />
           </div>
         </li>
       ))}
@@ -355,10 +375,25 @@ export function AdminStandingsView({ data }: { data: FinalStandings }) {
         <StandingsList rows={rest} />
       </section>
 
-      <p className="mt-6 font-sans text-[11px] leading-relaxed text-muted-foreground">
-        Η κατάταξη κρίνεται πρώτα από το πόσο μακριά έφτασε κανείς στο φινάλε (θησαυρός, μετά πυξίδα,
-        μετά το 1ο σημείωμα), έπειτα από τα στίγματα της πορείας και τέλος από το ποιος έφτασε πρώτος.
-        Οι ώρες είναι σε ώρα Ελλάδας.
+      {/* Legend, so the two tick states are unambiguous on a projector. */}
+      <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-sm border border-border bg-card/40 px-3 py-2.5">
+        <span className="font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
+          ΥΠΟΜΝΗΜΑ
+        </span>
+        <span className="inline-flex items-center gap-1.5 font-sans text-[11px] text-muted-foreground">
+          <Check className="size-3.5 text-brass" strokeWidth={3} />
+          Το βρήκαν
+        </span>
+        <span className="inline-flex items-center gap-1.5 font-sans text-[11px] text-muted-foreground">
+          <CircleDashed className="size-3.5 text-muted-foreground/60" />
+          Δεν το έφτασαν
+        </span>
+      </div>
+
+      <p className="mt-3 font-sans text-[11px] leading-relaxed text-muted-foreground">
+        Κάθε πλήρωμα κρίνεται πρώτα από το πόσο μακριά έφτασε στο φινάλε (θησαυρός, μετά πυξίδα, μετά
+        το 1ο σημείωμα) και έπειτα από τους γρίφους που έλυσε. Οι γρίφοι της πορείας είναι{" "}
+        {data.total} στο σύνολο.
       </p>
     </main>
   )
