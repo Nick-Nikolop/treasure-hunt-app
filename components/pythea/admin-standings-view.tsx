@@ -165,16 +165,58 @@ function Milestone({
   )
 }
 
-/** Medal colouring for the top three, plain brass numeral for everyone else. */
+/**
+ * Gold, silver and bronze, defined once so the podium and the rank badges in the
+ * bands below cannot drift apart.
+ *
+ * Every value is a COMPLETE literal class string: Tailwind cannot compile an
+ * interpolated arbitrary value, so a `bg-${metal}/10` template would silently
+ * produce no style at all.
+ *
+ * The winner stays dominant despite all three now glowing: gold alone gets a
+ * full-strength border and the strongest wash, and its plinth is also taller with
+ * a larger name. Silver's wash is dialled lower than bronze's because a pale
+ * neutral reads stronger than a dark warm one at equal alpha.
+ */
+const MEDALS = [
+  {
+    icon: Trophy,
+    frame: "border-brass bg-brass/10",
+    ink: "text-brass",
+    glow: "bg-[radial-gradient(ellipse_at_top,color-mix(in_oklch,var(--brass)_30%,transparent),transparent_70%)]",
+    rank: "border-brass bg-brass text-background",
+  },
+  {
+    icon: Medal,
+    frame: "border-silver/65 bg-silver/[0.08]",
+    ink: "text-silver",
+    glow: "bg-[radial-gradient(ellipse_at_top,color-mix(in_oklch,var(--silver)_20%,transparent),transparent_70%)]",
+    rank: "border-silver/60 bg-silver/20 text-silver",
+  },
+  {
+    icon: Award,
+    frame: "border-bronze/65 bg-bronze/[0.08]",
+    ink: "text-bronze",
+    glow: "bg-[radial-gradient(ellipse_at_top,color-mix(in_oklch,var(--bronze)_26%,transparent),transparent_70%)]",
+    rank: "border-bronze/60 bg-bronze/20 text-bronze",
+  },
+] as const
+
+/**
+ * The metal for a finishing position. Clamped, so when a tie pushes the third
+ * plinth's number past 3 it still reads as the third standing rather than
+ * falling through to no medal at all.
+ */
+function medalFor(position: number) {
+  return MEDALS[Math.min(position, MEDALS.length) - 1]
+}
+
+/** Medal colouring for the top three, plain numeral for everyone else. */
 function RankMark({ position }: { position: number }) {
   const tone =
-    position === 1
-      ? "border-brass bg-brass text-background"
-      : position === 2
-        ? "border-brass/60 bg-brass/20 text-brass"
-        : position === 3
-          ? "border-teal/60 bg-teal/15 text-teal"
-          : "border-border bg-muted/20 text-muted-foreground"
+    position <= 3
+      ? medalFor(position).rank
+      : "border-border bg-muted/20 text-muted-foreground"
   return (
     <span
       className={`inline-flex size-9 shrink-0 items-center justify-center rounded-sm border font-serif text-lg font-bold tabular-nums ${tone}`}
@@ -187,7 +229,6 @@ function RankMark({ position }: { position: number }) {
 /** The tall plinths at the top. Usually three; more when a position is tied. */
 function Podium({ rows }: { rows: StandingRow[] }) {
   if (rows.length === 0) return null
-  const ICONS = [Trophy, Medal, Award]
   // How many share each position, so a tie can be labelled as one instead of
   // printing "ΝΙΚΗΤΗΣ" on several identical-looking cards.
   const sharedCount = new Map<number, number>()
@@ -204,32 +245,21 @@ function Podium({ rows }: { rows: StandingRow[] }) {
       {rows.map((row, i) => {
         const isWinner = row.position === 1
         const tied = (sharedCount.get(row.position) ?? 1) > 1
-        const Icon = ICONS[Math.min(row.position, 3) - 1] ?? Award
+        const medal = medalFor(row.position)
+        const Icon = medal.icon
         return (
           <div
             key={`${row.kind}-${row.id}`}
-            className={`relative overflow-hidden rounded-sm border p-4 text-center ${DESKTOP_ORDER[i] ?? ""} ${
-              isWinner
-                ? "border-brass bg-brass/10 sm:pb-8 sm:pt-7"
-                : "border-border bg-card/60 sm:pb-5"
+            className={`relative overflow-hidden rounded-sm border p-4 text-center ${DESKTOP_ORDER[i] ?? ""} ${medal.frame} ${
+              isWinner ? "sm:pb-8 sm:pt-7" : "sm:pb-5"
             }`}
           >
-            {/* Winner gets a warm wash so the eye lands there first. */}
-            {isWinner && (
-              <div
-                aria-hidden
-                className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,color-mix(in_oklch,var(--brass)_28%,transparent),transparent_70%)]"
-              />
-            )}
+            {/* Each plinth is washed in its own metal, gold strongest, so the eye
+                still lands on the winner first. */}
+            <div className={`pointer-events-none absolute inset-0 ${medal.glow}`} aria-hidden />
             <div className="relative">
-              <Icon
-                className={`mx-auto size-7 ${isWinner ? "text-brass" : "text-muted-foreground"}`}
-              />
-              <p
-                className={`mt-2 font-sans text-[10px] font-bold tracking-chip ${
-                  isWinner ? "text-brass" : "text-muted-foreground"
-                }`}
-              >
+              <Icon className={`mx-auto size-7 ${medal.ink}`} />
+              <p className={`mt-2 font-sans text-[10px] font-bold tracking-chip ${medal.ink}`}>
                 <Figures>
                   {isWinner && !tied ? "ΝΙΚΗΤΗΣ" : `${row.position}Η ΘΕΣΗ${tied ? " ΕΞ ΙΣΟΥ" : ""}`}
                 </Figures>

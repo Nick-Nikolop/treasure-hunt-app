@@ -34,6 +34,13 @@
   --parchment: oklch(0.93 0.04 82);
   --ink: oklch(0.16 0.018 62);
   --brass: oklch(0.78 0.13 78);
+  /* Medal metals for the podium. Brass already reads as the gold, so these two
+     are tuned to sit beside it: silver keeps brass's lightness but drops to
+     near-zero chroma with a faint cool cast so it reads as white metal rather
+     than washed-out gold, and bronze swings to a redder hue and goes darker so
+     it cannot be mistaken for either. */
+  --silver: oklch(0.84 0.015 250);
+  --bronze: oklch(0.63 0.11 48);
   --teal: oklch(0.58 0.08 196);
   /* Recessed "sealed page" interior revealed where a page was torn out. */
   --sealed: oklch(0.24 0.025 70);
@@ -78,6 +85,8 @@
   --parchment: oklch(0.93 0.04 82);
   --ink: oklch(0.16 0.018 62);
   --brass: oklch(0.78 0.13 78);
+  --silver: oklch(0.84 0.015 250);
+  --bronze: oklch(0.63 0.11 48);
   --teal: oklch(0.58 0.08 196);
   --sealed: oklch(0.24 0.025 70);
   --sealed-foreground: oklch(0.72 0.03 80);
@@ -121,6 +130,10 @@
   --parchment: oklch(0.89 0.04 82);
   --ink: oklch(0.16 0.018 62);
   --brass: oklch(0.52 0.13 66);
+  /* Darkened to carry the same contrast against pale parchment that the dark
+     theme's metals carry against ink, matching how brass itself is handled. */
+  --silver: oklch(0.52 0.014 250);
+  --bronze: oklch(0.44 0.09 46);
   --teal: oklch(0.46 0.08 196);
   /* Warm leather brown so the sealed pages read as aged binding rather than
      harsh black against the pale parchment background. */
@@ -143,6 +156,8 @@
   --color-parchment: var(--parchment);
   --color-ink: var(--ink);
   --color-brass: var(--brass);
+  --color-silver: var(--silver);
+  --color-bronze: var(--bronze);
   --color-teal: var(--teal);
   --color-sealed: var(--sealed);
   --color-sealed-foreground: var(--sealed-foreground);
