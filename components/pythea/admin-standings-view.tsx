@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import {
   Award,
   Check,
@@ -11,9 +11,11 @@ import {
   MapPin,
   Medal,
   ScrollText,
+  Search,
   Trophy,
   User,
   Users,
+  X,
 } from "lucide-react"
 import type { StandingRow, StandingsBoard } from "@/lib/standings"
 
@@ -31,8 +33,13 @@ import type { StandingRow, StandingsBoard } from "@/lib/standings"
  * Each band states its achievement once in its header and its rows carry only a
  * position and a name.
  *
- * The bands intentionally still contain the medallists, so a band's count is the
- * true number of teams at that achievement rather than "the ones not on a plinth".
+ * The top three are shown ONLY on the podium and are excluded from the bands
+ * below, so a band's count is the number of OTHER teams at that achievement.
+ *
+ * A name search sits above the podium. While a query is active it replaces the
+ * podium and bands with one flat, still-ranked list of matching teams (podium
+ * teams included), since the ceremonial layout is not a useful way to read a
+ * lookup; clearing the field restores the ceremony view.
  *
  * Rosters are private: a team's members are never listed and no per-team headcount
  * is shown. The only counts on the page are teams per band and course-wide totals.
@@ -59,6 +66,20 @@ function riddlesSolved(row: StandingRow): number {
 /** The compass is behind anyone who went on to the treasure. */
 function reachedCompass(row: StandingRow): boolean {
   return row.stage === "compass" || row.stage === "treasure"
+}
+
+/**
+ * Fold a name for searching: lower-case and strip Greek accents, so typing
+ * "ortiloxos" is out of scope but "ορτιλοχος" (no tonos) still finds "Ορτίλοχος".
+ * The range covers the general combining-mark block plus Greek's own
+ * perispomeni/ypogegrammeni, which sit just outside it.
+ */
+function foldName(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f\u0342-\u0345]/g, "")
+    .toLowerCase()
+    .trim()
 }
 
 /**
@@ -589,6 +610,17 @@ export function AdminStandingsView({ data }: { data: StandingsBoard }) {
     [belowRows],
   )
 
+  const [query, setQuery] = useState("")
+  const searching = query.trim().length > 0
+  // Searches the FULL ranked list, so a top-three team is findable too even
+  // though it is otherwise only on the podium. rows are already in rank order, so
+  // the matches come out ranked without re-sorting.
+  const results = useMemo(() => {
+    if (!searching) return []
+    const q = foldName(query)
+    return rows.filter((r) => foldName(r.name).includes(q))
+  }, [rows, query, searching])
+
   return (
     <main className="relative z-10 mx-auto w-full max-w-5xl px-4 pb-20 pt-8 sm:px-6">
       {/* Ceremony header. No back link: this board is opened on its own, as a
@@ -620,42 +652,127 @@ export function AdminStandingsView({ data }: { data: StandingsBoard }) {
         </div>
       </header>
 
-      {podium.length > 0 && (
-        <section className="mt-8">
-          <h2 className="mb-3 font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
-            ΤΟ ΒΑΘΡΟ
-          </h2>
-          <Podium rows={podium} />
-        </section>
-      )}
-
-      <section className="mt-8">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
-            ΚΑΤΑΤΑΞΗ ΚΑΤΑ ΕΠΙΤΕΥΓΜΑ
-          </h2>
-          <span className="font-sans text-[10px] tracking-chip text-muted-foreground/70">
-            <Figures>{`${belowRows.length} ΣΥΝΟΛΟ`}</Figures>
-            {/* Only worth saying when a lone explorer is actually in the list. */}
-            {belowSolo > 0 && <Figures>{` · ${belowSolo} ΧΩΡΙΣ ΟΜΑΔΑ`}</Figures>}
-          </span>
-        </div>
-
-        {groups.length === 0 ? (
-          <p className="rounded-sm border border-dashed border-border px-4 py-10 text-center font-sans text-sm text-muted-foreground">
-            Καμία καταχώρηση.
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {groups.map((group, i) => (
-              // The podium already carries the spotlight, so no band gets the
-              // brass-wash headline treatment. The fallback keeps the top band
-              // highlighted only in the impossible-in-practice case of no podium.
-              <GroupPanel key={group.key} group={group} headline={i === 0 && podium.length === 0} />
-            ))}
-          </div>
+      {/* Name lookup. Sits above the podium so it is a stable anchor: typing
+          swaps the ceremony view below for a flat result list in place. */}
+      <div className="relative mt-6">
+        <Search
+          aria-hidden
+          className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+        />
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setQuery("")
+          }}
+          placeholder="Αναζήτηση ομάδας…"
+          aria-label="Αναζήτηση ομάδας με το όνομα"
+          autoComplete="off"
+          className="w-full rounded-sm border border-border bg-card/60 py-2.5 pl-9 pr-9 font-sans text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-brass/60 focus:ring-1 focus:ring-brass/40"
+        />
+        {searching && (
+          <button
+            type="button"
+            onClick={() => setQuery("")}
+            aria-label="Καθαρισμός αναζήτησης"
+            className="absolute right-2 top-1/2 flex size-6 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <X className="size-4" />
+          </button>
         )}
-      </section>
+      </div>
+
+      {searching ? (
+        <section className="mt-6" aria-live="polite">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h2 className="font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
+              ΑΝΑΖΗΤΗΣΗ
+            </h2>
+            <span className="font-sans text-[10px] tracking-chip text-muted-foreground/70">
+              <Figures>
+                {`${results.length} ${results.length === 1 ? "ΑΠΟΤΕΛΕΣΜΑ" : "ΑΠΟΤΕΛΕΣΜΑΤΑ"}`}
+              </Figures>
+            </span>
+          </div>
+
+          {results.length === 0 ? (
+            <p className="rounded-sm border border-dashed border-border px-4 py-10 text-center font-sans text-sm text-muted-foreground">
+              Καμία ομάδα δεν ταιριάζει με «{query.trim()}».
+            </p>
+          ) : (
+            <ul className="divide-y divide-border/60 overflow-hidden rounded-sm border border-border bg-card/40">
+              {results.map((row) => (
+                <li
+                  key={`${row.kind}-${row.id}`}
+                  className="flex items-center gap-3 px-3 py-2.5 sm:px-4"
+                >
+                  <RankMark position={row.position} />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-pretty font-serif text-base font-bold leading-tight text-foreground">
+                      {row.name}
+                    </p>
+                    {/* One compact status line, since a flat result has no band
+                        header above it to state the achievement. */}
+                    <p className="mt-0.5 font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
+                      <Figures>{`${riddlesSolved(row)}/${row.total} ΓΡΙΦΟΙ`}</Figures>
+                      {row.finished
+                        ? " · ΘΗΣΑΥΡΟΣ"
+                        : reachedCompass(row)
+                          ? " · ΠΥΞΙΔΑ"
+                          : ""}
+                      {row.kind === "player" ? " · ΧΩΡΙΣ ΟΜΑΔΑ" : ""}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ) : (
+        <>
+          {podium.length > 0 && (
+            <section className="mt-8">
+              <h2 className="mb-3 font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
+                ΤΟ ΒΑΘΡΟ
+              </h2>
+              <Podium rows={podium} />
+            </section>
+          )}
+
+          <section className="mt-8">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h2 className="font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
+                ΚΑΤΑΤΑΞΗ ΚΑΤΑ ΕΠΙΤΕΥΓΜΑ
+              </h2>
+              <span className="font-sans text-[10px] tracking-chip text-muted-foreground/70">
+                <Figures>{`${belowRows.length} ΣΥΝΟΛΟ`}</Figures>
+                {/* Only worth saying when a lone explorer is actually in the list. */}
+                {belowSolo > 0 && <Figures>{` · ${belowSolo} ΧΩΡΙΣ ΟΜΑΔΑ`}</Figures>}
+              </span>
+            </div>
+
+            {groups.length === 0 ? (
+              <p className="rounded-sm border border-dashed border-border px-4 py-10 text-center font-sans text-sm text-muted-foreground">
+                Καμία καταχώρηση.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {groups.map((group, i) => (
+                  // The podium already carries the spotlight, so no band gets the
+                  // brass-wash headline treatment. The fallback keeps the top band
+                  // highlighted only in the impossible-in-practice case of no podium.
+                  <GroupPanel
+                    key={group.key}
+                    group={group}
+                    headline={i === 0 && podium.length === 0}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        </>
+      )}
 
       {/* Legend, so the two tick states are unambiguous on a projector. */}
       <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-sm border border-border bg-card/40 px-3 py-2.5">
