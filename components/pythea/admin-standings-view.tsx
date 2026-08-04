@@ -82,19 +82,27 @@ function RankMark({ position }: { position: number }) {
   )
 }
 
-/** The three tall plinths at the top. Index 0 is the winner. */
+/** The tall plinths at the top. Usually three; more when a position is tied. */
 function Podium({ rows }: { rows: StandingRow[] }) {
   if (rows.length === 0) return null
   const ICONS = [Trophy, Medal, Award]
+  // How many share each position, so a tie can be labelled as one instead of
+  // printing "ΝΙΚΗΤΗΣ" on several identical-looking cards.
+  const sharedCount = new Map<number, number>()
+  for (const r of rows) sharedCount.set(r.position, (sharedCount.get(r.position) ?? 0) + 1)
+
   // DOM order stays rank order (1, 2, 3) so a screen reader and the mobile stack
   // both read the winner first. Only the desktop grid reshuffles to 2nd-1st-3rd
-  // so the winner stands in the middle.
-  const DESKTOP_ORDER = ["sm:order-2", "sm:order-1", "sm:order-3"]
+  // so the winner stands in the middle, and only for a clean untied top three.
+  const classicPodium =
+    rows.length === 3 && new Set(rows.map((r) => r.position)).size === 3
+  const DESKTOP_ORDER = classicPodium ? ["sm:order-2", "sm:order-1", "sm:order-3"] : []
 
   return (
     <div className="grid gap-3 sm:grid-cols-3 sm:items-end">
       {rows.map((row, i) => {
         const isWinner = row.position === 1
+        const tied = (sharedCount.get(row.position) ?? 1) > 1
         const Icon = ICONS[Math.min(row.position, 3) - 1] ?? Award
         return (
           <div
@@ -121,7 +129,9 @@ function Podium({ rows }: { rows: StandingRow[] }) {
                   isWinner ? "text-brass" : "text-muted-foreground"
                 }`}
               >
-                {row.position === 1 ? "ΝΙΚΗΤΗΣ" : `${row.position}Η ΘΕΣΗ`}
+                {isWinner && !tied
+                  ? "ΝΙΚΗΤΗΣ"
+                  : `${row.position}Η ΘΕΣΗ${tied ? " ΕΞ ΙΣΟΥ" : ""}`}
               </p>
               <p
                 className={`mt-1 text-balance font-serif font-bold leading-tight text-foreground ${
@@ -246,8 +256,23 @@ export function AdminStandingsView({ data }: { data: FinalStandings }) {
   const rows = view === "teams" ? data.teams : data.players
 
   // Only crews/players who actually moved deserve a plinth, so an all-zero
-  // podium never crowns someone who never left the harbour.
-  const podium = useMemo(() => rows.filter((r) => r.progress > 0).slice(0, 3), [rows])
+  // podium never crowns someone who never left the harbour. We take the top three
+  // DISTINCT positions and every row sharing them, so a tie (teammates who all
+  // scanned the treasure) never silently drops a co-winner into the list below.
+  // Capped so a pathological many-way tie cannot blow up the layout.
+  const podium = useMemo(() => {
+    const moved = rows.filter((r) => r.progress > 0)
+    const top = [...new Set(moved.map((r) => r.position))].sort((a, b) => a - b).slice(0, 3)
+    // Add one position-group at a time and stop before any group that would not
+    // fit whole, so the podium never shows "3 of the 5 who tied".
+    const out: StandingRow[] = []
+    for (const pos of top) {
+      const group = moved.filter((r) => r.position === pos)
+      if (out.length > 0 && out.length + group.length > 6) break
+      out.push(...group)
+    }
+    return out
+  }, [rows])
   const rest = useMemo(
     () => rows.filter((r) => !podium.some((p) => p.id === r.id && p.kind === r.kind)),
     [rows, podium],
