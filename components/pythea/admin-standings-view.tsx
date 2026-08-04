@@ -232,18 +232,19 @@ function Podium({ rows }: { rows: StandingRow[] }) {
   const sharedCount = new Map<number, number>()
   for (const r of rows) sharedCount.set(r.position, (sharedCount.get(r.position) ?? 0) + 1)
 
-  // Stays a true 3-up podium at EVERY width, winner raised in the middle. It used
-  // to collapse to one column below sm, which on a phone became three
-  // full-height stacked cards that lost the podium read entirely and just
-  // repeated the top three teams already listed in the bands below. DOM order
-  // stays rank order (1, 2, 3) so a screen reader still meets the winner first;
-  // only the visual grid reshuffles to 2nd-1st-3rd, and only for a clean untied
-  // top three.
+  // MOBILE: the winner is a full-width hero on its own row, with 2nd and 3rd
+  // sharing the row beneath it. Three equal columns on a phone squeezed each
+  // plinth to ~104px and long Greek names wrapped into a cramped mess, so the
+  // winner gets the whole width and the runners-up split the rest.
+  // DESKTOP (sm+): the classic 3-up stepped podium, winner raised in the middle.
+  // DOM order stays rank order (1, 2, 3) so a screen reader meets the winner
+  // first and it naturally sits on top on mobile; only the sm grid reshuffles to
+  // 2nd-1st-3rd, and only for a clean untied top three.
   const classicPodium = rows.length === 3 && new Set(rows.map((r) => r.position)).size === 3
-  const ORDER = classicPodium ? ["order-2", "order-1", "order-3"] : []
+  const ORDER = classicPodium ? ["sm:order-2", "sm:order-1", "sm:order-3"] : []
 
   return (
-    <div className="grid grid-cols-3 items-end gap-2 sm:gap-3">
+    <div className="grid grid-cols-2 items-end gap-2 sm:grid-cols-3 sm:gap-3">
       {rows.map((row, i) => {
         const isWinner = row.position === 1
         const tied = (sharedCount.get(row.position) ?? 1) > 1
@@ -252,16 +253,16 @@ function Podium({ rows }: { rows: StandingRow[] }) {
         return (
           <div
             key={`${row.kind}-${row.id}`}
-            className={`relative overflow-hidden rounded-sm border p-2.5 text-center sm:p-4 ${ORDER[i] ?? ""} ${medal.frame} ${
-              isWinner ? "pb-4 pt-3.5 sm:pb-8 sm:pt-7" : "pb-3 sm:pb-5"
+            className={`relative overflow-hidden rounded-sm border p-3 text-center sm:p-4 ${ORDER[i] ?? ""} ${medal.frame} ${
+              isWinner ? "col-span-2 pb-4 pt-3.5 sm:col-span-1 sm:pb-8 sm:pt-7" : "pb-3 sm:pb-5"
             }`}
           >
             {/* Each plinth is washed in its own metal, gold strongest, so the eye
                 still lands on the winner first. */}
             <div className={`pointer-events-none absolute inset-0 ${medal.glow}`} aria-hidden />
             <div className="relative">
-              <Icon className={`mx-auto size-5 sm:size-7 ${medal.ink}`} />
-              {/* Tighter tracking on mobile so "ΝΙΚΗΤΗΣ" fits a ~90px column. */}
+              <Icon className={`mx-auto ${isWinner ? "size-6" : "size-5"} sm:size-7 ${medal.ink}`} />
+              {/* Tighter tracking on mobile so "ΝΙΚΗΤΗΣ" fits a narrow column. */}
               <p
                 className={`mt-1.5 font-sans text-[9px] font-bold tracking-[0.14em] sm:mt-2 sm:text-[10px] sm:tracking-chip ${medal.ink}`}
               >
@@ -271,7 +272,7 @@ function Podium({ rows }: { rows: StandingRow[] }) {
               </p>
               <p
                 className={`mt-1 text-balance font-serif font-bold leading-tight text-foreground ${
-                  isWinner ? "text-base sm:text-2xl" : "text-sm sm:text-xl"
+                  isWinner ? "text-xl sm:text-2xl" : "text-sm sm:text-xl"
                 }`}
               >
                 {row.name}
@@ -287,10 +288,15 @@ function Podium({ rows }: { rows: StandingRow[] }) {
               <p className="mt-1 font-sans text-[9px] font-bold tracking-[0.14em] text-muted-foreground sm:text-[10px] sm:tracking-chip">
                 ΓΡΙΦΟΙ
               </p>
-              {/* Milestone chips are too wide to sit in a phone-width column, and
-                  the same two teams carry the same chips in the bands right below,
-                  so they show only from sm up. */}
-              <div className="mt-3 hidden flex-wrap justify-center gap-1.5 sm:flex">
+              {/* Now that the podium teams are not repeated in the bands below,
+                  these chips are the only place their compass/treasure status
+                  shows. The winner is full-width on mobile so it can carry them;
+                  the narrow runner-up columns show them from sm up. */}
+              <div
+                className={`mt-3 flex-wrap justify-center gap-1.5 sm:flex ${
+                  isWinner ? "flex" : "hidden"
+                }`}
+              >
                 <Milestone label="ΠΥΞΙΔΑ" icon={Compass} reached={reachedCompass(row)} />
                 <Milestone label="ΘΗΣΑΥΡΟΣ" icon={Gem} reached={row.finished} />
               </div>
@@ -549,7 +555,6 @@ export function AdminStandingsView({ data }: { data: StandingsBoard }) {
   // Counted server-side, because the full player list is exactly the roster data
   // this board must not ship to the browser.
   const activePlayers = data.activePlayers
-  const soloShown = useMemo(() => rows.filter((r) => r.kind === "player").length, [rows])
 
   // We take the top three DISTINCT positions and every row sharing them, so a
   // tie (teammates who all scanned the treasure) never silently drops a
@@ -568,10 +573,21 @@ export function AdminStandingsView({ data }: { data: StandingsBoard }) {
     return out
   }, [rows])
 
-  // The bands below deliberately keep EVERY row, including the medallists. The
-  // podium is a spotlight, not a slice: lifting the top three out would have torn
-  // two teams out of the compass band and left that band's count wrong.
-  const groups = useMemo(() => groupRows(rows), [rows])
+  // The three on the plinths are NOT repeated in the bands: the podium is their
+  // place on this board. Everyone else is grouped by achievement below. The band
+  // counts therefore mean "the OTHER teams at this achievement", which is the
+  // intent now that the top three are celebrated separately.
+  const belowRows = useMemo(() => {
+    const onPodium = new Set(podium.map((r) => `${r.kind}-${r.id}`))
+    return rows.filter((r) => !onPodium.has(`${r.kind}-${r.id}`))
+  }, [rows, podium])
+  const groups = useMemo(() => groupRows(belowRows), [belowRows])
+  // The section's own count describes what is actually listed under it, so it
+  // stays in step with the screen now that the medallists sit apart.
+  const belowSolo = useMemo(
+    () => belowRows.filter((r) => r.kind === "player").length,
+    [belowRows],
+  )
 
   return (
     <main className="relative z-10 mx-auto w-full max-w-5xl px-4 pb-20 pt-8 sm:px-6">
@@ -619,9 +635,9 @@ export function AdminStandingsView({ data }: { data: StandingsBoard }) {
             ΚΑΤΑΤΑΞΗ ΚΑΤΑ ΕΠΙΤΕΥΓΜΑ
           </h2>
           <span className="font-sans text-[10px] tracking-chip text-muted-foreground/70">
-            <Figures>{`${rows.length} ΣΥΝΟΛΟ`}</Figures>
+            <Figures>{`${belowRows.length} ΣΥΝΟΛΟ`}</Figures>
             {/* Only worth saying when a lone explorer is actually in the list. */}
-            {soloShown > 0 && <Figures>{` · ${soloShown} ΧΩΡΙΣ ΟΜΑΔΑ`}</Figures>}
+            {belowSolo > 0 && <Figures>{` · ${belowSolo} ΧΩΡΙΣ ΟΜΑΔΑ`}</Figures>}
           </span>
         </div>
 
@@ -632,9 +648,9 @@ export function AdminStandingsView({ data }: { data: StandingsBoard }) {
         ) : (
           <div className="space-y-3">
             {groups.map((group, i) => (
-              // The warm wash and the larger names belong to whichever element is
-              // carrying the spotlight, so they stay off the top band while the
-              // podium is above it repeating those same names.
+              // The podium already carries the spotlight, so no band gets the
+              // brass-wash headline treatment. The fallback keeps the top band
+              // highlighted only in the impossible-in-practice case of no podium.
               <GroupPanel key={group.key} group={group} headline={i === 0 && podium.length === 0} />
             ))}
           </div>
