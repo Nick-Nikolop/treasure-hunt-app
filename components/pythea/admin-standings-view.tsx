@@ -4,15 +4,13 @@ import { useMemo } from "react"
 import Link from "next/link"
 import {
   ArrowLeft,
-  Award,
   Check,
   CircleDashed,
   Compass,
   Crown,
   Gem,
-  Medal,
+  MapPin,
   ScrollText,
-  Trophy,
   User,
   Users,
 } from "lucide-react"
@@ -24,9 +22,15 @@ import type { FinalStandings, StandingRow } from "@/lib/standings"
  *
  * Ranking is still decided server-side in lib/standings.ts (stage, then progress,
  * then who got there first), but arrival TIMES are deliberately never shown: the
- * board reports what each team achieved, not when. Every row reduces to three
- * plain facts, riddles solved out of ten plus a yes/no on the compass and the
- * treasure, and the stage is implied by them rather than repeated as a label.
+ * board reports what each team achieved, not when.
+ *
+ * The ranking is presented as ACHIEVEMENT BANDS rather than one long table, so the
+ * story reads as "these found the treasure, these reached the compass, these
+ * solved all ten..." Each band states its achievement once in its header and its
+ * rows carry only a position and a name.
+ *
+ * Rosters are private: a team's members are never listed and no per-team headcount
+ * is shown. The only counts on the page are teams per band and course-wide totals.
  *
  * Greek copy always calls a team "ομάδα" / "ομάδες", matching the rest of the app;
  * nautical synonyms are deliberately not used. Note uppercase Greek drops accents,
@@ -103,153 +107,205 @@ function RankMark({ position }: { position: number }) {
   )
 }
 
-/** The tall plinths at the top. Usually three; more when a position is tied. */
-function Podium({ rows }: { rows: StandingRow[] }) {
-  if (rows.length === 0) return null
-  const ICONS = [Trophy, Medal, Award]
-  // How many share each position, so a tie can be labelled as one instead of
-  // printing "ΝΙΚΗΤΗΣ" on several identical-looking cards.
-  const sharedCount = new Map<number, number>()
-  for (const r of rows) sharedCount.set(r.position, (sharedCount.get(r.position) ?? 0) + 1)
-
-  // DOM order stays rank order (1, 2, 3) so a screen reader and the mobile stack
-  // both read the winner first. Only the desktop grid reshuffles to 2nd-1st-3rd
-  // so the winner stands in the middle, and only for a clean untied top three.
-  const classicPodium =
-    rows.length === 3 && new Set(rows.map((r) => r.position)).size === 3
-  const DESKTOP_ORDER = classicPodium ? ["sm:order-2", "sm:order-1", "sm:order-3"] : []
-
-  return (
-    <div className="grid gap-3 sm:grid-cols-3 sm:items-end">
-      {rows.map((row, i) => {
-        const isWinner = row.position === 1
-        const tied = (sharedCount.get(row.position) ?? 1) > 1
-        const Icon = ICONS[Math.min(row.position, 3) - 1] ?? Award
-        return (
-          <div
-            key={`${row.kind}-${row.id}`}
-            className={`relative overflow-hidden rounded-sm border p-4 text-center ${DESKTOP_ORDER[i] ?? ""} ${
-              isWinner
-                ? "border-brass bg-brass/10 sm:pb-8 sm:pt-7"
-                : "border-border bg-card/60 sm:pb-5"
-            }`}
-          >
-            {/* Winner gets a warm wash so the eye lands there first. */}
-            {isWinner && (
-              <div
-                aria-hidden
-                className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,color-mix(in_oklch,var(--brass)_28%,transparent),transparent_70%)]"
-              />
-            )}
-            <div className="relative">
-              <Icon
-                className={`mx-auto size-7 ${isWinner ? "text-brass" : "text-muted-foreground"}`}
-              />
-              <p
-                className={`mt-2 font-sans text-[10px] font-bold tracking-chip ${
-                  isWinner ? "text-brass" : "text-muted-foreground"
-                }`}
-              >
-                {isWinner && !tied
-                  ? "ΝΙΚΗΤΗΣ"
-                  : `${row.position}Η ΘΕΣΗ${tied ? " ΕΞ ΙΣΟΥ" : ""}`}
-              </p>
-              <p
-                className={`mt-1 text-balance font-serif font-bold leading-tight text-foreground ${
-                  isWinner ? "text-2xl" : "text-xl"
-                }`}
-              >
-                {row.name}
-              </p>
-              {row.teamName && (
-                <p className="mt-1 font-sans text-[11px] text-muted-foreground">{row.teamName}</p>
-              )}
-              {/* The headline number: riddles cracked out of the ten on the trail. */}
-              <p className="mt-3 font-serif text-3xl font-bold tabular-nums leading-none text-foreground">
-                {riddlesSolved(row)}
-                <span className="text-lg text-muted-foreground"> / {row.total}</span>
-              </p>
-              <p className="mt-1 font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
-                ΓΡΙΦΟΙ
-              </p>
-              <div className="mt-3 flex flex-wrap justify-center gap-1.5">
-                <Milestone label="ΠΥΞΙΔΑ" icon={Compass} reached={reachedCompass(row)} />
-                <Milestone label="ΘΗΣΑΥΡΟΣ" icon={Gem} reached={row.finished} />
-              </div>
-            </div>
-          </div>
-        )
-      })}
-    </div>
-  )
+/** An achievement band, and the teams that share it. */
+type StandingsGroup = {
+  key: string
+  label: string
+  icon: typeof Gem
+  tone: "gold" | "teal" | "plain"
+  riddles: number
+  total: number
+  /** The three finale bands spell out the two milestones; the rest are below it. */
+  showMilestones: boolean
+  compass: boolean
+  treasure: boolean
+  rows: StandingRow[]
 }
 
-function StandingsList({ rows }: { rows: StandingRow[] }) {
-  if (rows.length === 0) {
-    return (
-      <p className="rounded-sm border border-dashed border-border px-4 py-10 text-center font-sans text-sm text-muted-foreground">
-        Καμία καταχώρηση.
-      </p>
-    )
+/**
+ * Buckets the ranked list into bands: the treasure, then the compass, then the
+ * first note, then one band per riddle count.
+ *
+ * It walks the ALREADY RANKED rows in order and keys a Map, so band order simply
+ * follows the ranking and a band only exists once something lands in it. There is
+ * deliberately no 10..1 countdown: the real data skips some counts entirely (no
+ * team sits on exactly five), and a fixed loop would print empty bands.
+ *
+ * The bands cannot overlap, because a team that reached any finale step is keyed
+ * by that step, and everyone else tops out at total - 1 riddles.
+ */
+function groupRows(rows: StandingRow[]): StandingsGroup[] {
+  const bands = new Map<string, StandingsGroup>()
+
+  for (const row of rows) {
+    const solved = riddlesSolved(row)
+    const key =
+      row.stage === "treasure"
+        ? "treasure"
+        : row.stage === "compass"
+          ? "compass"
+          : row.stage === "trail_end"
+            ? "note"
+            : `riddles-${solved}`
+
+    let band = bands.get(key)
+    if (!band) {
+      band = {
+        key,
+        label:
+          key === "treasure"
+            ? "ΒΡΗΚΑΝ ΤΟΝ ΘΗΣΑΥΡΟ"
+            : key === "compass"
+              ? "ΕΦΤΑΣΑΝ ΣΤΗΝ ΠΥΞΙΔΑ"
+              : key === "note"
+                ? "ΕΦΤΑΣΑΝ ΣΤΟ ΠΡΩΤΟ ΣΗΜΕΙΩΜΑ"
+                : `${solved} ΑΠΟ ${row.total} ΓΡΙΦΟΥΣ`,
+        icon:
+          key === "treasure"
+            ? Gem
+            : key === "compass"
+              ? Compass
+              : key === "note"
+                ? ScrollText
+                : MapPin,
+        tone: key === "treasure" ? "gold" : key === "compass" ? "teal" : "plain",
+        riddles: solved,
+        total: row.total,
+        showMilestones: key === "treasure" || key === "compass" || key === "note",
+        compass: reachedCompass(row),
+        treasure: row.stage === "treasure",
+        rows: [],
+      }
+      bands.set(key, band)
+    }
+    band.rows.push(row)
   }
 
+  return [...bands.values()]
+}
+
+/**
+ * One achievement band: everyone inside it got exactly as far as everyone else.
+ *
+ * Because that is true by construction, the riddle count and the two milestone
+ * ticks live on the HEADER and never repeat per row. Rows carry only a position
+ * and a name, so a band of eight teams reads as one fact plus eight names rather
+ * than eight identical-looking lines.
+ */
+function GroupPanel({ group, headline }: { group: StandingsGroup; headline: boolean }) {
+  const Icon = group.icon
+  const gold = group.tone === "gold"
+  const teal = group.tone === "teal"
+
+  // Teams per BAND, which says nothing about how many people are in any team.
+  const n = group.rows.length
+  const allTeams = group.rows.every((r) => r.kind === "team")
+  const countWord = allTeams
+    ? n === 1
+      ? "ΟΜΑΔΑ"
+      : "ΟΜΑΔΕΣ"
+    : n === 1
+      ? "ΣΥΜΜΕΤΟΧΗ"
+      : "ΣΥΜΜΕΤΟΧΕΣ"
+
   return (
-    <ul className="divide-y divide-border overflow-hidden rounded-sm border border-border">
-      {rows.map((row) => (
-        <li
-          key={`${row.kind}-${row.id}`}
-          className={`flex flex-wrap items-center gap-3 px-3 py-3 sm:px-4 ${
-            row.finished ? "bg-brass/[0.06]" : row.position <= 3 ? "bg-card/50" : ""
-          }`}
-        >
-          <RankMark position={row.position} />
+    <section
+      className={`relative overflow-hidden rounded-sm border ${
+        gold
+          ? "border-brass/70 bg-brass/[0.07]"
+          : teal
+            ? "border-teal/50 bg-card/60"
+            : "border-border bg-card/40"
+      }`}
+    >
+      {/* The top band gets a warm wash so the eye lands there first. */}
+      {headline && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,color-mix(in_oklch,var(--brass)_22%,transparent),transparent_72%)]"
+        />
+      )}
 
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-serif text-base font-bold text-foreground">{row.name}</p>
-            {/* Teams list their crew; players name the crew they belonged to. */}
-            {row.kind === "team" ? (
-              row.members.length > 0 && (
-                <p className="truncate font-sans text-[11px] text-muted-foreground">
-                  {row.members.join(" · ")}
-                </p>
-              )
-            ) : row.teamName ? (
-              <p className="truncate font-sans text-[11px] text-muted-foreground">
-                <Users className="mr-1 inline size-3 align-[-2px]" />
-                {row.teamName}
-              </p>
-            ) : (
-              <p className="font-sans text-[11px] italic text-muted-foreground/70">Χωρίς ομάδα</p>
+      <div
+        className={`relative border-b px-3 py-3 sm:px-4 ${gold ? "border-brass/30" : "border-border"}`}
+      >
+        <div className="flex items-center gap-2.5">
+          <span
+            className={`inline-flex size-8 shrink-0 items-center justify-center rounded-sm border ${
+              gold
+                ? "border-brass/60 bg-brass/20 text-brass"
+                : teal
+                  ? "border-teal/50 bg-teal/15 text-teal"
+                  : "border-border bg-muted/20 text-muted-foreground"
+            }`}
+          >
+            <Icon className="size-4" />
+          </span>
+          <h3
+            className={`min-w-0 flex-1 font-sans text-[11px] font-bold tracking-chip ${
+              gold ? "text-brass" : teal ? "text-teal" : "text-foreground"
+            }`}
+          >
+            {group.label}
+          </h3>
+          <span className="shrink-0 rounded-sm border border-border bg-background/40 px-2 py-1 font-sans text-[10px] font-bold tabular-nums tracking-chip text-muted-foreground">
+            {n} {countWord}
+          </span>
+        </div>
+
+        <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-2">
+          <div className="min-w-[110px] flex-1">
+            {/* Spelled out only for the finale bands, whose label names the
+                milestone instead of the number. */}
+            {group.showMilestones && (
+              <span className="font-sans text-[11px] font-bold tabular-nums text-foreground">
+                {group.riddles}
+                <span className="text-muted-foreground">/{group.total}</span>
+                <span className="ml-1 font-normal text-[10px] text-muted-foreground">γρίφοι</span>
+              </span>
             )}
-          </div>
-
-          {/* Riddles solved, with a bar built from the SAME figure so the two
-              can never disagree. */}
-          <div className="w-[104px] shrink-0">
-            <span className="font-sans text-xs font-bold tabular-nums text-foreground">
-              {riddlesSolved(row)}
-              <span className="text-muted-foreground">/{row.total}</span>
-              <span className="ml-1 font-normal text-[10px] text-muted-foreground">γρίφοι</span>
-            </span>
-            <div className="mt-1 h-1.5 overflow-hidden rounded-sm bg-muted/40">
+            <div
+              className={`h-1.5 overflow-hidden rounded-sm bg-muted/40 ${group.showMilestones ? "mt-1" : ""}`}
+            >
               <div
-                className={`h-full ${row.finished ? "bg-brass" : "bg-brass/55"}`}
+                className={`h-full ${gold ? "bg-brass" : "bg-brass/55"}`}
                 style={{
-                  width: `${row.total > 0 ? (riddlesSolved(row) / row.total) * 100 : 0}%`,
+                  width: `${group.total > 0 ? (group.riddles / group.total) * 100 : 0}%`,
                 }}
               />
             </div>
           </div>
+          {group.showMilestones && (
+            <div className="flex shrink-0 gap-1.5">
+              <Milestone label="ΠΥΞΙΔΑ" icon={Compass} reached={group.compass} />
+              <Milestone label="ΘΗΣΑΥΡΟΣ" icon={Gem} reached={group.treasure} />
+            </div>
+          )}
+        </div>
+      </div>
 
-          {/* Own line on narrow screens, so the team name keeps enough room to
-              read in full instead of being truncated to three letters. */}
-          <div className="flex w-full shrink-0 gap-1.5 sm:w-auto">
-            <Milestone label="ΠΥΞΙΔΑ" icon={Compass} reached={reachedCompass(row)} />
-            <Milestone label="ΘΗΣΑΥΡΟΣ" icon={Gem} reached={row.finished} />
-          </div>
-        </li>
-      ))}
-    </ul>
+      <ul className="relative divide-y divide-border/60">
+        {group.rows.map((row) => (
+          <li key={`${row.kind}-${row.id}`} className="flex items-center gap-3 px-3 py-2.5 sm:px-4">
+            <RankMark position={row.position} />
+            <div className="min-w-0 flex-1">
+              {/* No truncation: with only a rank beside it, a long team name has
+                  room to wrap and be read in full. */}
+              <p
+                className={`text-pretty font-serif font-bold leading-tight text-foreground ${
+                  headline ? "text-lg sm:text-xl" : "text-base"
+                }`}
+              >
+                {row.name}
+              </p>
+              {row.kind === "player" && (
+                <p className="font-sans text-[11px] italic text-muted-foreground/70">Χωρίς ομάδα</p>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
 
@@ -296,27 +352,11 @@ export function AdminStandingsView({ data }: { data: FinalStandings }) {
   const activePlayers = useMemo(() => data.players.filter(hasSolved).length, [data.players])
   const soloShown = useMemo(() => rows.filter((r) => r.kind === "player").length, [rows])
 
-  // We take the top three DISTINCT positions and every row sharing them, so a
-  // tie (teammates who all scanned the treasure) never silently drops a
-  // co-winner into the list below. Capped so a pathological many-way tie cannot
-  // blow up the layout.
-  const podium = useMemo(() => {
-    const moved = rows
-    const top = [...new Set(moved.map((r) => r.position))].sort((a, b) => a - b).slice(0, 3)
-    // Add one position-group at a time and stop before any group that would not
-    // fit whole, so the podium never shows "3 of the 5 who tied".
-    const out: StandingRow[] = []
-    for (const pos of top) {
-      const group = moved.filter((r) => r.position === pos)
-      if (out.length > 0 && out.length + group.length > 6) break
-      out.push(...group)
-    }
-    return out
-  }, [rows])
-  const rest = useMemo(
-    () => rows.filter((r) => !podium.some((p) => p.id === r.id && p.kind === r.kind)),
-    [rows, podium],
-  )
+  // Every row belongs to exactly one band, so the whole ranking is the bands and
+  // nothing is shown twice. The top band doubles as the winners' spotlight, which
+  // is why there is no separate podium: pulling the top three out would have torn
+  // two teams out of the compass band and left its count wrong.
+  const groups = useMemo(() => groupRows(rows), [rows])
 
   return (
     <main className="relative z-10 mx-auto w-full max-w-5xl px-4 pb-20 pt-8 sm:px-6">
@@ -356,19 +396,10 @@ export function AdminStandingsView({ data }: { data: FinalStandings }) {
         </div>
       </header>
 
-      {podium.length > 0 && (
-        <section className="mt-8">
-          <h2 className="mb-3 font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
-            ΤΟ ΒΑΘΡΟ
-          </h2>
-          <Podium rows={podium} />
-        </section>
-      )}
-
       <section className="mt-8">
         <div className="mb-3 flex items-center justify-between gap-3">
           <h2 className="font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
-            {podium.length > 0 ? "Η ΣΥΝΕΧΕΙΑ ΤΗΣ ΚΑΤΑΤΑΞΗΣ" : "ΚΑΤΑΤΑΞΗ"}
+            ΚΑΤΑΤΑΞΗ ΚΑΤΑ ΕΠΙΤΕΥΓΜΑ
           </h2>
           <span className="font-sans text-[10px] tracking-chip text-muted-foreground/70">
             {rows.length} ΣΥΝΟΛΟ
@@ -376,7 +407,18 @@ export function AdminStandingsView({ data }: { data: FinalStandings }) {
             {soloShown > 0 && ` · ${soloShown} ΧΩΡΙΣ ΟΜΑΔΑ`}
           </span>
         </div>
-        <StandingsList rows={rest} />
+
+        {groups.length === 0 ? (
+          <p className="rounded-sm border border-dashed border-border px-4 py-10 text-center font-sans text-sm text-muted-foreground">
+            Καμία καταχώρηση.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {groups.map((group, i) => (
+              <GroupPanel key={group.key} group={group} headline={i === 0} />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Legend, so the two tick states are unambiguous on a projector. */}
