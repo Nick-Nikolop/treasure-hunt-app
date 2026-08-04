@@ -24,9 +24,13 @@ import type { FinalStandings, StandingRow } from "@/lib/standings"
  *
  * Ranking is still decided server-side in lib/standings.ts (stage, then progress,
  * then who got there first), but arrival TIMES are deliberately never shown: the
- * board reports what each crew achieved, not when. Every row reduces to three
+ * board reports what each team achieved, not when. Every row reduces to three
  * plain facts, riddles solved out of ten plus a yes/no on the compass and the
  * treasure, and the stage is implied by them rather than repeated as a label.
+ *
+ * Greek copy always calls a team "ομάδα" / "ομάδες", matching the rest of the app;
+ * nautical synonyms are deliberately not used. Note uppercase Greek drops accents,
+ * so the chip label is ΟΜΑΔΕΣ, not ΟΜΆΔΕΣ.
  */
 
 /**
@@ -215,7 +219,7 @@ function StandingsList({ rows }: { rows: StandingRow[] }) {
                 {row.teamName}
               </p>
             ) : (
-              <p className="font-sans text-[11px] italic text-muted-foreground/70">Χωρίς πλήρωμα</p>
+              <p className="font-sans text-[11px] italic text-muted-foreground/70">Χωρίς ομάδα</p>
             )}
           </div>
 
@@ -237,7 +241,7 @@ function StandingsList({ rows }: { rows: StandingRow[] }) {
             </div>
           </div>
 
-          {/* Own line on narrow screens, so the crew name keeps enough room to
+          {/* Own line on narrow screens, so the team name keeps enough room to
               read in full instead of being truncated to three letters. */}
           <div className="flex w-full shrink-0 gap-1.5 sm:w-auto">
             <Milestone label="ΠΥΞΙΔΑ" icon={Compass} reached={reachedCompass(row)} />
@@ -339,13 +343,13 @@ export function AdminStandingsView({ data }: { data: FinalStandings }) {
             Το ταξίδι του Πυθέα
           </h1>
           <p className="mx-auto mt-2 max-w-[52ch] text-pretty font-serif text-sm leading-relaxed text-muted-foreground">
-            Η οριστική κατάταξη κάθε πληρώματος και εξερευνητή που έλυσε τουλάχιστον ένα στοιχείο, όπως
+            Η οριστική κατάταξη κάθε ομάδας και εξερευνητή που έλυσε τουλάχιστον ένα στοιχείο, όπως
             την έγραψε το κυνήγι.
           </p>
         </div>
 
         <div className="grid grid-cols-2 gap-2 p-3 sm:grid-cols-4 sm:p-4">
-          <StatTile icon={Users} value={activeTeams} label="ΠΛΗΡΩΜΑΤΑ" />
+          <StatTile icon={Users} value={activeTeams} label="ΟΜΑΔΕΣ" />
           <StatTile icon={User} value={activePlayers} label="ΕΞΕΡΕΥΝΗΤΕΣ" />
           <StatTile icon={ScrollText} value={data.stats.endgameTeams} label="ΣΤΟ ΦΙΝΑΛΕ" />
           <StatTile icon={Gem} value={data.stats.finishedTeams} label="ΟΛΟΚΛΗΡΩΣΑΝ" />
@@ -369,7 +373,7 @@ export function AdminStandingsView({ data }: { data: FinalStandings }) {
           <span className="font-sans text-[10px] tracking-chip text-muted-foreground/70">
             {rows.length} ΣΥΝΟΛΟ
             {/* Only worth saying when a lone explorer is actually in the list. */}
-            {soloShown > 0 && ` · ${soloShown} ΧΩΡΙΣ ΠΛΗΡΩΜΑ`}
+            {soloShown > 0 && ` · ${soloShown} ΧΩΡΙΣ ΟΜΑΔΑ`}
           </span>
         </div>
         <StandingsList rows={rest} />
@@ -391,7 +395,7 @@ export function AdminStandingsView({ data }: { data: FinalStandings }) {
       </div>
 
       <p className="mt-3 font-sans text-[11px] leading-relaxed text-muted-foreground">
-        Κάθε πλήρωμα κρίνεται πρώτα από το πόσο μακριά έφτασε στο φινάλε (θησαυρός, μετά πυξίδα, μετά
+        Κάθε ομάδα κρίνεται πρώτα από το πόσο μακριά έφτασε στο φινάλε (θησαυρός, μετά πυξίδα, μετά
         το 1ο σημείωμα) και έπειτα από τους γρίφους που έλυσε. Οι γρίφοι της πορείας είναι{" "}
         {data.total} στο σύνολο.
       </p>

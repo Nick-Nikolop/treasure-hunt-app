@@ -704,7 +704,7 @@ const el = {
     // Admin-only switcher for the rotating hiding hint on the first note
     adminVariantLabel: "ΕΚΔΟΧΗ ΚΡΥΨΗΣ",
     adminVariantHint:
-      "Κάθε πλήρωμα παίρνει μία από αυτές τις εκδοχές, με σειρά. Εδώ τις διαβάζεις όλες, χωρίς να αλλάξει τι θα πάρει το επόμενο πλήρωμα.",
+      "Κάθε ομάδα παίρνει μία από αυτές τις εκδοχές, με σειρά. Εδώ τις διαβάζεις όλες, χωρίς να αλλάξει τι θα πάρει η επόμενη ομάδα.",
     adminVariantAssigned: "ΤΟ ΔΙΚΟ ΣΟΥ",
     adminVariantUnassigned: "Δεν έχεις ακόμη δική σου εκδοχή, γιατί δεν έκλεισες το ίχνος ως εξερευνητής.",
     // Compass reveal (after the COMPASS QR is scanned — the note screen)
@@ -733,7 +733,7 @@ const el = {
     adminTestHold: "Χαρτί αναμονής",
     adminTestRelease: "Ειδοποίηση",
     adminTestWait: "Αναμονή",
-    adminTestHint: "Δες τι βλέπει ένα πλήρωμα σε αναμονή. Δεν αλλάζει τίποτα για τους παίκτες.",
+    adminTestHint: "Δες τι βλέπει μια ομάδα σε αναμονή. Δεν αλλάζει τίποτα για τους παίκτες.",
     trailEndKicker: "ΒΡΗΚΑΤΕ ΕΝΑ ΣΗΜΕΙΩΜΑ ΣΤΟ ΤΕΛΟΣ ΤΟΥ ΗΜΕΡΟΛΟΓΙΟΥ",
     trailEndTitle: "Το πρώτο σημείωμα του Πυθέα",
     trailEndHint: "Το ταξίδι στον χάρτη ολοκληρώθηκε. Τώρα ψάξτε την πυξίδα στην Καλαμάτα.",
