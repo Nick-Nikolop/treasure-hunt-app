@@ -1,9 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
-import Link from "next/link"
 import {
-  ArrowLeft,
   Award,
   Check,
   CircleDashed,
@@ -567,16 +565,9 @@ export function AdminStandingsView({ data }: { data: StandingsBoard }) {
 
   return (
     <main className="relative z-10 mx-auto w-full max-w-5xl px-4 pb-20 pt-8 sm:px-6">
-      <Link
-        href="/admin"
-        className="inline-flex items-center gap-1.5 font-sans text-[11px] font-bold tracking-chip text-muted-foreground transition-colors hover:text-brass"
-      >
-        <ArrowLeft className="size-3.5" />
-        ΠΙΣΩ ΣΤΟ ADMIN
-      </Link>
-
-      {/* Ceremony header. */}
-      <header className="relative mt-5 overflow-hidden rounded-sm border border-brass/40 bg-card/60">
+      {/* Ceremony header. No back link: this board is opened on its own, as a
+          screen to project, not as a page inside the admin tooling. */}
+      <header className="relative overflow-hidden rounded-sm border border-brass/40 bg-card/60">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-brass to-transparent"

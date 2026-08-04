@@ -481,11 +481,18 @@ export function AdminDashboard({
           <TabButton active={tab === "finale"} onClick={() => setTab("finale")} icon={Compass}>
             Finale
           </TabButton>
-          {/* Not a tab: the closing-ceremony standings live on their own page so
-              they can be projected full-screen without the admin chrome. Styled
-              to match the tabs so it reads as part of the same bar. */}
+          {/* Not a tab: the closing-ceremony standings live on their own page,
+              OUTSIDE /admin, so they can be projected full-screen without the
+              admin chrome or an admin-looking URL. It is still superadmin-gated by
+              its own guard. Styled to match the tabs so it reads as part of the
+              same bar. This stays the only way in, since the page is unlinked
+              from every public surface. */}
           <Link
-            href="/admin/standings"
+            href="/standings"
+            // Opened in a new tab so the ceremony screen can be projected while
+            // the dashboard stays put on the operator's own screen.
+            target="_blank"
+            rel="noreferrer"
             className="inline-flex shrink-0 items-center gap-2 rounded-sm border border-brass/40 px-3 py-2 font-sans text-sm font-bold tracking-chip text-brass transition-colors hover:bg-brass hover:text-background sm:px-4"
           >
             <Medal className="size-4" />

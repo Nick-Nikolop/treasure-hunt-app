@@ -11,6 +11,9 @@ export default function robots(): MetadataRoute.Robots {
         allow: "/",
         disallow: [
           "/admin",
+          // Needs its own entry: the closing-ceremony board sits at /standings,
+          // outside /admin, so the rule above no longer covers it.
+          "/standings",
           "/journal",
           "/leaderboard",
           "/teams",
