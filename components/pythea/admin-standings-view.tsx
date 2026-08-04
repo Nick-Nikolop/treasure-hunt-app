@@ -4,13 +4,16 @@ import { useMemo } from "react"
 import Link from "next/link"
 import {
   ArrowLeft,
+  Award,
   Check,
   CircleDashed,
   Compass,
   Crown,
   Gem,
   MapPin,
+  Medal,
   ScrollText,
+  Trophy,
   User,
   Users,
 } from "lucide-react"
@@ -24,10 +27,14 @@ import type { StandingRow, StandingsBoard } from "@/lib/standings"
  * then who got there first), but arrival TIMES are deliberately never shown: the
  * board reports what each team achieved, not when.
  *
- * The ranking is presented as ACHIEVEMENT BANDS rather than one long table, so the
- * story reads as "these found the treasure, these reached the compass, these
- * solved all ten..." Each band states its achievement once in its header and its
- * rows carry only a position and a name.
+ * The top three keep their podium, and below it the rest of the ranking is
+ * presented as ACHIEVEMENT BANDS rather than one long table, so the story reads as
+ * "these found the treasure, these reached the compass, these solved all ten..."
+ * Each band states its achievement once in its header and its rows carry only a
+ * position and a name.
+ *
+ * The bands intentionally still contain the medallists, so a band's count is the
+ * true number of teams at that achievement rather than "the ones not on a plinth".
  *
  * Rosters are private: a team's members are never listed and no per-team headcount
  * is shown. The only counts on the page are teams per band and course-wide totals.
@@ -104,6 +111,81 @@ function RankMark({ position }: { position: number }) {
     >
       {position}
     </span>
+  )
+}
+
+/** The tall plinths at the top. Usually three; more when a position is tied. */
+function Podium({ rows }: { rows: StandingRow[] }) {
+  if (rows.length === 0) return null
+  const ICONS = [Trophy, Medal, Award]
+  // How many share each position, so a tie can be labelled as one instead of
+  // printing "ΝΙΚΗΤΗΣ" on several identical-looking cards.
+  const sharedCount = new Map<number, number>()
+  for (const r of rows) sharedCount.set(r.position, (sharedCount.get(r.position) ?? 0) + 1)
+
+  // DOM order stays rank order (1, 2, 3) so a screen reader and the mobile stack
+  // both read the winner first. Only the desktop grid reshuffles to 2nd-1st-3rd
+  // so the winner stands in the middle, and only for a clean untied top three.
+  const classicPodium = rows.length === 3 && new Set(rows.map((r) => r.position)).size === 3
+  const DESKTOP_ORDER = classicPodium ? ["sm:order-2", "sm:order-1", "sm:order-3"] : []
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-3 sm:items-end">
+      {rows.map((row, i) => {
+        const isWinner = row.position === 1
+        const tied = (sharedCount.get(row.position) ?? 1) > 1
+        const Icon = ICONS[Math.min(row.position, 3) - 1] ?? Award
+        return (
+          <div
+            key={`${row.kind}-${row.id}`}
+            className={`relative overflow-hidden rounded-sm border p-4 text-center ${DESKTOP_ORDER[i] ?? ""} ${
+              isWinner
+                ? "border-brass bg-brass/10 sm:pb-8 sm:pt-7"
+                : "border-border bg-card/60 sm:pb-5"
+            }`}
+          >
+            {/* Winner gets a warm wash so the eye lands there first. */}
+            {isWinner && (
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,color-mix(in_oklch,var(--brass)_28%,transparent),transparent_70%)]"
+              />
+            )}
+            <div className="relative">
+              <Icon
+                className={`mx-auto size-7 ${isWinner ? "text-brass" : "text-muted-foreground"}`}
+              />
+              <p
+                className={`mt-2 font-sans text-[10px] font-bold tracking-chip ${
+                  isWinner ? "text-brass" : "text-muted-foreground"
+                }`}
+              >
+                {isWinner && !tied ? "ΝΙΚΗΤΗΣ" : `${row.position}Η ΘΕΣΗ${tied ? " ΕΞ ΙΣΟΥ" : ""}`}
+              </p>
+              <p
+                className={`mt-1 text-balance font-serif font-bold leading-tight text-foreground ${
+                  isWinner ? "text-2xl" : "text-xl"
+                }`}
+              >
+                {row.name}
+              </p>
+              {/* The headline number: riddles cracked out of the ten on the trail. */}
+              <p className="mt-3 font-serif text-3xl font-bold tabular-nums leading-none text-foreground">
+                {riddlesSolved(row)}
+                <span className="text-lg text-muted-foreground"> / {row.total}</span>
+              </p>
+              <p className="mt-1 font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
+                ΓΡΙΦΟΙ
+              </p>
+              <div className="mt-3 flex flex-wrap justify-center gap-1.5">
+                <Milestone label="ΠΥΞΙΔΑ" icon={Compass} reached={reachedCompass(row)} />
+                <Milestone label="ΘΗΣΑΥΡΟΣ" icon={Gem} reached={row.finished} />
+              </div>
+            </div>
+          </div>
+        )
+      })}
+    </div>
   )
 }
 
@@ -354,10 +436,26 @@ export function AdminStandingsView({ data }: { data: StandingsBoard }) {
   const activePlayers = data.activePlayers
   const soloShown = useMemo(() => rows.filter((r) => r.kind === "player").length, [rows])
 
-  // Every row belongs to exactly one band, so the whole ranking is the bands and
-  // nothing is shown twice. The top band doubles as the winners' spotlight, which
-  // is why there is no separate podium: pulling the top three out would have torn
-  // two teams out of the compass band and left its count wrong.
+  // We take the top three DISTINCT positions and every row sharing them, so a
+  // tie (teammates who all scanned the treasure) never silently drops a
+  // co-winner into the list below. Capped so a pathological many-way tie cannot
+  // blow up the layout.
+  const podium = useMemo(() => {
+    const top = [...new Set(rows.map((r) => r.position))].sort((a, b) => a - b).slice(0, 3)
+    // Add one position-group at a time and stop before any group that would not
+    // fit whole, so the podium never shows "3 of the 5 who tied".
+    const out: StandingRow[] = []
+    for (const pos of top) {
+      const group = rows.filter((r) => r.position === pos)
+      if (out.length > 0 && out.length + group.length > 6) break
+      out.push(...group)
+    }
+    return out
+  }, [rows])
+
+  // The bands below deliberately keep EVERY row, including the medallists. The
+  // podium is a spotlight, not a slice: lifting the top three out would have torn
+  // two teams out of the compass band and left that band's count wrong.
   const groups = useMemo(() => groupRows(rows), [rows])
 
   return (
@@ -398,6 +496,15 @@ export function AdminStandingsView({ data }: { data: StandingsBoard }) {
         </div>
       </header>
 
+      {podium.length > 0 && (
+        <section className="mt-8">
+          <h2 className="mb-3 font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
+            ΤΟ ΒΑΘΡΟ
+          </h2>
+          <Podium rows={podium} />
+        </section>
+      )}
+
       <section className="mt-8">
         <div className="mb-3 flex items-center justify-between gap-3">
           <h2 className="font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
@@ -417,7 +524,10 @@ export function AdminStandingsView({ data }: { data: StandingsBoard }) {
         ) : (
           <div className="space-y-3">
             {groups.map((group, i) => (
-              <GroupPanel key={group.key} group={group} headline={i === 0} />
+              // The warm wash and the larger names belong to whichever element is
+              // carrying the spotlight, so they stay off the top band while the
+              // podium is above it repeating those same names.
+              <GroupPanel key={group.key} group={group} headline={i === 0 && podium.length === 0} />
             ))}
           </div>
         )}
