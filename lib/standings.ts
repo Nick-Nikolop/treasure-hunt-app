@@ -91,9 +91,47 @@ export type StandingRow = {
   /** Country of the lead they are standing on, for flavour. */
   country: string | null
   countryEn: string | null
-  /** Team rows: member display names. Player rows: their crew name, or null. */
-  members: string[]
+  /**
+   * Player rows: the team they belonged to, or null. Team rows: always null.
+   *
+   * Member display names are deliberately NOT part of this shape. The ceremony
+   * board keeps rosters private, and anything included here would be serialised
+   * into the page payload even if no component rendered it.
+   */
   teamName: string | null
+}
+
+/**
+ * The narrowed payload the ceremony board is handed.
+ *
+ * `FinalStandings` carries `players` in full, which is EVERY registered explorer
+ * by display name. Handing the whole object to a client component would serialise
+ * all of those names into the page payload even though the board renders none of
+ * them, so counts that used to be derived in the browser are computed here and
+ * only the ranked entries travel.
+ */
+export type StandingsBoard = {
+  entries: StandingRow[]
+  total: number
+  /** Explorers who solved at least one riddle. A count, never a list. */
+  activePlayers: number
+  finishedTeams: number
+  endgameTeams: number
+}
+
+/**
+ * Solving the first stop unlocks lead 2, so "solved something" is progress > 1.
+ * Must stay in step with the board's own row filter or the header counts and the
+ * bands below them would disagree.
+ */
+export function toStandingsBoard(s: FinalStandings): StandingsBoard {
+  return {
+    entries: s.entries,
+    total: s.total,
+    activePlayers: s.players.filter((p) => p.progress > 1).length,
+    finishedTeams: s.stats.finishedTeams,
+    endgameTeams: s.stats.endgameTeams,
+  }
 }
 
 export type FinalStandings = {
@@ -321,10 +359,6 @@ export async function getFinalStandings(nowMs: number = Date.now()): Promise<Fin
       compassAt: firstOf((m) => m.compassAt),
       treasureAt: firstOf((m) => m.treasureAt),
       ...countryFor(progress),
-      members: ids
-        .map((id) => userById.get(id))
-        .filter((u): u is NonNullable<typeof u> => !!u)
-        .map(displayName),
       teamName: null,
       }
     })
@@ -350,7 +384,6 @@ export async function getFinalStandings(nowMs: number = Date.now()): Promise<Fin
       compassAt: m.compassAt,
       treasureAt: m.treasureAt,
       ...countryFor(m.progress),
-      members: [],
       teamName: teamId ? (teamNameById.get(teamId) ?? null) : null,
     }
   })

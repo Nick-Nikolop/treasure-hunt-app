@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 import { getAdminUser } from "@/lib/admin"
-import { getFinalStandings } from "@/lib/standings"
+import { getFinalStandings, toStandingsBoard } from "@/lib/standings"
 import { Atmosphere } from "@/components/pythea/atmosphere"
 import { AdminStandingsView } from "@/components/pythea/admin-standings-view"
 
@@ -20,7 +20,9 @@ export default async function AdminStandingsPage() {
   const admin = await getAdminUser()
   if (!admin) redirect("/")
 
-  const data = await getFinalStandings()
+  // Narrowed before it crosses into the client component: the full standings
+  // carry every explorer's display name, and this board must not ship rosters.
+  const data = toStandingsBoard(await getFinalStandings())
 
   return (
     <>

@@ -14,7 +14,7 @@ import {
   User,
   Users,
 } from "lucide-react"
-import type { FinalStandings, StandingRow } from "@/lib/standings"
+import type { StandingRow, StandingsBoard } from "@/lib/standings"
 
 /**
  * The closing-ceremony standings board. Superadmin-only, rendered on its own
@@ -331,7 +331,7 @@ function StatTile({
   )
 }
 
-export function AdminStandingsView({ data }: { data: FinalStandings }) {
+export function AdminStandingsView({ data }: { data: StandingsBoard }) {
   // Only crews/explorers who actually SOLVED something are ranked at all.
   // Careful with the off-by-one: `progress` counts leads UNLOCKED, and lead 1 is
   // handed to everyone at registration without a scan, so `progress === 1` means
@@ -349,7 +349,9 @@ export function AdminStandingsView({ data }: { data: FinalStandings }) {
     () => rows.filter((r) => r.kind === "team").length,
     [rows],
   )
-  const activePlayers = useMemo(() => data.players.filter(hasSolved).length, [data.players])
+  // Counted server-side, because the full player list is exactly the roster data
+  // this board must not ship to the browser.
+  const activePlayers = data.activePlayers
   const soloShown = useMemo(() => rows.filter((r) => r.kind === "player").length, [rows])
 
   // Every row belongs to exactly one band, so the whole ranking is the bands and
@@ -391,8 +393,8 @@ export function AdminStandingsView({ data }: { data: FinalStandings }) {
         <div className="grid grid-cols-2 gap-2 p-3 sm:grid-cols-4 sm:p-4">
           <StatTile icon={Users} value={activeTeams} label="ΟΜΑΔΕΣ" />
           <StatTile icon={User} value={activePlayers} label="ΕΞΕΡΕΥΝΗΤΕΣ" />
-          <StatTile icon={ScrollText} value={data.stats.endgameTeams} label="ΣΤΟ ΦΙΝΑΛΕ" />
-          <StatTile icon={Gem} value={data.stats.finishedTeams} label="ΟΛΟΚΛΗΡΩΣΑΝ" />
+          <StatTile icon={ScrollText} value={data.endgameTeams} label="ΣΤΟ ΦΙΝΑΛΕ" />
+          <StatTile icon={Gem} value={data.finishedTeams} label="ΟΛΟΚΛΗΡΩΣΑΝ" />
         </div>
       </header>
 
