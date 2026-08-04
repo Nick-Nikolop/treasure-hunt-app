@@ -64,30 +64,39 @@ function reachedCompass(row: StandingRow): boolean {
 }
 
 /**
- * Per-digit correction for Alegreya Sans, measured off the rendered font at
- * 100px (cap height 70): `s` scales the glyph up to cap height, `y` lifts the
- * ones that hang below the baseline, expressed in the scaled glyph's own em.
+ * Per-digit correction, measured off both rendered families at 100px/700:
+ * Alegreya Sans (cap 70, digits 52-62 tall) and Alegreya (cap 72, digits 52-64).
+ * The two are the same oldstyle design and their scale factors agree to ~2%, so
+ * one averaged table serves both rather than branching on family.
+ *
+ * `s` scales a digit up to cap height; `y` lifts the ones drawn below the
+ * baseline (3/4/5/7/9 hang ~9 units), in the scaled glyph's own em.
  */
 const FIGURE_FIX: Record<string, { s: number; y: number }> = {
-  "0": { s: 1.32, y: 0 },
-  "1": { s: 1.35, y: 0 },
+  "0": { s: 1.34, y: 0 },
+  "1": { s: 1.37, y: 0 },
   "2": { s: 1.35, y: 0 },
-  "3": { s: 1.13, y: 0.09 },
-  "4": { s: 1.15, y: 0.09 },
-  "5": { s: 1.15, y: 0.09 },
-  "6": { s: 1.13, y: 0 },
-  "7": { s: 1.13, y: 0.09 },
-  "8": { s: 1.15, y: 0 },
-  "9": { s: 1.13, y: 0.08 },
+  "3": { s: 1.15, y: 0.1 },
+  "4": { s: 1.15, y: 0.11 },
+  "5": { s: 1.14, y: 0.1 },
+  "6": { s: 1.15, y: 0 },
+  "7": { s: 1.16, y: 0.105 },
+  "8": { s: 1.16, y: 0 },
+  "9": { s: 1.15, y: 0.1 },
 }
 
 /**
- * Renders a label whose digits sit inline with capitals, e.g. "8 ΑΠΟ 10 ΓΡΙΦΟΥΣ".
+ * Renders digits at cap height, e.g. "8 ΑΠΟ 10 ΓΡΙΦΟΥΣ" or a bare "40".
  *
- * Alegreya Sans has exactly ONE figure set and it is OLDSTYLE: measured against a
- * cap height of 70, the digits 0/1/2 are only 52 tall and 3/4/5/7/9 hang 9 units
+ * Alegreya has exactly ONE figure set and it is OLDSTYLE: measured against a cap
+ * height of ~71, the digits 0/1/2 are only ~52 tall and 3/4/5/7/9 hang 9 units
  * below the baseline. Next to uppercase Greek that reads as the numbers being in
- * a different, smaller font, which is precisely what looked wrong.
+ * a different, smaller font, which is precisely what looked wrong. It also makes
+ * a number ragged on its own, since "40" pairs a descending 4 with a short 0.
+ *
+ * Applied to every number the board presents as DATA (labels, counts, ranks,
+ * scores). That is all of them: the board has no lowercase running prose, which
+ * is the one setting oldstyle figures are actually designed for.
  *
  * **`font-variant-numeric: lining-nums` cannot fix this.** The Google-hosted file
  * ships no lining alternate, so that declaration (and `font-feature-settings:
@@ -99,10 +108,10 @@ const FIGURE_FIX: Record<string, { s: number; y: number }> = {
  * resolves to px at the parent and inherits as that px, so the wide chip tracking
  * stays even across the resized glyphs.
  */
-function Figures({ children }: { children: string }) {
+function Figures({ children }: { children: string | number }) {
   return (
     <>
-      {[...children].map((ch, i) => {
+      {[...String(children)].map((ch, i) => {
         const fix = FIGURE_FIX[ch]
         if (!fix) return ch
         return (
@@ -170,7 +179,7 @@ function RankMark({ position }: { position: number }) {
     <span
       className={`inline-flex size-9 shrink-0 items-center justify-center rounded-sm border font-serif text-lg font-bold tabular-nums ${tone}`}
     >
-      {position}
+      <Figures>{position}</Figures>
     </span>
   )
 }
@@ -234,8 +243,11 @@ function Podium({ rows }: { rows: StandingRow[] }) {
               </p>
               {/* The headline number: riddles cracked out of the ten on the trail. */}
               <p className="mt-3 font-serif text-3xl font-bold tabular-nums leading-none text-foreground">
-                {riddlesSolved(row)}
-                <span className="text-lg text-muted-foreground"> / {row.total}</span>
+                <Figures>{riddlesSolved(row)}</Figures>
+                <span className="text-lg text-muted-foreground">
+                  {" / "}
+                  <Figures>{row.total}</Figures>
+                </span>
               </p>
               <p className="mt-1 font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
                 ΓΡΙΦΟΙ
@@ -404,8 +416,10 @@ function GroupPanel({ group, headline }: { group: StandingsGroup; headline: bool
                 milestone instead of the number. */}
             {group.showMilestones && (
               <span className="font-sans text-[11px] font-bold tabular-nums text-foreground">
-                {group.riddles}
-                <span className="text-muted-foreground">/{group.total}</span>
+                <Figures>{group.riddles}</Figures>
+                <span className="text-muted-foreground">
+                  /<Figures>{group.total}</Figures>
+                </span>
                 <span className="ml-1 font-normal text-[10px] text-muted-foreground">γρίφοι</span>
               </span>
             )}
@@ -467,7 +481,7 @@ function StatTile({
     <div className="rounded-sm border border-border bg-card/50 px-3 py-2.5">
       <Icon className="size-4 text-brass" />
       <p className="mt-1 font-serif text-2xl font-bold tabular-nums leading-none text-foreground">
-        {value}
+        <Figures>{value}</Figures>
       </p>
       <p className="mt-1 font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
         {label}
@@ -574,9 +588,9 @@ export function AdminStandingsView({ data }: { data: StandingsBoard }) {
             ΚΑΤΑΤΑΞΗ ΚΑΤΑ ΕΠΙΤΕΥΓΜΑ
           </h2>
           <span className="font-sans text-[10px] tracking-chip text-muted-foreground/70">
-            {rows.length} ΣΥΝΟΛΟ
+            <Figures>{`${rows.length} ΣΥΝΟΛΟ`}</Figures>
             {/* Only worth saying when a lone explorer is actually in the list. */}
-            {soloShown > 0 && ` · ${soloShown} ΧΩΡΙΣ ΟΜΑΔΑ`}
+            {soloShown > 0 && <Figures>{` · ${soloShown} ΧΩΡΙΣ ΟΜΑΔΑ`}</Figures>}
           </span>
         </div>
 
