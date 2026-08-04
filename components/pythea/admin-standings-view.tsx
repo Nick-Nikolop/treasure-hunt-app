@@ -232,14 +232,18 @@ function Podium({ rows }: { rows: StandingRow[] }) {
   const sharedCount = new Map<number, number>()
   for (const r of rows) sharedCount.set(r.position, (sharedCount.get(r.position) ?? 0) + 1)
 
-  // DOM order stays rank order (1, 2, 3) so a screen reader and the mobile stack
-  // both read the winner first. Only the desktop grid reshuffles to 2nd-1st-3rd
-  // so the winner stands in the middle, and only for a clean untied top three.
+  // Stays a true 3-up podium at EVERY width, winner raised in the middle. It used
+  // to collapse to one column below sm, which on a phone became three
+  // full-height stacked cards that lost the podium read entirely and just
+  // repeated the top three teams already listed in the bands below. DOM order
+  // stays rank order (1, 2, 3) so a screen reader still meets the winner first;
+  // only the visual grid reshuffles to 2nd-1st-3rd, and only for a clean untied
+  // top three.
   const classicPodium = rows.length === 3 && new Set(rows.map((r) => r.position)).size === 3
-  const DESKTOP_ORDER = classicPodium ? ["sm:order-2", "sm:order-1", "sm:order-3"] : []
+  const ORDER = classicPodium ? ["order-2", "order-1", "order-3"] : []
 
   return (
-    <div className="grid gap-3 sm:grid-cols-3 sm:items-end">
+    <div className="grid grid-cols-3 items-end gap-2 sm:gap-3">
       {rows.map((row, i) => {
         const isWinner = row.position === 1
         const tied = (sharedCount.get(row.position) ?? 1) > 1
@@ -248,39 +252,45 @@ function Podium({ rows }: { rows: StandingRow[] }) {
         return (
           <div
             key={`${row.kind}-${row.id}`}
-            className={`relative overflow-hidden rounded-sm border p-4 text-center ${DESKTOP_ORDER[i] ?? ""} ${medal.frame} ${
-              isWinner ? "sm:pb-8 sm:pt-7" : "sm:pb-5"
+            className={`relative overflow-hidden rounded-sm border p-2.5 text-center sm:p-4 ${ORDER[i] ?? ""} ${medal.frame} ${
+              isWinner ? "pb-4 pt-3.5 sm:pb-8 sm:pt-7" : "pb-3 sm:pb-5"
             }`}
           >
             {/* Each plinth is washed in its own metal, gold strongest, so the eye
                 still lands on the winner first. */}
             <div className={`pointer-events-none absolute inset-0 ${medal.glow}`} aria-hidden />
             <div className="relative">
-              <Icon className={`mx-auto size-7 ${medal.ink}`} />
-              <p className={`mt-2 font-sans text-[10px] font-bold tracking-chip ${medal.ink}`}>
+              <Icon className={`mx-auto size-5 sm:size-7 ${medal.ink}`} />
+              {/* Tighter tracking on mobile so "ΝΙΚΗΤΗΣ" fits a ~90px column. */}
+              <p
+                className={`mt-1.5 font-sans text-[9px] font-bold tracking-[0.14em] sm:mt-2 sm:text-[10px] sm:tracking-chip ${medal.ink}`}
+              >
                 <Figures>
                   {isWinner && !tied ? "ΝΙΚΗΤΗΣ" : `${row.position}Η ΘΕΣΗ${tied ? " ΕΞ ΙΣΟΥ" : ""}`}
                 </Figures>
               </p>
               <p
                 className={`mt-1 text-balance font-serif font-bold leading-tight text-foreground ${
-                  isWinner ? "text-2xl" : "text-xl"
+                  isWinner ? "text-base sm:text-2xl" : "text-sm sm:text-xl"
                 }`}
               >
                 {row.name}
               </p>
               {/* The headline number: riddles cracked out of the ten on the trail. */}
-              <p className="mt-3 font-serif text-3xl font-bold tabular-nums leading-none text-foreground">
+              <p className="mt-2 font-serif text-2xl font-bold tabular-nums leading-none text-foreground sm:mt-3 sm:text-3xl">
                 <Figures>{riddlesSolved(row)}</Figures>
-                <span className="text-lg text-muted-foreground">
+                <span className="text-base text-muted-foreground sm:text-lg">
                   {" / "}
                   <Figures>{row.total}</Figures>
                 </span>
               </p>
-              <p className="mt-1 font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
+              <p className="mt-1 font-sans text-[9px] font-bold tracking-[0.14em] text-muted-foreground sm:text-[10px] sm:tracking-chip">
                 ΓΡΙΦΟΙ
               </p>
-              <div className="mt-3 flex flex-wrap justify-center gap-1.5">
+              {/* Milestone chips are too wide to sit in a phone-width column, and
+                  the same two teams carry the same chips in the bands right below,
+                  so they show only from sm up. */}
+              <div className="mt-3 hidden flex-wrap justify-center gap-1.5 sm:flex">
                 <Milestone label="ΠΥΞΙΔΑ" icon={Compass} reached={reachedCompass(row)} />
                 <Milestone label="ΘΗΣΑΥΡΟΣ" icon={Gem} reached={row.finished} />
               </div>
