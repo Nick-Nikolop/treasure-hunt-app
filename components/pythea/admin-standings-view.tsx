@@ -422,13 +422,15 @@ function GroupPanel({ group, headline }: { group: StandingsGroup; headline: bool
   // Teams per BAND, which says nothing about how many people are in any team.
   const n = group.rows.length
   const allTeams = group.rows.every((r) => r.kind === "team")
+  // Sentence-case count for the "reached here" caption, so it reads as running
+  // Greek rather than an eyebrow.
   const countWord = allTeams
     ? n === 1
-      ? "ΟΜΑΔΑ"
-      : "ΟΜΑΔΕΣ"
+      ? "ομάδα"
+      : "ομάδες"
     : n === 1
-      ? "ΣΥΜΜΕΤΟΧΗ"
-      : "ΣΥΜΜΕΤΟΧΕΣ"
+      ? "συμμετοχή"
+      : "συμμετοχές"
 
   return (
     <section
@@ -470,10 +472,18 @@ function GroupPanel({ group, headline }: { group: StandingsGroup; headline: bool
           >
             <Figures>{group.label}</Figures>
           </h3>
-          <span className="shrink-0 rounded-sm border border-border bg-background/40 px-2 py-1 font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
-            <Figures>{`${n} ${countWord}`}</Figures>
-          </span>
         </div>
+
+        {/* The count as a completed fact about the frozen board: this is where
+            these teams stood the moment the game ended. Replaces the old bare
+            "N ΟΜΑΔΕΣ" chip, so the number appears once and reads as a statement,
+            not a live tally. */}
+        <p className="mt-2 font-serif text-sm leading-snug text-muted-foreground">
+          Έφτασαν εδώ{" "}
+          <span className="font-bold text-foreground">
+            <Figures>{n}</Figures> {countWord}
+          </span>
+        </p>
 
         <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-2">
           <div className="min-w-[110px] flex-1">
@@ -639,8 +649,8 @@ export function AdminStandingsView({ data }: { data: StandingsBoard }) {
             Το ταξίδι του Πυθέα
           </h1>
           <p className="mx-auto mt-2 max-w-[52ch] text-pretty font-serif text-sm leading-relaxed text-muted-foreground">
-            Η οριστική κατάταξη κάθε ομάδας και εξερευνητή που έλυσε τουλάχιστον ένα στοιχείο, όπως
-            την έγραψε το κυνήγι.
+            Η κατάταξη κάθε ομάδας και εξερευνητή που έλυσε τουλάχιστον ένα στοιχείο, παγωμένη όπως
+            ήταν τη στιγμή που έληξε το παιχνίδι.
           </p>
         </div>
 
