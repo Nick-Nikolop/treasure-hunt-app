@@ -109,6 +109,21 @@ function reachScore(row: StandingRow): number {
 const ENDGAME_RIDDLES = 2
 
 /**
+ * Where a stage left a team, as a sentence-case prepositional phrase for running
+ * prose. The band headings above are shouty uppercase ("ΕΦΤΑΣΑΝ ΣΤΗΝ ΠΥΞΙΔΑ"), so
+ * they cannot be reused inside the closing note.
+ */
+function stagePointPhrase(stage: StandingRow["stage"]): string {
+  return stage === "treasure"
+    ? "στον θησαυρό"
+    : stage === "compass"
+      ? "στην πυξίδα"
+      : stage === "trail_end"
+        ? "στο πρώτο σημείωμα"
+        : "στην πορεία των γρίφων"
+}
+
+/**
  * Fold a name for searching: lower-case and strip Greek accents, so typing
  * "ortiloxos" is out of scope but "ορτιλοχος" (no tonos) still finds "Ορτίλοχος".
  * The range covers the general combining-mark block plus Greek's own
@@ -674,6 +689,21 @@ export function AdminStandingsView({ data }: { data: StandingsBoard }) {
     return out
   }, [rows])
 
+  // 2nd and 3rd reached the SAME point with the SAME riddles solved, so the only
+  // thing that separated them was who got there first. Derived rather than
+  // asserted, so the closing note explains the split only while it is genuinely a
+  // timing call: if a future board has them on different stages or riddle counts,
+  // the sentence disappears instead of lying. Distinct positions are required too,
+  // since a shared position means they were NOT separated at all.
+  const runnerUpTie = useMemo(() => {
+    const second = rows.find((r) => r.position === 2)
+    const third = rows.find((r) => r.position === 3)
+    if (!second || !third) return null
+    if (second.stage !== third.stage) return null
+    if (riddlesSolved(second) !== riddlesSolved(third)) return null
+    return { phrase: stagePointPhrase(second.stage) }
+  }, [rows])
+
   // The three on the plinths are NOT repeated in the bands: the podium is their
   // place on this board. Everyone else is grouped by achievement below. The band
   // counts therefore mean "the OTHER teams at this achievement", which is the
@@ -907,7 +937,15 @@ export function AdminStandingsView({ data }: { data: StandingsBoard }) {
 
       <p className="mt-3 font-sans text-[11px] leading-relaxed text-muted-foreground">
         Κάθε ομάδα κρίνεται πρώτα από το πόσο μακριά έφτασε στο φινάλε (θησαυρός, μετά πυξίδα, μετά
-        το 1ο σημείωμα) και έπειτα από τους γρίφους που έλυσε. Το πρώτο σετ της πορείας είχε{" "}
+        το 1ο σημείωμα) και έπειτα από τους γρίφους που έλυσε.{" "}
+        {runnerUpTie && (
+          <>
+            Όταν δύο ομάδες σταμάτησαν στο ίδιο σημείο έχοντας λύσει τους ίδιους γρίφους, προηγείται
+            εκείνη που έφτασε εκεί πρώτη. Έτσι κρίθηκε η σειρά ανάμεσα στη 2η και την 3η θέση, που
+            έμειναν και οι δύο {runnerUpTie.phrase}.{" "}
+          </>
+        )}
+        Το πρώτο σετ της πορείας είχε{" "}
         {data.total} γρίφους. Στο φινάλε ακολουθούσαν δύο ακόμη, ένας για να βρεθεί η πυξίδα και
         ένας για τον θησαυρό, δηλαδή {data.total + ENDGAME_RIDDLES} γρίφοι συνολικά.
       </p>
