@@ -69,6 +69,37 @@ function reachedCompass(row: StandingRow): boolean {
 }
 
 /**
+ * The band a row belongs to: the furthest point it reached. Shared by the
+ * bucketing and by the funnel counts, so the two can never disagree about which
+ * band a team is in.
+ */
+function bandKey(row: StandingRow): string {
+  return row.stage === "treasure"
+    ? "treasure"
+    : row.stage === "compass"
+      ? "compass"
+      : row.stage === "trail_end"
+        ? "note"
+        : `riddles-${riddlesSolved(row)}`
+}
+
+/**
+ * How far a row got, as ONE comparable number, so "passed through here" can be
+ * counted as "reached at least this far". Any endgame step outranks every riddle
+ * count, mirroring STAGE_RANK in lib/standings; the gaps are wide enough that a
+ * riddle total can never climb into an endgame tier.
+ */
+function reachScore(row: StandingRow): number {
+  return row.stage === "treasure"
+    ? 1_000_000
+    : row.stage === "compass"
+      ? 100_000
+      : row.stage === "trail_end"
+        ? 10_000
+        : riddlesSolved(row)
+}
+
+/**
  * Fold a name for searching: lower-case and strip Greek accents, so typing
  * "ortiloxos" is out of scope but "ορτιλοχος" (no tonos) still finds "Ορτίλοχος".
  * The range covers the general combining-mark block plus Greek's own
@@ -329,6 +360,26 @@ function Podium({ rows }: { rows: StandingRow[] }) {
   )
 }
 
+/**
+ * The funnel numbers for one band, counted over the WHOLE field.
+ *
+ * They must not come from the band's own visible rows: the top three are lifted
+ * out to the podium, so a subset count would under-report the field and make
+ * "passed through" plainly wrong (the treasure band would claim fewer finishers
+ * than the podium shows). `onPodium` is what reconciles the two, since it
+ * explains the gap between `ended` and the names actually listed.
+ */
+type BandStats = {
+  /** Teams whose hunt ENDED at this point. */
+  ended: number
+  /** Teams that reached at least this far, so it includes everyone above. */
+  passed: number
+  /** How many of `ended` are shown on the podium instead of in the list. */
+  onPodium: number
+  /** False when a lone explorer is in the band, which changes the noun. */
+  allTeams: boolean
+}
+
 /** An achievement band, and the teams that share it. */
 type StandingsGroup = {
   key: string
@@ -361,14 +412,7 @@ function groupRows(rows: StandingRow[]): StandingsGroup[] {
 
   for (const row of rows) {
     const solved = riddlesSolved(row)
-    const key =
-      row.stage === "treasure"
-        ? "treasure"
-        : row.stage === "compass"
-          ? "compass"
-          : row.stage === "trail_end"
-            ? "note"
-            : `riddles-${solved}`
+    const key = bandKey(row)
 
     let band = bands.get(key)
     if (!band) {
@@ -414,23 +458,31 @@ function groupRows(rows: StandingRow[]): StandingsGroup[] {
  * and a name, so a band of eight teams reads as one fact plus eight names rather
  * than eight identical-looking lines.
  */
-function GroupPanel({ group, headline }: { group: StandingsGroup; headline: boolean }) {
+function GroupPanel({
+  group,
+  headline,
+  stats,
+}: {
+  group: StandingsGroup
+  headline: boolean
+  stats: BandStats
+}) {
   const Icon = group.icon
   const gold = group.tone === "gold"
   const teal = group.tone === "teal"
 
-  // Teams per BAND, which says nothing about how many people are in any team.
-  const n = group.rows.length
-  const allTeams = group.rows.every((r) => r.kind === "team")
-  // Sentence-case count for the "reached here" caption, so it reads as running
-  // Greek rather than an eyebrow.
-  const countWord = allTeams
-    ? n === 1
+  // Counts TEAMS, which says nothing about how many people are in any team.
+  // Sentence-case so the caption reads as running Greek, not an eyebrow.
+  const countWord = stats.allTeams
+    ? stats.ended === 1
       ? "ομάδα"
       : "ομάδες"
-    : n === 1
+    : stats.ended === 1
       ? "συμμετοχή"
       : "συμμετοχές"
+  // Nobody goes past the top band, so there the two numbers are equal by
+  // definition and printing both would just be noise.
+  const showPassed = stats.passed > stats.ended
 
   return (
     <section
@@ -474,15 +526,32 @@ function GroupPanel({ group, headline }: { group: StandingsGroup; headline: bool
           </h3>
         </div>
 
-        {/* The count as a completed fact about the frozen board: this is where
-            these teams stood the moment the game ended. Replaces the old bare
-            "N ΟΜΑΔΕΣ" chip, so the number appears once and reads as a statement,
-            not a live tally. */}
+        {/* Two facts about the frozen board: how many teams ENDED here when the
+            game stopped, and how many had passed through this point in total.
+            Both are counted over the whole field, so the second is always the
+            first plus everyone in the bands above. */}
         <p className="mt-2 font-serif text-sm leading-snug text-muted-foreground">
-          Έφτασαν εδώ{" "}
+          Τερμάτισαν εδώ{" "}
           <span className="font-bold text-foreground">
-            <Figures>{n}</Figures> {countWord}
+            <Figures>{stats.ended}</Figures> {countWord}
           </span>
+          {/* Sits directly after the number it qualifies: it reconciles that count
+              with the shorter visible list whenever some of this band's teams are
+              being celebrated on the podium instead of listed here. */}
+          {stats.onPodium > 0 && (
+            <span className="text-muted-foreground/70">
+              {" · "}
+              <Figures>{stats.onPodium}</Figures> στο βάθρο
+            </span>
+          )}
+          {showPassed && (
+            <>
+              {" · πέρασαν από εδώ "}
+              <span className="font-bold text-foreground">
+                <Figures>{stats.passed}</Figures>
+              </span>
+            </>
+          )}
         </p>
 
         <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -619,6 +688,32 @@ export function AdminStandingsView({ data }: { data: StandingsBoard }) {
     () => belowRows.filter((r) => r.kind === "player").length,
     [belowRows],
   )
+
+  // Funnel numbers per band, over the FULL ranked field (podium included), so
+  // "passed through" is the truth about the hunt rather than a fact about which
+  // rows happen to be listed below.
+  const bandStats = useMemo(() => {
+    const onPodium = new Set(podium.map((r) => `${r.kind}-${r.id}`))
+    const stats = new Map<string, BandStats & { level: number }>()
+    for (const row of rows) {
+      const key = bandKey(row)
+      let s = stats.get(key)
+      if (!s) {
+        s = { ended: 0, passed: 0, onPodium: 0, allTeams: true, level: reachScore(row) }
+        stats.set(key, s)
+      }
+      s.ended += 1
+      if (row.kind !== "team") s.allTeams = false
+      if (onPodium.has(`${row.kind}-${row.id}`)) s.onPodium += 1
+    }
+    // "Passed through" = reached at least this far, which is this band plus every
+    // band above it. Cheap to count directly at this size and it cannot drift out
+    // of step with the band order.
+    for (const s of stats.values()) {
+      s.passed = rows.filter((r) => reachScore(r) >= s.level).length
+    }
+    return stats
+  }, [rows, podium])
 
   const [query, setQuery] = useState("")
   const searching = query.trim().length > 0
@@ -776,6 +871,16 @@ export function AdminStandingsView({ data }: { data: StandingsBoard }) {
                     key={group.key}
                     group={group}
                     headline={i === 0 && podium.length === 0}
+                    // Every band came from a row, so its key always has stats;
+                    // the fallback only satisfies the type.
+                    stats={
+                      bandStats.get(group.key) ?? {
+                        ended: group.rows.length,
+                        passed: group.rows.length,
+                        onPodium: 0,
+                        allTeams: true,
+                      }
+                    }
                   />
                 ))}
               </div>
