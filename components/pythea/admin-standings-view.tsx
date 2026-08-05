@@ -100,6 +100,15 @@ function reachScore(row: StandingRow): number {
 }
 
 /**
+ * Riddles that came AFTER the trail: one to locate the compass, one to dig up the
+ * treasure. Fixed by the hunt's design (the two sentinel steps that are real
+ * riddles), whereas the first note between them is just a handover, not a riddle.
+ * `data.total` only counts the trail, so the closing note adds this to state the
+ * full figure instead of hardcoding it.
+ */
+const ENDGAME_RIDDLES = 2
+
+/**
  * Fold a name for searching: lower-case and strip Greek accents, so typing
  * "ortiloxos" is out of scope but "ορτιλοχος" (no tonos) still finds "Ορτίλοχος".
  * The range covers the general combining-mark block plus Greek's own
@@ -898,8 +907,9 @@ export function AdminStandingsView({ data }: { data: StandingsBoard }) {
 
       <p className="mt-3 font-sans text-[11px] leading-relaxed text-muted-foreground">
         Κάθε ομάδα κρίνεται πρώτα από το πόσο μακριά έφτασε στο φινάλε (θησαυρός, μετά πυξίδα, μετά
-        το 1ο σημείωμα) και έπειτα από τους γρίφους που έλυσε. Οι γρίφοι της πορείας είναι{" "}
-        {data.total} στο σύνολο.
+        το 1ο σημείωμα) και έπειτα από τους γρίφους που έλυσε. Το πρώτο σετ της πορείας είχε{" "}
+        {data.total} γρίφους. Στο φινάλε ακολουθούσαν δύο ακόμη, ένας για να βρεθεί η πυξίδα και
+        ένας για τον θησαυρό, δηλαδή {data.total + ENDGAME_RIDDLES} γρίφοι συνολικά.
       </p>
     </main>
   )
