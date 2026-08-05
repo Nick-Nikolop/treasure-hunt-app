@@ -342,13 +342,11 @@ function Podium({ rows }: { rows: StandingRow[] }) {
               </p>
               {/* Now that the podium teams are not repeated in the bands below,
                   these chips are the only place their compass/treasure status
-                  shows. The winner is full-width on mobile so it can carry them;
-                  the narrow runner-up columns show them from sm up. */}
-              <div
-                className={`mt-3 flex-wrap justify-center gap-1.5 sm:flex ${
-                  isWinner ? "flex" : "hidden"
-                }`}
-              >
+                  shows, so EVERY plinth carries them, runners-up included: 2nd and
+                  3rd did reach the compass and that tick is the proof. They wrap
+                  to two lines in the narrow mobile runner-up columns, which is why
+                  the row is centred and wrapping rather than truncated. */}
+              <div className="mt-3 flex flex-wrap justify-center gap-1.5">
                 <Milestone label="ΠΥΞΙΔΑ" icon={Compass} reached={reachedCompass(row)} />
                 <Milestone label="ΘΗΣΑΥΡΟΣ" icon={Gem} reached={row.finished} />
               </div>
@@ -480,10 +478,6 @@ function GroupPanel({
     : stats.ended === 1
       ? "συμμετοχή"
       : "συμμετοχές"
-  // Nobody goes past the top band, so there the two numbers are equal by
-  // definition and printing both would just be noise.
-  const showPassed = stats.passed > stats.ended
-
   return (
     <section
       className={`relative overflow-hidden rounded-sm border ${
@@ -529,7 +523,9 @@ function GroupPanel({
         {/* Two facts about the frozen board: how many teams ENDED here when the
             game stopped, and how many had passed through this point in total.
             Both are counted over the whole field, so the second is always the
-            first plus everyone in the bands above. */}
+            first plus everyone in the bands above. The total prints on every band
+            for a consistent read, including the top one where nobody went further
+            and the two numbers therefore match. */}
         <p className="mt-2 font-serif text-sm leading-snug text-muted-foreground">
           Τερμάτισαν εδώ{" "}
           <span className="font-bold text-foreground">
@@ -544,14 +540,10 @@ function GroupPanel({
               <Figures>{stats.onPodium}</Figures> στο βάθρο
             </span>
           )}
-          {showPassed && (
-            <>
-              {" · πέρασαν από εδώ "}
-              <span className="font-bold text-foreground">
-                <Figures>{stats.passed}</Figures>
-              </span>
-            </>
-          )}
+          {" · πέρασαν συνολικά "}
+          <span className="font-bold text-foreground">
+            <Figures>{stats.passed}</Figures>
+          </span>
         </p>
 
         <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-2">
