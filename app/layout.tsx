@@ -7,14 +7,6 @@ import { LanguageProvider } from '@/components/pythea/language-provider'
 import { LiteModeProvider } from '@/components/pythea/lite-mode-provider'
 import { PhaseProvider } from '@/components/pythea/phase-provider'
 import { AnalyticsProvider } from '@/components/pythea/analytics-provider'
-import { CookieConsent } from '@/components/pythea/cookie-consent'
-import { NotificationProvider } from '@/components/pythea/notification-provider'
-import { HoldReleaseToast } from '@/components/pythea/hold-release-toast'
-import { HoldWaitNotice } from '@/components/pythea/hold-wait-notice'
-import { CompassPickupPopup } from '@/components/pythea/compass-pickup-popup'
-import { AdminAlertsWidget } from '@/components/pythea/admin-alerts-widget'
-import { AnnouncementModal } from '@/components/pythea/announcement-modal'
-import { ContactWidget } from '@/components/pythea/contact-widget'
 import { getPhaseContext, getPublicPhase } from '@/lib/phase-guard'
 import { DEFAULT_LOCALE, isLocale, LANG_COOKIE, type Locale } from '@/lib/i18n'
 import { SITE, TEASER, SITE_URL, KEYWORDS, BRAND, BRAND_NAME_EN, VERIFICATION } from '@/lib/seo'
@@ -178,28 +170,13 @@ export default async function RootLayout({
             <LiteModeProvider>
               <PhaseProvider value={phaseValue}>{children}</PhaseProvider>
             </LiteModeProvider>
-            <CookieConsent />
-            <NotificationProvider />
-            {/* Global so a held crew is told the way opened wherever they are
-                waiting, not only if they happen to be on the journal. */}
-            <HoldReleaseToast />
-            {/* The mirror of the toast above: while the hold is still on, a crew
-                that closed the trail is reminded when the hunt resumes. Global
-                for the same reason, and it reappears on every load by design. */}
-            <HoldWaitNotice />
-            {/* Global so a crew waiting on the compass pickup sees the clock
-                wherever they are, not only on the journal. Shown ONLY to crews
-                who may open note 2 (checked server-side) and it stops for good
-                once the countdown ends. */}
-            <CompassPickupPopup />
-            <AdminAlertsWidget />
-            {/* Site-wide notice, shown to everyone on every page. Reappears on
-                each load / navigation by design (see the component); the journal
-                label re-opens it after dismissal. Inside LanguageProvider so it
-                reads localised copy. */}
-            <AnnouncementModal />
-            {/* Inside LanguageProvider: it reads localised copy. */}
-            <ContactWidget />
+            {/* EVERY SITE-WIDE POPUP IS INTENTIONALLY DISABLED. The hunt is over,
+                so the cookie banner, the notification layer, the hold toast and
+                wait notice, the compass-pickup countdown, the admin alerts, the
+                announcement modal and the floating contact widget were all
+                unmounted here: nothing may appear over the page uninvited.
+                The components themselves are untouched, so re-mounting one is a
+                one-line change if it is ever wanted back. */}
           </LanguageProvider>
           <AnalyticsProvider />
         </ThemeProvider>

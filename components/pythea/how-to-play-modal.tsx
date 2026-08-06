@@ -263,27 +263,16 @@ export function HowToPlayModal({
 }
 
 /**
- * Journal mount point: opens the walkthrough automatically on a browser's first
- * visit, and always renders the button that reopens it.
+ * Journal mount point: renders the button that opens the walkthrough.
  *
- * The auto-open decision is made in an effect (never during render) so the
- * server and client agree on the first paint.
+ * It used to open ITSELF on a browser's first visit. That auto-open is disabled
+ * on purpose (no popup may appear uninvited), so the walkthrough is now shown
+ * only when the button below is pressed.
  */
 export function HowToPlayLauncher({ endsAt }: { endsAt: string }) {
   const { t } = useI18n()
   const h = t.howToPlay
   const [open, setOpen] = useState(false)
-
-  useEffect(() => {
-    let seen = true
-    try {
-      seen = localStorage.getItem(SEEN_KEY) !== null
-    } catch {
-      // Private mode / storage blocked: skip the auto-open rather than nagging
-      // on every single visit, since the button below still works.
-    }
-    if (!seen) setOpen(true)
-  }, [])
 
   // Mark as seen on dismissal, so an interrupted read comes back next time.
   const close = useCallback(() => {

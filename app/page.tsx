@@ -13,7 +13,6 @@ import { Party } from "@/components/pythea/party"
 import { FloatingCta } from "@/components/pythea/floating-cta"
 import { SiteFooter } from "@/components/pythea/site-footer"
 import { TeaserLanding } from "@/components/pythea/teaser-landing"
-import { LockedRedirectNotice } from "@/components/pythea/locked-redirect-notice"
 import { HuntCompleteBanner } from "@/components/pythea/hunt-complete-banner"
 import { getPhaseContext } from "@/lib/phase-guard"
 import { areRostersFrozen } from "@/lib/phase"
@@ -113,7 +112,10 @@ export default async function Page({
       />
       <Atmosphere />
       <SiteHeader initialUser={initialUser} />
-      <LockedRedirectNotice />
+      {/* The `?locked=` countdown modal is intentionally NOT mounted: it used to
+          pop by itself after a bounce from the journal or the leaderboard, and no
+          popup may appear uninvited. Clicking a locked link still explains itself,
+          because that modal is opened by the visitor's own click. */}
       <main className="relative">
         <Hero endsAt={huntEndsAt} />
         {/* Straight under the hero: WHERE the leads actually arrive. Players kept
