@@ -1,6 +1,5 @@
 import type { Metadata } from "next"
 import { headers } from "next/headers"
-import { LogIn } from "lucide-react"
 import { auth } from "@/lib/auth"
 import { getFinalStandings, toStandingsBoard } from "@/lib/standings"
 import { Atmosphere } from "@/components/pythea/atmosphere"
@@ -36,10 +35,11 @@ export default async function StandingsPage() {
   // carry every explorer's display name, and this board must not ship rosters.
   const data = toStandingsBoard(await getFinalStandings())
 
-  // This page has no site header, and non-admins are now redirected here from "/",
-  // so without this there is no way to reach the sign-in form from the page most
-  // visitors land on. Only shown when signed out: a logged-in player has nothing
-  // to do with it, and it would read as a dead control.
+  // No visible sign-in control on this board by design: it is a ceremony screen
+  // meant to be projected, and non-admins are redirected here from "/", so a login
+  // button would sit on the page most visitors land on. It is hidden behind a
+  // deliberate gesture on the title instead (see AdminStandingsView). Resolved
+  // server-side so the gesture stays inert for anyone already signed in.
   const session = await auth.api.getSession({ headers: await headers() })
   const signedOut = !session?.user
 
@@ -47,24 +47,7 @@ export default async function StandingsPage() {
     <>
       <Atmosphere />
       <div className="relative flex min-h-screen flex-col">
-        {signedOut && (
-          /* In normal flow, not floated: the board's own header is a
-             self-contained screen to project, so the button sits above it and
-             pushes it down instead of overlapping its top border. */
-          <div className="relative z-20 mx-auto flex w-full max-w-5xl justify-end px-4 pt-4 sm:px-6">
-            <a
-              /* Comes back here after signing in. Without the param the form
-                 defaults to "/", which sends a regular player straight back to
-                 this page anyway but through an extra redirect. */
-              href="/sign-in?redirect=%2Fstandings"
-              className="inline-flex items-center gap-2 rounded-sm border border-brass/60 bg-background/70 px-4 py-2 font-sans text-xs font-bold tracking-chip text-brass backdrop-blur-sm transition-colors hover:bg-brass hover:text-primary-foreground"
-            >
-              <LogIn className="size-3.5" aria-hidden />
-              ΣΥΝΔΕΣΗ
-            </a>
-          </div>
-        )}
-        <AdminStandingsView data={data} />
+        <AdminStandingsView data={data} signedOut={signedOut} />
       </div>
     </>
   )

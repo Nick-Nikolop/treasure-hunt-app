@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 import {
   Award,
   Check,
@@ -8,6 +8,7 @@ import {
   Compass,
   Crown,
   Gem,
+  LogIn,
   MapPin,
   Medal,
   ScrollText,
@@ -656,7 +657,21 @@ function StatTile({
   )
 }
 
-export function AdminStandingsView({ data }: { data: StandingsBoard }) {
+/** Taps needed on the title to reveal the sign-in link, and the window they must
+ *  land in. Fast enough that it cannot happen by accident, loose enough to be
+ *  doable with a thumb: the timer resets from the LAST tap, not the first, so a
+ *  slow tapper never gets stuck one short. */
+const REVEAL_TAPS = 5
+const REVEAL_WINDOW_MS = 1500
+
+export function AdminStandingsView({
+  data,
+  signedOut = false,
+}: {
+  data: StandingsBoard
+  /** False when a session already exists, which makes the gesture a no-op. */
+  signedOut?: boolean
+}) {
   // Only crews/explorers who actually SOLVED something are ranked at all.
   // Careful with the off-by-one: `progress` counts leads UNLOCKED, and lead 1 is
   // handed to everyone at registration without a scan, so `progress === 1` means
@@ -763,6 +778,22 @@ export function AdminStandingsView({ data }: { data: StandingsBoard }) {
     return rows.filter((r) => foldName(r.name).includes(q))
   }, [rows, query, searching])
 
+  // Hidden sign-in: REVEAL_TAPS quick taps on the title. Timestamps rather than a
+  // counter plus a timeout, so there is no timer to clear on unmount and a pause
+  // mid-run simply drops the stale taps instead of failing the whole attempt.
+  const tapsRef = useRef<number[]>([])
+  const [revealed, setRevealed] = useState(false)
+
+  function handleTitleTap() {
+    if (!signedOut || revealed) return
+    const now = Date.now()
+    tapsRef.current = [...tapsRef.current, now].filter((t) => now - t < REVEAL_WINDOW_MS)
+    if (tapsRef.current.length >= REVEAL_TAPS) {
+      tapsRef.current = []
+      setRevealed(true)
+    }
+  }
+
   return (
     <main className="relative z-10 mx-auto w-full max-w-5xl px-4 pb-20 pt-8 sm:px-6">
       {/* Ceremony header. No back link: this board is opened on its own, as a
@@ -777,9 +808,25 @@ export function AdminStandingsView({ data }: { data: StandingsBoard }) {
             <Crown className="size-3.5" />
             ΤΕΛΙΚΗ ΚΑΤΑΤΑΞΗ
           </p>
-          <h1 className="mt-2 text-balance font-serif text-3xl font-bold leading-tight text-foreground sm:text-4xl">
+          {/* onClick covers taps too (pointer events map onto it), so one handler
+              serves mouse and touch without double-counting. select-none stops a
+              rapid multi-tap from highlighting the text mid-gesture. */}
+          <h1
+            onClick={handleTitleTap}
+            className="mt-2 select-none text-balance font-serif text-3xl font-bold leading-tight text-foreground sm:text-4xl"
+          >
             Το ταξίδι του Πυθέα
           </h1>
+
+          {revealed && (
+            <a
+              href="/sign-in?redirect=%2Fstandings"
+              className="mt-3 inline-flex items-center gap-2 rounded-sm border border-brass/60 bg-background/70 px-4 py-2 font-sans text-[10px] font-bold tracking-chip text-brass transition-colors hover:bg-brass hover:text-primary-foreground"
+            >
+              <LogIn className="size-3.5" aria-hidden />
+              ΣΥΝΔΕΣΗ
+            </a>
+          )}
           <p className="mx-auto mt-2 max-w-[52ch] text-pretty font-serif text-sm leading-relaxed text-muted-foreground">
             Η κατάταξη κάθε ομάδας και εξερευνητή που έλυσε τουλάχιστον ένα στοιχείο, παγωμένη όπως
             ήταν τη στιγμή που έληξε το παιχνίδι.
