@@ -51,6 +51,7 @@ import {
   FileArchive,
 } from "lucide-react"
 import { adminListProofGallery, type AdminGalleryProof } from "@/app/admin/actions"
+import { proofThumbUrl, type ThumbWidth } from "@/lib/proof-thumb"
 
 /** How the archive is broken into sections. */
 type GroupBy = "none" | "team" | "user" | "lead" | "day"
@@ -140,12 +141,30 @@ const GROUP_TABS: { key: GroupBy; label: string }[] = [
   { key: "day", label: "Day" },
 ]
 
-/** Width presets the thumbnail route accepts. Anything else is coerced to 480 there. */
-const THUMB_GRID = 480
-const THUMB_ROW = 160
-const THUMB_LIGHTBOX = 960
+/**
+ * Width presets. 480 covers a ~228 px grid tile at retina density, 160 the
+ * compact row strip, 960 the lightbox.
+ */
+const THUMB_GRID: ThumbWidth = 480
+const THUMB_ROW: ThumbWidth = 160
+const THUMB_LIGHTBOX: ThumbWidth = 960
 
-function thumbSrc(url: string, w: number): string {
+/**
+ * How many tiles are treated as "the first screen" and allowed to load eagerly at
+ * high priority. Five columns at the widest breakpoint, so this is the first four
+ * rows: enough to fill the visible area without handing the browser hundreds of
+ * equally urgent requests, which is what made everything feel slow.
+ */
+const EAGER_TILE_COUNT = 20
+
+/**
+ * The resize route, which builds a thumbnail and stores it.
+ *
+ * Only used as a fallback. The stored copy is addressed directly by
+ * `proofThumbUrl`, so this is what runs the first time a given photo and width is
+ * needed and effectively never again.
+ */
+function thumbSrc(url: string, w: ThumbWidth): string {
   return `/api/admin-proof-thumb?w=${w}&u=${encodeURIComponent(url)}`
 }
 
@@ -712,7 +731,7 @@ export function AdminGalleryPanel() {
         </div>
       ) : (
         <div className="flex flex-col gap-6">
-          {sections.map((s) => (
+          {sections.map((s, sectionIndex) => (
             <section key={s.key} className="flex flex-col gap-3">
               {s.title && (
                 <header className="flex items-baseline justify-between gap-3 border-b border-border pb-2">
@@ -733,8 +752,12 @@ export function AdminGalleryPanel() {
 
               {density === "grid" ? (
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                  {s.items.flatMap((p) =>
-                    p.photoUrls.map((url, i) => (
+                  {s.items
+                    // Flattened first so each tile knows its position within the
+                    // section. `photoUrls.map` alone only gives the index inside
+                    // one submission, which says nothing about what is on screen.
+                    .flatMap((p) => p.photoUrls.map((url, i) => ({ p, url, i })))
+                    .map(({ p, url, i }, tileIndex) => (
                       <PhotoTile
                         key={`${p.id}-${i}`}
                         url={url}
@@ -749,9 +772,12 @@ export function AdminGalleryPanel() {
                         onDownload={() =>
                           void downloadOne({ url, n: i + 1, of: p.photoUrls.length, proof: p })
                         }
+                        // Only the opening rows of the first section: those are
+                        // what the admin sees before scrolling, so they load
+                        // eagerly while everything below waits its turn.
+                        priority={sectionIndex === 0 && tileIndex < EAGER_TILE_COUNT}
                       />
-                    )),
-                  )}
+                    ))}
                 </div>
               ) : (
                 <div className="flex flex-col gap-2">
@@ -816,19 +842,43 @@ function ProofImage({
   width,
   alt,
   className,
+  priority = false,
 }: {
   url: string
-  width: number
+  width: ThumbWidth
   alt: string
   className?: string
+  /**
+   * Set for tiles on the first screen. Those skip the near-viewport wait and ask
+   * the browser to fetch them ahead of everything else, so the images the admin
+   * is actually looking at are not queued behind rows they have not reached yet.
+   */
+  priority?: boolean
 }) {
   const hostRef = useRef<HTMLDivElement | null>(null)
-  const [inView, setInView] = useState(false)
+  // A priority tile is in view by definition, so it never waits on the observer.
+  const [inView, setInView] = useState(priority)
   const [state, setState] = useState<"loading" | "ok" | "error">("loading")
   /** Bumped to force a fresh request when the admin presses retry. */
   const [attempt, setAttempt] = useState(0)
-  /** After a thumbnail failure the original is tried once, unresized. */
-  const [useOriginal, setUseOriginal] = useState(false)
+
+  /**
+   * Which source is being tried, cheapest first:
+   *   "stored"   the thumbnail already sitting in Blob, served by the CDN. No
+   *              request to our server at all, measured ~50 ms.
+   *   "build"    the resize route, which creates that stored copy and redirects.
+   *              Reached only the first time a photo and width is needed.
+   *   "original" the untouched multi-megabyte photo, so a thumbnail problem can
+   *              never hide a picture that is perfectly fine.
+   */
+  const [stage, setStage] = useState<"stored" | "build" | "original">("stored")
+
+  // A different photo in the same tile (paging, filtering) has to start over,
+  // otherwise it inherits the previous photo's fallback stage and loaded state.
+  useEffect(() => {
+    setStage("stored")
+    setState("loading")
+  }, [url, width])
 
   useEffect(() => {
     const node = hostRef.current
@@ -845,7 +895,10 @@ function ProofImage({
     return () => io.disconnect()
   }, [inView])
 
-  const src = useOriginal ? url : thumbSrc(url, width)
+  const stored = proofThumbUrl(url, width)
+  // With no derivable stored URL (a photo outside our Blob store) the fast path
+  // does not apply, so start at the resize route instead of failing a stage.
+  const src = stage === "original" ? url : stage === "build" || !stored ? thumbSrc(url, width) : stored
 
   return (
     <div ref={hostRef} className={`relative size-full overflow-hidden bg-muted/40 ${className ?? ""}`}>
@@ -855,17 +908,20 @@ function ProofImage({
           key={`${src}-${attempt}`}
           src={src || "/placeholder.svg"}
           alt={alt}
-          loading="lazy"
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : "low"}
           decoding="async"
           className={`size-full object-cover transition-opacity duration-200 ${
             state === "ok" ? "opacity-100" : "opacity-0"
           }`}
           onLoad={() => setState("ok")}
           onError={() => {
-            if (!useOriginal) {
-              // The resize failed; the photo itself may still be there.
-              setUseOriginal(true)
-              setState("loading")
+            // Walk down the chain. A miss on "stored" is the normal case for a
+            // photo nobody has viewed yet, not an error worth showing.
+            if (stage === "stored" && stored) {
+              setStage("build")
+            } else if (stage !== "original") {
+              setStage("original")
             } else {
               setState("error")
             }
@@ -885,7 +941,9 @@ function ProofImage({
           type="button"
           onClick={(e) => {
             e.stopPropagation()
-            setUseOriginal(false)
+            // Back to the top of the chain: whatever was wrong may have been the
+            // resize rather than the photo.
+            setStage("stored")
             setState("loading")
             setAttempt((a) => a + 1)
           }}
@@ -1182,6 +1240,7 @@ function PhotoTile({
   onOpen,
   onToggle,
   onDownload,
+  priority = false,
 }: {
   url: string
   proof: AdminGalleryProof
@@ -1193,6 +1252,8 @@ function PhotoTile({
   onOpen: () => void
   onToggle: () => void
   onDownload: () => void
+  /** True for the first rows, so they load ahead of tiles further down. */
+  priority?: boolean
 }) {
   return (
     // A div, not a button: the tile now holds its own download button, and nesting
@@ -1225,6 +1286,7 @@ function PhotoTile({
         width={THUMB_GRID}
         alt={`Proof by ${proof.userName} for ${proof.country}`}
         className="transition-transform duration-300 group-hover:scale-105"
+        priority={priority}
       />
 
       {/* Identity is burned into the tile so the grid is scannable without

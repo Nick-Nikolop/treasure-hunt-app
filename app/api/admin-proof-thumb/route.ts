@@ -1,52 +1,40 @@
+import { put } from "@vercel/blob"
 import { type NextRequest, NextResponse } from "next/server"
 import sharp from "sharp"
 import { requireAdmin } from "@/lib/admin"
+import { isOwnBlobUrl, isThumbWidth, proofThumbKey, proofThumbUrl } from "@/lib/proof-thumb"
 
 /**
- * Thumbnails for the admin Gallery tab.
+ * Builds (and permanently stores) one thumbnail for the admin Gallery tab.
  *
- * WHY THIS EXISTS. The archive holds ~400 photo proofs and they are phone
- * originals: a single one measured 4.05 MB. The gallery used to point every grid
- * tile straight at the Blob original, so opening the tab asked the browser for
- * well over a gigabyte of JPEG to paint 150 px squares. A browser only opens a
- * handful of connections per host, so the rest queue behind those multi-megabyte
- * transfers and some simply time out - which is exactly the reported "it bugs
- * ugly and sometimes it won't even open the images".
+ * WHY THIS EXISTS. The archive holds ~400 phone originals averaging 2.75 MB, and
+ * the gallery used to point every grid tile at the original, so opening the tab
+ * asked the browser for roughly a gigabyte of JPEG to paint 228 px squares. A
+ * browser opens only a handful of connections per host, so the rest queued behind
+ * those transfers and some never arrived - the reported "it bugs ugly and
+ * sometimes it won't even open the images".
  *
- * `next/image` cannot help here: the project sets `images.unoptimized`, so it
- * would emit the original URL untouched. Rather than flip that globally (it
- * changes behaviour and cost for every image on the site) this route does the one
- * resize the gallery needs. The same 4.05 MB photo comes back as ~17 KB, a 99.6%
- * reduction, which is the difference between a stalling grid and an instant one.
+ * `next/image` cannot help: the project sets `images.unoptimized`, so it emits
+ * the original URL untouched. Flipping that globally would change behaviour and
+ * cost for every image on the site, so this route does the one resize the gallery
+ * needs. The same 4.05 MB photo comes back as ~16 KB.
+ *
+ * WHY IT REDIRECTS INSTEAD OF RETURNING PIXELS. Resizing on every request was
+ * still slow: measured ~405 ms per tile once six ran at once, and because nothing
+ * was persisted that whole bill came due again on every page load. Now the result
+ * is written back to Blob under a deterministic key and the caller is sent there.
+ * The second request for a photo never resizes anything, and the client can even
+ * skip this route entirely by addressing the stored copy directly - a warm
+ * thumbnail measured ~50 ms straight from the CDN.
  *
  * `.rotate()` is not cosmetic. Resizing drops the EXIF block, so without it a
  * portrait phone photo whose orientation lives only in EXIF would come back
  * lying on its side while the original displayed upright.
  */
 
-/** Only our own Blob storage may be fetched, so this cannot be used as an SSRF proxy. */
-const BLOB_HOST_FRAGMENT = ".public.blob.vercel-storage.com"
-
-/**
- * Widths are an allowlist rather than a free number: an attacker (or a careless
- * loop) could otherwise mint unlimited distinct cache entries and make us resize
- * the same photo forever. 160 serves the row strip, 480 the grid, 960 the
- * lightbox preview.
- */
-const ALLOWED_WIDTHS = new Set([160, 480, 960])
-
-function isOwnBlobUrl(raw: string): boolean {
-  try {
-    const u = new URL(raw)
-    return u.protocol === "https:" && u.hostname.endsWith(BLOB_HOST_FRAGMENT)
-  } catch {
-    return false
-  }
-}
-
 export async function GET(request: NextRequest): Promise<NextResponse> {
-  // Same gate as the rest of the admin surface. The proofs are people's photos,
-  // so this must not become an open resizing endpoint even though the underlying
+  // Same gate as the rest of the admin surface. These are people's photos, so
+  // this must not become an open resizing endpoint even though the underlying
   // Blob URLs are unguessable.
   try {
     await requireAdmin()
@@ -55,24 +43,38 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   const raw = request.nextUrl.searchParams.get("u")
-  const wParam = Number(request.nextUrl.searchParams.get("w") ?? 480)
-  const width = ALLOWED_WIDTHS.has(wParam) ? wParam : 480
+  const requested = Number(request.nextUrl.searchParams.get("w") ?? 480)
+  const width = isThumbWidth(requested) ? requested : 480
 
   if (!raw || !isOwnBlobUrl(raw)) {
     return new NextResponse("Bad request", { status: 400 })
   }
 
+  const key = proofThumbKey(raw, width)
+  const target = proofThumbUrl(raw, width)
+  if (!key || !target) {
+    return new NextResponse("Bad request", { status: 400 })
+  }
+
   try {
-    // `no-store` is DELIBERATE. `force-cache` sends these through the Next.js
-    // data cache, which refuses anything over 2MB, so every proof photo (2.5-5.6MB
+    // Cheap existence probe. The client normally addresses the stored copy itself
+    // and only falls back to this route when that 404s, but a second tab, a retry
+    // or the row strip asking for a width the grid already built all land here
+    // with the work already done - and re-downloading a 4 MB original to rebuild
+    // an identical 16 KB file would defeat the point.
+    const existing = await fetch(target, { method: "HEAD", cache: "no-store" })
+    if (existing.ok) {
+      return NextResponse.redirect(target, 302)
+    }
+
+    // `no-store` is DELIBERATE. `force-cache` sends this through the Next.js data
+    // cache, which refuses anything over 2 MB, so every proof photo (2.5-5.6 MB
     // here) logged a "Failed to set fetch cache" error on EVERY request while
-    // caching nothing at all. Caching happens on the response instead, via the
-    // long-lived immutable header below: the browser keeps the 17KB thumbnail, so
-    // the big original is fetched once per thumbnail rather than once per view.
+    // caching nothing at all. Persistence is handled by the `put` below instead.
     const upstream = await fetch(raw, { cache: "no-store" })
     if (!upstream.ok) {
-      // Surfaced as a status rather than a placeholder image so the client can
-      // tell "this photo is gone" from "the resize failed" and offer a retry.
+      // A status rather than a placeholder image, so the client can tell "this
+      // photo is gone" from "the resize failed" and offer a retry.
       return new NextResponse("Upstream unavailable", { status: 502 })
     }
 
@@ -83,15 +85,19 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       .jpeg({ quality: 72, mozjpeg: true })
       .toBuffer()
 
-    return new NextResponse(new Uint8Array(out), {
-      headers: {
-        "content-type": "image/jpeg",
-        // `private` because the response is admin-only: it must sit in the
-        // admin's own browser cache, never in a shared CDN. Immutable is safe
-        // since a Blob URL's contents never change once written.
-        "cache-control": "private, max-age=31536000, immutable",
-      },
+    // `addRandomSuffix: false` is what makes the URL predictable, and predictable
+    // is the whole point - it is how the browser reaches this file without asking
+    // us first. `allowOverwrite` keeps two tabs racing on the same cold thumbnail
+    // harmless: both produce identical bytes for the same key.
+    await put(key, out, {
+      access: "public",
+      addRandomSuffix: false,
+      allowOverwrite: true,
+      contentType: "image/jpeg",
+      cacheControlMaxAge: 31536000,
     })
+
+    return NextResponse.redirect(target, 302)
   } catch {
     return new NextResponse("Resize failed", { status: 500 })
   }
