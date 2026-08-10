@@ -63,7 +63,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    const upstream = await fetch(raw, { cache: "force-cache" })
+    // `no-store` is DELIBERATE. `force-cache` sends these through the Next.js
+    // data cache, which refuses anything over 2MB, so every proof photo (2.5-5.6MB
+    // here) logged a "Failed to set fetch cache" error on EVERY request while
+    // caching nothing at all. Caching happens on the response instead, via the
+    // long-lived immutable header below: the browser keeps the 17KB thumbnail, so
+    // the big original is fetched once per thumbnail rather than once per view.
+    const upstream = await fetch(raw, { cache: "no-store" })
     if (!upstream.ok) {
       // Surfaced as a status rather than a placeholder image so the client can
       // tell "this photo is gone" from "the resize failed" and offer a retry.

@@ -204,7 +204,17 @@ export function AdminGalleryPanel() {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [zipping, setZipping] = useState(false)
   const [downloadingOne, setDownloadingOne] = useState<string | null>(null)
-  const [downloadNote, setDownloadNote] = useState<string | null>(null)
+  /**
+   * One line of feedback under the download controls.
+   *
+   * Carries a tone because this slot reports both "that photo is gone" (a failure)
+   * and "your zip is being built" (progress); rendering the second one in the
+   * destructive red of the first would read as an error when nothing is wrong.
+   */
+  const [downloadNote, setDownloadNote] = useState<{
+    kind: "error" | "info"
+    text: string
+  } | null>(null)
 
   const load = useCallback(async () => {
     setLoadError(null)
@@ -361,7 +371,10 @@ export function AdminGalleryPanel() {
       // some browsers before they have read the blob.
       window.setTimeout(() => URL.revokeObjectURL(href), 60_000)
     } catch {
-      setDownloadNote("That photo could not be downloaded. It may no longer be in storage.")
+      setDownloadNote({
+        kind: "error",
+        text: "That photo could not be downloaded. It may no longer be in storage.",
+      })
     } finally {
       setDownloadingOne(null)
     }
@@ -380,7 +393,14 @@ export function AdminGalleryPanel() {
     if (chosen.length === 0) return
 
     setZipping(true)
-    setDownloadNote(null)
+    // Said up front because the server fetches the originals one at a time: a few
+    // hundred photos take well over a minute before the browser shows a save
+    // dialog, and without this the admin sees the button unlock with nothing
+    // apparently happening and clicks it again.
+    setDownloadNote({
+      kind: "info",
+      text: `Building a zip of ${chosen.length} photo${chosen.length === 1 ? "" : "s"}. Large selections take a minute or two — the download will start on its own, so there is no need to click again.`,
+    })
     const form = document.createElement("form")
     form.method = "POST"
     form.action = "/api/admin-proof-zip"
@@ -660,9 +680,14 @@ export function AdminGalleryPanel() {
         </div>
 
         {downloadNote && (
-          <p className="font-sans text-xs text-destructive" role="status">
-            {downloadNote}
-          </p>
+            <p
+              className={`font-sans text-xs ${
+                downloadNote.kind === "error" ? "text-destructive" : "text-muted-foreground"
+              }`}
+              role="status"
+            >
+              {downloadNote.text}
+            </p>
         )}
       </div>
 

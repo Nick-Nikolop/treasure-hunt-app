@@ -116,7 +116,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           const entry = new ZipPassThrough(safeEntryName(f.name, i))
           zip.add(entry)
           try {
-            const res = await fetch(f.url, { cache: "force-cache" })
+            // `no-store` is DELIBERATE: the Next.js data cache rejects anything
+            // over 2MB, so `force-cache` logged a "Failed to set fetch cache"
+            // error for every single photo while caching none of them. It also
+            // keeps memory flat, which is the whole point of streaming here.
+            const res = await fetch(f.url, { cache: "no-store" })
             if (!res.ok) throw new Error(String(res.status))
             entry.push(new Uint8Array(await res.arrayBuffer()), true)
           } catch {
