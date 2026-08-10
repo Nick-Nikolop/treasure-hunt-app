@@ -6,11 +6,23 @@
 //  Distinct from the Proofs tab on purpose. Proofs is a work queue - what needs
 //  deciding right now, plus the last 20 decisions - so it deliberately hides
 //  history. This tab is the opposite: every submission ever filed, never capped,
-//  with filtering and grouping to find any of it again. It is read-only; deciding
-//  and deleting stay in Proofs so there is exactly one place that mutates.
+//  with filtering and grouping to find any of it again. It never decides or
+//  deletes: those stay in Proofs so exactly one place mutates. It DOES download,
+//  which reads nothing but Blob storage.
+//
+//  PERFORMANCE IS THE WHOLE STORY HERE. The archive is ~400 phone originals of
+//  roughly 4 MB each. Pointing tiles at those originals asked the browser for well
+//  over a gigabyte to paint 150 px squares, which is what made this tab "bug ugly
+//  and sometimes not even open the images". Two rules keep it quick, and both must
+//  survive future edits:
+//
+//    1. A grid tile NEVER loads an original. It loads a resized copy from
+//       /api/admin-proof-thumb (~17 KB instead of 4 MB).
+//    2. An <img> is only created once it is close to the viewport, so scrolling
+//       pays for what it shows instead of firing 400 requests on mount.
 // ─────────────────────────────────────────────────────────────────────────
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import {
   Camera,
@@ -31,6 +43,12 @@ import {
   Navigation,
   LayoutGrid,
   Rows3,
+  Download,
+  CheckSquare,
+  Square,
+  RotateCw,
+  ImageOff,
+  FileArchive,
 } from "lucide-react"
 import { adminListProofGallery, type AdminGalleryProof } from "@/app/admin/actions"
 
@@ -122,11 +140,55 @@ const GROUP_TABS: { key: GroupBy; label: string }[] = [
   { key: "day", label: "Day" },
 ]
 
+/** Width presets the thumbnail route accepts. Anything else is coerced to 480 there. */
+const THUMB_GRID = 480
+const THUMB_ROW = 160
+const THUMB_LIGHTBOX = 960
+
+function thumbSrc(url: string, w: number): string {
+  return `/api/admin-proof-thumb?w=${w}&u=${encodeURIComponent(url)}`
+}
+
+/**
+ * Filenames for downloads.
+ *
+ * Deliberately reduced to ASCII. Explorer names here are usually Greek, and a zip
+ * entry with non-ASCII bytes is still mangled by some desktop unzippers, so the
+ * archive would arrive full of unreadable names. The English lead name and the
+ * Athens date keep each file identifiable without them.
+ */
+function asciiSlug(raw: string): string {
+  const stripped = raw
+    .normalize("NFD")
+    // Drop combining accents, so "Ορτίλοχος" and "Renée" both survive as letters.
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\w\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+  return stripped.length > 0 ? stripped : "explorer"
+}
+
+/** Keep whatever extension Blob stored, defaulting to jpg. */
+function extOf(url: string): string {
+  const m = /\.([a-z0-9]{3,4})(?:$|\?)/i.exec(url)
+  return m ? m[1].toLowerCase() : "jpg"
+}
+
+function fileNameFor(shot: Shot): string {
+  const who = asciiSlug(shot.proof.userName)
+  const where = asciiSlug(shot.proof.countryEn || shot.proof.country)
+  const when = dayKey(shot.proof.createdAt)
+  const which = shot.of > 1 ? `-${shot.n}` : ""
+  return `${who}-${where}-${when}${which}.${extOf(shot.url)}`
+}
+
 export function AdminGalleryPanel() {
   const [proofs, setProofs] = useState<AdminGalleryProof[]>([])
   const [teams, setTeams] = useState<{ id: string; name: string }[]>([])
   const [leads, setLeads] = useState<{ order: number; label: string }[]>([])
   const [loaded, setLoaded] = useState(false)
+  /** The archive query itself can fail; without this the tab sat on a spinner forever. */
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   const [search, setSearch] = useState("")
   const [status, setStatus] = useState<StatusFilter>("all")
@@ -137,12 +199,26 @@ export function AdminGalleryPanel() {
 
   const [lightbox, setLightbox] = useState<{ shots: Shot[]; index: number } | null>(null)
 
+  /** Selection is by URL: the archive has no duplicate photo URLs, so it is a safe key. */
+  const [selecting, setSelecting] = useState(false)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [zipping, setZipping] = useState(false)
+  const [downloadingOne, setDownloadingOne] = useState<string | null>(null)
+  const [downloadNote, setDownloadNote] = useState<string | null>(null)
+
   const load = useCallback(async () => {
-    const data = await adminListProofGallery()
-    setProofs(data.proofs)
-    setTeams(data.teams)
-    setLeads(data.leads)
-    setLoaded(true)
+    setLoadError(null)
+    try {
+      const data = await adminListProofGallery()
+      setProofs(data.proofs)
+      setTeams(data.teams)
+      setLeads(data.leads)
+    } catch {
+      setLoadError("The archive could not be loaded.")
+    } finally {
+      // Always flips, so a failure shows the retry instead of an endless spinner.
+      setLoaded(true)
+    }
   }, [])
 
   useEffect(() => {
@@ -172,15 +248,6 @@ export function AdminGalleryPanel() {
       )
     })
   }, [proofs, search, status, teamId, leadOrder])
-
-  /** Every surviving photo, flattened, in the same order the sections render. */
-  const shots = useMemo<Shot[]>(
-    () =>
-      filtered.flatMap((p) =>
-        p.photoUrls.map((url, i) => ({ url, n: i + 1, of: p.photoUrls.length, proof: p })),
-      ),
-    [filtered],
-  )
 
   /** The filtered archive split into titled sections. */
   const sections = useMemo(() => {
@@ -221,13 +288,118 @@ export function AdminGalleryPanel() {
     return out.sort((a, b) => a.title.localeCompare(b.title))
   }, [filtered, groupBy])
 
+  /**
+   * Every surviving photo, flattened IN SECTION ORDER.
+   *
+   * Derived from `sections` rather than `filtered` on purpose: while a grouping is
+   * active those two orders differ, so building the roll from `filtered` made the
+   * lightbox arrows jump somewhere other than the neighbouring tile on screen.
+   */
+  const shots = useMemo<Shot[]>(
+    () =>
+      sections.flatMap((s) =>
+        s.items.flatMap((p) =>
+          p.photoUrls.map((url, i) => ({ url, n: i + 1, of: p.photoUrls.length, proof: p })),
+        ),
+      ),
+    [sections],
+  )
+
+  /** O(1) url -> position in the roll, so opening a tile cannot mis-seek. */
+  const shotIndex = useMemo(() => {
+    const m = new Map<string, number>()
+    shots.forEach((s, i) => m.set(s.url, i))
+    return m
+  }, [shots])
+
   const openShot = useCallback(
     (url: string) => {
-      const i = shots.findIndex((s) => s.url === url)
-      setLightbox({ shots, index: i < 0 ? 0 : i })
+      setLightbox({ shots, index: shotIndex.get(url) ?? 0 })
     },
-    [shots],
+    [shots, shotIndex],
   )
+
+  const toggleOne = useCallback((url: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(url)) next.delete(url)
+      else next.add(url)
+      return next
+    })
+  }, [])
+
+  /** Selecting is only meaningful over what the filters currently show. */
+  const selectAllShown = useCallback(() => {
+    setSelected(new Set(shots.map((s) => s.url)))
+  }, [shots])
+
+  const clearSelection = useCallback(() => setSelected(new Set()), [])
+
+  /**
+   * One photo, straight to disk.
+   *
+   * The bytes are fetched and re-offered as an object URL because `<a download>` is
+   * IGNORED for cross-origin targets - Blob lives on another host, so linking
+   * directly would just navigate to the image instead of saving it. Blob answers
+   * with `access-control-allow-origin: *`, which is what makes the fetch legal.
+   */
+  const downloadOne = useCallback(async (shot: Shot) => {
+    setDownloadingOne(shot.url)
+    setDownloadNote(null)
+    try {
+      const res = await fetch(shot.url)
+      if (!res.ok) throw new Error(String(res.status))
+      const blob = await res.blob()
+      const href = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = href
+      a.download = fileNameFor(shot)
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      // Revoked on a delay: dropping it in the same tick cancels the save in
+      // some browsers before they have read the blob.
+      window.setTimeout(() => URL.revokeObjectURL(href), 60_000)
+    } catch {
+      setDownloadNote("That photo could not be downloaded. It may no longer be in storage.")
+    } finally {
+      setDownloadingOne(null)
+    }
+  }, [])
+
+  /**
+   * The selection as one zip, built by /api/admin-proof-zip.
+   *
+   * Submitted as a real form into a hidden iframe rather than fetched, so the
+   * browser streams the archive to disk instead of holding all of it in memory,
+   * and a server-side failure renders in the invisible frame instead of replacing
+   * this page.
+   */
+  const downloadSelected = useCallback(() => {
+    const chosen = shots.filter((s) => selected.has(s.url))
+    if (chosen.length === 0) return
+
+    setZipping(true)
+    setDownloadNote(null)
+    const form = document.createElement("form")
+    form.method = "POST"
+    form.action = "/api/admin-proof-zip"
+    form.target = "proof-zip-sink"
+    const input = document.createElement("input")
+    input.type = "hidden"
+    input.name = "files"
+    input.value = JSON.stringify(
+      chosen.map((s) => ({ url: s.url, name: fileNameFor(s) })),
+    )
+    form.appendChild(input)
+    document.body.appendChild(form)
+    form.submit()
+    form.remove()
+
+    // There is no completion event for an iframe download, so the button unlocks
+    // on a timer and says so, rather than pretending to track progress.
+    window.setTimeout(() => setZipping(false), 4000)
+  }, [shots, selected])
 
   // Arrow keys page the lightbox; Escape closes it. Bound while it is open only.
   useEffect(() => {
@@ -267,8 +439,31 @@ export function AdminGalleryPanel() {
     )
   }
 
+  if (loadError) {
+    return (
+      <div className="flex flex-col items-center gap-3 rounded-sm border border-dashed border-border py-16 text-center">
+        <ImageOff className="size-6 text-muted-foreground" />
+        <p className="font-sans text-sm text-muted-foreground">{loadError}</p>
+        <button
+          type="button"
+          onClick={() => void load()}
+          className="inline-flex items-center gap-1.5 rounded-sm border border-brass/40 bg-brass/10 px-3 py-1.5 font-sans text-xs font-bold tracking-chip text-brass transition-colors hover:border-brass"
+        >
+          <RotateCw className="size-3.5" />
+          Try again
+        </button>
+      </div>
+    )
+  }
+
+  const selectedCount = selected.size
+
   return (
     <div className="flex flex-col gap-4">
+      {/* Where the streamed zip lands. Kept mounted so a download in flight is
+          never interrupted by a re-render. */}
+      <iframe name="proof-zip-sink" title="Download target" className="hidden" />
+
       {/* Totals. Photo count is what the eye is looking for here, not row count. */}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <Stat icon={Images} label="Photos" value={shots.length} />
@@ -396,6 +591,79 @@ export function AdminGalleryPanel() {
             </div>
           </div>
         </div>
+
+        {/* Selection bar. Its own row so the controls above never reflow when the
+            counts appear. */}
+        <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
+          <button
+            type="button"
+            onClick={() => {
+              setSelecting((s) => !s)
+              // Leaving select mode drops the selection, so a stale set cannot be
+              // downloaded later by surprise.
+              if (selecting) clearSelection()
+            }}
+            aria-pressed={selecting}
+            className={`inline-flex items-center gap-1.5 rounded-sm border px-2.5 py-1.5 font-sans text-xs font-bold tracking-chip transition-colors ${
+              selecting
+                ? "border-brass bg-brass text-background"
+                : "border-border text-muted-foreground hover:border-brass hover:text-brass"
+            }`}
+          >
+            {selecting ? <CheckSquare className="size-3.5" /> : <Square className="size-3.5" />}
+            {selecting ? "Selecting" : "Select"}
+          </button>
+
+          {selecting && (
+            <>
+              <span className="font-sans text-xs tracking-chip text-muted-foreground tabular-nums">
+                {selectedCount} of {shots.length} selected
+              </span>
+              <button
+                type="button"
+                onClick={selectAllShown}
+                disabled={shots.length === 0 || selectedCount === shots.length}
+                className="rounded-sm border border-border px-2.5 py-1.5 font-sans text-xs font-bold tracking-chip text-muted-foreground transition-colors hover:border-brass hover:text-brass disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Select all shown
+              </button>
+              <button
+                type="button"
+                onClick={clearSelection}
+                disabled={selectedCount === 0}
+                className="rounded-sm border border-border px-2.5 py-1.5 font-sans text-xs font-bold tracking-chip text-muted-foreground transition-colors hover:border-brass hover:text-brass disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Clear
+              </button>
+              <button
+                type="button"
+                onClick={downloadSelected}
+                disabled={selectedCount === 0 || zipping}
+                className="inline-flex items-center gap-1.5 rounded-sm border border-brass/40 bg-brass/10 px-3 py-1.5 font-sans text-xs font-bold tracking-chip text-brass transition-colors hover:border-brass disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {zipping ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <FileArchive className="size-3.5" />
+                )}
+                {zipping ? "Preparing zip…" : `Download ${selectedCount || ""} as zip`}
+              </button>
+            </>
+          )}
+
+          {!selecting && (
+            <span className="font-sans text-xs text-muted-foreground">
+              Turn on Select to pick photos and download them together. Every tile can also be
+              downloaded on its own.
+            </span>
+          )}
+        </div>
+
+        {downloadNote && (
+          <p className="font-sans text-xs text-destructive" role="status">
+            {downloadNote}
+          </p>
+        )}
       </div>
 
       {/* Archive */}
@@ -448,7 +716,14 @@ export function AdminGalleryPanel() {
                         proof={p}
                         n={i + 1}
                         of={p.photoUrls.length}
+                        selecting={selecting}
+                        isSelected={selected.has(url)}
+                        busy={downloadingOne === url}
                         onOpen={() => openShot(url)}
+                        onToggle={() => toggleOne(url)}
+                        onDownload={() =>
+                          void downloadOne({ url, n: i + 1, of: p.photoUrls.length, proof: p })
+                        }
                       />
                     )),
                   )}
@@ -456,7 +731,16 @@ export function AdminGalleryPanel() {
               ) : (
                 <div className="flex flex-col gap-2">
                   {s.items.map((p) => (
-                    <ProofRowCard key={p.id} proof={p} onOpen={openShot} />
+                    <ProofRowCard
+                      key={p.id}
+                      proof={p}
+                      selecting={selecting}
+                      selected={selected}
+                      busyUrl={downloadingOne}
+                      onOpen={openShot}
+                      onToggle={toggleOne}
+                      onDownload={downloadOne}
+                    />
                   ))}
                 </div>
               )}
@@ -469,109 +753,311 @@ export function AdminGalleryPanel() {
           so arrowing through the archive works like a photo roll. */}
       <AnimatePresence>
         {lightbox && lightbox.shots[lightbox.index] && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[80] flex items-center justify-center p-4"
-          >
-            <button
-              type="button"
-              aria-label="Close"
-              onClick={() => setLightbox(null)}
-              className="absolute inset-0 cursor-default bg-background/95 backdrop-blur-sm"
-            />
-            <div className="relative z-10 flex max-h-full w-full max-w-4xl flex-col items-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={lightbox.shots[lightbox.index].url || "/placeholder.svg"}
-                alt={`Proof by ${lightbox.shots[lightbox.index].proof.userName}`}
-                className="max-h-[72vh] w-auto rounded-sm border border-border object-contain"
-              />
-
-              <div className="mt-4 w-full max-w-2xl rounded-sm border border-border bg-card p-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="truncate font-serif text-sm font-black text-foreground">
-                      {lightbox.shots[lightbox.index].proof.userName}
-                    </p>
-                    <p className="truncate font-sans text-xs text-muted-foreground">
-                      {lightbox.shots[lightbox.index].proof.email}
-                    </p>
-                  </div>
-                  <StatusChip status={lightbox.shots[lightbox.index].proof.status} />
-                </div>
-                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-sans text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-1">
-                    <Users className="size-3.5" />
-                    {lightbox.shots[lightbox.index].proof.teamName ?? "Solo"}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <MapPin className="size-3.5" />
-                    {lightbox.shots[lightbox.index].proof.country}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <Clock className="size-3.5" />
-                    {fullStamp(lightbox.shots[lightbox.index].proof.createdAt)}
-                  </span>
-                  <ContextChip context={lightbox.shots[lightbox.index].proof.context} />
-                </div>
-                {lightbox.shots[lightbox.index].proof.note && (
-                  <p className="mt-2 border-t border-border pt-2 font-sans text-xs leading-relaxed text-foreground">
-                    {lightbox.shots[lightbox.index].proof.note}
-                  </p>
-                )}
-                {lightbox.shots[lightbox.index].proof.reason && (
-                  <p className="mt-2 border-t border-border pt-2 font-sans text-xs leading-relaxed text-destructive">
-                    Rejected: {lightbox.shots[lightbox.index].proof.reason}
-                  </p>
-                )}
-              </div>
-
-              <div className="mt-4 flex items-center gap-4">
-                <button
-                  type="button"
-                  aria-label="Previous"
-                  onClick={() =>
-                    setLightbox((lb) =>
-                      lb
-                        ? { ...lb, index: (lb.index - 1 + lb.shots.length) % lb.shots.length }
-                        : lb,
-                    )
-                  }
-                  className="flex size-10 items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors hover:border-brass hover:text-brass"
-                >
-                  <ChevronLeft className="size-5" />
-                </button>
-                <span className="font-sans text-xs tracking-chip text-muted-foreground">
-                  {lightbox.index + 1} / {lightbox.shots.length}
-                </span>
-                <button
-                  type="button"
-                  aria-label="Next"
-                  onClick={() =>
-                    setLightbox((lb) =>
-                      lb ? { ...lb, index: (lb.index + 1) % lb.shots.length } : lb,
-                    )
-                  }
-                  className="flex size-10 items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors hover:border-brass hover:text-brass"
-                >
-                  <ChevronRight className="size-5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLightbox(null)}
-                  className="ml-2 flex size-10 items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors hover:border-brass hover:text-brass"
-                  aria-label="Close"
-                >
-                  <X className="size-5" />
-                </button>
-              </div>
-            </div>
-          </motion.div>
+          <Lightbox
+            shot={lightbox.shots[lightbox.index]}
+            index={lightbox.index}
+            total={lightbox.shots.length}
+            busy={downloadingOne === lightbox.shots[lightbox.index].url}
+            onDownload={() => void downloadOne(lightbox.shots[lightbox.index])}
+            onClose={() => setLightbox(null)}
+            onPrev={() =>
+              setLightbox((lb) =>
+                lb ? { ...lb, index: (lb.index - 1 + lb.shots.length) % lb.shots.length } : lb,
+              )
+            }
+            onNext={() =>
+              setLightbox((lb) => (lb ? { ...lb, index: (lb.index + 1) % lb.shots.length } : lb))
+            }
+          />
         )}
       </AnimatePresence>
     </div>
+  )
+}
+
+/**
+ * An archive photo that loads politely.
+ *
+ * Three things this fixes, all of which the tab used to get wrong:
+ *   - it waits until it is near the viewport before requesting anything, so
+ *     opening the tab no longer fires hundreds of requests at once;
+ *   - it shows a skeleton while loading instead of an empty frame, which is what
+ *     made a slow photo look like a broken one;
+ *   - if the resize fails it retries the ORIGINAL once before giving up, so a
+ *     thumbnail problem can never hide a photo that is perfectly fine.
+ */
+function ProofImage({
+  url,
+  width,
+  alt,
+  className,
+}: {
+  url: string
+  width: number
+  alt: string
+  className?: string
+}) {
+  const hostRef = useRef<HTMLDivElement | null>(null)
+  const [inView, setInView] = useState(false)
+  const [state, setState] = useState<"loading" | "ok" | "error">("loading")
+  /** Bumped to force a fresh request when the admin presses retry. */
+  const [attempt, setAttempt] = useState(0)
+  /** After a thumbnail failure the original is tried once, unresized. */
+  const [useOriginal, setUseOriginal] = useState(false)
+
+  useEffect(() => {
+    const node = hostRef.current
+    if (!node || inView) return
+    // A generous margin so images are ready by the time they scroll in, without
+    // reaching so far that the whole archive counts as visible.
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) setInView(true)
+      },
+      { rootMargin: "300px" },
+    )
+    io.observe(node)
+    return () => io.disconnect()
+  }, [inView])
+
+  const src = useOriginal ? url : thumbSrc(url, width)
+
+  return (
+    <div ref={hostRef} className={`relative size-full overflow-hidden bg-muted/40 ${className ?? ""}`}>
+      {inView && state !== "error" && (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img
+          key={`${src}-${attempt}`}
+          src={src || "/placeholder.svg"}
+          alt={alt}
+          loading="lazy"
+          decoding="async"
+          className={`size-full object-cover transition-opacity duration-200 ${
+            state === "ok" ? "opacity-100" : "opacity-0"
+          }`}
+          onLoad={() => setState("ok")}
+          onError={() => {
+            if (!useOriginal) {
+              // The resize failed; the photo itself may still be there.
+              setUseOriginal(true)
+              setState("loading")
+            } else {
+              setState("error")
+            }
+          }}
+        />
+      )}
+
+      {state === "loading" && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="size-full animate-pulse bg-muted/60" />
+          <Loader2 className="absolute size-4 animate-spin text-muted-foreground/60" />
+        </div>
+      )}
+
+      {state === "error" && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            setUseOriginal(false)
+            setState("loading")
+            setAttempt((a) => a + 1)
+          }}
+          className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-muted-foreground transition-colors hover:text-brass"
+          title="This photo did not load. Click to try again."
+        >
+          <ImageOff className="size-4" />
+          <span className="font-sans text-[10px] font-bold tracking-chip">RETRY</span>
+        </button>
+      )}
+    </div>
+  )
+}
+
+/** The full-size view, with its own loading and error handling. */
+function Lightbox({
+  shot,
+  index,
+  total,
+  busy,
+  onDownload,
+  onClose,
+  onPrev,
+  onNext,
+}: {
+  shot: Shot
+  index: number
+  total: number
+  busy: boolean
+  onDownload: () => void
+  onClose: () => void
+  onPrev: () => void
+  onNext: () => void
+}) {
+  const [state, setState] = useState<"loading" | "ok" | "error">("loading")
+  const [attempt, setAttempt] = useState(0)
+
+  // Every new photo starts out loading again, otherwise the previous one's "ok"
+  // would claim the next original had already arrived.
+  useEffect(() => {
+    setState("loading")
+    setAttempt(0)
+  }, [shot.url])
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[80] flex items-center justify-center p-4"
+    >
+      <button
+        type="button"
+        aria-label="Close"
+        onClick={onClose}
+        className="absolute inset-0 cursor-default bg-background/95 backdrop-blur-sm"
+      />
+      <div className="relative z-10 flex max-h-full w-full max-w-4xl flex-col items-center overflow-y-auto">
+        <div className="relative flex min-h-[40vh] w-full items-center justify-center">
+          {/* The already-cached thumbnail sits underneath so the frame is filled the
+              instant it opens. The multi-megabyte original then fades in over it -
+              previously this space stayed blank while it downloaded, which read as
+              "the image will not open". */}
+          {state !== "ok" && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={thumbSrc(shot.url, THUMB_LIGHTBOX) || "/placeholder.svg"}
+              alt=""
+              aria-hidden="true"
+              className="max-h-[72vh] w-auto rounded-sm border border-border object-contain opacity-60 blur-[1px]"
+            />
+          )}
+
+          {state !== "error" && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              key={`${shot.url}-${attempt}`}
+              src={shot.url || "/placeholder.svg"}
+              alt={`Proof by ${shot.proof.userName}`}
+              decoding="async"
+              className={`max-h-[72vh] w-auto rounded-sm border border-border object-contain ${
+                state === "ok" ? "" : "absolute inset-0 m-auto opacity-0"
+              }`}
+              onLoad={() => setState("ok")}
+              onError={() => setState("error")}
+            />
+          )}
+
+          {state === "loading" && (
+            <span className="absolute bottom-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-sm bg-background/90 px-2.5 py-1 font-sans text-[10px] font-bold tracking-chip text-muted-foreground">
+              <Loader2 className="size-3 animate-spin" />
+              LOADING FULL SIZE
+            </span>
+          )}
+
+          {state === "error" && (
+            <div className="flex flex-col items-center gap-2 rounded-sm border border-dashed border-border p-8 text-center">
+              <ImageOff className="size-6 text-muted-foreground" />
+              <p className="font-sans text-sm text-muted-foreground">
+                This photo could not be opened.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setState("loading")
+                  setAttempt((a) => a + 1)
+                }}
+                className="inline-flex items-center gap-1.5 rounded-sm border border-brass/40 bg-brass/10 px-3 py-1.5 font-sans text-xs font-bold tracking-chip text-brass transition-colors hover:border-brass"
+              >
+                <RotateCw className="size-3.5" />
+                Try again
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-4 w-full max-w-2xl rounded-sm border border-border bg-card p-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="min-w-0">
+              <p className="truncate font-serif text-sm font-black text-foreground">
+                {shot.proof.userName}
+              </p>
+              <p className="truncate font-sans text-xs text-muted-foreground">{shot.proof.email}</p>
+            </div>
+            <StatusChip status={shot.proof.status} />
+          </div>
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-sans text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1">
+              <Users className="size-3.5" />
+              {shot.proof.teamName ?? "Solo"}
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <MapPin className="size-3.5" />
+              {shot.proof.country}
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <Clock className="size-3.5" />
+              {fullStamp(shot.proof.createdAt)}
+            </span>
+            <ContextChip context={shot.proof.context} />
+          </div>
+          {shot.proof.note && (
+            <p className="mt-2 border-t border-border pt-2 font-sans text-xs leading-relaxed text-foreground">
+              {shot.proof.note}
+            </p>
+          )}
+          {shot.proof.reason && (
+            <p className="mt-2 border-t border-border pt-2 font-sans text-xs leading-relaxed text-destructive">
+              Rejected: {shot.proof.reason}
+            </p>
+          )}
+        </div>
+
+        <div className="mt-4 flex items-center gap-3">
+          <button
+            type="button"
+            aria-label="Previous"
+            onClick={onPrev}
+            className="flex size-10 items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors hover:border-brass hover:text-brass"
+          >
+            <ChevronLeft className="size-5" />
+          </button>
+          <span className="font-sans text-xs tracking-chip text-muted-foreground tabular-nums">
+            {index + 1} / {total}
+          </span>
+          <button
+            type="button"
+            aria-label="Next"
+            onClick={onNext}
+            className="flex size-10 items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors hover:border-brass hover:text-brass"
+          >
+            <ChevronRight className="size-5" />
+          </button>
+          <button
+            type="button"
+            onClick={onDownload}
+            disabled={busy}
+            className="inline-flex items-center gap-1.5 rounded-sm border border-brass/40 bg-brass/10 px-3 py-2 font-sans text-xs font-bold tracking-chip text-brass transition-colors hover:border-brass disabled:opacity-50"
+          >
+            {busy ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Download className="size-3.5" />
+            )}
+            {busy ? "Saving…" : "Download"}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex size-10 items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors hover:border-brass hover:text-brass"
+            aria-label="Close"
+          >
+            <X className="size-5" />
+          </button>
+        </div>
+      </div>
+    </motion.div>
   )
 }
 
@@ -665,36 +1151,60 @@ function PhotoTile({
   proof,
   n,
   of,
+  selecting,
+  isSelected,
+  busy,
   onOpen,
+  onToggle,
+  onDownload,
 }: {
   url: string
   proof: AdminGalleryProof
   n: number
   of: number
+  selecting: boolean
+  isSelected: boolean
+  busy: boolean
   onOpen: () => void
+  onToggle: () => void
+  onDownload: () => void
 }) {
   return (
-    <button
-      type="button"
-      onClick={onOpen}
+    // A div, not a button: the tile now holds its own download button, and nesting
+    // a button inside a button is invalid HTML and breaks click handling.
+    <div
+      role="button"
+      tabIndex={0}
+      // In select mode the whole tile toggles, which is what makes picking a run of
+      // photos quick; otherwise it opens.
+      onClick={selecting ? onToggle : onOpen}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault()
+          if (selecting) onToggle()
+          else onOpen()
+        }
+      }}
       // Grid tiles are thumbnails with no room for a full stamp, so the exact
       // Athens times ride along as a tooltip; the rows density and the lightbox
       // both show them outright.
       title={`${proof.userName} · ${proof.country}\nSent ${fullStamp(proof.createdAt)}${
         proof.decidedAt ? `\nReviewed ${fullStamp(proof.decidedAt)}` : ""
       }`}
-      className="group relative aspect-square overflow-hidden rounded-sm border border-border bg-background transition-colors hover:border-brass"
+      className={`group relative aspect-square cursor-pointer overflow-hidden rounded-sm border bg-background transition-colors ${
+        isSelected ? "border-brass ring-2 ring-brass/50" : "border-border hover:border-brass"
+      }`}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={url || "/placeholder.svg"}
+      <ProofImage
+        url={url}
+        width={THUMB_GRID}
         alt={`Proof by ${proof.userName} for ${proof.country}`}
-        loading="lazy"
-        className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
+        className="transition-transform duration-300 group-hover:scale-105"
       />
+
       {/* Identity is burned into the tile so the grid is scannable without
           opening anything, which is the whole point of the grid density. */}
-      <span className="absolute inset-x-0 bottom-0 flex flex-col gap-0.5 bg-gradient-to-t from-background/95 to-transparent p-2 text-left">
+      <span className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col gap-0.5 bg-gradient-to-t from-background/95 to-transparent p-2 text-left">
         <span className="truncate font-sans text-[11px] font-bold text-foreground">
           {proof.userName}
         </span>
@@ -702,7 +1212,8 @@ function PhotoTile({
           {proof.teamName ?? "Solo"} · {proof.country}
         </span>
       </span>
-      <span className="absolute right-1.5 top-1.5 flex items-center gap-1">
+
+      <span className="pointer-events-none absolute right-1.5 top-1.5 flex items-center gap-1">
         {of > 1 && (
           <span className="rounded-sm bg-background/85 px-1.5 py-0.5 font-sans text-[10px] font-black tabular-nums text-muted-foreground">
             {n}/{of}
@@ -710,7 +1221,44 @@ function PhotoTile({
         )}
         <StatusDot status={proof.status} />
       </span>
-    </button>
+
+      {/* Selection marker. Always visible in select mode so it is obvious which
+          tiles are picked without hovering each one. */}
+      {selecting && (
+        <span
+          className={`pointer-events-none absolute left-1.5 top-1.5 flex size-6 items-center justify-center rounded-sm border ${
+            isSelected
+              ? "border-brass bg-brass text-background"
+              : "border-border bg-background/85 text-muted-foreground"
+          }`}
+        >
+          {isSelected ? <CheckSquare className="size-4" /> : <Square className="size-4" />}
+        </span>
+      )}
+
+      {/* Per-photo download. Hidden while selecting so it cannot be hit by accident
+          when the tile's job is to toggle. */}
+      {!selecting && (
+        <button
+          type="button"
+          onClick={(e) => {
+            // Without this the tile's own click would open the lightbox too.
+            e.stopPropagation()
+            onDownload()
+          }}
+          disabled={busy}
+          aria-label={`Download photo by ${proof.userName}`}
+          title="Download this photo"
+          className="absolute left-1.5 top-1.5 flex size-7 items-center justify-center rounded-sm border border-border bg-background/90 text-muted-foreground opacity-0 transition-all hover:border-brass hover:text-brass focus-visible:opacity-100 group-hover:opacity-100 disabled:opacity-100"
+        >
+          {busy ? (
+            <Loader2 className="size-3.5 animate-spin" />
+          ) : (
+            <Download className="size-3.5" />
+          )}
+        </button>
+      )}
+    </div>
   )
 }
 
@@ -727,30 +1275,81 @@ function StatusDot({ status }: { status: string }) {
 
 function ProofRowCard({
   proof,
+  selecting,
+  selected,
+  busyUrl,
   onOpen,
+  onToggle,
+  onDownload,
 }: {
   proof: AdminGalleryProof
+  selecting: boolean
+  selected: Set<string>
+  busyUrl: string | null
   onOpen: (url: string) => void
+  onToggle: (url: string) => void
+  onDownload: (shot: Shot) => void
 }) {
   return (
     <article className="flex flex-col gap-3 rounded-sm border border-border bg-card p-3 sm:flex-row">
-      <div className="flex shrink-0 gap-2">
-        {proof.photoUrls.map((url, i) => (
-          <button
-            key={i}
-            type="button"
-            onClick={() => onOpen(url)}
-            className="size-20 overflow-hidden rounded-sm border border-border transition-colors hover:border-brass"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={url || "/placeholder.svg"}
-              alt={`Proof ${i + 1} by ${proof.userName}`}
-              loading="lazy"
-              className="size-full object-cover"
-            />
-          </button>
-        ))}
+      <div className="flex shrink-0 flex-wrap gap-2">
+        {proof.photoUrls.map((url, i) => {
+          const isSelected = selected.has(url)
+          return (
+            <div key={i} className="flex flex-col items-center gap-1">
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => (selecting ? onToggle(url) : onOpen(url))}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault()
+                    if (selecting) onToggle(url)
+                    else onOpen(url)
+                  }
+                }}
+                className={`relative size-20 cursor-pointer overflow-hidden rounded-sm border transition-colors ${
+                  isSelected ? "border-brass ring-2 ring-brass/50" : "border-border hover:border-brass"
+                }`}
+              >
+                <ProofImage
+                  url={url}
+                  width={THUMB_ROW}
+                  alt={`Proof ${i + 1} by ${proof.userName}`}
+                />
+                {selecting && (
+                  <span
+                    className={`pointer-events-none absolute left-1 top-1 flex size-5 items-center justify-center rounded-sm border ${
+                      isSelected
+                        ? "border-brass bg-brass text-background"
+                        : "border-border bg-background/85 text-muted-foreground"
+                    }`}
+                  >
+                    {isSelected ? <CheckSquare className="size-3" /> : <Square className="size-3" />}
+                  </span>
+                )}
+              </div>
+              {!selecting && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    onDownload({ url, n: i + 1, of: proof.photoUrls.length, proof })
+                  }
+                  disabled={busyUrl === url}
+                  className="inline-flex items-center gap-1 font-sans text-[10px] font-bold tracking-chip text-muted-foreground transition-colors hover:text-brass disabled:opacity-50"
+                  title="Download this photo"
+                >
+                  {busyUrl === url ? (
+                    <Loader2 className="size-3 animate-spin" />
+                  ) : (
+                    <Download className="size-3" />
+                  )}
+                  SAVE
+                </button>
+              )}
+            </div>
+          )
+        })}
       </div>
 
       <div className="min-w-0 flex-1">
