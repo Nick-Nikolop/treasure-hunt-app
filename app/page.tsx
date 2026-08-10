@@ -25,6 +25,7 @@ import { DEFAULT_LOCALE, isLocale, LANG_COOKIE, getDictionary } from "@/lib/i18n
 import { homeJsonLd } from "@/lib/seo"
 import { HowToPlayPreviewButton } from "@/components/pythea/how-to-play-modal"
 import { getFinaleConfig } from "@/lib/finale"
+import { redirect } from "next/navigation"
 
 // Recompute against the live clock on each request (for the countdown state).
 export const dynamic = "force-dynamic"
@@ -38,6 +39,16 @@ export default async function Page({
   // superadmins. Resolve this first so we can short-circuit before doing the
   // rest of the home-page work.
   const phaseCtx = await getPhaseContext()
+
+  // The landing page (hero, story, prize pool, FAQ, etc.) is now superadmin-only.
+  // Everyone else — signed out or a regular player — lands on the leaderboard
+  // instead, which is the page they actually want and is already public with no
+  // role gate of its own. This runs before the teaser/hunt-closed branches below
+  // so it applies unconditionally, at every phase.
+  if (!phaseCtx.isSuperadmin) {
+    redirect("/standings")
+  }
+
   if (phaseCtx.siteLocked) {
     return <TeaserLanding targetMs={phaseCtx.settings.phase2UnlockMs} />
   }
