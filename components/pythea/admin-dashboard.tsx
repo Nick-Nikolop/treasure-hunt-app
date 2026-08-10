@@ -483,10 +483,10 @@ export function AdminDashboard({
           </TabButton>
           {/* Not a tab: the closing-ceremony standings live on their own page,
               OUTSIDE /admin, so they can be projected full-screen without the
-              admin chrome or an admin-looking URL. It is still superadmin-gated by
-              its own guard. Styled to match the tabs so it reads as part of the
-              same bar. This stays the only way in, since the page is unlinked
-              from every public surface. */}
+              admin chrome or an admin-looking URL. Styled to match the tabs so it
+              reads as part of the same bar. This is a convenience shortcut, no
+              longer a private door: /standings is public now that the hunt has
+              closed, so treat that board as readable by anyone. */}
           <Link
             href="/standings"
             // Opened in a new tab so the ceremony screen can be projected while

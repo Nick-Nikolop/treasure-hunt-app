@@ -12,7 +12,10 @@ export default function robots(): MetadataRoute.Robots {
         disallow: [
           "/admin",
           // Needs its own entry: the closing-ceremony board sits at /standings,
-          // outside /admin, so the rule above no longer covers it.
+          // outside /admin, so the rule above no longer covers it. That board is
+          // PUBLIC now (no login) yet stays listed here on purpose, because it
+          // names individual players: open to anyone with the link, but not
+          // crawled into search results.
           "/standings",
           "/journal",
           "/leaderboard",

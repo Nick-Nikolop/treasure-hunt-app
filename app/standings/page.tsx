@@ -1,6 +1,4 @@
 import type { Metadata } from "next"
-import { redirect } from "next/navigation"
-import { getAdminUser } from "@/lib/admin"
 import { getFinalStandings, toStandingsBoard } from "@/lib/standings"
 import { Atmosphere } from "@/components/pythea/atmosphere"
 import { AdminStandingsView } from "@/components/pythea/admin-standings-view"
@@ -14,23 +12,23 @@ export const metadata: Metadata = {
 }
 
 /**
- * Lives at /standings rather than under /admin so the closing ceremony can be
- * opened without the URL announcing itself as an admin screen.
+ * THIS PAGE IS DELIBERATELY PUBLIC. The hunt is over, so the final board is open
+ * to everyone: no session, no superadmin check, no redirect. It used to be gated
+ * by `getAdminUser()`, and since there is no middleware and no admin layout in
+ * this app that guard was the entire protection, so removing it is the whole
+ * change.
  *
- * THE PATH GRANTS NOTHING. There is no middleware and no admin layout in this
- * app, so `getAdminUser()` below was always the entire protection, both here and
- * under /admin. Moving the file therefore removed no layer, but it does mean the
- * guard can never be inferred from the location: delete it and the board becomes
- * public. `/standings` is also added to robots.ts, since it no longer falls under
- * the `/admin` disallow rule.
+ * What still protects the data is `toStandingsBoard()` below, NOT the route: it
+ * narrows the full standings down to the board's own shape before anything is
+ * serialised. Keep that call. `getFinalStandings()` carries every explorer's
+ * display name and full rosters, and handing it straight to the client component
+ * would ship all of it into the page payload even though nothing renders it.
+ *
+ * Kept out of search engines on purpose (noindex here, plus a /standings entry in
+ * robots.ts): the board names individual players, so it is open to anyone with the
+ * link without also being crawled into search results.
  */
 export default async function StandingsPage() {
-  // No session, or a plain user, gets bounced to the landing page.
-  // getAdminUser() returns null for anyone who is not a superadmin, so there is
-  // no separate "simple user" branch to get wrong.
-  const admin = await getAdminUser()
-  if (!admin) redirect("/")
-
   // Narrowed before it crosses into the client component: the full standings
   // carry every explorer's display name, and this board must not ship rosters.
   const data = toStandingsBoard(await getFinalStandings())

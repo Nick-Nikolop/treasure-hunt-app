@@ -20,8 +20,14 @@ import {
 import type { StandingRow, StandingsBoard } from "@/lib/standings"
 
 /**
- * The closing-ceremony standings board. Superadmin-only, rendered on its own
- * page so it can be projected full-screen without the admin chrome around it.
+ * The closing-ceremony standings board, rendered on its own page so it can be
+ * projected full-screen without the admin chrome around it.
+ *
+ * PUBLIC as of the hunt closing: /standings has no session guard any more, so
+ * assume anyone can read whatever this renders. The file name is historical (it
+ * was superadmin-only), and the `data` prop is already narrowed by
+ * `toStandingsBoard()`, so nothing here should reach for rosters or contact
+ * details that the board does not display.
  *
  * Ranking is still decided server-side in lib/standings.ts (stage, then progress,
  * then who got there first), but arrival TIMES are deliberately never shown: the
@@ -775,7 +781,7 @@ export function AdminStandingsView({ data }: { data: StandingsBoard }) {
             Το ταξίδι του Πυθέα
           </h1>
           <p className="mx-auto mt-2 max-w-[52ch] text-pretty font-serif text-sm leading-relaxed text-muted-foreground">
-            Η κατάταξη κάθε ομάδας και εξερευνητή που έλυσε τουλάχιστον ένα στοιχείο, παγωμένη όπως
+            Η κατάταξη κάθε ομάδας και εξερευνητή που έλυσε τουλά��ιστον ένα στοιχείο, παγωμένη όπως
             ήταν τη στιγμή που έληξε το παιχνίδι.
           </p>
         </div>
@@ -940,7 +946,7 @@ export function AdminStandingsView({ data }: { data: StandingsBoard }) {
         το 1ο σημείωμα) και έπειτα από τους γρίφους που έλυσε.{" "}
         {runnerUpTie && (
           <>
-            Όταν δύο ομάδες σταμάτησαν στο ίδιο σημείο έχοντας λύσει τους ίδιους γρίφους, προηγείται
+            Όταν δύο ομάδες στ��μάτησαν στο ίδιο σημείο έχοντας λύσει τους ίδιους γρίφους, προηγείται
             εκείνη που έφτασε εκεί πρώτη. Έτσι κρίθηκε η σειρά ανάμεσα στη 2η και την 3η θέση, που
             έμειναν και οι δύο {runnerUpTie.phrase}.{" "}
           </>
