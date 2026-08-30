@@ -229,11 +229,10 @@ function Milestone({
 }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-sm border px-1.5 py-1 font-sans text-[10px] font-bold tracking-chip ${
-        reached
+      className={`inline-flex items-center gap-1 rounded-sm border px-1.5 py-1 font-sans text-[10px] font-bold tracking-chip ${reached
           ? "border-brass/50 bg-brass/15 text-brass"
           : "border-border bg-muted/20 text-muted-foreground/60"
-      }`}
+        }`}
     >
       <Icon className="size-3 shrink-0" />
       {label}
@@ -336,9 +335,8 @@ function Podium({ rows }: { rows: StandingRow[] }) {
         return (
           <div
             key={`${row.kind}-${row.id}`}
-            className={`relative overflow-hidden rounded-sm border p-3 text-center sm:p-4 ${ORDER[i] ?? ""} ${medal.frame} ${
-              isWinner ? "col-span-2 pb-4 pt-3.5 sm:col-span-1 sm:pb-8 sm:pt-7" : "pb-3 sm:pb-5"
-            }`}
+            className={`relative overflow-hidden rounded-sm border p-3 text-center sm:p-4 ${ORDER[i] ?? ""} ${medal.frame} ${isWinner ? "col-span-2 pb-4 pt-3.5 sm:col-span-1 sm:pb-8 sm:pt-7" : "pb-3 sm:pb-5"
+              }`}
           >
             {/* Each plinth is washed in its own metal, gold strongest, so the eye
                 still lands on the winner first. */}
@@ -354,9 +352,8 @@ function Podium({ rows }: { rows: StandingRow[] }) {
                 </Figures>
               </p>
               <p
-                className={`mt-1 text-balance font-serif font-bold leading-tight text-foreground ${
-                  isWinner ? "text-xl sm:text-2xl" : "text-sm sm:text-xl"
-                }`}
+                className={`mt-1 text-balance font-serif font-bold leading-tight text-foreground ${isWinner ? "text-xl sm:text-2xl" : "text-sm sm:text-xl"
+                  }`}
               >
                 {row.name}
               </p>
@@ -511,13 +508,12 @@ function GroupPanel({
       : "συμμετοχές"
   return (
     <section
-      className={`relative overflow-hidden rounded-sm border ${
-        gold
+      className={`relative overflow-hidden rounded-sm border ${gold
           ? "border-brass/70 bg-brass/[0.07]"
           : teal
             ? "border-teal/50 bg-card/60"
             : "border-border bg-card/40"
-      }`}
+        }`}
     >
       {/* The top band gets a warm wash so the eye lands there first. */}
       {headline && (
@@ -532,20 +528,18 @@ function GroupPanel({
       >
         <div className="flex items-center gap-2.5">
           <span
-            className={`inline-flex size-8 shrink-0 items-center justify-center rounded-sm border ${
-              gold
+            className={`inline-flex size-8 shrink-0 items-center justify-center rounded-sm border ${gold
                 ? "border-brass/60 bg-brass/20 text-brass"
                 : teal
                   ? "border-teal/50 bg-teal/15 text-teal"
                   : "border-border bg-muted/20 text-muted-foreground"
-            }`}
+              }`}
           >
             <Icon className="size-4" />
           </span>
           <h3
-            className={`min-w-0 flex-1 font-sans text-[11px] font-bold tracking-chip ${
-              gold ? "text-brass" : teal ? "text-teal" : "text-foreground"
-            }`}
+            className={`min-w-0 flex-1 font-sans text-[11px] font-bold tracking-chip ${gold ? "text-brass" : teal ? "text-teal" : "text-foreground"
+              }`}
           >
             <Figures>{group.label}</Figures>
           </h3>
@@ -618,9 +612,8 @@ function GroupPanel({
               {/* No truncation: with only a rank beside it, a long team name has
                   room to wrap and be read in full. */}
               <p
-                className={`text-pretty font-serif font-bold leading-tight text-foreground ${
-                  headline ? "text-lg sm:text-xl" : "text-base"
-                }`}
+                className={`text-pretty font-serif font-bold leading-tight text-foreground ${headline ? "text-lg sm:text-xl" : "text-base"
+                  }`}
               >
                 {row.name}
               </p>
@@ -828,7 +821,7 @@ export function AdminStandingsView({
             </a>
           )}
           <p className="mx-auto mt-2 max-w-[52ch] text-pretty font-serif text-sm leading-relaxed text-muted-foreground">
-            Η κατάταξη κάθε ομάδας και εξερευνητή που έλυσε τουλάχιστον ένα στοιχείο, παγωμένη όπως
+            Η καταάταξη κάθε ομάδας και εξερευνητή που έλυσε τουλάχιστον ένα στοιχείο, παγωμένη όπως
             ήταν τη στιγμή που έληξε το παιχνίδι.
           </p>
         </div>
