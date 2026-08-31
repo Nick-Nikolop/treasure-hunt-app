@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { headers } from "next/headers"
 import { auth } from "@/lib/auth"
+import { getAdminUser } from "@/lib/admin"
 import { getFinalStandings, toStandingsBoard } from "@/lib/standings"
 import { Atmosphere } from "@/components/pythea/atmosphere"
 import { AdminStandingsView } from "@/components/pythea/admin-standings-view"
@@ -42,12 +43,14 @@ export default async function StandingsPage() {
   // server-side so the gesture stays inert for anyone already signed in.
   const session = await auth.api.getSession({ headers: await headers() })
   const signedOut = !session?.user
+  const admin = await getAdminUser()
+  const isAdmin = admin !== null
 
   return (
     <>
       <Atmosphere />
       <div className="relative flex min-h-screen flex-col">
-        <AdminStandingsView data={data} signedOut={signedOut} />
+        <AdminStandingsView data={data} signedOut={signedOut} isAdmin={isAdmin} />
       </div>
     </>
   )

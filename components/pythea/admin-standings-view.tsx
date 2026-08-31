@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useMemo, useRef, useState } from "react"
 import {
   Award,
@@ -13,11 +14,13 @@ import {
   Medal,
   ScrollText,
   Search,
+  Shield,
   Trophy,
   User,
   Users,
   X,
 } from "lucide-react"
+import { useSession } from "@/lib/auth-client"
 import type { StandingRow, StandingsBoard } from "@/lib/standings"
 
 /**
@@ -660,11 +663,18 @@ const REVEAL_WINDOW_MS = 1500
 export function AdminStandingsView({
   data,
   signedOut = false,
+  isAdmin: serverIsAdmin = false,
 }: {
   data: StandingsBoard
   /** False when a session already exists, which makes the gesture a no-op. */
   signedOut?: boolean
+  /** True when the current user is a superadmin. */
+  isAdmin?: boolean
 }) {
+  const { data: session } = useSession()
+  const clientRole = (session?.user as { role?: string | null } | undefined)?.role
+  const isAdmin = serverIsAdmin || clientRole === "superadmin"
+
   // Only crews/explorers who actually SOLVED something are ranked at all.
   // Careful with the off-by-one: `progress` counts leads UNLOCKED, and lead 1 is
   // handed to everyone at registration without a scan, so `progress === 1` means
@@ -811,14 +821,26 @@ export function AdminStandingsView({
             Το ταξίδι του Πυθέα
           </h1>
 
-          {revealed && (
-            <a
-              href="/sign-in?redirect=%2Fstandings"
-              className="mt-3 inline-flex items-center gap-2 rounded-sm border border-brass/60 bg-background/70 px-4 py-2 font-sans text-[10px] font-bold tracking-chip text-brass transition-colors hover:bg-brass hover:text-primary-foreground"
-            >
-              <LogIn className="size-3.5" aria-hidden />
-              ΣΥΝΔΕΣΗ
-            </a>
+          {isAdmin ? (
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+              <Link
+                href="/admin"
+                className="inline-flex items-center gap-2 rounded-sm border border-brass bg-brass/15 px-4 py-2 font-sans text-[10px] font-bold tracking-chip text-brass transition-colors hover:bg-brass hover:text-primary-foreground"
+              >
+                <Shield className="size-3.5" aria-hidden />
+                ΔΙΑΧΕΙΡΙΣΗ
+              </Link>
+            </div>
+          ) : (
+            revealed && (
+              <a
+                href="/sign-in?redirect=%2Fstandings"
+                className="mt-3 inline-flex items-center gap-2 rounded-sm border border-brass/60 bg-background/70 px-4 py-2 font-sans text-[10px] font-bold tracking-chip text-brass transition-colors hover:bg-brass hover:text-primary-foreground"
+              >
+                <LogIn className="size-3.5" aria-hidden />
+                ΣΥΝΔΕΣΗ
+              </a>
+            )
           )}
           <p className="mx-auto mt-2 max-w-[52ch] text-pretty font-serif text-sm leading-relaxed text-muted-foreground">
             Η τελική κατάταξη κάθε ομάδας και εξερευνητή που έλυσε τουλάχιστον ένα στοιχείο, όπως διαμορφώθηκε με τη λήξη του κυνηγιού.
