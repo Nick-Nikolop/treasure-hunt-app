@@ -21,3 +21,4 @@ node_modules
 # never is - it holds live session tokens, password hashes and personal data
 # copied verbatim out of the database.
 migration/out/
+.env*

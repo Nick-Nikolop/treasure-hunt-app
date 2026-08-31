@@ -821,8 +821,7 @@ export function AdminStandingsView({
             </a>
           )}
           <p className="mx-auto mt-2 max-w-[52ch] text-pretty font-serif text-sm leading-relaxed text-muted-foreground">
-            Η κατάταξη κάθε ομάδας και εξερευνητή που έλυσε τουλάχιστον ένα στοιχείο, παγωμένη όπως
-            ήταν τη στιγμή που έληξε το παιχνίδι.
+            Η τελική κατάταξη κάθε ομάδας και εξερευνητή που έλυσε τουλάχιστον ένα στοιχείο, όπως διαμορφώθηκε με τη λήξη του κυνηγιού.
           </p>
         </div>
 
