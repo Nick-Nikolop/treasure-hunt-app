@@ -20,6 +20,14 @@ function ensureTable(): Promise<void> {
         updated_at timestamptz NOT NULL DEFAULT now()
       )`,
     )
+    // One-off correction requested by the organiser: Παναγιώτης's vote moves to the first identity.
+    // The cutoff limits it to the vote cast before this fix, so a later vote of his own is never overridden.
+    .then(() =>
+      pool.query(
+        `UPDATE brand_vote_r2 SET choice = 'old', updated_at = now()
+         WHERE voter_name = 'Παναγιώτης' AND choice = 'new' AND updated_at < '2026-10-02T21:15:00Z'`,
+      ),
+    )
     .then(() => undefined)
     .catch((error) => {
       tableReady = null
