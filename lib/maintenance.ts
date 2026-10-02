@@ -22,6 +22,14 @@ import { user } from "@/lib/db/schema"
 export const JOURNAL_MAINTENANCE = false
 
 /**
+ * SITE-WIDE maintenance switch. While true, every page renders the maintenance
+ * screen (see `app/layout.tsx`) for everyone except the founder account
+ * `BOOTSTRAP_SUPERADMIN_EMAIL`. Other superadmins are locked out too, on purpose.
+ * Flip to `false` to reopen the site.
+ */
+export const SITE_MAINTENANCE = true
+
+/**
  * These two allow-lists were ONE list until 07-31, which made the two very
  * different concessions inseparable. They are now split, because the founder's
  * alt needs exactly one of them and not the other:

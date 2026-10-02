@@ -8,6 +8,9 @@ import { LiteModeProvider } from '@/components/pythea/lite-mode-provider'
 import { PhaseProvider } from '@/components/pythea/phase-provider'
 import { AnalyticsProvider } from '@/components/pythea/analytics-provider'
 import { getPhaseContext, getPublicPhase } from '@/lib/phase-guard'
+import { isHeldByMaintenance } from '@/lib/site-maintenance'
+import { Atmosphere } from '@/components/pythea/atmosphere'
+import { MaintenanceScreen } from '@/components/pythea/maintenance-screen'
 import { DEFAULT_LOCALE, isLocale, LANG_COOKIE, type Locale } from '@/lib/i18n'
 import { SITE, TEASER, SITE_URL, KEYWORDS, BRAND, BRAND_NAME_EN, VERIFICATION } from '@/lib/seo'
 import './globals.css'
@@ -139,6 +142,7 @@ export default async function RootLayout({
   // Resolve the phased-rollout context once per request so every page shares
   // the same effective phase and open tabs can auto-advance at each boundary.
   const phaseCtx = await getPhaseContext()
+  const heldByMaintenance = await isHeldByMaintenance()
   const phaseValue = {
     phase: phaseCtx.phase,
     isSuperadmin: phaseCtx.isSuperadmin,
@@ -168,7 +172,16 @@ export default async function RootLayout({
         >
           <LanguageProvider initialLocale={locale}>
             <LiteModeProvider>
-              <PhaseProvider value={phaseValue}>{children}</PhaseProvider>
+              <PhaseProvider value={phaseValue}>
+                {heldByMaintenance ? (
+                  <>
+                    <Atmosphere />
+                    <MaintenanceScreen />
+                  </>
+                ) : (
+                  children
+                )}
+              </PhaseProvider>
             </LiteModeProvider>
             {/* EVERY SITE-WIDE POPUP IS INTENTIONALLY DISABLED. The hunt is over,
                 so the cookie banner, the notification layer, the hold toast and
