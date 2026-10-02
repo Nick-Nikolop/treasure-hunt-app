@@ -21,8 +21,8 @@ export const user = pgTable("user", {
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 })
 
-// Team brand vote. Created on demand by lib/brand-vote.ts; listed here for reference.
-export const brandVote = pgTable("brand_vote", {
+// Team brand vote (round 2; round 1 votes stay in the old brand_vote table). Created on demand by lib/brand-vote.ts; listed here for reference.
+export const brandVote = pgTable("brand_vote_r2", {
   voterName: text("voter_name").primaryKey(),
   choice: text("choice").notNull(),
   deviceHash: text("device_hash").notNull().unique(),

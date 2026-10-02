@@ -12,7 +12,7 @@ let tableReady: Promise<void> | null = null
 function ensureTable(): Promise<void> {
   tableReady ??= pool
     .query(
-      `CREATE TABLE IF NOT EXISTS brand_vote (
+      `CREATE TABLE IF NOT EXISTS brand_vote_r2 (
         voter_name text PRIMARY KEY,
         choice text NOT NULL,
         device_hash text NOT NULL UNIQUE,
@@ -39,7 +39,7 @@ function hashDevice(token: string): string {
 export async function listVotes(): Promise<VoteRow[]> {
   await ensureTable()
   const { rows } = await pool.query<{ voter_name: string; choice: string }>(
-    "SELECT voter_name, choice FROM brand_vote",
+    "SELECT voter_name, choice FROM brand_vote_r2",
   )
   return rows.flatMap((row) =>
     isVoter(row.voter_name) && isVoteChoice(row.choice) ? [{ name: row.voter_name, choice: row.choice }] : [],
@@ -50,7 +50,7 @@ export async function getDeviceVoter(token: string | undefined): Promise<Voter |
   if (!token) return null
   await ensureTable()
   const { rows } = await pool.query<{ voter_name: string }>(
-    "SELECT voter_name FROM brand_vote WHERE device_hash = $1",
+    "SELECT voter_name FROM brand_vote_r2 WHERE device_hash = $1",
     [hashDevice(token)],
   )
   const name = rows[0]?.voter_name
@@ -68,11 +68,11 @@ export async function saveVote(name: Voter, choice: VoteChoice, token: string): 
   await ensureTable()
   try {
     const { rowCount } = await pool.query(
-      `INSERT INTO brand_vote (voter_name, choice, device_hash)
+      `INSERT INTO brand_vote_r2 (voter_name, choice, device_hash)
        VALUES ($1, $2, $3)
        ON CONFLICT (voter_name) DO UPDATE
          SET choice = EXCLUDED.choice, updated_at = now()
-         WHERE brand_vote.device_hash = EXCLUDED.device_hash`,
+         WHERE brand_vote_r2.device_hash = EXCLUDED.device_hash`,
       [name, choice, hashDevice(token)],
     )
     return rowCount === 1 ? "saved" : "name-locked"
