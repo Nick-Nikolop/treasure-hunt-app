@@ -21,10 +21,11 @@ import { ComboArt } from "@/components/vote/alt-identity"
 import { CHOICE_LABEL, type VoteChoice, type Voter } from "@/lib/brand-vote-shared"
 import { cn } from "@/lib/utils"
 
-export type StepIndex = 0 | 1 | 2
+export type StepIndex = 0 | 1 | 2 | 3
 export type BrandMode = "old" | "new" | "alt" | "neutral"
 
 export const STEPS: { label: string; short: string; brand: BrandMode }[] = [
+  { label: "Αρχή", short: "Αρχή", brand: "neutral" },
   { label: CHOICE_LABEL.old, short: "Πρώτη", brand: "old" },
   { label: CHOICE_LABEL.new, short: "Νέα", brand: "new" },
   { label: "Ψηφοφορία", short: "Ψήφος", brand: "neutral" },
@@ -82,7 +83,7 @@ export function StepNav({ step, onGo }: { step: StepIndex; onGo: (index: number)
                   )}
                 >
                   <span className="hidden md:inline">{s.label}</span>
-                  <span className="md:hidden">{s.short}</span>
+                  <span className={cn("md:hidden", !active && "sr-only")}>{s.short}</span>
                 </span>
               </button>
               {!last && (
@@ -187,7 +188,7 @@ export function OldIdentityStep() {
   return (
     <>
       <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_340px] md:items-center">
-        <StepIntro eyebrow="Βήμα 1 · Αυτή φοράει τώρα η σελίδα" title={CHOICE_LABEL.old}>
+        <StepIntro eyebrow="Βήμα 2 · Αυτή φοράει τώρα η σελίδα" title={CHOICE_LABEL.old}>
           <p>
             Η ταυτότητα με την οποία έγινε η πρώτη διοργάνωση, το Ταξίδι του Πυθέα. Μια πυξίδα με τη διαδρομή του
             κυνηγιού χαραγμένη πάνω της, που καταλήγει σε ένα κόκκινο Χ, το σημείο του θησαυρού.
@@ -258,7 +259,7 @@ export function NewIdentityStep({
   return (
     <>
       <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_380px] md:items-center">
-        <StepIntro eyebrow="Βήμα 2 · Η σελίδα αλλάζει μόνη της" title={CHOICE_LABEL.new}>
+        <StepIntro eyebrow="Βήμα 3 · Η σελίδα αλλάζει μόνη της" title={CHOICE_LABEL.new}>
           <p>
             Το μονόγραμμα TH μέσα σε πυξίδα. Το σήμα δεν αλλάζει ποτέ. Κάθε κυνήγι του φοράει ένα «κοστούμι»: χρώματα,
             μέταλλο και ατμόσφαιρα που ταιριάζουν στο θέμα του.
@@ -587,19 +588,19 @@ export function VoteStep({
   const options: { choice: "old" | "new"; step: number; visual: ReactNode }[] = [
     {
       choice: "old",
-      step: 0,
+      step: 1,
       visual: (
         <div className="flex h-full items-center justify-center p-6">
           <Image src="/compass-icon.png" alt="" width={852} height={866} className="h-full w-auto object-contain" />
         </div>
       ),
     },
-    { choice: "new", step: 1, visual: <PairedIdentityReel /> },
+    { choice: "new", step: 2, visual: <PairedIdentityReel /> },
   ]
 
   return (
     <>
-      <StepIntro eyebrow="Βήμα 3 · Ουδέτερη σελίδα" title="Η ψήφος σου">
+      <StepIntro eyebrow="Βήμα 4 · Ουδέτερη σελίδα" title="Η ψήφος σου">
         <p>
           Η σελίδα δεν φοράει καμία ταυτότητα, για να κρίνεις μόνο τα σήματα. Διάλεξε επιλογή, μετά το όνομά σου και
           επιβεβαίωσε. Μπορείς να αλλάξεις την ψήφο σου όποτε θέλεις από την ίδια συσκευή.

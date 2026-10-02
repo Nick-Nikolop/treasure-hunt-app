@@ -129,24 +129,33 @@ export function BrandVote({ votes, deviceVoter }: Props) {
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-5xl flex-col gap-8 px-5 py-10 md:py-16">
-      <header className="flex flex-col gap-5">
-        <div className="flex flex-col gap-3">
-          <p className="font-sans text-xs font-semibold uppercase tracking-[0.2em] text-primary">The Hunt · Ομάδα</p>
-          <h1 className="text-balance text-3xl font-bold leading-tight text-foreground md:text-5xl">
-            Ποια ταυτότητα κρατάμε;
-          </h1>
-          <p className="max-w-[62ch] text-pretty font-sans text-[15px] leading-relaxed text-muted-foreground md:text-base">
-            Δες τις τρεις ταυτότητες μία-μία. Σε κάθε βήμα όλη η σελίδα φοράει εκείνη την ταυτότητα. Στο τέλος η σελίδα
-            γίνεται ουδέτερη για να ψηφίσεις χωρίς επιρροή.
-          </p>
-        </div>
-        <TurnoutBar voted={votes.length} total={VOTERS.length} waiting={waiting} />
-        <StepNav step={step} onGo={goTo} />
-      </header>
+      <StepNav step={step} onGo={goTo} />
 
-      <div key={step} className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
-        {step === 0 && <OldIdentityStep />}
-        {step === 1 && (
+      <div
+        key={step}
+        className={cn(
+          "flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-2 duration-500",
+          step === 0 && "flex-1 justify-center",
+        )}
+      >
+        {step === 0 && (
+          <header className="flex flex-col gap-6">
+            <div className="flex flex-col gap-3">
+              <p className="font-sans text-xs font-semibold uppercase tracking-[0.2em] text-primary">The Hunt · Ομάδα</p>
+              <h1 className="text-balance text-4xl font-bold leading-tight text-foreground md:text-6xl">
+                Ποια ταυτότητα κρατάμε;
+              </h1>
+              <p className="max-w-[62ch] text-pretty font-sans text-base leading-relaxed text-muted-foreground md:text-lg">
+                Δες τις δύο ταυτότητες μία-μία. Σε κάθε βήμα όλη η σελίδα φοράει εκείνη την ταυτότητα, και στη νέα
+                μπορείς να δοκιμάσεις και τις παραλλαγές της. Στο τέλος η σελίδα γίνεται ουδέτερη για να ψηφίσεις χωρίς
+                επιρροή.
+              </p>
+            </div>
+            <TurnoutBar voted={votes.length} total={VOTERS.length} waiting={waiting} />
+          </header>
+        )}
+        {step === 1 && <OldIdentityStep />}
+        {step === 2 && (
           <NewIdentityStep
             theme={theme}
             cycling={cycleThemes}
@@ -157,7 +166,7 @@ export function BrandVote({ votes, deviceVoter }: Props) {
             }}
           />
         )}
-        {step === 2 && (
+        {step === 3 && (
           <VoteStep
             byChoice={byChoice}
             myChoice={myChoice}
