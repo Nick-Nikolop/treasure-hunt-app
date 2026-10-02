@@ -204,15 +204,21 @@ export function BrandVote({ votes, deviceVoter }: Props) {
 
 function TurnoutBar({ voted, total, waiting }: { voted: number; total: number; waiting: Voter[] }) {
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-baseline justify-between gap-4 font-sans text-sm">
-        <span className="text-foreground">
-          {voted} από {total} ψήφισαν
-        </span>
-        {waiting.length > 0 && <span className="text-muted-foreground">Εκκρεμούν: {waiting.join(", ")}</span>}
+    <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 text-card-foreground">
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="flex items-baseline gap-2">
+          <span className="text-2xl font-bold leading-none tabular-nums">
+            {voted}
+            <span className="text-card-foreground/50">/{total}</span>
+          </span>
+          <span className="font-sans text-sm text-card-foreground/75">ψήφισαν</span>
+        </p>
+        {waiting.length === 0 && (
+          <span className="font-sans text-xs font-semibold uppercase tracking-[0.12em] text-primary">Ολοκληρώθηκε</span>
+        )}
       </div>
       <div
-        className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+        className="h-1.5 w-full overflow-hidden rounded-full bg-card-foreground/15"
         role="progressbar"
         aria-valuemin={0}
         aria-valuemax={total}
@@ -221,6 +227,23 @@ function TurnoutBar({ voted, total, waiting }: { voted: number; total: number; w
       >
         <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${(voted / total) * 100}%` }} />
       </div>
+      {waiting.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <span className="font-sans text-xs font-semibold uppercase tracking-[0.12em] text-card-foreground/60">
+            Εκκρεμούν
+          </span>
+          <ul className="flex flex-wrap gap-1.5">
+            {waiting.map((name) => (
+              <li
+                key={name}
+                className="rounded-full border border-border bg-background px-2.5 py-1 font-sans text-sm leading-none text-foreground"
+              >
+                {name}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   )
 }
