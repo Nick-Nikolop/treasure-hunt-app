@@ -3,7 +3,17 @@
 import { useEffect, useState, type ReactNode } from "react"
 import Image from "next/image"
 import { ALT_PRESETS, getAltBackdrop, getAltEmblem } from "@/lib/brand/alt-identity"
-import { ArrowLeft, ArrowRight, Check, Eye, Infinity as InfinityIcon, Pause, Play, Star } from "lucide-react"
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  Eye,
+  Infinity as InfinityIcon,
+  MousePointerClick,
+  Pause,
+  Play,
+  Star,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ThLockup, ThMark } from "@/components/brand/th-mark"
 import { HUNT_THEMES, THEME_COMBOS, type HuntTheme } from "@/lib/brand/themes"
@@ -389,6 +399,35 @@ function ThemeGallery({ activeId, onPick }: { activeId: string; onPick: (id: str
           θα βλέπει ο κόσμος παντού, και το <span className="font-semibold text-foreground">Brass</span> η δεύτερη
           πρόταση. Οι υπόλοιπες είναι παραλλαγές ανάλογα με το θέμα του κάθε κυνηγιού.
         </p>
+      </div>
+
+      <div className="flex flex-col gap-3 rounded-xl bg-primary p-4 text-primary-foreground shadow-lg shadow-primary/25 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-5">
+        <div className="flex items-center gap-3">
+          <span className="relative flex size-11 shrink-0 items-center justify-center rounded-full bg-primary-foreground/15">
+            <span
+              className="absolute inset-0 animate-ping rounded-full bg-primary-foreground/25 motion-reduce:hidden"
+              aria-hidden="true"
+            />
+            <MousePointerClick className="relative size-5" aria-hidden="true" />
+          </span>
+          <p className="flex flex-col">
+            <span className="font-sans text-base font-bold leading-snug">Πάτησε μια κάρτα για να τη δοκιμάσεις</span>
+            <span className="font-sans text-sm leading-snug text-primary-foreground/80">
+              Όλη η σελίδα αλλάζει στο θέμα που διαλέγεις.
+            </span>
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            const index = GALLERY.findIndex((item) => item.id === activeId)
+            onPick(GALLERY[(index + 1) % GALLERY.length].id)
+          }}
+          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-primary-foreground px-5 py-2.5 font-sans text-sm font-bold text-primary shadow-sm transition-transform hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-primary active:scale-[0.98]"
+        >
+          Δες την επόμενη
+          <ArrowRight className="size-4" aria-hidden="true" />
+        </button>
       </div>
 
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
