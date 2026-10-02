@@ -3,8 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react"
 import Image from "next/image"
 import { ALT_PRESETS, getAltBackdrop, getAltEmblem } from "@/lib/brand/alt-identity"
-import Link from "next/link"
-import { ArrowLeft, ArrowRight, Check, ExternalLink, Eye, Pause, Play } from "lucide-react"
+import { ArrowLeft, ArrowRight, Check, Eye, Infinity as InfinityIcon, Pause, Play, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ThLockup, ThMark } from "@/components/brand/th-mark"
 import { HUNT_THEMES, THEME_COMBOS, type HuntTheme } from "@/lib/brand/themes"
@@ -40,36 +39,51 @@ export const NEUTRAL_VARS: Record<string, string> = {
 export function StepNav({ step, onGo }: { step: StepIndex; onGo: (index: number) => void }) {
   return (
     <nav aria-label="Βήματα">
-      <ol className="grid grid-cols-4 gap-2">
+      <ol className="flex w-full items-center">
         {STEPS.map((s, index) => {
           const active = index === step
           const done = index < step
+          const last = index === STEPS.length - 1
           return (
-            <li key={s.label}>
+            <li key={s.label} className={cn("flex items-center", !last && "flex-1")}>
               <button
                 type="button"
                 onClick={() => onGo(index)}
                 aria-current={active ? "step" : undefined}
-                className="flex w-full flex-col gap-2 rounded-sm text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="group flex shrink-0 items-center gap-2.5 rounded-full pr-1 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 <span
                   className={cn(
-                    "h-1 w-full rounded-full transition-colors duration-500",
-                    active ? "bg-primary" : done ? "bg-primary/50" : "bg-muted",
-                  )}
-                />
-                <span
-                  className={cn(
-                    "font-sans text-xs font-semibold md:text-sm",
-                    active ? "text-foreground" : "text-muted-foreground",
+                    "flex size-9 shrink-0 items-center justify-center rounded-full border-2 font-sans text-sm font-bold transition-colors duration-500",
+                    active
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : done
+                        ? "border-primary bg-background text-primary"
+                        : "border-border bg-background text-muted-foreground group-hover:border-primary/60",
                   )}
                 >
-                  <span className="hidden md:inline">
-                    {index + 1}. {s.label}
-                  </span>
+                  {done ? <Check className="size-4" strokeWidth={3} aria-hidden="true" /> : index + 1}
+                  {done && <span className="sr-only">{`${index + 1} (ολοκληρώθηκε)`}</span>}
+                </span>
+                <span
+                  className={cn(
+                    "font-sans text-sm font-semibold",
+                    active ? "text-foreground" : "text-muted-foreground group-hover:text-foreground",
+                  )}
+                >
+                  <span className="hidden md:inline">{s.label}</span>
                   <span className="md:hidden">{s.short}</span>
                 </span>
               </button>
+              {!last && (
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "mx-2 h-0.5 flex-1 rounded-full transition-colors duration-500 md:mx-4",
+                    done ? "bg-primary" : "bg-border",
+                  )}
+                />
+              )}
             </li>
           )
         })}
@@ -258,7 +272,7 @@ export function NewIdentityStep({
           Αυτό το λογότυπο είναι φτιαγμένο για να μας εκπροσωπεί σε κάθε θέμα, χωρίς να χάνουμε ποτέ την ταυτότητά μας.
         </h3>
         <p className="max-w-[62ch] font-sans text-[15px] leading-relaxed text-muted-foreground md:text-base">
-          Μυστήριο στο δάσος, νουάρ, ατσάλι: το TH και η πυξίδα μένουν ίδια. Αλλάζει μόνο το υλικό και η ατμόσφαιρα, άρα
+          Mystery, Noir, Steel: το TH και η πυξίδα μένουν ίδια. Αλλάζει μόνο το υλικό και η ατμόσφαιρα, άρα
           όποιο κυνήγι κι αν φτιάξουμε, ο κόσμος βλέπει αμέσως ότι είναι δικό μας.
         </p>
       </section>
@@ -280,39 +294,18 @@ export function NewIdentityStep({
           {theme.metal.map((c) => (
             <span key={c} className="size-9 rounded-full border border-border" style={{ background: c }} />
           ))}
-          <Button variant="outline" onClick={onToggleCycle} className="ml-2">
+          <Button
+            variant="outline"
+            onClick={onToggleCycle}
+            className="ml-2 border-card-foreground/30 bg-transparent text-card-foreground hover:bg-card-foreground/10 hover:text-card-foreground dark:border-card-foreground/30 dark:bg-transparent dark:hover:bg-card-foreground/10"
+          >
             {cycling ? <Pause className="size-4" aria-hidden="true" /> : <Play className="size-4" aria-hidden="true" />}
             {cycling ? "Παύση" : "Αυτόματα"}
           </Button>
         </div>
       </section>
 
-      <div role="radiogroup" aria-label="Θέμα νέας ταυτότητας" className="grid grid-cols-3 gap-2 md:grid-cols-6">
-        {HUNT_THEMES.map((t) => {
-          const active = t.id === theme.id
-          return (
-            <button
-              key={t.id}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              onClick={() => onPick(t.id)}
-              className={cn(
-                "flex flex-col items-center gap-2 rounded-lg border-2 px-2 py-4 transition-all",
-                active ? "scale-[1.03] border-primary" : "border-transparent hover:border-primary/50",
-              )}
-              style={{ backgroundColor: t.surface }}
-            >
-              <ThMark theme={t} size={48} showCardinals={false} />
-              <span className="font-sans text-xs font-semibold" style={{ color: t.ink }}>
-                {t.name}
-              </span>
-            </button>
-          )
-        })}
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4">
         <InfoBlock title="Η λογική">
           <p>
             <span className="font-semibold">1 σήμα × {HUNT_THEMES.length} κοστούμια.</span> Το TH και η πυξίδα μένουν
@@ -322,84 +315,166 @@ export function NewIdentityStep({
             Υπέρ: σταθερό brand που μεγαλώνει μαζί μας. Κατά: χρειάζεται νέο κοστούμι για κάθε θέμα.
           </p>
         </InfoBlock>
-        <InfoBlock title="Περισσότερα">
-          <p>Όλοι οι κανόνες, τα χρώματα και τα αρχεία του νέου brand.</p>
-          <Link
-            href="/brand"
-            target="_blank"
-            className="inline-flex items-center gap-1.5 text-primary underline-offset-4 hover:underline"
-          >
-            Άνοιξε το brand σε νέα καρτέλα
-            <ExternalLink className="size-3.5" aria-hidden="true" />
-          </Link>
-        </InfoBlock>
       </div>
     </>
   )
 }
 
+const DEFAULT_THEME_ID = "noir"
+const SECOND_THEME_ID = "default"
+
+function recommendRank(id: string): 1 | 2 | null {
+  if (id === DEFAULT_THEME_ID) return 1
+  if (id === SECOND_THEME_ID) return 2
+  return null
+}
+
+function RecommendBadge({
+  rank,
+  className,
+  compactOnMobile = false,
+}: {
+  rank: 1 | 2 | null
+  className?: string
+  compactOnMobile?: boolean
+}) {
+  if (!rank) {
+    return (
+      <span
+        className={cn(
+          "absolute left-3 top-3 rounded-full bg-background/70 px-3 py-1 font-sans text-xs font-semibold uppercase tracking-[0.12em] text-foreground backdrop-blur-sm",
+          compactOnMobile && "hidden sm:inline",
+          className,
+        )}
+      >
+        Παραλλαγή
+      </span>
+    )
+  }
+  const label = rank === 1 ? "Προτεινόμενο" : "2η πρόταση"
+  return (
+    <span
+      className={cn(
+        "absolute inline-flex items-center gap-1.5 rounded-full font-sans text-xs font-bold uppercase tracking-[0.12em] shadow-lg",
+        compactOnMobile ? "left-1.5 top-1.5 p-1 sm:left-3 sm:top-3 sm:px-3 sm:py-1" : "left-3 top-3 px-3 py-1",
+        rank === 1 ? "bg-[#c99a55] text-[#2b2622]" : "bg-[#2b2622] text-[#e8d2a8] ring-1 ring-[#c99a55]",
+        className,
+      )}
+    >
+      <Star className={cn("size-3.5", rank === 1 && "fill-current")} aria-hidden="true" />
+      {compactOnMobile ? <span className="sr-only sm:not-sr-only">{label}</span> : label}
+    </span>
+  )
+}
+
 const GALLERY: { id: string; label: string; note: string }[] = [
-  { id: "mystery", label: "Μυστήριο στο δάσος", note: "Μπρούντζος πάνω σε σκούρο πράσινο" },
-  { id: "noir", label: "Νουάρ", note: "Χρυσό πάνω σε μαύρη πέτρα" },
-  { id: "steel", label: "Ατσάλι", note: "Ατσάλι πάνω σε σχιστόλιθο" },
+  { id: "noir", label: "Noir", note: "Παλιός χρυσός πάνω σε ραγισμένη σκοτεινή πέτρα" },
+  { id: "default", label: "Brass", note: "Βουρτσισμένος χρυσός πάνω σε μπεζ χαρτί" },
+  { id: "mystery", label: "Mystery", note: "Ορείχαλκος πάνω σε σκούρο πράσινο" },
+  { id: "carnival", label: "Carnival", note: "Χρυσός με μάσκα πάνω σε μπορντό βελούδο" },
+  { id: "relic", label: "Relic", note: "Σκούρα πέτρα πάνω σε φθαρμένο μπετό" },
+  { id: "steel", label: "Steel", note: "Ατσάλι πάνω σε σχιστόλιθο" },
 ]
 
 function ThemeGallery({ activeId, onPick }: { activeId: string; onPick: (id: string) => void }) {
+  const activeItem = GALLERY.find((item) => item.id === activeId)
   return (
-    <section aria-label="Το ίδιο λογότυπο σε τρία θέματα" className="grid gap-4 sm:grid-cols-3">
-      {GALLERY.map((item) => {
-        const combo = THEME_COMBOS[item.id]
-        if (!combo) return null
-        const active = item.id === activeId
-        return (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => onPick(item.id)}
-            aria-pressed={active}
-            className={cn(
-              "group flex flex-col overflow-hidden rounded-xl border-2 bg-card text-left transition-all",
-              active ? "border-primary" : "border-border hover:border-primary/50",
-            )}
-          >
-            <ComboArt
-              emblem={getAltEmblem(combo.emblemId)}
-              backdrop={getAltBackdrop(combo.backdropId)}
-              sizes="(min-width: 640px) 33vw, 100vw"
-              className="aspect-square transition-transform duration-500 group-hover:scale-105"
-            />
-            <span className="flex flex-col gap-0.5 p-4">
-              <span className="text-lg font-bold text-card-foreground">{item.label}</span>
-              <span className="font-sans text-sm text-muted-foreground">{item.note}</span>
-            </span>
-          </button>
-        )
-      })}
+    <section aria-labelledby="theme-gallery-title" className="flex flex-col gap-5">
+      <div className="flex flex-col gap-2">
+        <h3 id="theme-gallery-title" className="text-balance text-2xl font-bold text-foreground">
+          Μία βασική έκδοση, άπειρες παραλλαγές
+        </h3>
+        <p className="max-w-[65ch] font-sans text-[15px] leading-relaxed text-muted-foreground md:text-base">
+          Το <span className="font-semibold text-foreground">Noir</span> είναι η προτεινόμενη κύρια έκδοση, αυτή που
+          θα βλέπει ο κόσμος παντού, και το <span className="font-semibold text-foreground">Brass</span> η δεύτερη
+          πρόταση. Οι υπόλοιπες είναι παραλλαγές ανάλογα με το θέμα του κάθε κυνηγιού.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+        {GALLERY.map((item) => {
+          const combo = THEME_COMBOS[item.id]
+          if (!combo) return null
+          const active = item.id === activeId
+          const rank = recommendRank(item.id)
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => onPick(item.id)}
+              aria-pressed={active}
+              className={cn(
+                "group relative flex flex-col overflow-hidden rounded-lg border-2 bg-card text-left transition-all sm:rounded-xl",
+                active ? "border-primary" : rank ? "border-primary/60" : "border-border hover:border-primary/50",
+              )}
+            >
+              <span className="relative block overflow-hidden">
+                <ComboArt
+                  emblem={getAltEmblem(combo.emblemId)}
+                  backdrop={getAltBackdrop(combo.backdropId)}
+                  sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 33vw"
+                  className="aspect-square transition-transform duration-500 group-hover:scale-105"
+                />
+                <RecommendBadge rank={rank} compactOnMobile />
+              </span>
+              <span className="flex flex-col gap-0.5 px-2 py-2 sm:p-4">
+                <span className="truncate text-sm font-bold text-card-foreground sm:text-lg">
+                  {item.label}
+                </span>
+                <span className="hidden font-sans text-sm text-card-foreground/70 sm:block">{item.note}</span>
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
+      {activeItem && (
+        <p className="-mt-2 font-sans text-sm leading-relaxed text-muted-foreground sm:hidden" aria-live="polite">
+          <span className="font-semibold text-foreground">{activeItem.label}:</span> {activeItem.note}
+        </p>
+      )}
+
+      <div className="flex items-start gap-4 rounded-xl border border-dashed border-primary/50 p-5">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+          <InfinityIcon className="size-5" aria-hidden="true" />
+        </span>
+        <p className="font-sans text-[15px] leading-relaxed text-muted-foreground md:text-base">
+          <span className="font-semibold text-foreground">Και αυτά είναι μόνο η αρχή.</span> Κάθε υλικό ταιριάζει με
+          κάθε φόντο, οπότε οι δυνατότητες είναι ουσιαστικά άπειρες: νέο κυνήγι, νέο ντύσιμο, ίδιο σήμα.
+        </p>
+      </div>
     </section>
   )
 }
 
-const IDENTITY_PAIRS = ALT_PRESETS.filter(
-  (preset, index, all) =>
-    all.findIndex((p) => p.emblemId === preset.emblemId && p.backdropId === preset.backdropId) === index,
-).map((preset) => ({
-  id: preset.id,
-  name: preset.name,
-  emblem: getAltEmblem(preset.emblemId),
-  backdrop: getAltBackdrop(preset.backdropId),
-}))
+const IDENTITY_PAIRS = GALLERY.flatMap((item) => {
+  const combo = THEME_COMBOS[item.id]
+  if (!combo) return []
+  return [
+    {
+      id: item.id,
+      name: item.label,
+      note: item.note,
+      isDefault: item.id === DEFAULT_THEME_ID,
+      rank: recommendRank(item.id),
+      emblem: getAltEmblem(combo.emblemId),
+      backdrop: getAltBackdrop(combo.backdropId),
+    },
+  ]
+})
 
-const PAIR_INTERVAL_MS = 3200
+export const THEME_INTERVAL_MS = 3200
+export const DEFAULT_THEME_HOLD_MS = 6000
 
 function PairedIdentityReel() {
   const [active, setActive] = useState(0)
+  const current = IDENTITY_PAIRS[active]
 
   useEffect(() => {
-    const timer = window.setInterval(() => setActive((i) => (i + 1) % IDENTITY_PAIRS.length), PAIR_INTERVAL_MS)
-    return () => window.clearInterval(timer)
-  }, [])
-
-  const current = IDENTITY_PAIRS[active]
+    const delay = current.isDefault ? DEFAULT_THEME_HOLD_MS : THEME_INTERVAL_MS
+    const timer = window.setTimeout(() => setActive((i) => (i + 1) % IDENTITY_PAIRS.length), delay)
+    return () => window.clearTimeout(timer)
+  }, [current.isDefault, active])
 
   return (
     <div className="absolute inset-0">
@@ -431,11 +506,13 @@ function PairedIdentityReel() {
         )
       })}
       <p className="sr-only" aria-live="polite">
-        {`Συνδυασμός ${current.name}: ${current.emblem.name} σε ${current.backdrop.name}`}
+        {`${current.name}${current.rank === 1 ? " (προτεινόμενο)" : current.rank === 2 ? " (2η πρόταση)" : ""}: ${current.note}`}
       </p>
+      <RecommendBadge key={`badge-${current.id}`} rank={current.rank} className="animate-in fade-in duration-700" />
       <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-3 bg-gradient-to-t from-black/70 to-transparent px-4 pb-3 pt-8">
-        <span key={current.id} className="font-sans text-sm font-semibold text-white animate-in fade-in duration-700">
-          {current.emblem.name} · {current.backdrop.name}
+        <span key={current.id} className="flex flex-col animate-in fade-in duration-700">
+          <span className="font-sans text-sm font-bold text-white">{current.name}</span>
+          <span className="font-sans text-xs text-white/75">{current.note}</span>
         </span>
         <span className="flex gap-1" aria-hidden="true">
           {IDENTITY_PAIRS.map((pair, index) => (
@@ -504,6 +581,11 @@ export function VoteStep({
               <div className="relative aspect-[4/3] overflow-hidden bg-muted">{visual}</div>
               <div className="flex flex-1 flex-col gap-4 p-5">
                 <h3 className="text-xl font-bold text-card-foreground">{CHOICE_LABEL[choice]}</h3>
+                {choice === "new" && (
+                  <p className="font-sans text-sm leading-relaxed text-card-foreground/75">
+                    Λεπτομέρειες όπως το μέγεθος και η θέση των γραμμάτων N, W, E, S μπορούν να οριστούν στη συνέχεια.
+                  </p>
+                )}
                 {voterList(byChoice[choice])}
                 <div className="mt-auto flex flex-col gap-2">
                   <Button onClick={() => onVote(choice)} variant={isMine ? "outline" : "default"} size="lg">

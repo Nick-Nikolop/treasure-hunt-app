@@ -5,6 +5,8 @@ export type AltEmblem = {
   src: string
   /** Accent used for buttons and links when this emblem drives the page preview. */
   accent: string
+  /** Darker accent so buttons keep contrast on light backdrops. */
+  accentOnLight: string
 }
 
 export type AltBackdrop = {
@@ -15,6 +17,8 @@ export type AltBackdrop = {
   /** Flat colour sampled from the texture, used while the image loads and for cards. */
   base: string
   deep: string
+  /** Secondary text colour when the default one lacks contrast on this texture. */
+  muted?: string
 }
 
 export type AltPreset = {
@@ -26,34 +30,35 @@ export type AltPreset = {
 }
 
 export const ALT_EMBLEMS: AltEmblem[] = [
-  { id: "polished-gold", name: "Γυαλισμένος χρυσός", material: "Λείο μέταλλο", src: "/brand/alt/emblems/polished-gold.webp", accent: "#d9ad4f" },
-  { id: "brushed-gold", name: "Βουρτσισμένος χρυσός", material: "Ματ μέταλλο", src: "/brand/alt/emblems/brushed-gold.webp", accent: "#cf9f45" },
-  { id: "antique-gold", name: "Παλαιωμένος χρυσός", material: "Σφυρήλατο", src: "/brand/alt/emblems/antique-gold.webp", accent: "#c79a3e" },
-  { id: "weathered-gold", name: "Φθαρμένος χρυσός", material: "Πατίνα", src: "/brand/alt/emblems/weathered-gold.webp", accent: "#bf9440" },
-  { id: "weathered-steel", name: "Ατσάλι", material: "Σίδερο", src: "/brand/alt/emblems/weathered-steel.webp", accent: "#b9bec6" },
-  { id: "dark-marble", name: "Μαύρο μάρμαρο", material: "Πέτρα", src: "/brand/alt/emblems/dark-marble.webp", accent: "#8a8f96" },
-  { id: "carnival", name: "Καρναβάλι", material: "Χρυσός + μάσκα", src: "/brand/alt/emblems/carnival.webp", accent: "#c7378f" },
+  { id: "brushed-gold", name: "Βουρτσισμένος χρυσός", material: "Ματ μέταλλο", src: "/brand/alt/emblems/brushed-gold.webp", accent: "#c99a55", accentOnLight: "#7f5f2c" },
+  { id: "weathered-brass", name: "Φθαρμένος ορείχαλκος", material: "Πατίνα", src: "/brand/alt/emblems/weathered-brass.webp", accent: "#b8935a", accentOnLight: "#735a30" },
+  { id: "pewter", name: "Κασσίτερος", material: "Σαμπανί μέταλλο", src: "/brand/alt/emblems/pewter.webp", accent: "#b3aa98", accentOnLight: "#5a5448" },
+  { id: "weathered-steel", name: "Ατσάλι", material: "Σίδερο", src: "/brand/alt/emblems/weathered-steel.webp", accent: "#b9bec6", accentOnLight: "#4b5058" },
+  { id: "dark-stone", name: "Σκούρα πέτρα", material: "Πέτρα", src: "/brand/alt/emblems/dark-stone.webp", accent: "#a9a59c", accentOnLight: "#2d2d2a" },
+  { id: "antique-gold", name: "Παλιός χρυσός", material: "Σφυρήλατος χρυσός", src: "/brand/alt/emblems/antique-gold-v2.webp", accent: "#c8913f", accentOnLight: "#7a5220" },
+  { id: "carnival", name: "Καρναβάλι", material: "Χρυσός + μάσκα", src: "/brand/alt/emblems/carnival.webp", accent: "#e0b04a", accentOnLight: "#8a5a14" },
 ]
 
 export const ALT_BACKDROPS: AltBackdrop[] = [
-  { id: "cream-paper", name: "Κρεμ χαρτί", src: "/brand/alt/backdrops/cream-paper.webp", tone: "light", base: "#e9e1d6", deep: "#ddd3c5" },
-  { id: "beige-stone", name: "Μπεζ πέτρα", src: "/brand/alt/backdrops/beige-stone.webp", tone: "light", base: "#c9bcab", deep: "#b9ab98" },
-  { id: "amber-slate", name: "Πλάκα με φως", src: "/brand/alt/backdrops/amber-slate.webp", tone: "dark", base: "#1d1a15", deep: "#14120e" },
-  { id: "bronze-slate", name: "Ραγισμένη πλάκα", src: "/brand/alt/backdrops/bronze-slate.webp", tone: "dark", base: "#1f1811", deep: "#15100b" },
-  { id: "charcoal-slate", name: "Ανθρακί πλάκα", src: "/brand/alt/backdrops/charcoal-slate.webp", tone: "dark", base: "#17181b", deep: "#0f1012" },
-  { id: "emerald-velvet", name: "Σμαραγδί βελούδο", src: "/brand/alt/backdrops/emerald-velvet.webp", tone: "dark", base: "#0f2418", deep: "#09170f" },
-  { id: "plum-velvet", name: "Μωβ βελούδο", src: "/brand/alt/backdrops/plum-velvet.webp", tone: "dark", base: "#2c0a24", deep: "#1c0617" },
+  { id: "beige-paper", name: "Μπεζ χαρτί", src: "/brand/alt/backdrops/beige-paper.webp", tone: "light", base: "#dcd5c9", deep: "#cfc7b9" },
+  { id: "concrete", name: "Μπετό", src: "/brand/alt/backdrops/concrete.webp", tone: "light", base: "#a19b90", deep: "#8f897e", muted: "#3b352e" },
+  { id: "bronze-charcoal", name: "Χάλκινο ανθρακί", src: "/brand/alt/backdrops/bronze-charcoal.webp", tone: "dark", base: "#19150d", deep: "#100d08" },
+  { id: "charcoal-slate", name: "Ανθρακί πλάκα", src: "/brand/alt/backdrops/charcoal-slate.webp", tone: "dark", base: "#161919", deep: "#0e1010" },
+  { id: "moody-cracked", name: "Ραγισμένη πέτρα", src: "/brand/alt/backdrops/moody-cracked.webp", tone: "dark", base: "#140f0a", deep: "#0c0906" },
+  { id: "charcoal-marble", name: "Μαύρο μάρμαρο", src: "/brand/alt/backdrops/charcoal-marble.webp", tone: "dark", base: "#151a1b", deep: "#0d1112" },
+  { id: "emerald-green", name: "Σμαραγδί", src: "/brand/alt/backdrops/emerald-green.webp", tone: "dark", base: "#0a1a13", deep: "#06110c" },
+  { id: "burgundy-velvet", name: "Μπορντό βελούδο", src: "/brand/alt/backdrops/burgundy-velvet-v2.webp", tone: "dark", base: "#3a0105", deep: "#240003", muted: "#c79a90" },
 ]
 
 /** Curated pairings, always composed live from one emblem layer over one backdrop layer. */
 export const ALT_PRESETS: AltPreset[] = [
-  { id: "gallery", name: "Gallery", emblemId: "polished-gold", backdropId: "cream-paper", note: "Καθαρό, φωτεινό, για ανακοινώσεις και έντυπα." },
-  { id: "lamplight", name: "Lamplight", emblemId: "antique-gold", backdropId: "amber-slate", note: "Ένας προβολέας από ψηλά, σαν να βρήκες το σήμα στο σκοτάδι." },
-  { id: "bronze-vault", name: "Bronze Vault", emblemId: "brushed-gold", backdropId: "bronze-slate", note: "Ζεστό χάλκινο φως από τη γωνία, μυστήριο θησαυρού." },
-  { id: "emerald-club", name: "Emerald Club", emblemId: "weathered-gold", backdropId: "emerald-velvet", note: "Βελούδο και χρυσός, βραδινό κυνήγι με dress code." },
+  { id: "gallery", name: "Gallery", emblemId: "brushed-gold", backdropId: "beige-paper", note: "Καθαρό, φωτεινό, για ανακοινώσεις και έντυπα." },
+  { id: "bronze-vault", name: "Bronze Vault", emblemId: "brushed-gold", backdropId: "bronze-charcoal", note: "Ζεστό χάλκινο φως από τη γωνία, μυστήριο θησαυρού." },
+  { id: "emerald-club", name: "Emerald Club", emblemId: "weathered-brass", backdropId: "emerald-green", note: "Ορείχαλκος σε σκούρο πράσινο, βραδινό κυνήγι με dress code." },
+  { id: "marble-noir", name: "Marble Noir", emblemId: "pewter", backdropId: "charcoal-marble", note: "Σαμπανί μέταλλο σε μαύρο μάρμαρο με φλέβες, κομψό και ήσυχο." },
   { id: "iron-cellar", name: "Iron Cellar", emblemId: "weathered-steel", backdropId: "charcoal-slate", note: "Κρύο ατσάλι σε ανθρακί πέτρα, για πιο σκοτεινό σενάριο." },
-  { id: "marble-court", name: "Marble Court", emblemId: "dark-marble", backdropId: "beige-stone", note: "Μάρμαρο σε πέτρα, αρχαιολογικό, ήρεμο." },
-  { id: "carnival-night", name: "Carnival Night", emblemId: "carnival", backdropId: "plum-velvet", note: "Το μόνο έμβλημα με αξεσουάρ: η μάσκα κάνει το σήμα θεματικό." },
+  { id: "concrete-court", name: "Concrete Court", emblemId: "dark-stone", backdropId: "concrete", note: "Σκούρα πέτρα σε φθαρμένο μπετό, αστικό και αρχαιολογικό μαζί." },
+  { id: "carnival-night", name: "Carnival Night", emblemId: "carnival", backdropId: "burgundy-velvet", note: "Το μόνο έμβλημα με αξεσουάρ: η μάσκα και τα φτερά πάνω σε μπορντό." },
 ]
 
 export const ALT_COMBO_COUNT = ALT_EMBLEMS.length * ALT_BACKDROPS.length
@@ -70,8 +75,8 @@ export function getAltBackdrop(id: string): AltBackdrop {
 export function altComboCssVars(emblem: AltEmblem, backdrop: AltBackdrop): Record<string, string> {
   const light = backdrop.tone === "light"
   const ink = light ? "#1d1813" : "#efe7da"
-  const muted = light ? "#5d5347" : "#b3a896"
-  const primary = light && emblem.id === "weathered-steel" ? "#4b5058" : emblem.accent
+  const muted = backdrop.muted ?? (light ? "#5d5347" : "#b3a896")
+  const primary = light ? emblem.accentOnLight : emblem.accent
   return {
     "--background": backdrop.base,
     "--foreground": ink,

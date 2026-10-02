@@ -46,15 +46,20 @@ export function BrandVote({ votes, deviceVoter }: Props) {
   }
 
   useEffect(() => {
+    if (preview !== "new") return
+    setThemeId("noir")
+    setCycleThemes(true)
+  }, [preview])
+
+  useEffect(() => {
     if (preview !== "new" || !cycleThemes) return
-    const timer = window.setInterval(() => {
-      setThemeId((current) => {
-        const index = HUNT_THEMES.findIndex((t) => t.id === current)
-        return HUNT_THEMES[(index + 1) % HUNT_THEMES.length].id
-      })
-    }, 3800)
-    return () => window.clearInterval(timer)
-  }, [preview, cycleThemes])
+    const delay = themeId === "noir" ? 6500 : 3800
+    const timer = window.setTimeout(() => {
+      const index = HUNT_THEMES.findIndex((t) => t.id === themeId)
+      setThemeId(HUNT_THEMES[(index + 1) % HUNT_THEMES.length].id)
+    }, delay)
+    return () => window.clearTimeout(timer)
+  }, [preview, cycleThemes, themeId])
 
   useEffect(() => {
     if (preview !== "neutral") return
@@ -96,8 +101,10 @@ export function BrandVote({ votes, deviceVoter }: Props) {
     const root = document.documentElement
     const vars = themeToCssVars(theme)
     for (const [name, value] of Object.entries(vars)) root.style.setProperty(name, value)
+    root.dataset.huntTheme = theme.id
     return () => {
       for (const name of Object.keys(vars)) root.style.removeProperty(name)
+      delete root.dataset.huntTheme
     }
   }, [preview, theme])
 
