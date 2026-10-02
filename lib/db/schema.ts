@@ -21,6 +21,15 @@ export const user = pgTable("user", {
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 })
 
+// Team brand vote. Created on demand by lib/brand-vote.ts; listed here for reference.
+export const brandVote = pgTable("brand_vote", {
+  voterName: text("voter_name").primaryKey(),
+  choice: text("choice").notNull(),
+  deviceHash: text("device_hash").notNull().unique(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+})
+
 export const session = pgTable("session", {
   id: text("id").primaryKey(),
   expiresAt: timestamp("expiresAt").notNull(),

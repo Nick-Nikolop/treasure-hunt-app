@@ -84,8 +84,38 @@ export const HUNT_THEMES: HuntTheme[] = [
   },
 ]
 
-export const DEFAULT_THEME_ID = "default"
+export const DEFAULT_THEME_ID = "relic"
+
+/** Photographic renders of the mark, keyed by theme id. */
+export const THEME_RENDERS: Partial<Record<string, string>> = {
+  relic: "/brand/reference-relic.png",
+  default: "/brand/reference-default.png",
+  carnival: "/brand/reference-carnival.png",
+  mystery: "/brand/reference-mystery.png",
+  noir: "/brand/reference-noir.png",
+  steel: "/brand/reference-steel.png",
+}
 
 export function getTheme(id: string): HuntTheme {
   return HUNT_THEMES.find((t) => t.id === id) ?? HUNT_THEMES[0]
+}
+
+/** Maps a hunt theme onto the site's design tokens so a whole page can wear it. */
+export function themeToCssVars(theme: HuntTheme): Record<string, string> {
+  const primary = theme.accent ?? theme.metal[1]
+  return {
+    "--background": theme.surface,
+    "--foreground": theme.ink,
+    "--card": theme.surfaceDeep,
+    "--card-foreground": theme.ink,
+    "--popover": theme.surface,
+    "--popover-foreground": theme.ink,
+    "--primary": primary,
+    "--primary-foreground": theme.surface,
+    "--muted": theme.surfaceDeep,
+    "--muted-foreground": theme.muted,
+    "--border": `${theme.muted}66`,
+    "--input": `${theme.muted}66`,
+    "--ring": primary,
+  }
 }

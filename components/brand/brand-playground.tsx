@@ -3,7 +3,7 @@
 import Image from "next/image"
 import { useState } from "react"
 import { ThLockup, ThMark } from "@/components/brand/th-mark"
-import { DEFAULT_THEME_ID, HUNT_THEMES, getTheme, type HuntTheme } from "@/lib/brand/themes"
+import { DEFAULT_THEME_ID, HUNT_THEMES, THEME_RENDERS, getTheme, type HuntTheme } from "@/lib/brand/themes"
 
 export function BrandPlayground() {
   const [activeId, setActiveId] = useState(DEFAULT_THEME_ID)
@@ -19,7 +19,20 @@ export function BrandPlayground() {
           Brand system &middot; internal preview
         </p>
 
-        <ThLockup theme={theme} size={240} />
+        <div className="flex flex-col items-center gap-8 md:flex-row md:gap-14">
+          <ThLockup theme={theme} size={240} />
+          {THEME_RENDERS[theme.id] && (
+            <Image
+              key={theme.id}
+              src={THEME_RENDERS[theme.id] as string}
+              alt={`${theme.name} render of the TH mark`}
+              width={1254}
+              height={1254}
+              priority
+              className="h-auto w-64 rounded-2xl shadow-2xl md:w-80"
+            />
+          )}
+        </div>
 
         <p className="max-w-[52ch] text-pretty text-center text-[15px] leading-relaxed md:text-base" style={{ color: theme.muted }}>
           {theme.mood}
@@ -87,7 +100,10 @@ export function BrandPlayground() {
           Your renders, for comparison
         </h2>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Reference src="/brand/reference-default.png" label="Default, The Next Chapter" />
+          <div className="md:col-span-2">
+            <Reference src="/brand/reference-relic.png" label="Relic, Carved in Stone (the default)" />
+          </div>
+          <Reference src="/brand/reference-default.png" label="Brass, The Next Chapter" />
           <Reference src="/brand/reference-carnival.png" label="Carnival Mystery, with the mask costume" />
         </div>
       </section>
