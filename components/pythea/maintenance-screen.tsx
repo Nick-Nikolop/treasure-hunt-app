@@ -56,12 +56,11 @@ const SPARKS = [
   { x: "38px", y: "-18px" },
 ]
 
-function ForgeAnimation({ onTap }: { onTap: () => void }) {
+function ForgeAnimation() {
   return (
     <div
-      onClick={onTap}
       aria-hidden
-      className="relative mx-auto h-48 w-64 cursor-default select-none"
+      className="relative mx-auto h-48 w-64 select-none"
     >
       <div className="absolute left-32 top-20 z-20 size-1 -translate-x-1/2">
         {SPARKS.map((s, i) => (
@@ -156,10 +155,12 @@ export function MaintenanceScreen() {
           </p>
 
           <div className="mt-4">
-            <ForgeAnimation onTap={handleTap} />
+            <ForgeAnimation />
           </div>
 
-          <h1 className="mt-2 text-balance font-serif text-3xl font-bold leading-tight text-foreground sm:text-4xl">
+          <h1
+            onClick={handleTap}
+            className="mt-2 cursor-default select-none text-balance font-serif text-3xl font-bold leading-tight text-foreground sm:text-4xl">
             Υπό συντήρηση
           </h1>
           <p className="mx-auto mt-3 max-w-[46ch] text-pretty font-serif text-sm leading-relaxed text-muted-foreground">
