@@ -379,12 +379,12 @@ function RecommendBadge({
 }
 
 const GALLERY: { id: string; label: string; note: string }[] = [
-  { id: "noir", label: "Noir", note: "Παλιός χρυσός πάνω σε ραγισμένη σκοτεινή πέτρα" },
-  { id: "default", label: "Brass", note: "Βουρτσισμένος χρυσός πάνω σε μπεζ χαρτί" },
+  { id: "noir", label: "Noir", note: "Παλιός χρυσός πάνω σε σκούρο καφέ" },
+  { id: "default", label: "Brass", note: "Βουρτσισμένος χρυσός πάνω σε μπεζ" },
   { id: "mystery", label: "Mystery", note: "Ορείχαλκος πάνω σε σκούρο πράσινο" },
-  { id: "carnival", label: "Carnival", note: "Χρυσός με μάσκα πάνω σε μπορντό βελούδο" },
-  { id: "relic", label: "Relic", note: "Σκούρα πέτρα πάνω σε φθαρμένο μπετό" },
-  { id: "steel", label: "Steel", note: "Ατσάλι πάνω σε σχιστόλιθο" },
+  { id: "carnival", label: "Carnival", note: "Χρυσός με μάσκα πάνω σε μπορντό" },
+  { id: "relic", label: "Relic", note: "Σκούρα πέτρα πάνω σε ζεστό γκρι" },
+  { id: "steel", label: "Steel", note: "Ατσάλι πάνω σε ανθρακί" },
 ]
 
 function ThemeGallery({ activeId, onPick }: { activeId: string; onPick: (id: string) => void }) {
@@ -529,7 +529,7 @@ function PairedIdentityReel() {
               shown ? "opacity-100" : "opacity-0",
             )}
           >
-            <Image src={pair.backdrop.src} alt="" fill sizes="(min-width: 768px) 50vw, 100vw" className="object-cover" />
+            <div className="absolute inset-0" style={{ backgroundColor: pair.backdrop.base }} />
             <div className="absolute inset-0 flex items-center justify-center p-8">
               <Image
                 src={pair.emblem.src}

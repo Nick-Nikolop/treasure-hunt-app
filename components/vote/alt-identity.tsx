@@ -57,7 +57,6 @@ export function ComboArt({
 }) {
   return (
     <div className={cn("relative overflow-hidden", className)} style={{ backgroundColor: backdrop.base }}>
-      <Image src={backdrop.src} alt="" fill sizes={sizes} className="object-cover" priority={priority} />
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="relative aspect-square" style={{ width: `${emblemScale * 100}%`, filter: emblemShadow(backdrop) }}>
           <Image
@@ -545,7 +544,7 @@ function MixLab({ combo, onComboChange }: { combo: AltCombo; onComboChange: (com
                     exit={{ opacity: 0, transition: { delay: 0.45, duration: 0.01 } }}
                     transition={{ duration: busy === "shuffle" ? 0.25 : 0.55, ease: [0.65, 0, 0.35, 1] }}
                   >
-                    <Image src={backdrop.src} alt="" fill sizes="(min-width: 1024px) 540px, 100vw" className="object-cover" />
+                    <div className="absolute inset-0" style={{ backgroundColor: backdrop.base }} />
                   </motion.div>
                 </AnimatePresence>
               </motion.div>
@@ -946,7 +945,7 @@ function FullscreenViewer({
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.6 }}
               >
-                <Image src={backdrop.src} alt="" fill sizes="100vw" className="object-cover" priority />
+                <div className="absolute inset-0" style={{ backgroundColor: backdrop.base }} />
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 pb-32">
                   <motion.div
                     initial={{ scale: 0.85, rotateY: -40, opacity: 0 }}
