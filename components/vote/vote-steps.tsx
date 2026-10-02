@@ -200,10 +200,10 @@ export function OldIdentityStep() {
         </StepIntro>
         <div className="flex aspect-square items-center justify-center rounded-2xl border border-border bg-card p-8">
           <Image
-            src="/compass-icon.png"
+            src="/images/the-hunt-final-logo.png"
             alt="Το έμβλημα της πυξίδας της πρώτης διοργάνωσης"
-            width={852}
-            height={866}
+            width={2200}
+            height={2200}
             className="h-auto w-full max-w-64"
             priority
           />
@@ -591,7 +591,13 @@ export function VoteStep({
       step: 1,
       visual: (
         <div className="flex h-full items-center justify-center p-6">
-          <Image src="/compass-icon.png" alt="" width={852} height={866} className="h-full w-auto object-contain" />
+          <Image
+            src="/images/the-hunt-final-logo.png"
+            alt=""
+            width={2200}
+            height={2200}
+            className="h-full w-auto object-contain"
+          />
         </div>
       ),
     },
