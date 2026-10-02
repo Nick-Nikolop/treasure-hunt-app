@@ -86,14 +86,14 @@ export const HUNT_THEMES: HuntTheme[] = [
 
 export const DEFAULT_THEME_ID = "relic"
 
-/** Photographic renders of the mark, keyed by theme id. */
-export const THEME_RENDERS: Partial<Record<string, string>> = {
-  relic: "/brand/reference-relic.png",
-  default: "/brand/reference-default.png",
-  carnival: "/brand/reference-carnival.png",
-  mystery: "/brand/reference-mystery.png",
-  noir: "/brand/reference-noir.png",
-  steel: "/brand/reference-steel.png",
+/** Each theme is shown as one emblem layer over one backdrop layer (ids from lib/brand/alt-identity). */
+export const THEME_COMBOS: Partial<Record<string, { emblemId: string; backdropId: string }>> = {
+  relic: { emblemId: "dark-marble", backdropId: "beige-stone" },
+  default: { emblemId: "polished-gold", backdropId: "bronze-slate" },
+  carnival: { emblemId: "carnival", backdropId: "plum-velvet" },
+  mystery: { emblemId: "weathered-gold", backdropId: "emerald-velvet" },
+  noir: { emblemId: "antique-gold", backdropId: "amber-slate" },
+  steel: { emblemId: "weathered-steel", backdropId: "charcoal-slate" },
 }
 
 export function getTheme(id: string): HuntTheme {

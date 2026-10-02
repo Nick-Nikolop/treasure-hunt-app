@@ -7,7 +7,8 @@ import Link from "next/link"
 import { ArrowLeft, ArrowRight, Check, ExternalLink, Eye, Pause, Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ThLockup, ThMark } from "@/components/brand/th-mark"
-import { HUNT_THEMES, THEME_RENDERS, type HuntTheme } from "@/lib/brand/themes"
+import { HUNT_THEMES, THEME_COMBOS, type HuntTheme } from "@/lib/brand/themes"
+import { ComboArt } from "@/components/vote/alt-identity"
 import { CHOICE_LABEL, type VoteChoice, type Voter } from "@/lib/brand-vote-shared"
 import { cn } from "@/lib/utils"
 
@@ -134,16 +135,15 @@ function Swatch({ color, name, role }: { color: string; name: string; role: stri
 }
 
 export function NewIdentityVisual({ theme }: { theme: HuntTheme }) {
-  const render = THEME_RENDERS[theme.id]
-  if (render) {
+  const combo = THEME_COMBOS[theme.id]
+  if (combo) {
     return (
-      <Image
+      <ComboArt
         key={theme.id}
-        src={render}
-        alt={`Το μονόγραμμα TH στο θέμα ${theme.name}`}
-        fill
+        emblem={getAltEmblem(combo.emblemId)}
+        backdrop={getAltBackdrop(combo.backdropId)}
         sizes="(min-width: 768px) 400px, 100vw"
-        className="object-cover animate-in fade-in duration-700"
+        className="h-full w-full animate-in fade-in duration-700"
         priority
       />
     )
@@ -348,8 +348,8 @@ function ThemeGallery({ activeId, onPick }: { activeId: string; onPick: (id: str
   return (
     <section aria-label="Το ίδιο λογότυπο σε τρία θέματα" className="grid gap-4 sm:grid-cols-3">
       {GALLERY.map((item) => {
-        const src = THEME_RENDERS[item.id]
-        if (!src) return null
+        const combo = THEME_COMBOS[item.id]
+        if (!combo) return null
         const active = item.id === activeId
         return (
           <button
@@ -362,15 +362,12 @@ function ThemeGallery({ activeId, onPick }: { activeId: string; onPick: (id: str
               active ? "border-primary" : "border-border hover:border-primary/50",
             )}
           >
-            <span className="relative aspect-square overflow-hidden">
-              <Image
-                src={src}
-                alt={`Το λογότυπο TH στο θέμα ${item.label}`}
-                fill
-                sizes="(min-width: 640px) 33vw, 100vw"
-                className="object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-            </span>
+            <ComboArt
+              emblem={getAltEmblem(combo.emblemId)}
+              backdrop={getAltBackdrop(combo.backdropId)}
+              sizes="(min-width: 640px) 33vw, 100vw"
+              className="aspect-square transition-transform duration-500 group-hover:scale-105"
+            />
             <span className="flex flex-col gap-0.5 p-4">
               <span className="text-lg font-bold text-card-foreground">{item.label}</span>
               <span className="font-sans text-sm text-muted-foreground">{item.note}</span>

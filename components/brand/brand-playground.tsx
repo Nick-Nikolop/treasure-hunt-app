@@ -3,7 +3,9 @@
 import Image from "next/image"
 import { useState } from "react"
 import { ThLockup, ThMark } from "@/components/brand/th-mark"
-import { DEFAULT_THEME_ID, HUNT_THEMES, THEME_RENDERS, getTheme, type HuntTheme } from "@/lib/brand/themes"
+import { DEFAULT_THEME_ID, HUNT_THEMES, THEME_COMBOS, getTheme, type HuntTheme } from "@/lib/brand/themes"
+import { getAltBackdrop, getAltEmblem } from "@/lib/brand/alt-identity"
+import { ComboArt } from "@/components/vote/alt-identity"
 
 export function BrandPlayground() {
   const [activeId, setActiveId] = useState(DEFAULT_THEME_ID)
@@ -21,15 +23,14 @@ export function BrandPlayground() {
 
         <div className="flex flex-col items-center gap-8 md:flex-row md:gap-14">
           <ThLockup theme={theme} size={240} />
-          {THEME_RENDERS[theme.id] && (
-            <Image
+          {THEME_COMBOS[theme.id] && (
+            <ComboArt
               key={theme.id}
-              src={THEME_RENDERS[theme.id] as string}
-              alt={`${theme.name} render of the TH mark`}
-              width={1254}
-              height={1254}
+              emblem={getAltEmblem(THEME_COMBOS[theme.id]!.emblemId)}
+              backdrop={getAltBackdrop(THEME_COMBOS[theme.id]!.backdropId)}
+              sizes="320px"
               priority
-              className="h-auto w-64 rounded-2xl shadow-2xl md:w-80"
+              className="aspect-square w-64 rounded-2xl shadow-2xl md:w-80"
             />
           )}
         </div>
@@ -95,18 +96,6 @@ export function BrandPlayground() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 pb-24">
-        <h2 className="mb-6 text-sm font-semibold uppercase tracking-[0.24em]" style={{ color: theme.muted }}>
-          Your renders, for comparison
-        </h2>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div className="md:col-span-2">
-            <Reference src="/brand/reference-relic.png" label="Relic, Carved in Stone (the default)" />
-          </div>
-          <Reference src="/brand/reference-default.png" label="Brass, The Next Chapter" />
-          <Reference src="/brand/reference-carnival.png" label="Carnival Mystery, with the mask costume" />
-        </div>
-      </section>
     </main>
   )
 }
@@ -151,13 +140,4 @@ function ThemePicker({
   )
 }
 
-function Reference({ src, label }: { src: string; label: string }) {
-  return (
-    <figure className="flex flex-col gap-3">
-      <div className="overflow-hidden rounded-2xl">
-        <Image src={src} alt={label} width={1254} height={1254} className="h-auto w-full" />
-      </div>
-      <figcaption className="text-sm opacity-70">{label}</figcaption>
-    </figure>
-  )
-}
+

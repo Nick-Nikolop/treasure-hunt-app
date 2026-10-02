@@ -224,8 +224,8 @@ function PresetReel({
   return (
     <section aria-label="Έτοιμοι συνδυασμοί" className="flex flex-col gap-6">
       <SectionLabel kicker="Τα έτοιμα" title={`${ALT_PRESETS.length} συνδυασμοί που ήδη σχεδίασα`}>
-        Αυτά είναι τα τελικά renders. Περνάνε μόνα τους. Πάτα ένα όνομα για να σταθείς εκεί, ή την εικόνα για πλήρη
-        οθόνη.
+        Κάθε ένας χτίζεται ζωντανά από ένα έμβλημα πάνω σε ένα φόντο. Περνάνε μόνοι τους. Πάτα ένα όνομα για να
+        σταθείς εκεί, ή την εικόνα για πλήρη οθόνη.
       </SectionLabel>
 
       <div
@@ -248,12 +248,11 @@ function PresetReel({
               exit={{ opacity: 0, scale: 0.98 }}
               transition={{ opacity: { duration: 0.9 }, scale: { duration: reduce ? 0 : DURATION / 1000 + 0.9, ease: "linear" } }}
             >
-              <Image
-                src={preset.src}
-                alt={`Το έμβλημα στο preset ${preset.name}`}
-                fill
+              <ComboArt
+                emblem={getAltEmblem(preset.emblemId)}
+                backdrop={getAltBackdrop(preset.backdropId)}
                 sizes="(min-width: 768px) 560px, 100vw"
-                className="object-cover"
+                className="h-full w-full"
                 priority={index === 0}
               />
             </motion.div>
@@ -294,9 +293,13 @@ function PresetReel({
                       active ? "border-primary bg-primary/10" : "border-border hover:border-primary/50",
                     )}
                   >
-                    <span className="relative size-10 shrink-0 overflow-hidden rounded-md">
-                      <Image src={p.src} alt="" fill sizes="40px" className="object-cover" />
-                    </span>
+                    <ComboArt
+                      emblem={getAltEmblem(p.emblemId)}
+                      backdrop={getAltBackdrop(p.backdropId)}
+                      sizes="40px"
+                      emblemScale={0.78}
+                      className="size-10 shrink-0 rounded-md"
+                    />
                     <span className="flex min-w-0 flex-col">
                       <span className="font-sans text-sm font-bold text-foreground">{p.name}</span>
                       <span className="truncate font-sans text-xs text-muted-foreground">{p.note}</span>
@@ -862,7 +865,6 @@ function viewerItems(mode: "presets" | "all") {
       title: p.name,
       sub: `${getAltEmblem(p.emblemId).name} + ${getAltBackdrop(p.backdropId).name}`,
       combo: { emblemId: p.emblemId, backdropId: p.backdropId },
-      render: p.src,
     }))
   }
   return ALT_EMBLEMS.flatMap((e) =>
@@ -871,7 +873,6 @@ function viewerItems(mode: "presets" | "all") {
       title: `${e.name} + ${b.name}`,
       sub: `${e.material} · σκηνή ${b.tone === "light" ? "φωτεινή" : "σκοτεινή"}`,
       combo: { emblemId: e.id, backdropId: b.id },
-      render: null as string | null,
     })),
   )
 }
@@ -945,44 +946,24 @@ function FullscreenViewer({
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.6 }}
               >
-                {item.render ? (
-                  <>
-                    <Image src={item.render} alt="" fill sizes="100vw" className="scale-110 object-cover opacity-50 blur-2xl" />
-                    <div className="absolute inset-0 flex items-center justify-center p-4 pb-40 md:pb-32">
-                      <div className="relative aspect-square h-full max-h-full max-w-full">
-                        <Image
-                          src={item.render}
-                          alt={item.title}
-                          fill
-                          sizes="100vh"
-                          className="rounded-xl object-contain shadow-2xl"
-                          priority
-                        />
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <Image src={backdrop.src} alt="" fill sizes="100vw" className="object-cover" priority />
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 pb-32">
-                      <motion.div
-                        initial={{ scale: 0.85, rotateY: -40, opacity: 0 }}
-                        animate={{ scale: 1, rotateY: 0, opacity: 1 }}
-                        transition={{ duration: 0.7, ease: "easeOut" }}
-                        className="relative aspect-square w-[min(62vh,78vw)]"
-                        style={{ filter: emblemShadow(backdrop) }}
-                      >
-                        <Image src={emblem.src} alt={item.title} fill sizes="62vh" className="object-contain" priority />
-                      </motion.div>
-                      <p
-                        className="font-sans text-lg font-bold uppercase tracking-[0.5em] md:text-2xl"
-                        style={{ color: backdrop.tone === "light" ? "#3a2f22" : emblem.accent }}
-                      >
-                        The Hunt
-                      </p>
-                    </div>
-                  </>
-                )}
+                <Image src={backdrop.src} alt="" fill sizes="100vw" className="object-cover" priority />
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 pb-32">
+                  <motion.div
+                    initial={{ scale: 0.85, rotateY: -40, opacity: 0 }}
+                    animate={{ scale: 1, rotateY: 0, opacity: 1 }}
+                    transition={{ duration: 0.7, ease: "easeOut" }}
+                    className="relative aspect-square w-[min(62vh,78vw)]"
+                    style={{ filter: emblemShadow(backdrop) }}
+                  >
+                    <Image src={emblem.src} alt={item.title} fill sizes="62vh" className="object-contain" priority />
+                  </motion.div>
+                  <p
+                    className="font-sans text-lg font-bold uppercase tracking-[0.5em] md:text-2xl"
+                    style={{ color: backdrop.tone === "light" ? "#3a2f22" : emblem.accent }}
+                  >
+                    The Hunt
+                  </p>
+                </div>
               </motion.div>
             </AnimatePresence>
 
@@ -990,7 +971,7 @@ function FullscreenViewer({
               <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
                   <p className="font-sans text-xs uppercase tracking-[0.2em] text-white/70">
-                    {state?.mode === "presets" ? "Έτοιμο render" : "Ζωντανή σύνθεση"} · {(state?.index ?? 0) % items.length + 1} /{" "}
+                    {state?.mode === "presets" ? "Έτοιμος συνδυασμός" : "Ζωντανή σύνθεση"} · {(state?.index ?? 0) % items.length + 1} /{" "}
                     {items.length}
                   </p>
                   <p className="text-2xl font-bold md:text-3xl">{item.title}</p>

@@ -20,7 +20,6 @@ export type AltBackdrop = {
 export type AltPreset = {
   id: string
   name: string
-  src: string
   emblemId: string
   backdropId: string
   note: string
@@ -46,16 +45,15 @@ export const ALT_BACKDROPS: AltBackdrop[] = [
   { id: "plum-velvet", name: "Μωβ βελούδο", src: "/brand/alt/backdrops/plum-velvet.webp", tone: "dark", base: "#2c0a24", deep: "#1c0617" },
 ]
 
-/** The eight pairings drawn as finished renders. Every one of them can also be rebuilt from the two layers. */
+/** Curated pairings, always composed live from one emblem layer over one backdrop layer. */
 export const ALT_PRESETS: AltPreset[] = [
-  { id: "gallery", name: "Gallery", src: "/brand/alt/presets/gallery.webp", emblemId: "polished-gold", backdropId: "cream-paper", note: "Καθαρό, φωτεινό, για ανακοινώσεις και έντυπα." },
-  { id: "lamplight", name: "Lamplight", src: "/brand/alt/presets/lamplight.webp", emblemId: "antique-gold", backdropId: "amber-slate", note: "Ένας προβολέας από ψηλά, σαν να βρήκες το σήμα στο σκοτάδι." },
-  { id: "bronze-vault", name: "Bronze Vault", src: "/brand/alt/presets/bronze-vault.webp", emblemId: "brushed-gold", backdropId: "bronze-slate", note: "Ζεστό χάλκινο φως από τη γωνία, μυστήριο θησαυρού." },
-  { id: "emerald-club", name: "Emerald Club", src: "/brand/alt/presets/emerald-club.webp", emblemId: "weathered-gold", backdropId: "emerald-velvet", note: "Βελούδο και χρυσός, βραδινό κυνήγι με dress code." },
-  { id: "iron-cellar", name: "Iron Cellar", src: "/brand/alt/presets/iron-cellar.webp", emblemId: "weathered-steel", backdropId: "charcoal-slate", note: "Κρύο ατσάλι σε ανθρακί πέτρα, για πιο σκοτεινό σενάριο." },
-  { id: "marble-court", name: "Marble Court", src: "/brand/alt/presets/marble-court.webp", emblemId: "dark-marble", backdropId: "beige-stone", note: "Μάρμαρο σε πέτρα, αρχαιολογικό, ήρεμο." },
-  { id: "marble-sunbeam", name: "Marble Sunbeam", src: "/brand/alt/presets/marble-sunbeam.webp", emblemId: "dark-marble", backdropId: "beige-stone", note: "Ίδιος συνδυασμός, άλλο φως: δείχνει ότι και ο φωτισμός είναι επιλογή." },
-  { id: "carnival-night", name: "Carnival Night", src: "/brand/alt/presets/carnival-night.webp", emblemId: "carnival", backdropId: "plum-velvet", note: "Το μόνο έμβλημα με αξεσουάρ: η μάσκα κάνει το σήμα θεματικό." },
+  { id: "gallery", name: "Gallery", emblemId: "polished-gold", backdropId: "cream-paper", note: "Καθαρό, φωτεινό, για ανακοινώσεις και έντυπα." },
+  { id: "lamplight", name: "Lamplight", emblemId: "antique-gold", backdropId: "amber-slate", note: "Ένας προβολέας από ψηλά, σαν να βρήκες το σήμα στο σκοτάδι." },
+  { id: "bronze-vault", name: "Bronze Vault", emblemId: "brushed-gold", backdropId: "bronze-slate", note: "Ζεστό χάλκινο φως από τη γωνία, μυστήριο θησαυρού." },
+  { id: "emerald-club", name: "Emerald Club", emblemId: "weathered-gold", backdropId: "emerald-velvet", note: "Βελούδο και χρυσός, βραδινό κυνήγι με dress code." },
+  { id: "iron-cellar", name: "Iron Cellar", emblemId: "weathered-steel", backdropId: "charcoal-slate", note: "Κρύο ατσάλι σε ανθρακί πέτρα, για πιο σκοτεινό σενάριο." },
+  { id: "marble-court", name: "Marble Court", emblemId: "dark-marble", backdropId: "beige-stone", note: "Μάρμαρο σε πέτρα, αρχαιολογικό, ήρεμο." },
+  { id: "carnival-night", name: "Carnival Night", emblemId: "carnival", backdropId: "plum-velvet", note: "Το μόνο έμβλημα με αξεσουάρ: η μάσκα κάνει το σήμα θεματικό." },
 ]
 
 export const ALT_COMBO_COUNT = ALT_EMBLEMS.length * ALT_BACKDROPS.length
