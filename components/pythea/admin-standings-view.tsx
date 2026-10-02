@@ -818,7 +818,7 @@ export function AdminStandingsView({
             onClick={handleTitleTap}
             className="mt-2 select-none text-balance font-serif text-3xl font-bold leading-tight text-foreground sm:text-4xl"
           >
-            Το ταξίδι του Πυθέα
+            Το ταξίδι του Πυθέα!
           </h1>
 
           {isAdmin ? (
