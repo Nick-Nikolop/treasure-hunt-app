@@ -583,7 +583,10 @@ export function VoteStep({
                 <h3 className="text-xl font-bold text-card-foreground">{CHOICE_LABEL[choice]}</h3>
                 {choice === "new" && (
                   <p className="font-sans text-sm leading-relaxed text-card-foreground/75">
-                    Λεπτομέρειες όπως το μέγεθος και η θέση των γραμμάτων N, W, E, S μπορούν να οριστούν στη συνέχεια.
+                    Λεπτομέρειες όπως το μέγεθος και η θέση των γραμμάτων N, W, E, S ή η υφή (ματ, μεταλλική, πέτρινη
+                    κ.λπ.) μπορούν να οριστούν στη συνέχεια. Προτείνουμε{" "}
+                    <span className="font-semibold text-card-foreground">ματ υφή</span>, γιατί ταιριάζει με τη
+                    μινιμαλιστική αισθητική που είναι ο στόχος μας.
                   </p>
                 )}
                 {voterList(byChoice[choice])}
