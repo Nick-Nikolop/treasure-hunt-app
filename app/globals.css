@@ -607,3 +607,8 @@ body {
     animation: ribbon-sway 5.5s ease-in-out infinite;
   }
 }
+
+.font-brand,
+.font-brand * {
+  font-family: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+}

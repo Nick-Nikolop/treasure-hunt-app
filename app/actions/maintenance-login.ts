@@ -3,7 +3,7 @@
 import { eq, sql } from "drizzle-orm"
 import { db } from "@/lib/db"
 import { user } from "@/lib/db/schema"
-import { isBootstrapEmail } from "@/lib/admin"
+import { isAiEyeEmail, isBootstrapEmail } from "@/lib/admin"
 import { SITE_MAINTENANCE } from "@/lib/maintenance"
 
 export type MaintenanceLoginVerdict = "ok" | "admin" | "denied"
@@ -17,7 +17,7 @@ export type MaintenanceLoginVerdict = "ok" | "admin" | "denied"
 export async function checkMaintenanceLogin(rawEmail: string): Promise<MaintenanceLoginVerdict> {
   const email = String(rawEmail ?? "").trim().toLowerCase()
   if (!email || email.length > 320) return "denied"
-  if (!SITE_MAINTENANCE || isBootstrapEmail(email)) return "ok"
+  if (!SITE_MAINTENANCE || isBootstrapEmail(email) || isAiEyeEmail(email)) return "ok"
 
   const rows = await db
     .select({ role: user.role })

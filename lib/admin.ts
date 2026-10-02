@@ -18,6 +18,18 @@ export function isBootstrapEmail(email: string | null | undefined): boolean {
   return !!email && email.toLowerCase() === BOOTSTRAP_SUPERADMIN_EMAIL
 }
 
+/**
+ * The assistant's own superadmin ("AI EYE"), provisioned by
+ * `scripts/ai-eye.mjs` with its email pre-verified. It is the only account
+ * besides the founder that passes the site-wide maintenance gate, so the site
+ * can be inspected without flipping SITE_MAINTENANCE.
+ */
+export const AI_EYE_EMAIL = "ai-eye@thehunt.gr"
+
+export function isAiEyeEmail(email: string | null | undefined): boolean {
+  return !!email && email.toLowerCase() === AI_EYE_EMAIL
+}
+
 export type AdminUser = {
   id: string
   email: string
