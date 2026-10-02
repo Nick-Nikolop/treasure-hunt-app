@@ -590,7 +590,7 @@ export function VoteStep({
       choice: "old",
       step: 1,
       visual: (
-        <div className="flex h-full items-center justify-center p-6">
+        <div className="flex h-full items-center justify-center bg-[#0a0a0a] p-6">
           <Image
             src="/images/the-hunt-final-logo.png"
             alt=""
