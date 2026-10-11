@@ -65,7 +65,7 @@ function Emblem() {
         transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1.8 }}
       >
         <Image
-          src="/brand/alt/emblems/carnival.webp"
+          src="/carnival/logo.webp"
           alt="The Hunt Carnival"
           fill
           priority
@@ -78,8 +78,8 @@ function Emblem() {
           style={{
             backgroundImage: "linear-gradient(110deg, transparent 35%, rgba(255,240,200,0.75) 50%, transparent 65%)",
             backgroundSize: "250% 100%",
-            maskImage: "url(/brand/alt/emblems/carnival.webp)",
-            WebkitMaskImage: "url(/brand/alt/emblems/carnival.webp)",
+            maskImage: "url(/carnival/logo.webp)",
+            WebkitMaskImage: "url(/carnival/logo.webp)",
             maskSize: "contain",
             WebkitMaskSize: "contain",
             maskRepeat: "no-repeat",
