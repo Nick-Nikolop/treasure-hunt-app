@@ -3,7 +3,7 @@
 import Image from "next/image"
 import { motion } from "framer-motion"
 import { useRef } from "react"
-import { BeamClue, EASE, HeroActions, type HeroCopy, HiddenMarks, beamMask, useBeam } from "./shared"
+import { BeamClue, EASE, Grain, HeroActions, type HeroCopy, HiddenMarks, beamMask, useBeam, useTypewriter } from "./shared"
 
 /** Pencil and ink notes on the map that only show under the lamp. */
 const MARKS = [
@@ -12,6 +12,21 @@ const MARKS = [
   { x: "46%", y: "66%", text: "N 37°02′", className: "text-xl", rotate: 6 },
   { x: "62%", y: "44%", text: "X", className: "text-6xl", rotate: 0 },
 ]
+
+/** Typed like a case report; the invisible full copy reserves the space so nothing jumps. */
+function TypedBody({ text }: { text: string }) {
+  const { typed, done } = useTypewriter(text, 1.9)
+  return (
+    <p className="relative max-w-md font-sans text-base leading-relaxed text-foreground/80 text-pretty md:text-lg">
+      <span className="invisible">{text}</span>
+      <span className="absolute inset-0" aria-hidden="true">
+        {typed}
+        {!done && <span className="ml-0.5 inline-block h-[1em] w-[0.5ch] translate-y-[0.15em] animate-pulse bg-brass" />}
+      </span>
+      <span className="sr-only">{text}</span>
+    </p>
+  )
+}
 
 /** Overhead shot of an investigator's desk: the beam is a desk lamp drifting over the map. */
 export function HeroDesk({ copy }: { copy: HeroCopy }) {
@@ -40,6 +55,30 @@ export function HeroDesk({ copy }: { copy: HeroCopy }) {
       />
 
       <BeamClue mask={mask} className="left-[82%] top-[36%]" />
+      <Grain opacity={0.07} />
+
+      <motion.figure
+        className="absolute bottom-[9%] right-[6%] z-[5] hidden w-56 bg-foreground p-2.5 pb-4 shadow-2xl lg:block xl:w-64"
+        initial={{ opacity: 0, y: -80, rotate: -24, scale: 1.2 }}
+        animate={{ opacity: 1, y: 0, rotate: 6, scale: 1 }}
+        transition={{ delay: 2.6, type: "spring", stiffness: 120, damping: 14 }}
+      >
+        <span className="absolute -top-3 left-1/2 h-6 w-20 -translate-x-1/2 -rotate-3 bg-brass/40 backdrop-blur-sm" aria-hidden="true" />
+        <div className="relative aspect-square overflow-hidden">
+          <Image unoptimized src="/landing/scene-clue.webp" alt="" fill sizes="16rem" className="object-cover saturate-[0.7] sepia-[0.25]" />
+        </div>
+        <figcaption className="pt-3 text-center font-serif text-sm italic text-background">{copy.evidenceCaption}</figcaption>
+      </motion.figure>
+
+      <motion.p
+        className="absolute bottom-[12%] right-[26%] z-[5] hidden -rotate-6 font-serif text-2xl italic text-brass lg:block xl:right-[24%]"
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 3.3, duration: 1, ease: EASE }}
+        aria-hidden="true"
+      >
+        {copy.deskNote} ↘
+      </motion.p>
 
       <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col gap-8 px-6 pb-16 pt-28 md:px-10">
         <motion.div
@@ -66,14 +105,7 @@ export function HeroDesk({ copy }: { copy: HeroCopy }) {
           ))}
         </h1>
 
-        <motion.p
-          className="max-w-md font-sans text-lg leading-relaxed text-foreground/80 text-pretty"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.9, duration: 1 }}
-        >
-          {copy.body}
-        </motion.p>
+        <TypedBody text={copy.body} />
         <HeroActions copy={copy} delay={2.1} />
       </div>
     </section>

@@ -3,7 +3,7 @@
 import Image from "next/image"
 import { motion } from "framer-motion"
 import { useRef } from "react"
-import { BeamClue, EASE, HeroActions, type HeroCopy, HiddenMarks, beamMask, toCaps, useBeam } from "./shared"
+import { BeamClue, EASE, Grain, HeroActions, type HeroCopy, HiddenMarks, beamMask, toCaps, useBeam } from "./shared"
 
 const IMAGE = "/landing/hero-aerial.webp"
 
@@ -43,9 +43,13 @@ export function HeroLetters({ copy }: { copy: HeroCopy }) {
       <motion.h1
         className="relative flex flex-1 flex-col items-center justify-center px-4 pb-4 pt-24 text-center md:absolute md:inset-0 md:pb-48 md:pt-16 font-serif font-extrabold leading-[0.9] tracking-tight"
         style={letterFill}
-        initial={{ opacity: 0, letterSpacing: "0.12em" }}
-        animate={{ opacity: 1, letterSpacing: "-0.02em" }}
-        transition={{ delay: 0.3, duration: 2.4, ease: EASE }}
+        initial={{ opacity: 0, letterSpacing: "0.12em", backgroundPosition: "50% 30%" }}
+        animate={{ opacity: 1, letterSpacing: "-0.02em", backgroundPosition: ["50% 30%", "40% 70%", "60% 45%"] }}
+        transition={{
+          opacity: { delay: 0.3, duration: 2.4, ease: EASE },
+          letterSpacing: { delay: 0.3, duration: 2.4, ease: EASE },
+          backgroundPosition: { duration: 26, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" },
+        }}
       >
         <span className="block py-[0.04em] text-[25vw] md:text-[17vw]">{first}</span>
         {rest.map((word) => (
@@ -58,6 +62,7 @@ export function HeroLetters({ copy }: { copy: HeroCopy }) {
       <div className="pointer-events-none absolute inset-0 bg-background/10" aria-hidden="true" />
 
       <BeamClue mask={mask} className="left-[88%] top-[56%]" />
+      <Grain opacity={0.08} />
 
       <div className="relative z-10 flex flex-col items-center gap-5 px-6 pb-10 md:mt-auto md:pb-12 text-center">
         <motion.p

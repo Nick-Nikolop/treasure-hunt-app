@@ -16,8 +16,26 @@ export const LANDING_COPY = {
       hint: "Ακολούθησε το φως. Και κοίτα προσεκτικά: επτά σύμβολα κρύβονται σε αυτή τη σελίδα.",
       scroll: "Κύλισε",
       slate: "Σκηνή 01 · Πλάνο 03",
-      caseLabel: "Ανοιχτή υπόθεση · Αρ. 001",
-    },
+  caseLabel: "Ανοιχτή υπόθεση · Αρ. 001",
+  subtitles: ["— Το είδες κι εσύ;", "— Ήταν εκεί από την αρχή.", "— Κοίτα πιο κοντά."],
+  deskNote: "Κοίτα κάτω από τη λάμπα.",
+  evidenceCaption: "Τεκμήριο Α · το σημάδι",
+  cipher: { decoding: "Αποκρυπτογράφηση", decoded: "Αποκρυπτογραφήθηκε", key: "Κλειδί" },
+  board: {
+  label: "Αναχωρήσεις",
+  columns: ["Ώρα", "Αποστολή", "Κατάσταση"],
+  rows: [
+  ["20:00", "Αποστολή 001", "Επιβίβαση"],
+  ["20:45", "Αποστολή 002", "Στην ώρα"],
+  ["21:30", "Αποστολή 003", "Απόρρητο"],
+  ],
+  },
+  evidence: {
+  label: "Ο τοίχος με τα στοιχεία",
+  photos: ["Το σοκάκι", "Η πρόσοψη", "Το σημάδι", "Η πλατεία"],
+  note: "Ποιος το άφησε;",
+  },
+  },
     film: {
       open: "Ο κόσμος είναι γεμάτος ιστορίες που δεν έχεις ανακαλύψει ακόμα.",
       frames: [
@@ -100,7 +118,7 @@ export const LANDING_COPY = {
     missions: {
       label: "Οι αποστολές",
       title: "Κάθε αποστολή είναι μια νέα ιστορία.",
-      body: "Εδώ θα βρίσκεις όσες αποστολές τρέχουν, με τις ημερομηνίες, τους όρους και τη σελίδα συμμετοχής της καθεμιάς.",
+      body: "Εδώ θα βρίσκεις όσες αποστολές τρέχουν, με τις ημερομηνίες, τους όρους και τη σελίδα ��υμμετοχής της καθεμιάς.",
       fields: { city: "Πόλη", period: "Περίοδος", entry: "Συμμετοχή" },
       file: "Φάκελος",
       next: {
@@ -199,8 +217,26 @@ export const LANDING_COPY = {
       hint: "Follow the light. And look closely: seven symbols are hidden on this page.",
       scroll: "Scroll",
       slate: "Scene 01 · Take 03",
-      caseLabel: "Open case · No. 001",
-    },
+  caseLabel: "Open case · No. 001",
+  subtitles: ["— Did you see it too?", "— It was there all along.", "— Look closer."],
+  deskNote: "Look under the lamp.",
+  evidenceCaption: "Exhibit A · the mark",
+  cipher: { decoding: "Decoding", decoded: "Decoded", key: "Key" },
+  board: {
+  label: "Departures",
+  columns: ["Time", "Hunt", "Status"],
+  rows: [
+  ["20:00", "Hunt 001", "Boarding"],
+  ["20:45", "Hunt 002", "On time"],
+  ["21:30", "Hunt 003", "Classified"],
+  ],
+  },
+  evidence: {
+  label: "The evidence wall",
+  photos: ["The alley", "The facade", "The mark", "The square"],
+  note: "Who left this?",
+  },
+  },
     film: {
       open: "The world is full of stories you have not discovered yet.",
       frames: [

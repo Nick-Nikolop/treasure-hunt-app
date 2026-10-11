@@ -1,9 +1,9 @@
 "use client"
 
 import Image from "next/image"
-import { motion } from "framer-motion"
+import { AnimatePresence, motion } from "framer-motion"
 import { useEffect, useRef, useState } from "react"
-import { BeamClue, EASE, HeroActions, type HeroCopy, HiddenMarks, beamMask, useBeam } from "./shared"
+import { BeamClue, EASE, Grain, HeroActions, type HeroCopy, HiddenMarks, beamMask, useBeam } from "./shared"
 
 const MARKS = [
   { x: "52%", y: "70%", text: "→ 7", className: "text-3xl md:text-4xl", rotate: -6 },
@@ -25,6 +25,57 @@ function Timecode() {
     <span className="tabular-nums">
       00:{pad(Math.floor(s / 60))}:{pad(s % 60)}:{pad(frames % 24)}
     </span>
+  )
+}
+
+function CropMarks() {
+  const corners = ["left-3 top-3 border-l border-t", "right-3 top-3 border-r border-t", "bottom-3 left-3 border-b border-l", "bottom-3 right-3 border-b border-r"]
+  return (
+    <>
+      {corners.map((corner) => (
+        <span key={corner} className={`pointer-events-none absolute size-5 border-brass/60 md:size-7 ${corner}`} aria-hidden="true" />
+      ))}
+      <span className="pointer-events-none absolute left-1/2 top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 opacity-40" aria-hidden="true">
+        <span className="absolute left-1/2 top-0 h-full w-px bg-foreground" />
+        <span className="absolute left-0 top-1/2 h-px w-full bg-foreground" />
+      </span>
+    </>
+  )
+}
+
+/** Film subtitles that come and go over the frame. */
+function Subtitles({ lines }: { lines: string[] }) {
+  const [index, setIndex] = useState(-1)
+  useEffect(() => {
+    let id = 0
+    const first = window.setTimeout(() => {
+      setIndex(0)
+      id = window.setInterval(() => setIndex((value) => (value + 1) % lines.length), 3600)
+    }, 3200)
+    return () => {
+      window.clearTimeout(first)
+      window.clearInterval(id)
+    }
+  }, [lines.length])
+
+  return (
+    <div className="pointer-events-none absolute inset-x-0 bottom-[8%] flex justify-center px-6" aria-hidden="true">
+      <AnimatePresence mode="wait">
+        {index >= 0 && (
+          <motion.p
+            key={index}
+            className="font-sans text-sm text-foreground md:text-lg"
+            style={{ textShadow: "0 1px 2px oklch(0 0 0 / 0.9), 0 0 12px oklch(0 0 0 / 0.8)" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            {lines[index]}
+          </motion.p>
+        )}
+      </AnimatePresence>
+    </div>
   )
 }
 
@@ -60,9 +111,9 @@ export function HeroWidescreen({ copy }: { copy: HeroCopy }) {
       >
         <motion.div
           className="absolute inset-0"
-          initial={{ scale: 1.15 }}
-          animate={{ scale: 1.03 }}
-          transition={{ duration: 10, ease: "easeOut" }}
+          initial={{ scale: 1.15, filter: "blur(14px)" }}
+          animate={{ scale: 1.03, filter: "blur(0px)" }}
+          transition={{ scale: { duration: 10, ease: "easeOut" }, filter: { delay: 0.9, duration: 1.4, ease: EASE } }}
         >
           <Image unoptimized src="/landing/hero-city.webp" alt="" fill priority sizes="100vw" className="object-cover brightness-[0.28] saturate-[0.6]" />
           <div className="absolute inset-0" style={{ maskImage: mask, WebkitMaskImage: mask }} aria-hidden="true">
@@ -71,6 +122,9 @@ export function HeroWidescreen({ copy }: { copy: HeroCopy }) {
           </div>
         </motion.div>
         <BeamClue mask={mask} className="left-[78%] top-[46%]" />
+        <Grain opacity={0.12} />
+        <CropMarks />
+        <Subtitles lines={copy.subtitles} />
         <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-foreground/10" aria-hidden="true" />
       </motion.div>
 
