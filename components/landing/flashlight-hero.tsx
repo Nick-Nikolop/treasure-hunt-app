@@ -18,35 +18,58 @@ const HIDDEN_MARKS = [
 
 export function FlashlightHero({ copy }: { copy: LandingCopy["hero"] }) {
   const stageRef = useRef<HTMLDivElement>(null)
+  const clueRef = useRef<HTMLDivElement>(null)
   const reduceMotion = useReducedMotion()
 
   useEffect(() => {
     const stage = stageRef.current
     if (!stage) return
     let frame = 0
+    let pointerUntil = 0
     const start = performance.now()
 
+    /** The hidden symbol only exists (visible and clickable) while the beam is actually on it. */
     const place = (x: number, y: number) => {
       stage.style.setProperty("--beam-x", `${x}px`)
       stage.style.setProperty("--beam-y", `${y}px`)
+      const clue = clueRef.current
+      if (!clue) return
+      const stageRect = stage.getBoundingClientRect()
+      const clueRect = clue.getBoundingClientRect()
+      const cx = clueRect.left + clueRect.width / 2 - stageRect.left
+      const cy = clueRect.top + clueRect.height / 2 - stageRect.top
+      clue.style.visibility = Math.hypot(cx - x, cy - y) < 170 ? "visible" : "hidden"
     }
 
     const sweep = (now: number) => {
-      const { width, height } = stage.getBoundingClientRect()
-      const t = (now - start) / 1000
-      const left = width < 768 ? 0.5 : 0.72
-      const reach = width < 768 ? 0.3 : 0.16
-      place(width * (left + reach * Math.sin(t * 0.4)), height * (0.5 + 0.18 * Math.sin(t * 0.8)))
+      if (now > pointerUntil) {
+        const { width, height } = stage.getBoundingClientRect()
+        const t = (now - start) / 1000
+        const left = width < 768 ? 0.5 : 0.72
+        const reach = width < 768 ? 0.3 : 0.16
+        place(width * (left + reach * Math.sin(t * 0.4)), height * (0.5 + 0.18 * Math.sin(t * 0.8)))
+      }
       frame = requestAnimationFrame(sweep)
     }
 
+    const onPointer = (event: PointerEvent) => {
+      if (event.pointerType !== "mouse") return
+      const rect = stage.getBoundingClientRect()
+      pointerUntil = performance.now() + 2500
+      place(event.clientX - rect.left, event.clientY - rect.top)
+    }
+
+    stage.addEventListener("pointermove", onPointer)
     if (reduceMotion) {
       const { width, height } = stage.getBoundingClientRect()
       place(width * 0.62, height * 0.55)
     } else {
       frame = requestAnimationFrame(sweep)
     }
-    return () => cancelAnimationFrame(frame)
+    return () => {
+      cancelAnimationFrame(frame)
+      stage.removeEventListener("pointermove", onPointer)
+    }
   }, [reduceMotion])
 
   const beamMask =
@@ -92,7 +115,9 @@ export function FlashlightHero({ copy }: { copy: LandingCopy["hero"] }) {
       />
 
       <div className="pointer-events-none absolute inset-0 z-[15]" style={{ maskImage: beamMask, WebkitMaskImage: beamMask }}>
-        <Clue id="hero" className="absolute left-[72%] top-[44%] -translate-x-1/2 -translate-y-1/2 md:left-[80%]" />
+        <div ref={clueRef} className="invisible absolute left-[72%] top-[44%] -translate-x-1/2 -translate-y-1/2 md:left-[80%]">
+          <Clue id="hero" large />
+        </div>
       </div>
 
       <motion.div
