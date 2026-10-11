@@ -22,8 +22,6 @@ export function FlashlightHero({ copy }: { copy: LandingCopy["hero"] }) {
   useEffect(() => {
     const stage = stageRef.current
     if (!stage) return
-    let pointerActive = false
-    let idleTimer: ReturnType<typeof setTimeout> | undefined
     let frame = 0
     const start = performance.now()
 
@@ -33,23 +31,12 @@ export function FlashlightHero({ copy }: { copy: LandingCopy["hero"] }) {
     }
 
     const sweep = (now: number) => {
-      if (!pointerActive) {
-        const { width, height } = stage.getBoundingClientRect()
-        const t = (now - start) / 1000
-        const left = width < 768 ? 0.5 : 0.72
-        const reach = width < 768 ? 0.3 : 0.16
-        place(width * (left + reach * Math.sin(t * 0.4)), height * (0.5 + 0.18 * Math.sin(t * 0.8)))
-      }
+      const { width, height } = stage.getBoundingClientRect()
+      const t = (now - start) / 1000
+      const left = width < 768 ? 0.5 : 0.72
+      const reach = width < 768 ? 0.3 : 0.16
+      place(width * (left + reach * Math.sin(t * 0.4)), height * (0.5 + 0.18 * Math.sin(t * 0.8)))
       frame = requestAnimationFrame(sweep)
-    }
-
-    const onMove = (event: PointerEvent) => {
-      if (event.pointerType !== "mouse") return
-      const rect = stage.getBoundingClientRect()
-      pointerActive = true
-      place(event.clientX - rect.left, event.clientY - rect.top)
-      clearTimeout(idleTimer)
-      idleTimer = setTimeout(() => (pointerActive = false), 3500)
     }
 
     if (reduceMotion) {
@@ -58,12 +45,7 @@ export function FlashlightHero({ copy }: { copy: LandingCopy["hero"] }) {
     } else {
       frame = requestAnimationFrame(sweep)
     }
-    stage.addEventListener("pointermove", onMove)
-    return () => {
-      cancelAnimationFrame(frame)
-      clearTimeout(idleTimer)
-      stage.removeEventListener("pointermove", onMove)
-    }
+    return () => cancelAnimationFrame(frame)
   }, [reduceMotion])
 
   const beamMask =
