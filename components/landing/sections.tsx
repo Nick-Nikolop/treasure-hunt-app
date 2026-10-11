@@ -64,7 +64,7 @@ export function HowSection({ copy }: { copy: LandingCopy["how"] }) {
               transition={{ delay: index * 0.12, duration: 1, ease: EASE }}
             >
               <div className="relative aspect-[4/5] overflow-hidden rounded-sm bg-card">
-                <Image
+                <Image unoptimized loading="eager"
                   src={step.image}
                   alt={step.alt}
                   fill
@@ -140,8 +140,8 @@ export function CodeSection({ copy }: { copy: LandingCopy["code"] }) {
           viewport={{ once: true, margin: "-15% 0px" }}
           transition={{ duration: 1.1, ease: EASE }}
         >
-          <Image
-            src="/landing/logo.png"
+          <Image unoptimized loading="eager"
+            src="/landing/logo.webp"
             alt=""
             width={520}
             height={505}
@@ -180,8 +180,8 @@ export function CodeSection({ copy }: { copy: LandingCopy["code"] }) {
 
 export function MissionsSection({ copy }: { copy: LandingCopy["missions"] }) {
   const cards = [
-    { ...copy.next, image: "/landing/scene-mission.png", live: true, ref: "TH-02" },
-    { ...copy.past, image: "/landing/scene-finale.png", live: false, ref: "TH-01" },
+    { ...copy.next, image: "/landing/scene-mission.webp", live: true, ref: "TH-02" },
+    { ...copy.past, image: "/landing/scene-finale.webp", live: false, ref: "TH-01" },
   ]
   return (
     <section id="missions" className="scroll-mt-20 border-t border-border/60 py-24 md:py-32">
@@ -201,7 +201,7 @@ export function MissionsSection({ copy }: { copy: LandingCopy["missions"] }) {
               viewport={{ once: true, margin: "-10% 0px" }}
               transition={{ delay: index * 0.15, duration: 1, ease: EASE }}
             >
-              <Image
+              <Image unoptimized loading="eager"
                 src={card.image}
                 alt=""
                 fill
@@ -287,7 +287,7 @@ export function ClosingSection({
   return (
     <>
       <section className="relative isolate overflow-hidden border-t border-border/60 py-32 md:py-48">
-        <Image src="/landing/scene-clue.png" alt="" fill sizes="100vw" className="-z-10 object-cover brightness-[0.25]" />
+        <Image unoptimized loading="eager" src="/landing/scene-clue.webp" alt="" fill sizes="100vw" className="-z-10 object-cover brightness-[0.25]" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-background via-transparent to-background" aria-hidden="true" />
         <div className="mx-auto flex max-w-4xl flex-col items-center gap-8 px-6 text-center">
           <motion.div
@@ -297,7 +297,7 @@ export function ClosingSection({
             transition={{ duration: 2.2, ease: EASE }}
             className="drop-shadow-[0_0_40px_rgba(226,176,72,0.35)]"
           >
-            <Image key={logoSrc} src={logoSrc} alt="The Hunt" width={176} height={171} className="h-auto w-32 md:w-44 animate-in fade-in duration-700" />
+            <Image unoptimized loading="eager" key={logoSrc} src={logoSrc} alt="The Hunt" width={176} height={171} className="h-auto w-32 md:w-44 animate-in fade-in duration-700" />
           </motion.div>
           <h2 className="font-serif text-5xl leading-tight text-foreground text-balance md:text-7xl">{copy.title}</h2>
           <p className="max-w-lg font-sans text-lg leading-relaxed text-foreground/80">{copy.body}</p>
@@ -313,7 +313,7 @@ export function ClosingSection({
         <div className="mx-auto grid max-w-7xl gap-12 px-6 py-16 md:grid-cols-[1.2fr_1fr_1.4fr] md:px-10">
           <div className="flex flex-col gap-4">
             <p className="flex items-center gap-3 font-serif text-base tracking-[0.3em] text-foreground">
-              <Image src="/landing/logo.png" alt="" width={36} height={35} className="h-auto w-9" />
+              <Image unoptimized loading="eager" src="/landing/logo.webp" alt="" width={36} height={35} className="h-auto w-9" />
               THE HUNT
             </p>
             <p className="max-w-xs font-sans text-sm leading-relaxed text-muted-foreground">{footer.tagline}</p>

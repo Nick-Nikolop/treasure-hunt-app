@@ -62,7 +62,7 @@ export function ColdOpen({ skipLabel, onFinish }: { skipLabel: string; onFinish:
               transition={{ duration: 2.6, times: [0, 0.6, 0.75, 1] }}
               aria-hidden="true"
             />
-            <Image src="/landing/logo.png" alt="The Hunt" width={220} height={220} priority className="relative h-36 w-36 md:h-52 md:w-52" />
+            <Image unoptimized src="/landing/logo.webp" alt="The Hunt" width={220} height={220} priority className="relative h-36 w-36 md:h-52 md:w-52" />
           </motion.div>
           <motion.p
             className="font-serif text-xl text-foreground md:text-2xl"

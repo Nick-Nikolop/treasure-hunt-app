@@ -77,8 +77,8 @@ export function FlashlightHero({ copy }: { copy: LandingCopy["hero"] }) {
         animate={{ scale: 1.02 }}
         transition={{ duration: 9, ease: "easeOut" }}
       >
-        <Image
-          src="/landing/hero-city.png"
+        <Image unoptimized
+          src="/landing/hero-city.webp"
           alt=""
           fill
           priority
@@ -90,7 +90,7 @@ export function FlashlightHero({ copy }: { copy: LandingCopy["hero"] }) {
           style={{ maskImage: beamMask, WebkitMaskImage: beamMask }}
           aria-hidden="true"
         >
-          <Image src="/landing/hero-city.png" alt="" fill sizes="100vw" className="object-cover brightness-[1.35] saturate-[1.15]" />
+          <Image unoptimized loading="eager" src="/landing/hero-city.webp" alt="" fill sizes="100vw" className="object-cover brightness-[1.35] saturate-[1.15]" />
           {HIDDEN_MARKS.map((mark) => (
             <span
               key={mark.text}

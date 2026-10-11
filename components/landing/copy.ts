@@ -1,7 +1,7 @@
 import type { Locale } from "@/lib/i18n"
 import { LEGAL_ORG } from "@/lib/legal"
 
-const FILM_IMAGES = ["/landing/film-street.png", "/landing/film-building.png", "/landing/film-square.png"]
+const FILM_IMAGES = ["/landing/film-street.webp", "/landing/film-building.webp", "/landing/film-square.webp"]
 
 export const LANDING_COPY = {
   el: {
@@ -45,25 +45,25 @@ export const LANDING_COPY = {
         {
           title: "Διάλεξε αποστολή",
           body: "Κάθε αποστολή έχει τη δική της ιστορία, τοποθεσία, διάρκεια και κανόνες.",
-          image: "/landing/scene-mission.png",
+          image: "/landing/scene-mission.webp",
           alt: "Σφραγισμένος φάκελος πάνω σε χάρτη πόλης",
         },
         {
           title: "Φτιάξε την ομάδα σου",
           body: "Μάζεψε την παρέα σου. Συνεργασία, παρατηρητικότητα και φαντασία κάνουν τη διαφορά.",
-          image: "/landing/scene-team.png",
+          image: "/landing/scene-team.webp",
           alt: "Παρέα φίλων τη νύχτα κοιτάζει ένα κινητό",
         },
         {
           title: "Βρες τα στοιχεία",
           body: "Εξερεύνησε πραγματικά σημεία, λύσε γρίφους και σκάναρε QR checkpoints. Κάθε ανακάλυψη ξεκλειδώνει το επόμενο κομμάτι.",
-          image: "/landing/scene-clue.png",
+          image: "/landing/scene-clue.webp",
           alt: "Φακός φωτίζει πλακέτα με QR σε πέτρινο τοίχο",
         },
         {
           title: "Φτάσε στο τέλος",
           body: "Ένωσε τα κομμάτια και μάθε τι κρύβεται πίσω από το μυστήριο. Το φινάλε αλλάζει σε κάθε αποστολή.",
-          image: "/landing/scene-finale.png",
+          image: "/landing/scene-finale.webp",
           alt: "Ξύλινο κουτί ανοίγει και βγαίνει φως",
         },
       ],
@@ -190,25 +190,25 @@ export const LANDING_COPY = {
         {
           title: "Pick a Hunt",
           body: "Every Hunt has its own story, location, length and rules.",
-          image: "/landing/scene-mission.png",
+          image: "/landing/scene-mission.webp",
           alt: "A sealed envelope on a city map",
         },
         {
           title: "Build your team",
           body: "Gather your crew. Teamwork, a sharp eye and imagination make the difference.",
-          image: "/landing/scene-team.png",
+          image: "/landing/scene-team.webp",
           alt: "Friends at night looking at a phone",
         },
         {
           title: "Find the clues",
           body: "Explore real places, solve puzzles and scan QR checkpoints. Every find unlocks the next part.",
-          image: "/landing/scene-clue.png",
+          image: "/landing/scene-clue.webp",
           alt: "A flashlight lighting a QR plaque on a stone wall",
         },
         {
           title: "Reach the end",
           body: "Connect the pieces and learn what lies behind the mystery. Every Hunt ends differently.",
-          image: "/landing/scene-finale.png",
+          image: "/landing/scene-finale.webp",
           alt: "A wooden box opening with light spilling out",
         },
       ],
