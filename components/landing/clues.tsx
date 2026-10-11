@@ -11,12 +11,12 @@ export type ClueId = (typeof CLUE_IDS)[number]
 /** Which word of the hidden sentence each clue carries. Page order deliberately differs from sentence order. */
 const WORD_OF: Record<ClueId, number> = { hero: 3, story: 6, scene: 0, code: 5, file: 1, faq: 4, footer: 2 }
 
-type SymbolKind = "ring" | "triangle" | "diamond" | "cross" | "crescent" | "bars" | "chevron"
+type SymbolKind = "ring" | "triangle" | "diamond" | "wave" | "crescent" | "bars" | "chevron"
 const SYMBOL_OF: Record<ClueId, SymbolKind> = {
   hero: "ring",
   story: "triangle",
   scene: "diamond",
-  code: "cross",
+  code: "wave",
   file: "crescent",
   faq: "bars",
   footer: "chevron",
@@ -59,7 +59,7 @@ export function HuntSymbol({ kind, className = "" }: { kind: SymbolKind; classNa
       )}
       {kind === "triangle" && <path d="M12 4 20 19H4Z" />}
       {kind === "diamond" && <path d="M12 3 20 12 12 21 4 12Z" />}
-      {kind === "cross" && <path d="M12 4v16M4 12h16" />}
+      {kind === "wave" && <path d="M3 12c2.25-4 4.5-4 6.75 0s4.5 4 6.75 0S19.5 8 21 9" />}
       {kind === "crescent" && <path d="M15.5 4a8.5 8.5 0 1 0 4.5 13A7 7 0 0 1 15.5 4Z" />}
       {kind === "bars" && <path d="M5 8h14M5 12h14M5 16h14" />}
       {kind === "chevron" && <path d="m5 11 7-6 7 6M5 18l7-6 7 6" />}
@@ -185,7 +185,7 @@ export function Clue({ id, className = "" }: { id: ClueId; className?: string })
       type="button"
       onClick={() => find(id)}
       aria-label={isFound ? `${copy.found}: ${copy.fragments[WORD_OF[id]]}` : copy.mark}
-      className={`group/clue pointer-events-auto relative inline-flex size-8 shrink-0 items-center justify-center align-middle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${className}`}
+      className={`group/clue pointer-events-auto ${className.includes("absolute") ? "" : "relative"} z-10 inline-flex size-8 shrink-0 items-center justify-center align-middle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${className}`}
     >
       {!isFound && (
         <span className="absolute inset-1.5 animate-ping rounded-full bg-brass/20 [animation-duration:3.2s]" aria-hidden="true" />
