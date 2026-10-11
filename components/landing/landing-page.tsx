@@ -8,7 +8,8 @@ import { ClueProvider, ClueTracker } from "./clues"
 import { ColdOpen } from "./cold-open"
 import { LANDING_COPY } from "./copy"
 import { FilmSequence } from "./film-sequence"
-import { FlashlightHero } from "./flashlight-hero"
+import { Hero } from "./hero/hero"
+import { VariantMenu, VariantProvider } from "./variants"
 import { ALT_LOGO, DEFAULT_LOGO, LogoContext } from "./logo-context"
 import { ClosingSection, CodeSection, FaqSection, HowSection, MissionsSection, StorySection, WhySection } from "./sections"
 
@@ -19,6 +20,8 @@ const PRELOAD_IMAGES = [
   "/landing/logo.webp",
   "/landing/logo-alt.webp",
   "/landing/hero-city.webp",
+  "/landing/hero-desk.webp",
+  "/landing/hero-aerial.webp",
   "/landing/film-street.webp",
   "/landing/film-building.webp",
   "/landing/film-square.webp",
@@ -61,6 +64,7 @@ export function LandingPage() {
 
   return (
     <LogoContext.Provider value={logoSrc}>
+    <VariantProvider>
     <ClueProvider copy={copy.clues}>
     <div className="dark min-h-svh bg-background text-foreground">
       <ColdOpen skipLabel={copy.intro.skip} onFinish={() => setHeroTake((take) => take + 1)} />
@@ -77,12 +81,12 @@ export function LandingPage() {
           <a
             href="#top"
             onClick={onLogoClick}
-            className="flex select-none items-center gap-3 font-serif text-base tracking-[0.35em] text-foreground"
+            className="flex select-none items-center gap-3 whitespace-nowrap font-serif text-sm tracking-[0.25em] text-foreground md:text-base md:tracking-[0.35em]"
           >
             <Image unoptimized key={logoSrc} src={logoSrc} alt="" width={40} height={39} className="h-auto w-10 animate-in fade-in zoom-in-75 duration-500" priority />
             <span>THE HUNT</span>
           </a>
-          <div className="flex items-center gap-6 font-sans text-sm">
+          <div className="flex items-center gap-2 font-sans text-sm sm:gap-4 md:gap-6">
             <a href="#how" className="hidden text-foreground/75 hover:text-brass md:inline">
               {copy.nav.how}
             </a>
@@ -93,6 +97,7 @@ export function LandingPage() {
               {copy.nav.faq}
             </a>
             <ClueTracker />
+            <VariantMenu locale={locale} />
             <button
               type="button"
               onClick={toggle}
@@ -111,7 +116,7 @@ export function LandingPage() {
       </header>
 
       <main id="top">
-        <FlashlightHero key={heroTake} copy={copy.hero} />
+        <Hero take={heroTake} copy={copy.hero} />
         <FilmSequence copy={copy.film} />
         <StorySection copy={copy.story} />
         <HowSection copy={copy.how} />
@@ -123,6 +128,7 @@ export function LandingPage() {
       </main>
     </div>
     </ClueProvider>
+    </VariantProvider>
     </LogoContext.Provider>
   )
 }
