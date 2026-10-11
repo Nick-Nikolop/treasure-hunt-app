@@ -217,12 +217,12 @@ export function MissionsSection({ copy }: { copy: LandingCopy["missions"] }) {
                 className={`-z-10 object-cover transition-transform duration-[2000ms] group-hover:scale-105 ${card.live ? "brightness-50" : "brightness-[0.3] grayscale"}`}
               />
               <div className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/70 to-background/10" aria-hidden="true" />
+              {!card.live && <Clue id="file" className="absolute right-[14%] top-[34%] opacity-40" />}
               <div className="flex items-center justify-between gap-4">
                 <span className={`rounded-full border px-3 py-1 font-sans text-xs uppercase tracking-[0.2em] ${card.live ? "border-brass text-brass" : "border-foreground/30 text-muted-foreground"}`}>
                   {card.status}
                 </span>
-                <span className="flex items-center gap-1 font-sans text-xs uppercase tracking-[0.3em] text-foreground/60">
-                  {!card.live && <Clue id="file" className="-my-2" />}
+                <span className="font-sans text-xs uppercase tracking-[0.3em] text-foreground/60">
                   {copy.file} {card.ref}
                 </span>
               </div>
