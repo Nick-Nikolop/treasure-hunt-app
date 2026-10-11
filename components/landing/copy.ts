@@ -1,8 +1,12 @@
 import type { Locale } from "@/lib/i18n"
+import { LEGAL_ORG } from "@/lib/legal"
+
+const FILM_IMAGES = ["/landing/film-street.png", "/landing/film-building.png", "/landing/film-square.png"]
 
 export const LANDING_COPY = {
   el: {
     nav: { how: "Πώς παίζεται", missions: "Αποστολές", faq: "Ερωτήσεις" },
+    intro: { skip: "Παράλειψη" },
     hero: {
       eyebrow: "Ένα παιχνίδι μυστηρίου στον πραγματικό κόσμο",
       title: ["Κάτι", "κρύβεται εδώ."],
@@ -10,6 +14,17 @@ export const LANDING_COPY = {
       primary: "Ανακάλυψε τις αποστολές",
       secondary: "Πώς παίζεται",
       hint: "Κούνησε το φως. Η πόλη έχει κι άλλα να σου δείξει.",
+      scroll: "Κύλισε",
+    },
+    film: {
+      open: "Ο κόσμος είναι γεμάτος ιστορίες που δεν έχεις ανακαλύψει ακόμα.",
+      frames: [
+        { title: "Ένας δρόμος.", alt: "Πέτρινο σοκάκι με ένα αχνό βέλος σε σκαλί", image: FILM_IMAGES[0] },
+        { title: "Ένα κτίριο.", alt: "Πρόσοψη νεοκλασικού κτιρίου με σκαλισμένο σύμβολο", image: FILM_IMAGES[1] },
+        { title: "Ένα γνώριμο σημείο.", alt: "Άδεια πλατεία με άγαλμα και ρολόι την αυγή", image: FILM_IMAGES[2] },
+      ],
+      close: "Μπορεί να κρύβει κάτι που δεν είχες προσέξει ποτέ.",
+      take: "Πλάνο",
     },
     story: {
       label: "Η ιδέα",
@@ -20,6 +35,7 @@ export const LANDING_COPY = {
         "Αν μια συνηθισμένη διαδρομή ήταν η αρχή μιας ιστορίας;",
       ],
       close: "Αυτό είναι το The Hunt.",
+      after: "Ένας διαφορετικός τρόπος να εξερευνήσεις, να σκεφτείς, να συνεργαστείς και να ανακαλύψεις.",
     },
     how: {
       label: "Πώς παίζεται",
@@ -59,43 +75,83 @@ export const LANDING_COPY = {
         { title: "Η περιπέτεια είναι αληθινή", body: "Δεν μπαίνεις σε φανταστικό κόσμο. Οι πραγματικοί δρόμοι γίνονται σημεία ανακάλυψης." },
         { title: "Κάθε στοιχείο μετράει", body: "Γρίφοι, παρατηρήσεις και πληροφορίες είναι κομμάτια μιας μεγαλύτερης ιστορίας." },
         { title: "Η ομάδα κάνει τη διαφορά", body: "Διαφορετικά μυαλά βλέπουν διαφορετικά πράγματα. Εδώ χρειάζονται όλα." },
+        { title: "Η εξερεύνηση αποκτά σκοπό", body: "Ένας δρόμος, ένα κτίριο ή ένα γνώριμο σημείο μπορεί να κρύβει κάτι που δεν είχες προσέξει ποτέ." },
         { title: "Κάθε αποστολή είναι αλλιώτικη", body: "Νέες ιστορίες, νέα σημεία, νέες προκλήσεις, κάτω από το ίδιο όνομα." },
+      ],
+    },
+    who: {
+      title: "Για όσους δεν αρκούνται στο προφανές.",
+      body: "Για τις παρέες που αγαπούν τους γρίφους και τα escape rooms, για όσους ψάχνουν κάτι διαφορετικό από μια συνηθισμένη έξοδο, και για όσους πιστεύουν ότι και τα πιο γνώριμα μέρη μπορούν να κρύβουν εκπλήξεις.",
+      needLabel: "Τι χρειάζεσαι",
+      needs: ["Περιέργεια", "Παρατηρητικότητα", "Την ομάδα σου", "Ένα κινητό"],
+    },
+    code: {
+      label: "Ο κώδικας του κυνηγού",
+      title: "Λίγοι κανόνες. Τηρούνται σε κάθε αποστολή.",
+      rules: [
+        { title: "Κοίτα δύο φορές.", body: "Τα στοιχεία σπάνια φωνάζουν. Μια λεπτομέρεια που προσπέρασες μπορεί να είναι η απάντηση." },
+        { title: "Μη βιάζεσαι.", body: "Το παιχνίδι ανταμείβει τη σκέψη, όχι την ταχύτητα. Περπάτα, παρατήρησε, συζήτησε." },
+        { title: "Σεβάσου τον χώρο.", body: "Παίζουμε σε δημόσιους χώρους που ανήκουν σε όλους. Τους αφήνουμε όπως τους βρήκαμε." },
+        { title: "Η ασφάλεια πρώτα.", body: "Αν κάτι μοιάζει επικίνδυνο, δεν είναι ο δρόμος. Κανένα στοιχείο δεν αξίζει ρίσκο." },
       ],
     },
     missions: {
       label: "Οι αποστολές",
       title: "Κάθε αποστολή είναι μια νέα ιστορία.",
       body: "Εδώ θα βρίσκεις όσες αποστολές τρέχουν, με τις ημερομηνίες, τους όρους και τη σελίδα συμμετοχής της καθεμιάς.",
-      next: { status: "Σύντομα", title: "Η επόμενη αποστολή", body: "Ετοιμάζεται. Οι λεπτομέρειες ανακοινώνονται σύντομα." },
-      past: { status: "Ολοκληρώθηκε", title: "Το ταξίδι του Πυθέα", body: "Η πρώτη αποστολή του The Hunt. Δέκα σταθμοί, ένα ημερολόγιο, ένας θησαυρός." },
-    },
-    who: {
-      title: "Για όσους δεν αρκούνται στο προφανές.",
-      body: "Για παρέες που αγαπούν τους γρίφους και τα escape rooms, για όσους ψάχνουν κάτι διαφορετικό από μια συνηθισμένη έξοδο. Δεν χρειάζεται να είσαι εξερευνητής. Αρκεί η περιέργεια.",
+      fields: { city: "Πόλη", period: "Περίοδος", entry: "Συμμετοχή" },
+      file: "Φάκελος",
+      next: {
+        status: "Σύντομα",
+        title: "Η επόμενη αποστολή",
+        body: "Ετοιμάζεται. Οι λεπτομέρειες ανακοινώνονται σύντομα.",
+        city: "Ανακοινώνεται",
+        period: "Ανακοινώνεται",
+        entry: "Δεν έχει ανοίξει ακόμα",
+      },
+      past: {
+        status: "Ολοκληρώθηκε",
+        title: "Το ταξίδι του Πυθέα",
+        body: "Η πρώτη αποστολή του The Hunt. Δέκα σταθμοί, ένα ημερολόγιο, ένας θησαυρός.",
+        city: "Καλαμάτα",
+        period: "Καλοκαίρι 2026",
+        entry: "Έκλεισε",
+      },
+      definesLabel: "Κάθε αποστολή ορίζει τα δικά της",
+      defines: ["Κόστος συμμετοχής", "Μέγεθος ομάδας", "Διάρκεια", "Μορφή παιχνιδιού", "Έπαθλα, αν υπάρχουν"],
     },
     faq: {
       label: "Ερωτήσεις",
+      title: "Πριν ξεκινήσεις.",
       items: [
         { q: "Τι είναι το The Hunt;", a: "Μια διαδραστική εμπειρία εξερεύνησης και γρίφων που ενώνει τον πραγματικό κόσμο με ένα ψηφιακό παιχνίδι." },
         { q: "Πώς συμμετέχω;", a: "Διαλέγεις μια διαθέσιμη αποστολή και ακολουθείς τις οδηγίες συμμετοχής της. Κάθε αποστολή έχει τους δικούς της όρους." },
         { q: "Χρειάζομαι κινητό;", a: "Ναι. Από το κινητό βλέπεις τα στοιχεία και σκανάρεις τα QR checkpoints. Οι ακριβείς απαιτήσεις αναφέρονται σε κάθε αποστολή." },
         { q: "Παίζω με φίλους;", a: "Φυσικά. Η ομάδα είναι η καρδιά του παιχνιδιού. Το μέγεθός της το ορίζει κάθε αποστολή." },
         { q: "Πόσο διαρκεί;", a: "Εξαρτάται από την αποστολή. Κάποιες ολοκληρώνονται σε λίγες ώρες, άλλες εξελίσσονται σε μέρες ή φάσεις." },
-        { q: "Κοστίζει; Έχει έπαθλα;", a: "Το κόστος και τυχόν έπαθλα διαφέρουν ανά αποστολή και αναφέρονται στη σελίδα της." },
+        { q: "Κοστίζει; Έχει έπαθλα;", a: "Το κόστος και τυχόν έπαθλα διαφέρουν ανά αποστολή και αναφέρονται στη σελίδα της. Κάποιες ειδικές αποστολές μπορεί να έχουν έπαθλα." },
         { q: "Πρέπει να τρέχω;", a: "Όχι. Το The Hunt βασίζεται στην παρατήρηση και τη σκέψη. Η ασφάλεια και ο σεβασμός στους δημόσιους χώρους έρχονται πρώτα." },
       ],
     },
     closing: {
       title: "Το επόμενο στοιχείο σε περιμένει.",
-      body: "Μάζεψε την ομάδα σου και ετοιμάσου να δεις την πόλη αλλιώς.",
+      body: "Μάζεψε την ομάδα σου, ανακάλυψε τις αποστολές και ετοιμάσου να δεις την πόλη αλλιώς.",
       cta: "Ανακάλυψε τις αποστολές",
     },
-    footer: { terms: "Όροι συμμετοχής", rights: "Με επιφύλαξη παντός δικαιώματος." },
+    footer: {
+      tagline: "Ένα παιχνίδι μυστηρίου στον πραγματικό κόσμο.",
+      exploreLabel: "Εξερεύνησε",
+      contactLabel: "Επικοινωνία",
+      contactBody: "Ερωτήσεις ή ιδέες; Γράψε μας. Ακολούθησε το The Hunt για να μάθεις πρώτος την επόμενη αποστολή.",
+      terms: "Όροι & Απόρρητο",
+      rights: "Με επιφύλαξη παντός δικαιώματος.",
+    },
     lang: "EN",
     langLabel: "Switch to English",
   },
   en: {
     nav: { how: "How it works", missions: "Hunts", faq: "FAQ" },
+    intro: { skip: "Skip" },
     hero: {
       eyebrow: "A mystery game played in the real world",
       title: ["Something", "is hidden here."],
@@ -103,6 +159,17 @@ export const LANDING_COPY = {
       primary: "Explore the Hunts",
       secondary: "How it works",
       hint: "Move the light. The city has more to show you.",
+      scroll: "Scroll",
+    },
+    film: {
+      open: "The world is full of stories you have not discovered yet.",
+      frames: [
+        { title: "A street.", alt: "A stone alley with a faint arrow on a step", image: FILM_IMAGES[0] },
+        { title: "A building.", alt: "A neoclassical facade with a carved symbol", image: FILM_IMAGES[1] },
+        { title: "A familiar place.", alt: "An empty square with a statue and clock tower at dawn", image: FILM_IMAGES[2] },
+      ],
+      close: "Any of them could hide something you never noticed.",
+      take: "Shot",
     },
     story: {
       label: "The idea",
@@ -113,6 +180,7 @@ export const LANDING_COPY = {
         "What if an ordinary walk was the start of a story?",
       ],
       close: "That is The Hunt.",
+      after: "A different way to explore, think, work together and discover.",
     },
     how: {
       label: "How it works",
@@ -152,41 +220,86 @@ export const LANDING_COPY = {
         { title: "The adventure is real", body: "No fantasy world needed. Real streets become places of discovery." },
         { title: "Every clue matters", body: "Puzzles, observations and facts are pieces of a bigger story." },
         { title: "The team makes the difference", body: "Different minds notice different things. Here you need them all." },
+        { title: "Exploring gets a purpose", body: "A street, a building or a familiar spot may hide something you never noticed." },
         { title: "Every Hunt is different", body: "New stories, new places, new challenges, under the same name." },
+      ],
+    },
+    who: {
+      title: "For those who look past the obvious.",
+      body: "For friends who love puzzles and escape rooms, for anyone after something different from a usual night out, and for those who believe even the most familiar places can hold surprises.",
+      needLabel: "What you need",
+      needs: ["Curiosity", "A sharp eye", "Your team", "A phone"],
+    },
+    code: {
+      label: "The hunter's code",
+      title: "A few rules. Kept in every Hunt.",
+      rules: [
+        { title: "Look twice.", body: "Clues rarely shout. A detail you walked past may be the answer." },
+        { title: "Do not rush.", body: "The game rewards thinking, not speed. Walk, observe, talk it through." },
+        { title: "Respect the place.", body: "We play in public spaces that belong to everyone. We leave them as we found them." },
+        { title: "Safety first.", body: "If something looks dangerous, it is not the way. No clue is worth a risk." },
       ],
     },
     missions: {
       label: "The Hunts",
       title: "Every Hunt is a new story.",
       body: "This is where running Hunts will appear, each with its dates, terms and its own sign-up page.",
-      next: { status: "Coming soon", title: "The next Hunt", body: "In the making. Details will be announced soon." },
-      past: { status: "Completed", title: "Pytheas' Voyage", body: "The first Hunt. Ten stops, one journal, one treasure." },
-    },
-    who: {
-      title: "For those who look past the obvious.",
-      body: "For friends who love puzzles and escape rooms, and anyone after something different from a usual night out. You do not need to be an explorer. Curiosity is enough.",
+      fields: { city: "City", period: "Period", entry: "Entry" },
+      file: "File",
+      next: {
+        status: "Coming soon",
+        title: "The next Hunt",
+        body: "In the making. Details will be announced soon.",
+        city: "To be announced",
+        period: "To be announced",
+        entry: "Not open yet",
+      },
+      past: {
+        status: "Completed",
+        title: "Pytheas' Voyage",
+        body: "The first Hunt. Ten stops, one journal, one treasure.",
+        city: "Kalamata",
+        period: "Summer 2026",
+        entry: "Closed",
+      },
+      definesLabel: "Each Hunt sets its own",
+      defines: ["Entry cost", "Team size", "Duration", "Game format", "Prizes, if any"],
     },
     faq: {
       label: "FAQ",
+      title: "Before you start.",
       items: [
         { q: "What is The Hunt?", a: "An interactive exploration and puzzle experience that connects the real world with a digital game." },
         { q: "How do I join?", a: "Pick an available Hunt and follow its sign-up instructions. Each Hunt has its own terms." },
         { q: "Do I need a phone?", a: "Yes. You use it to view clues and scan QR checkpoints. Exact requirements are listed for each Hunt." },
         { q: "Can I play with friends?", a: "Of course. The team is the heart of the game. Each Hunt sets its team size." },
         { q: "How long does it last?", a: "It depends on the Hunt. Some take a few hours, others unfold over days or phases." },
-        { q: "Does it cost anything? Are there prizes?", a: "Cost and any prizes vary by Hunt and are listed on its page." },
+        { q: "Does it cost anything? Are there prizes?", a: "Cost and any prizes vary by Hunt and are listed on its page. Some special Hunts may include prizes." },
         { q: "Do I have to run?", a: "No. The Hunt is about observation and thinking. Safety and respect for public spaces come first." },
       ],
     },
     closing: {
       title: "The next clue is waiting.",
-      body: "Gather your team and get ready to see the city differently.",
+      body: "Gather your team, explore the Hunts and get ready to see the city differently.",
       cta: "Explore the Hunts",
     },
-    footer: { terms: "Terms", rights: "All rights reserved." },
+    footer: {
+      tagline: "A mystery game played in the real world.",
+      exploreLabel: "Explore",
+      contactLabel: "Contact",
+      contactBody: "Questions or ideas? Write to us. Follow The Hunt to hear about the next Hunt first.",
+      terms: "Terms & Privacy",
+      rights: "All rights reserved.",
+    },
     lang: "ΕΛ",
     langLabel: "Αλλαγή σε Ελληνικά",
   },
 } satisfies Record<Locale, unknown>
+
+export const LANDING_CONTACT = {
+  email: LEGAL_ORG.contactEmail,
+  instagram: LEGAL_ORG.instagram,
+  instagramUrl: LEGAL_ORG.instagramUrl,
+}
 
 export type LandingCopy = (typeof LANDING_COPY)["el"]

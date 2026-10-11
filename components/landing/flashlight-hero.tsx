@@ -172,6 +172,23 @@ export function FlashlightHero({ copy }: { copy: LandingCopy["hero"] }) {
           <p className="font-serif text-sm italic text-muted-foreground">{copy.hint}</p>
         </motion.div>
       </div>
+
+      <motion.div
+        className="pointer-events-none absolute bottom-[7svh] right-6 z-10 hidden flex-col items-center gap-3 md:right-10 md:flex"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 2.6, duration: 1 }}
+        aria-hidden="true"
+      >
+        <span className="font-sans text-[11px] uppercase tracking-[0.35em] text-foreground/60 [writing-mode:vertical-rl]">{copy.scroll}</span>
+        <span className="relative h-16 w-px overflow-hidden bg-foreground/20">
+          <motion.span
+            className="absolute inset-x-0 top-0 h-6 bg-brass"
+            animate={{ y: ["-100%", "300%"] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+          />
+        </span>
+      </motion.div>
     </section>
   )
 }
