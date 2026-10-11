@@ -3,6 +3,7 @@
 import Image from "next/image"
 import { useEffect, useRef } from "react"
 import { motion, useReducedMotion } from "framer-motion"
+import { Clue } from "./clues"
 import type { LandingCopy } from "./copy"
 
 const EASE = [0.16, 1, 0.3, 1] as const
@@ -89,6 +90,10 @@ export function FlashlightHero({ copy }: { copy: LandingCopy["hero"] }) {
         className="pointer-events-none absolute inset-0 bg-gradient-to-r from-background/85 via-background/25 to-transparent"
         aria-hidden="true"
       />
+
+      <div className="pointer-events-none absolute inset-0 z-[15]" style={{ maskImage: beamMask, WebkitMaskImage: beamMask }}>
+        <Clue id="hero" className="absolute left-[72%] top-[44%] -translate-x-1/2 -translate-y-1/2 md:left-[80%]" />
+      </div>
 
       <motion.div
         className="pointer-events-none absolute inset-x-0 top-0 z-20 bg-background"

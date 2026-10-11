@@ -352,9 +352,12 @@ export function ClosingSection({
           </div>
         </div>
         <div className="border-t border-border/60">
-          <p className="mx-auto max-w-7xl px-6 py-6 font-sans text-xs text-muted-foreground md:px-10">
-            © {new Date().getFullYear()} thehunt.gr · {footer.rights}
-          </p>
+          <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 md:px-10">
+            <p className="font-sans text-xs text-muted-foreground">
+              © {new Date().getFullYear()} thehunt.gr · {footer.rights}
+            </p>
+            <Clue id="footer" className="opacity-60" />
+          </div>
         </div>
       </footer>
     </>
