@@ -277,10 +277,12 @@ export function ClosingSection({
   copy,
   footer,
   nav,
+  logoSrc,
 }: {
   copy: LandingCopy["closing"]
   footer: LandingCopy["footer"]
   nav: LandingCopy["nav"]
+  logoSrc: string
 }) {
   return (
     <>
@@ -295,7 +297,7 @@ export function ClosingSection({
             transition={{ duration: 2.2, ease: EASE }}
             className="drop-shadow-[0_0_40px_rgba(226,176,72,0.35)]"
           >
-            <Image src="/landing/logo.png" alt="The Hunt" width={176} height={171} className="h-auto w-32 md:w-44" />
+            <Image key={logoSrc} src={logoSrc} alt="The Hunt" width={176} height={171} className="h-auto w-32 md:w-44 animate-in fade-in duration-700" />
           </motion.div>
           <h2 className="font-serif text-5xl leading-tight text-foreground text-balance md:text-7xl">{copy.title}</h2>
           <p className="max-w-lg font-sans text-lg leading-relaxed text-foreground/80">{copy.body}</p>
