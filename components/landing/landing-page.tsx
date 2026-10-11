@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useEffect, useState } from "react"
 import { useI18n } from "@/components/pythea/language-provider"
 import { LANDING_COPY } from "./copy"
@@ -24,8 +25,9 @@ export function LandingPage() {
         className={`fixed inset-x-0 top-0 z-40 transition-colors duration-500 ${scrolled ? "border-b border-border/60 bg-background/85 backdrop-blur" : "bg-transparent"}`}
       >
         <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-6 px-6 md:px-10" aria-label="Main">
-          <a href="#top" className="font-serif text-lg tracking-[0.35em] text-foreground">
-            THE HUNT
+          <a href="#top" className="flex items-center gap-3 font-serif text-base tracking-[0.35em] text-foreground">
+            <Image src="/landing/logo.png" alt="" width={40} height={40} className="h-10 w-10" priority />
+            <span>THE HUNT</span>
           </a>
           <div className="flex items-center gap-6 font-sans text-sm">
             <a href="#how" className="hidden text-foreground/75 hover:text-brass md:inline">

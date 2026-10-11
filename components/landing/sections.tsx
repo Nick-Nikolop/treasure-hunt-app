@@ -186,6 +186,15 @@ export function ClosingSection({ copy, footer }: { copy: LandingCopy["closing"];
         <Image src="/landing/scene-clue.png" alt="" fill sizes="100vw" className="-z-10 object-cover brightness-[0.25]" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-background via-transparent to-background" aria-hidden="true" />
         <div className="mx-auto flex max-w-4xl flex-col items-center gap-8 px-6 text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8, rotate: -90 }}
+            whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+            viewport={{ once: true, margin: "-15%" }}
+            transition={{ duration: 2.2, ease: EASE }}
+            className="drop-shadow-[0_0_40px_rgba(226,176,72,0.35)]"
+          >
+            <Image src="/landing/logo.png" alt="The Hunt" width={176} height={176} className="h-32 w-32 md:h-44 md:w-44" />
+          </motion.div>
           <h2 className="font-serif text-5xl leading-tight text-foreground text-balance md:text-7xl">{copy.title}</h2>
           <p className="max-w-lg font-sans text-lg leading-relaxed text-foreground/80">{copy.body}</p>
           <a
@@ -198,7 +207,10 @@ export function ClosingSection({ copy, footer }: { copy: LandingCopy["closing"];
       </section>
       <footer className="border-t border-border/60">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-10 font-sans text-sm text-muted-foreground md:flex-row md:px-10">
-          <p className="font-serif text-base tracking-[0.3em] text-foreground">THE HUNT</p>
+          <p className="flex items-center gap-3 font-serif text-base tracking-[0.3em] text-foreground">
+            <Image src="/landing/logo.png" alt="" width={32} height={32} className="h-8 w-8" />
+            THE HUNT
+          </p>
           <div className="flex items-center gap-6">
             <Link href="/terms" className="hover:text-brass">
               {footer.terms}
