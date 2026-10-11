@@ -3,15 +3,7 @@
 import Image from "next/image"
 import { motion } from "framer-motion"
 import { useRef } from "react"
-import { BeamClue, EASE, Grain, HeroActions, type HeroCopy, HiddenMarks, beamMask, useBeam, useTypewriter } from "./shared"
-
-/** Pencil and ink notes on the map that only show under the lamp. */
-const MARKS = [
-  { x: "53%", y: "30%", text: "ΙΙ · ΧΙV", className: "text-2xl", rotate: -8 },
-  { x: "70%", y: "62%", text: "→ 7", className: "text-4xl", rotate: -4 },
-  { x: "46%", y: "66%", text: "N 37°02′", className: "text-xl", rotate: 6 },
-  { x: "62%", y: "44%", text: "X", className: "text-6xl", rotate: 0 },
-]
+import { BeamClue, EASE, Grain, HeroActions, type HeroCopy, beamMask, useBeam, useTypewriter } from "./shared"
 
 /** Typed like a case report; the invisible full copy reserves the space so nothing jumps. */
 function TypedBody({ text }: { text: string }) {
@@ -37,15 +29,14 @@ export function HeroDesk({ copy }: { copy: HeroCopy }) {
   return (
     <section ref={stageRef} className="relative isolate flex min-h-svh items-center overflow-hidden bg-background">
       <motion.div
-        className="absolute inset-0 -z-10"
-        initial={{ scale: 1.25, rotate: -2 }}
-        animate={{ scale: 1.05, rotate: 0 }}
+        className="absolute inset-x-0 bottom-0 top-16 -z-10 overflow-hidden"
+        initial={{ scale: 1.2, rotate: -2 }}
+        animate={{ scale: 1, rotate: 0 }}
         transition={{ duration: 3.2, ease: EASE }}
       >
-        <Image unoptimized src="/landing/hero-desk.webp" alt="" fill priority sizes="100vw" className="object-cover brightness-[0.2] saturate-[0.5]" />
+        <Image unoptimized src="/landing/hero-desk.webp" alt="" fill priority sizes="100vw" className="object-cover object-top brightness-[0.2] saturate-[0.5]" />
         <div className="absolute inset-0" style={{ maskImage: mask, WebkitMaskImage: mask }} aria-hidden="true">
-          <Image unoptimized loading="eager" src="/landing/hero-desk.webp" alt="" fill sizes="100vw" className="object-cover brightness-[1.15] saturate-[1.05] sepia-[0.15]" />
-          <HiddenMarks marks={MARKS} tone="ink" />
+          <Image unoptimized loading="eager" src="/landing/hero-desk.webp" alt="" fill sizes="100vw" className="object-cover object-top brightness-[1.15] saturate-[1.05] sepia-[0.15]" />
         </div>
       </motion.div>
 
