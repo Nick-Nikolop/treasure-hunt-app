@@ -57,29 +57,6 @@ export function HeroDesk({ copy }: { copy: HeroCopy }) {
       <BeamClue mask={mask} className="left-[82%] top-[36%]" />
       <Grain opacity={0.07} />
 
-      <motion.figure
-        className="absolute bottom-[9%] right-[6%] z-[5] hidden w-56 bg-foreground p-2.5 pb-4 shadow-2xl lg:block xl:w-64"
-        initial={{ opacity: 0, y: -80, rotate: -24, scale: 1.2 }}
-        animate={{ opacity: 1, y: 0, rotate: 6, scale: 1 }}
-        transition={{ delay: 2.6, type: "spring", stiffness: 120, damping: 14 }}
-      >
-        <span className="absolute -top-3 left-1/2 h-6 w-20 -translate-x-1/2 -rotate-3 bg-brass/40 backdrop-blur-sm" aria-hidden="true" />
-        <div className="relative aspect-square overflow-hidden">
-          <Image unoptimized src="/landing/scene-clue.webp" alt="" fill sizes="16rem" className="object-cover saturate-[0.7] sepia-[0.25]" />
-        </div>
-        <figcaption className="pt-3 text-center font-serif text-sm italic text-background">{copy.evidenceCaption}</figcaption>
-      </motion.figure>
-
-      <motion.p
-        className="absolute bottom-[12%] right-[26%] z-[5] hidden -rotate-6 font-serif text-2xl italic text-brass lg:block xl:right-[24%]"
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 3.3, duration: 1, ease: EASE }}
-        aria-hidden="true"
-      >
-        {copy.deskNote} ↘
-      </motion.p>
-
       <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col gap-8 px-6 pb-16 pt-28 md:px-10">
         <motion.div
           className="flex w-fit -rotate-2 items-center gap-3 border-2 border-brass/70 px-4 py-2 font-sans text-xs uppercase tracking-[0.3em] text-brass"

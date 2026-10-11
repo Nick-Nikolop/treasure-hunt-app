@@ -18,8 +18,6 @@ export const LANDING_COPY = {
       slate: "Σκηνή 01 · Πλάνο 03",
   caseLabel: "Ανοιχτή υπόθεση · Αρ. 001",
   subtitles: ["— Το είδες κι εσύ;", "— Ήταν εκεί από την αρχή.", "— Κοίτα πιο κοντά."],
-  deskNote: "Κοίτα κάτω από τη λάμπα.",
-  evidenceCaption: "Τεκμήριο Α · το σημάδι",
   cipher: { decoding: "Αποκρυπτογράφηση", decoded: "Αποκρυπτογραφήθηκε", key: "Κλειδί" },
   board: {
   label: "Αναχωρήσεις",
@@ -219,8 +217,6 @@ export const LANDING_COPY = {
       slate: "Scene 01 · Take 03",
   caseLabel: "Open case · No. 001",
   subtitles: ["— Did you see it too?", "— It was there all along.", "— Look closer."],
-  deskNote: "Look under the lamp.",
-  evidenceCaption: "Exhibit A · the mark",
   cipher: { decoding: "Decoding", decoded: "Decoded", key: "Key" },
   board: {
   label: "Departures",
