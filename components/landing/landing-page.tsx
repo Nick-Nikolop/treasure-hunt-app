@@ -1,8 +1,10 @@
 "use client"
 
 import Image from "next/image"
+import { motion, useScroll } from "framer-motion"
 import { useEffect, useRef, useState } from "react"
 import { useI18n } from "@/components/pythea/language-provider"
+import { ClueProvider, ClueTracker } from "./clues"
 import { ColdOpen } from "./cold-open"
 import { LANDING_COPY } from "./copy"
 import { FilmSequence } from "./film-sequence"
@@ -33,6 +35,7 @@ export function LandingPage() {
   const [altLogo, setAltLogo] = useState(false)
   const logoClicks = useRef<number[]>([])
   const logoSrc = altLogo ? ALT_LOGO : DEFAULT_LOGO
+  const { scrollYProgress } = useScroll()
 
   useEffect(() => {
     const decoded = PRELOAD_IMAGES.map((src) => {
@@ -58,6 +61,7 @@ export function LandingPage() {
 
   return (
     <LogoContext.Provider value={logoSrc}>
+    <ClueProvider copy={copy.clues}>
     <div className="dark min-h-svh bg-background text-foreground">
       <ColdOpen skipLabel={copy.intro.skip} onFinish={() => setHeroTake((take) => take + 1)} />
       <div
@@ -88,6 +92,7 @@ export function LandingPage() {
             <a href="#faq" className="hidden text-foreground/75 hover:text-brass md:inline">
               {copy.nav.faq}
             </a>
+            <ClueTracker />
             <button
               type="button"
               onClick={toggle}
@@ -98,6 +103,11 @@ export function LandingPage() {
             </button>
           </div>
         </nav>
+        <motion.div
+          className="absolute inset-x-0 bottom-0 h-px origin-left bg-brass"
+          style={{ scaleX: scrollYProgress }}
+          aria-hidden="true"
+        />
       </header>
 
       <main id="top">
@@ -112,6 +122,7 @@ export function LandingPage() {
         <ClosingSection copy={copy.closing} footer={copy.footer} nav={copy.nav} logoSrc={logoSrc} />
       </main>
     </div>
+    </ClueProvider>
     </LogoContext.Provider>
   )
 }

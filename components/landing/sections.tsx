@@ -5,6 +5,7 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import { Eye, Hourglass, Instagram, Landmark, Mail, Plus, ShieldCheck } from "lucide-react"
 import { LANDING_CONTACT, type LandingCopy } from "./copy"
+import { Clue, ClueReward } from "./clues"
 import { useLogoSrc } from "./logo-context"
 
 const EASE = [0.16, 1, 0.3, 1] as const
@@ -40,7 +41,9 @@ export function StorySection({ copy }: { copy: LandingCopy["story"] }) {
         transition={{ duration: 1.2, ease: EASE }}
       >
         <p className="font-serif text-4xl italic text-brass md:text-6xl">{copy.close}</p>
-        <p className="max-w-xl font-sans text-lg leading-relaxed text-foreground/75 text-pretty">{copy.after}</p>
+        <p className="max-w-xl font-sans text-lg leading-relaxed text-foreground/75 text-pretty">
+          {copy.after} <Clue id="story" className="-my-2" />
+        </p>
       </motion.div>
     </section>
   )
@@ -77,6 +80,7 @@ export function HowSection({ copy }: { copy: LandingCopy["how"] }) {
                 <p className="absolute left-4 top-9 font-sans text-[11px] uppercase tracking-[0.3em] text-foreground/80">
                   {copy.scene} {String(index + 1).padStart(2, "0")}
                 </p>
+                {index === 2 && <Clue id="scene" className="absolute bottom-12 right-6" />}
               </div>
               <div className="flex flex-col gap-2">
                 <h3 className="font-serif text-2xl text-foreground">{step.title}</h3>
@@ -150,6 +154,7 @@ export function CodeSection({ copy }: { copy: LandingCopy["code"] }) {
             height={505}
             className="pointer-events-none absolute -right-24 -top-16 -z-10 w-[26rem] opacity-[0.06] md:w-[34rem]"
           />
+          <Clue id="code" className="absolute right-[5.5rem] top-[7.5rem] md:right-[8.5rem] md:top-[10.5rem]" />
           <div className="flex flex-col gap-12">
             <div className="flex max-w-2xl flex-col gap-4">
               <Label>{copy.label}</Label>
@@ -216,7 +221,8 @@ export function MissionsSection({ copy }: { copy: LandingCopy["missions"] }) {
                 <span className={`rounded-full border px-3 py-1 font-sans text-xs uppercase tracking-[0.2em] ${card.live ? "border-brass text-brass" : "border-foreground/30 text-muted-foreground"}`}>
                   {card.status}
                 </span>
-                <span className="font-sans text-xs uppercase tracking-[0.3em] text-foreground/60">
+                <span className="flex items-center gap-1 font-sans text-xs uppercase tracking-[0.3em] text-foreground/60">
+                  {!card.live && <Clue id="file" className="-my-2" />}
                   {copy.file} {card.ref}
                 </span>
               </div>
@@ -261,13 +267,16 @@ export function FaqSection({ copy }: { copy: LandingCopy["faq"] }) {
           <h2 className="font-serif text-4xl text-foreground md:text-5xl">{copy.title}</h2>
         </div>
         <div className="flex flex-col">
-          {copy.items.map((item) => (
+          {copy.items.map((item, index) => (
             <details key={item.q} className="group border-b border-border/60 py-6 [&_summary::-webkit-details-marker]:hidden">
               <summary className="flex cursor-pointer items-center justify-between gap-6 font-serif text-xl text-foreground md:text-2xl">
                 {item.q}
                 <Plus className="size-5 shrink-0 text-brass transition-transform duration-300 group-open:rotate-45" aria-hidden="true" />
               </summary>
-              <p className="max-w-2xl pt-4 font-sans text-base leading-relaxed text-muted-foreground">{item.a}</p>
+              <p className="max-w-2xl pt-4 font-sans text-base leading-relaxed text-muted-foreground">
+                {item.a}
+                {index === copy.items.length - 1 && <Clue id="faq" className="-my-2 ml-1" />}
+              </p>
             </details>
           ))}
         </div>
@@ -304,6 +313,7 @@ export function ClosingSection({
           </motion.div>
           <h2 className="font-serif text-5xl leading-tight text-foreground text-balance md:text-7xl">{copy.title}</h2>
           <p className="max-w-lg font-sans text-lg leading-relaxed text-foreground/80">{copy.body}</p>
+          <ClueReward />
           <a
             href="#missions"
             className="rounded-full bg-primary px-8 py-4 font-sans text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
