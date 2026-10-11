@@ -7,6 +7,7 @@ import { ColdOpen } from "./cold-open"
 import { LANDING_COPY } from "./copy"
 import { FilmSequence } from "./film-sequence"
 import { FlashlightHero } from "./flashlight-hero"
+import { ALT_LOGO, DEFAULT_LOGO, LogoContext } from "./logo-context"
 import { ClosingSection, CodeSection, FaqSection, HowSection, MissionsSection, StorySection, WhySection } from "./sections"
 
 const GRAIN =
@@ -31,7 +32,7 @@ export function LandingPage() {
   const [heroTake, setHeroTake] = useState(0)
   const [altLogo, setAltLogo] = useState(false)
   const logoClicks = useRef<number[]>([])
-  const logoSrc = altLogo ? "/landing/logo-alt.webp" : "/landing/logo.webp"
+  const logoSrc = altLogo ? ALT_LOGO : DEFAULT_LOGO
 
   useEffect(() => {
     const decoded = PRELOAD_IMAGES.map((src) => {
@@ -56,6 +57,7 @@ export function LandingPage() {
   }
 
   return (
+    <LogoContext.Provider value={logoSrc}>
     <div className="dark min-h-svh bg-background text-foreground">
       <ColdOpen skipLabel={copy.intro.skip} onFinish={() => setHeroTake((take) => take + 1)} />
       <div
@@ -110,5 +112,6 @@ export function LandingPage() {
         <ClosingSection copy={copy.closing} footer={copy.footer} nav={copy.nav} logoSrc={logoSrc} />
       </main>
     </div>
+    </LogoContext.Provider>
   )
 }

@@ -3,6 +3,7 @@
 import Image from "next/image"
 import { useEffect, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
+import { useLogoSrc } from "./logo-context"
 
 const SEEN_KEY = "thehunt:cold-open-seen"
 const DURATION_MS = 3400
@@ -14,6 +15,7 @@ const EASE = [0.16, 1, 0.3, 1] as const
  * page replay the hero entrance so it is not spent behind the card.
  */
 export function ColdOpen({ skipLabel, onFinish }: { skipLabel: string; onFinish: () => void }) {
+  const logoSrc = useLogoSrc()
   const [visible, setVisible] = useState(true)
 
   useEffect(() => {
@@ -62,7 +64,7 @@ export function ColdOpen({ skipLabel, onFinish }: { skipLabel: string; onFinish:
               transition={{ duration: 2.6, times: [0, 0.6, 0.75, 1] }}
               aria-hidden="true"
             />
-            <Image unoptimized src="/landing/logo.webp" alt="The Hunt" width={220} height={220} priority className="relative h-36 w-36 md:h-52 md:w-52" />
+            <Image unoptimized src={logoSrc} alt="The Hunt" width={220} height={220} priority className="relative h-36 w-36 md:h-52 md:w-52" />
           </motion.div>
           <motion.p
             className="font-serif text-xl text-foreground md:text-2xl"

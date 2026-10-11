@@ -5,6 +5,7 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import { Eye, Hourglass, Instagram, Landmark, Mail, Plus, ShieldCheck } from "lucide-react"
 import { LANDING_CONTACT, type LandingCopy } from "./copy"
+import { useLogoSrc } from "./logo-context"
 
 const EASE = [0.16, 1, 0.3, 1] as const
 const RULE_ICONS = [Eye, Hourglass, Landmark, ShieldCheck]
@@ -130,6 +131,7 @@ export function WhySection({ copy, who }: { copy: LandingCopy["why"]; who: Landi
 }
 
 export function CodeSection({ copy }: { copy: LandingCopy["code"] }) {
+  const logoSrc = useLogoSrc()
   return (
     <section className="border-t border-border/60 py-24 md:py-32">
       <div className="mx-auto max-w-7xl px-6 md:px-10">
@@ -141,7 +143,8 @@ export function CodeSection({ copy }: { copy: LandingCopy["code"] }) {
           transition={{ duration: 1.1, ease: EASE }}
         >
           <Image unoptimized loading="eager"
-            src="/landing/logo.webp"
+            key={logoSrc}
+            src={logoSrc}
             alt=""
             width={520}
             height={505}
@@ -313,7 +316,7 @@ export function ClosingSection({
         <div className="mx-auto grid max-w-7xl gap-12 px-6 py-16 md:grid-cols-[1.2fr_1fr_1.4fr] md:px-10">
           <div className="flex flex-col gap-4">
             <p className="flex items-center gap-3 font-serif text-base tracking-[0.3em] text-foreground">
-              <Image unoptimized loading="eager" src="/landing/logo.webp" alt="" width={36} height={35} className="h-auto w-9" />
+              <Image unoptimized loading="eager" key={logoSrc} src={logoSrc} alt="" width={36} height={35} className="h-auto w-9 animate-in fade-in duration-700" />
               THE HUNT
             </p>
             <p className="max-w-xs font-sans text-sm leading-relaxed text-muted-foreground">{footer.tagline}</p>
