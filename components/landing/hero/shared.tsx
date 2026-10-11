@@ -19,6 +19,8 @@ type BeamPath = {
   mobileX?: number
   mobileReachX?: number
   speed?: number
+  /** Set false to keep the beam on its own sweep and ignore the mouse. */
+  followPointer?: boolean
 }
 
 /** How long the beam keeps following a still mouse before drifting back to its own sweep. */
@@ -30,7 +32,7 @@ const POINTER_HOLD_MS = 2400
  */
 export function useBeam(ref: RefObject<HTMLElement | null>, path: BeamPath) {
   const reduceMotion = useReducedMotion()
-  const { x, y, reachX, reachY, mobileX, mobileReachX, speed = 1 } = path
+  const { x, y, reachX, reachY, mobileX, mobileReachX, speed = 1, followPointer = true } = path
 
   useEffect(() => {
     const stage = ref.current
@@ -76,15 +78,17 @@ export function useBeam(ref: RefObject<HTMLElement | null>, path: BeamPath) {
       place(width * x, height * y)
       return
     }
-    stage.addEventListener("pointermove", onMove)
-    stage.addEventListener("pointerleave", onLeave)
+    if (followPointer) {
+      stage.addEventListener("pointermove", onMove)
+      stage.addEventListener("pointerleave", onLeave)
+    }
     frame = requestAnimationFrame(sweep)
     return () => {
       cancelAnimationFrame(frame)
       stage.removeEventListener("pointermove", onMove)
       stage.removeEventListener("pointerleave", onLeave)
     }
-  }, [ref, reduceMotion, x, y, reachX, reachY, mobileX, mobileReachX, speed])
+  }, [ref, reduceMotion, x, y, reachX, reachY, mobileX, mobileReachX, speed, followPointer])
 }
 
 export function beamMask(inner = "9rem", outer = "19rem") {

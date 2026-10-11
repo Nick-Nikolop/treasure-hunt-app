@@ -31,7 +31,7 @@ function TypedBody({ text }: { text: string }) {
 /** Overhead shot of an investigator's desk: the beam is a desk lamp drifting over the map. */
 export function HeroDesk({ copy }: { copy: HeroCopy }) {
   const stageRef = useRef<HTMLElement>(null)
-  useBeam(stageRef, { x: 0.66, y: 0.5, reachX: 0.2, reachY: 0.26, mobileX: 0.55, mobileReachX: 0.3, speed: 0.8 })
+  useBeam(stageRef, { x: 0.66, y: 0.5, reachX: 0.2, reachY: 0.26, mobileX: 0.55, mobileReachX: 0.3, speed: 0.8, followPointer: false })
   const mask = beamMask("10rem", "22rem")
 
   return (
