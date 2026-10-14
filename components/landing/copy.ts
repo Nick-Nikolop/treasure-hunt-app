@@ -22,6 +22,8 @@ export const LANDING_COPY = {
       body: "Βγαίνεις με την παρέα σου στους δρόμους της πόλης. Το κινητό σού δίνει γρίφους. Τους λύνεις, βρίσκεις το σωστό σημείο, σκανάρεις ένα QR και παίρνεις τον επόμενο γρίφο, μέχρι το τέλος.",
       compare: "Σαν escape room, αλλά σε ολόκληρη την πόλη.",
       equation: ["Escape room", "Η πόλη σου", "Το κινητό σου"],
+      notes: ["Γρίφοι που λύνετε μαζί, σαν ομάδα.", "Πραγματικοί δρόμοι και σημεία, όχι ένα δωμάτιο.", "Σου δίνει τους γρίφους και σκανάρει τα QR."],
+      result: "Ένα παιχνίδι που παίζεις έξω, στην πόλη.",
       facts: [
         { q: "Τι κάνεις;", a: "Λύνεις γρίφους και βρίσκεις σημεία στην πόλη." },
         { q: "Πού;", a: "Έξω, σε πραγματικούς δρόμους και δημόσιους χώρους." },
@@ -162,7 +164,7 @@ export const LANDING_COPY = {
       ask: "Ρώτα κάτι",
       flip: "Πάτα για την απάντηση",
       empty: "Διάλεξε μια ερώτηση από κάτω.",
-      done: "Τις ρώτησες όλες.",
+      done: "Τις ρώτησες όλε��.",
       items: [
         { q: "Τι είναι το The Hunt;", a: "Μια διαδραστική εμπειρία εξερεύνησης και γρίφων που ενώνει τον πραγματικό κόσμο με ένα ψηφιακό παιχνίδι." },
         { q: "Πώς συμμετέχω;", a: "Διαλέγεις μια διαθέσιμη αποστολή και ακολουθείς τις οδηγίες συμμετοχής της. Κάθε αποστολή έχει τους δικούς της όρους." },
@@ -243,6 +245,8 @@ export const LANDING_COPY = {
       body: "You head out into the city with your friends. Your phone gives you a puzzle. You solve it, find the right spot, scan a QR code and get the next puzzle, all the way to the end.",
       compare: "Like an escape room, but the whole city is the room.",
       equation: ["Escape room", "Your city", "Your phone"],
+      notes: ["Puzzles you solve together, as a team.", "Real streets and places, not a single room.", "Gives you the puzzles and scans the QR codes."],
+      result: "A game you play outdoors, across the city.",
       facts: [
         { q: "What do you do?", a: "Solve puzzles and find places around the city." },
         { q: "Where?", a: "Outdoors, on real streets and in public places." },

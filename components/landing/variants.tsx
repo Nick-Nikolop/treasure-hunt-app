@@ -28,11 +28,11 @@ export const SECTIONS: SectionDef[] = [
     id: "what",
     label: { el: "Τι είναι", en: "What it is" },
     options: [
-      o("plain", "Λιτό · τέσσερις απαντήσεις", "Plain · four answers"),
-      o("phone", "Με την οθόνη του κινητού", "With the phone screen"),
-      o("equation", "Escape room + πόλη + κινητό", "Escape room + city + phone"),
-      o("photo", "Με φωτογραφία", "With a photo"),
-      o("questions", "Ερώτηση · απάντηση", "Question · answer"),
+      o("equation", "Εξίσωση · σε μία σειρά", "Equation · one row"),
+      o("cards", "Εξίσωση · κάρτες με εξήγηση", "Equation · explained cards"),
+      o("stack", "Εξίσωση · μεγάλα γράμματα", "Equation · big type stack"),
+      o("build", "Εξίσωση · χτίζεται με το scroll", "Equation · builds on scroll"),
+      o("sentence", "Εξίσωση · ως τίτλος", "Equation · as the headline"),
     ],
   },
   {
