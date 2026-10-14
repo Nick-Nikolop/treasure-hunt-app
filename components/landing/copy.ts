@@ -1,7 +1,7 @@
 import type { Locale } from "@/lib/i18n"
 import { LEGAL_ORG } from "@/lib/legal"
 
-const FILM_IMAGES = ["/landing/film-street.webp", "/landing/film-building.webp", "/landing/film-square.webp"]
+const FILM_IMAGES = ["/landing/plateia.webp", "/landing/kastro.webp", "/landing/limani.webp"]
 
 export const LANDING_COPY = {
   el: {
@@ -30,16 +30,16 @@ export const LANDING_COPY = {
   },
   evidence: {
   label: "Ο τοίχος με τα στοιχεία",
-  photos: ["Το σοκάκι", "Η πρόσοψη", "Το σημάδι", "Η πλατεία"],
+  photos: ["Το Κάστρο", "Η Πλατεία", "Το σημάδι", "Το Λιμάνι"],
   note: "Ποιος το άφησε;",
   },
   },
     film: {
       open: "Ο κόσμος είναι γεμάτος ιστορίες που δεν έχεις ανακαλύψει ακόμα.",
       frames: [
-        { title: "Ένας δρόμος.", alt: "Πέτρινο σοκάκι με ένα αχνό βέλος σε σκαλί", image: FILM_IMAGES[0] },
-        { title: "Ένα κτίριο.", alt: "Πρόσοψη νεοκλασικού κτιρίου με σκαλισμένο σύμβολο", image: FILM_IMAGES[1] },
-        { title: "Ένα γνώριμο σημείο.", alt: "Άδεια πλατεία με άγαλμα και ρολόι την αυγή", image: FILM_IMAGES[2] },
+        { title: "Μια πλατεία.", alt: "Παλιά φωτογραφία της Πλατείας Βασιλέως Γεωργίου στην Καλαμάτα", image: FILM_IMAGES[0] },
+        { title: "Ένα κάστρο.", alt: "Ο λόφος του Κάστρου της Καλαμάτας πάνω από την πόλη", image: FILM_IMAGES[1] },
+        { title: "Ένα γνώριμο σημείο.", alt: "Παλιά φωτογραφία του λιμανιού της Καλαμάτας με τον Ταΰγετο", image: FILM_IMAGES[2] },
       ],
       close: "Μπορεί να κρύβει κάτι που δεν είχες προσέξει ποτέ.",
       take: "Πλάνο",
@@ -229,16 +229,16 @@ export const LANDING_COPY = {
   },
   evidence: {
   label: "The evidence wall",
-  photos: ["The alley", "The facade", "The mark", "The square"],
+  photos: ["The Castle", "The Square", "The mark", "The Port"],
   note: "Who left this?",
   },
   },
     film: {
       open: "The world is full of stories you have not discovered yet.",
       frames: [
-        { title: "A street.", alt: "A stone alley with a faint arrow on a step", image: FILM_IMAGES[0] },
-        { title: "A building.", alt: "A neoclassical facade with a carved symbol", image: FILM_IMAGES[1] },
-        { title: "A familiar place.", alt: "An empty square with a statue and clock tower at dawn", image: FILM_IMAGES[2] },
+        { title: "A square.", alt: "An old photo of King George Square in Kalamata", image: FILM_IMAGES[0] },
+        { title: "A castle.", alt: "The Kalamata castle hill above the city", image: FILM_IMAGES[1] },
+        { title: "A familiar place.", alt: "An old photo of Kalamata port beneath Mount Taygetos", image: FILM_IMAGES[2] },
       ],
       close: "Any of them could hide something you never noticed.",
       take: "Shot",

@@ -57,7 +57,7 @@ export function FilmSequence({ copy }: { copy: LandingCopy["film"] }) {
               animate={{ scale: 1, x: shotIndex % 2 === 0 ? "2%" : "-2%" }}
               transition={{ duration: (SHOT_MS + (shotIndex === count - 1 ? CLOSE_MS : 0)) / 1000 + 1, ease: "linear" }}
             >
-              <Image unoptimized loading="eager" src={copy.frames[shotIndex].image} alt={copy.frames[shotIndex].alt} fill sizes="100vw" className="object-cover brightness-[0.6]" />
+              <Image unoptimized loading="eager" src={copy.frames[shotIndex].image} alt={copy.frames[shotIndex].alt} fill sizes="100vw" className="object-cover brightness-[0.6] grayscale sepia-[0.4] contrast-[1.15]" />
             </motion.div>
 
             <AnimatePresence>

@@ -87,10 +87,10 @@ export function HeroBoard({ copy }: { copy: HeroCopy }) {
   return (
     <section ref={stageRef} className="relative isolate flex min-h-svh flex-col items-center justify-center overflow-hidden bg-background">
       <div className="absolute inset-0 -z-10" aria-hidden="true">
-        <Image unoptimized src="/landing/hero-city.webp" alt="" fill priority sizes="100vw" className="object-cover brightness-[0.12] saturate-[0.4]" />
+        <Image unoptimized src="/landing/hero-desk.webp" alt="" fill priority sizes="100vw" className="object-cover brightness-[0.12] saturate-[0.4]" />
       </div>
       <div className="absolute inset-0 -z-10" style={{ maskImage: mask, WebkitMaskImage: mask }} aria-hidden="true">
-        <Image unoptimized loading="eager" src="/landing/hero-city.webp" alt="" fill sizes="100vw" className="object-cover brightness-[0.5] saturate-[0.7]" />
+        <Image unoptimized loading="eager" src="/landing/hero-desk.webp" alt="" fill sizes="100vw" className="object-cover brightness-[0.5] saturate-[0.7]" />
       </div>
       <BeamClue mask={mask} className="left-[86%] top-[20%] md:left-[90%] md:top-[30%]" />
       <Grain opacity={0.06} />

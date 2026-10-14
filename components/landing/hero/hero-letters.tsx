@@ -5,7 +5,7 @@ import { motion } from "framer-motion"
 import { useRef } from "react"
 import { BeamClue, EASE, Grain, HeroActions, type HeroCopy, HiddenMarks, beamMask, toCaps, useBeam } from "./shared"
 
-const IMAGE = "/landing/hero-aerial.webp"
+const IMAGE = "/landing/hero-desk.webp"
 
 const MARKS = [
   { x: "14%", y: "22%", text: "N 37°02′", className: "text-xl", rotate: 4 },

@@ -7,10 +7,10 @@ import { BeamClue, BeamShade, EASE, Grain, HeroActions, type HeroCopy, beamMask,
 
 /** Positions are percentages of the board area. Pins sit at the top centre of each card. */
 const PHOTOS = [
-  { src: "/landing/film-street.webp", x: 4, y: 8, w: 36, rotate: -7 },
-  { src: "/landing/film-building.webp", x: 56, y: 2, w: 34, rotate: 5 },
+  { src: "/landing/kastro.webp", x: 4, y: 8, w: 36, rotate: -7 },
+  { src: "/landing/plateia.webp", x: 56, y: 2, w: 34, rotate: 5 },
   { src: "/landing/scene-clue.webp", x: 30, y: 44, w: 36, rotate: -2 },
-  { src: "/landing/film-square.webp", x: 66, y: 52, w: 30, rotate: 8 },
+  { src: "/landing/limani.webp", x: 66, y: 52, w: 30, rotate: 8 },
 ]
 const NOTE = { x: 3, y: 66, rotate: 4 }
 const pinOf = (index: number) => ({ x: PHOTOS[index].x + PHOTOS[index].w / 2, y: PHOTOS[index].y + 1.5 })
@@ -77,7 +77,7 @@ export function HeroEvidence({ copy }: { copy: HeroCopy }) {
           >
             <Pin />
             <div className="relative aspect-[4/3] overflow-hidden">
-              <Image unoptimized src={photo.src} alt="" fill sizes="(min-width: 768px) 20vw, 40vw" className="object-cover saturate-[0.6] sepia-[0.2]" />
+              <Image unoptimized src={photo.src} alt="" fill sizes="(min-width: 768px) 20vw, 40vw" className="object-cover grayscale sepia-[0.45] contrast-[1.1]" />
             </div>
             <figcaption className="truncate pt-[4%] text-center font-serif text-xs italic text-background md:text-sm">{copy.evidence.photos[index]}</figcaption>
           </motion.figure>

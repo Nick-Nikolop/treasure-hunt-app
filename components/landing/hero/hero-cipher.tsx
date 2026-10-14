@@ -124,7 +124,7 @@ export function HeroCipher({ copy }: { copy: HeroCopy }) {
       }}
     >
       <div className="absolute inset-0 -z-10" style={{ maskImage: mask, WebkitMaskImage: mask }} aria-hidden="true">
-        <Image unoptimized src="/landing/hero-aerial.webp" alt="" fill priority sizes="100vw" className="object-cover brightness-[0.5] saturate-[0.6]" />
+        <Image unoptimized src="/landing/hero-desk.webp" alt="" fill priority sizes="100vw" className="object-cover brightness-[0.5] saturate-[0.6]" />
         <HiddenMarks marks={MARKS} />
       </div>
       <BeamClue mask={mask} className="left-[8%] top-[74%] md:left-[44%] md:top-[86%]" />

@@ -115,9 +115,9 @@ export function HeroWidescreen({ copy }: { copy: HeroCopy }) {
           animate={{ scale: 1.03, filter: "blur(0px)" }}
           transition={{ scale: { duration: 10, ease: "easeOut" }, filter: { delay: 0.9, duration: 1.4, ease: EASE } }}
         >
-          <Image unoptimized src="/landing/hero-city.webp" alt="" fill priority sizes="100vw" className="object-cover brightness-[0.28] saturate-[0.6]" />
+          <Image unoptimized src="/landing/hero-desk.webp" alt="" fill priority sizes="100vw" className="object-cover brightness-[0.28] saturate-[0.6]" />
           <div className="absolute inset-0" style={{ maskImage: mask, WebkitMaskImage: mask }} aria-hidden="true">
-            <Image unoptimized loading="eager" src="/landing/hero-city.webp" alt="" fill sizes="100vw" className="object-cover brightness-[1.3] saturate-[1.1]" />
+            <Image unoptimized loading="eager" src="/landing/hero-desk.webp" alt="" fill sizes="100vw" className="object-cover brightness-[1.3] saturate-[1.1]" />
             <HiddenMarks marks={MARKS} />
           </div>
         </motion.div>

@@ -32,7 +32,7 @@ const POINTER_HOLD_MS = 2400
  */
 export function useBeam(ref: RefObject<HTMLElement | null>, path: BeamPath) {
   const reduceMotion = useReducedMotion()
-  const { x, y, reachX, reachY, mobileX, mobileReachX, speed = 1, followPointer = true } = path
+  const { x, y, reachX, reachY, mobileX, mobileReachX, speed = 1, followPointer = false } = path
 
   useEffect(() => {
     const stage = ref.current
