@@ -17,8 +17,8 @@ export function HeroDeskLine({ copy }: { copy: HeroCopy }) {
         <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col gap-8 px-6 pb-14 pt-28 md:px-10">
           <RevealTitle
             lines={copy.title}
-            className="font-serif text-5xl leading-[0.95] text-foreground text-balance md:text-7xl lg:text-8xl xl:whitespace-nowrap"
-            lineClassName="block md:inline-block md:pr-[0.22em]"
+            className="font-serif text-5xl leading-[0.95] text-foreground text-balance md:text-7xl lg:text-8xl"
+            lineClassName="block"
           />
           <motion.div
             className="h-px origin-left bg-brass/50"

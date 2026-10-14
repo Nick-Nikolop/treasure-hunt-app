@@ -7,7 +7,7 @@ import { useI18n } from "@/components/pythea/language-provider"
 import { ClueProvider, ClueTracker } from "./clues"
 import { ColdOpen } from "./cold-open"
 import { LANDING_COPY } from "./copy"
-import { FilmSequence } from "./film-sequence"
+import { FilmBody } from "./film/film-body"
 import { Hero } from "./hero/hero"
 import { VariantMenu, VariantProvider } from "./variants"
 import { ALT_LOGO, DEFAULT_LOGO, LogoContext } from "./logo-context"
@@ -115,7 +115,7 @@ export function LandingPage() {
 
       <main id="top">
         <Hero take={heroTake} copy={copy.hero} />
-        <FilmSequence copy={copy.film} />
+        <FilmBody copy={copy.film} />
         <PageBody copy={copy} logoSrc={logoSrc} />
       </main>
     </div>

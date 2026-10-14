@@ -9,7 +9,7 @@ export const LANDING_COPY = {
     intro: { skip: "Παράλειψη" },
     hero: {
       eyebrow: "Ένα παιχνίδι μυστηρίου στον πραγματικό κόσμο",
-      title: ["Κάτι", "κρύβεται εδώ."],
+      title: ["Η Καλαμάτα", "είναι γεμάτη μυστήρια."],
       body: "Το The Hunt μετατρέπει την πόλη σε παιχνίδι. Ακολουθείς στοιχεία, λύνεις γρίφους, βρίσκεις κρυμμένα σημεία και φτάνεις με την ομάδα σου μέχρι το τέλος.",
       primary: "Ανακάλυψε τις αποστολές",
       secondary: "Πώς παίζεται",
@@ -19,12 +19,29 @@ export const LANDING_COPY = {
     film: {
       open: "Ο κόσμος είναι γεμάτος ιστορίες που δεν έχεις ανακαλύψει ακόμα.",
       frames: [
-        { title: "Μια πλατεία.", alt: "Παλιά φωτογραφία της Πλατείας Βασιλέως Γεωργίου στην Καλαμάτα", image: FILM_IMAGES[0] },
-        { title: "Ένα κάστρο.", alt: "Ο λόφος του Κάστρου της Καλαμάτας πάνω από την πόλη", image: FILM_IMAGES[1] },
-        { title: "Ένα γνώριμο σημείο.", alt: "Παλιά φωτογραφία του λιμανιού της Καλαμάτας με τον Ταΰγετο", image: FILM_IMAGES[2] },
+        {
+          title: "Μια πλατεία.",
+          hint: "Εκατοντάδες περαστικοί κάθε μέρα. Σχεδόν κανείς δεν κοιτάζει ψηλά.",
+          alt: "Παλιά φωτογραφία της Πλατείας Βασιλέως Γεωργίου στην Καλαμάτα",
+          image: FILM_IMAGES[0],
+        },
+        {
+          title: "Ένα κάστρο.",
+          hint: "Αιώνες πάνω από την πόλη. Οι πέτρες του έχουν δει τα πάντα.",
+          alt: "Ο λόφος του Κάστρου της Καλαμάτας πάνω από την πόλη",
+          image: FILM_IMAGES[1],
+        },
+        {
+          title: "Ένα γνώριμο σημείο.",
+          hint: "Τα καράβια φεύγουν. Οι ιστορίες μένουν πίσω.",
+          alt: "Παλιά φωτογραφία του λιμανιού της Καλαμάτας με τον Ταΰγετο",
+          image: FILM_IMAGES[2],
+        },
       ],
       close: "Μπορεί να κρύβει κάτι που δεν είχες προσέξει ποτέ.",
       take: "Πλάνο",
+      place: "Καλαμάτα",
+      spot: "Κούνησε το φως για να δεις",
     },
     story: {
       label: "Η ιδέα",
@@ -190,7 +207,7 @@ export const LANDING_COPY = {
     intro: { skip: "Skip" },
     hero: {
       eyebrow: "A mystery game played in the real world",
-      title: ["Something", "is hidden here."],
+      title: ["Kalamata", "is full of mysteries."],
       body: "The Hunt turns the city into a game. Follow clues, solve puzzles, find hidden spots and reach the end with your team.",
       primary: "Explore the Hunts",
       secondary: "How it works",
@@ -200,12 +217,29 @@ export const LANDING_COPY = {
     film: {
       open: "The world is full of stories you have not discovered yet.",
       frames: [
-        { title: "A square.", alt: "An old photo of King George Square in Kalamata", image: FILM_IMAGES[0] },
-        { title: "A castle.", alt: "The Kalamata castle hill above the city", image: FILM_IMAGES[1] },
-        { title: "A familiar place.", alt: "An old photo of Kalamata port beneath Mount Taygetos", image: FILM_IMAGES[2] },
+        {
+          title: "A square.",
+          hint: "Hundreds of people walk through it every day. Almost nobody looks up.",
+          alt: "An old photo of King George Square in Kalamata",
+          image: FILM_IMAGES[0],
+        },
+        {
+          title: "A castle.",
+          hint: "Centuries above the city. Its stones have seen everything.",
+          alt: "The Kalamata castle hill above the city",
+          image: FILM_IMAGES[1],
+        },
+        {
+          title: "A familiar place.",
+          hint: "The ships leave. The stories stay behind.",
+          alt: "An old photo of Kalamata port beneath Mount Taygetos",
+          image: FILM_IMAGES[2],
+        },
       ],
       close: "Any of them could hide something you never noticed.",
       take: "Shot",
+      place: "Kalamata",
+      spot: "Move the light to look closer",
     },
     story: {
       label: "The idea",

@@ -26,7 +26,16 @@ export const SECTIONS: SectionDef[] = [
     label: { el: "Hero", en: "Hero" },
     options: [],
   },
-  { id: "film", label: { el: "Πλάνα", en: "Film" }, options: [] },
+  {
+    id: "film",
+    label: { el: "Τα τρία σημεία", en: "The three places" },
+    options: [
+      { id: "postcards", label: { el: "Καρτ ποστάλ · στοίβα που μοιράζεται", en: "Postcards · a stack that deals" } },
+      { id: "spotlight", label: { el: "Φακός · ψάξε στο σκοτάδι", en: "Flashlight · search the dark" } },
+      { id: "triptych", label: { el: "Τρίπτυχο · τρεις φωτογραφίες", en: "Triptych · three photographs" } },
+      { id: "current", label: { el: "Η τωρινή (για σύγκριση)", en: "Current (for comparison)" } },
+    ],
+  },
   { id: "story", label: { el: "Η ιδέα", en: "The idea" }, options: [] },
   { id: "how", label: { el: "Πώς παίζεται", en: "How it works" }, options: [] },
   { id: "why", label: { el: "Γιατί", en: "Why" }, options: [] },
