@@ -45,7 +45,7 @@ export function HeroDesk({ copy }: { copy: HeroCopy }) {
         aria-hidden="true"
       />
 
-      <BeamClue mask={mask} className="left-[82%] top-[36%]" />
+      <BeamClue mask={mask} className="left-[46%] top-[83%]" />
       <Grain opacity={0.07} />
 
       <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col gap-8 px-6 pb-16 pt-28 md:px-10">
