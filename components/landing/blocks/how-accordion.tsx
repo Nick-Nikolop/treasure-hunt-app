@@ -7,7 +7,10 @@ import { Clue } from "../clues"
 import type { LandingCopy } from "../copy"
 import { EASE, Label } from "../pages/kit"
 
-/** Four tall panels side by side; the one you hover or tap opens wide and tells its scene. */
+/**
+ * Four tall panels side by side; the one you hover or tap opens wide and shows its step.
+ * The open text has a fixed width so it never re-wraps while the panel is still growing.
+ */
 export function HowAccordion({ copy }: { copy: LandingCopy["how"] }) {
   const [active, setActive] = useState(0)
 
@@ -71,14 +74,13 @@ export function HowAccordion({ copy }: { copy: LandingCopy["how"] }) {
                   <h3 className="font-serif text-3xl text-foreground">{step.title}</h3>
                   <p className="max-w-md font-sans text-base leading-relaxed text-foreground/80">{step.body}</p>
                 </div>
-                <AnimatePresence>
+                <AnimatePresence initial={false}>
                   {open && (
                     <motion.div
-                      className="pointer-events-none absolute inset-x-0 bottom-0 hidden flex-col gap-3 p-10 lg:flex"
-                      initial={{ opacity: 0, y: 24 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 12 }}
-                      transition={{ delay: 0.25, duration: 0.6, ease: EASE }}
+                      className="pointer-events-none absolute bottom-0 left-0 hidden w-[min(30rem,40vw)] flex-col gap-3 p-10 lg:flex"
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0, transition: { delay: 0.45, duration: 0.5, ease: EASE } }}
+                      exit={{ opacity: 0, transition: { duration: 0.15 } }}
                     >
                       <h3 className="font-serif text-5xl leading-tight text-foreground">{step.title}</h3>
                       <p className="max-w-md font-sans text-lg leading-relaxed text-foreground/80">{step.body}</p>

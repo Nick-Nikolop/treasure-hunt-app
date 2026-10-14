@@ -19,16 +19,15 @@ import {
   ClosingSection,
   CodeSection,
   FaqSection,
-  HowSection,
   MissionsSection,
   SiteFooter,
   StorySection,
   WhySection,
 } from "../sections"
 import { useVariant } from "../variants"
-import { DossierCode, DossierHow, DossierMissions, DossierStory, DossierWhy } from "./dossier"
-import { MapCode, MapHow, MapMissions, MapStory, MapWhy } from "./map"
-import { NightCode, NightHow, NightMissions, NightStory, NightWhy } from "./night"
+import { DossierCode, DossierMissions, DossierStory, DossierWhy } from "./dossier"
+import { MapCode, MapMissions, MapStory, MapWhy } from "./map"
+import { NightCode, NightMissions, NightStory, NightWhy } from "./night"
 
 type WhyProps = { copy: LandingCopy["why"]; who: LandingCopy["who"] }
 
@@ -38,13 +37,6 @@ const STORY: Record<string, ComponentType<{ copy: LandingCopy["story"] }>> = {
   oneline: StoryOneLine,
   map: MapStory,
   current: StorySection,
-}
-const HOW: Record<string, ComponentType<{ copy: LandingCopy["how"] }>> = {
-  dossier: DossierHow,
-  night: NightHow,
-  accordion: HowAccordion,
-  map: MapHow,
-  current: HowSection,
 }
 const WHY: Record<string, ComponentType<WhyProps>> = {
   dossier: DossierWhy,
@@ -85,7 +77,6 @@ const CLOSING: Record<string, ComponentType<{ copy: LandingCopy["closing"] }>> =
 /** Everything between the film and the end of the page; each section renders the variant picked for it. */
 export function PageBody({ copy }: { copy: LandingCopy }) {
   const Story = STORY[useVariant("story")] ?? DossierStory
-  const How = HOW[useVariant("how")] ?? DossierHow
   const Why = WHY[useVariant("why")] ?? DossierWhy
   const Code = CODE[useVariant("code")] ?? DossierCode
   const Missions = MISSIONS[useVariant("missions")] ?? DossierMissions
@@ -95,7 +86,7 @@ export function PageBody({ copy }: { copy: LandingCopy }) {
   return (
     <>
       <Story copy={copy.story} />
-      <How copy={copy.how} />
+      <HowAccordion copy={copy.how} />
       <Why copy={copy.why} who={copy.who} />
       <Code copy={copy.code} />
       <Missions copy={copy.missions} />

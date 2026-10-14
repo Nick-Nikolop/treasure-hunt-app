@@ -47,17 +47,6 @@ export const SECTIONS: SectionDef[] = [
     ],
   },
   {
-    id: "how",
-    label: { el: "Πώς παίζεται", en: "How it works" },
-    options: [
-      o("dossier", "Φωτογραφία που μένει σταθερή", "Pinned photo"),
-      o("night", "Οριζόντια κύλιση σκηνών", "Scenes scroll sideways"),
-      o("accordion", "Πάνελ που ανοίγουν", "Expanding panels"),
-      o("map", "Φωτογραφίες σε χαρτί", "Prints on paper"),
-      o("current", "Τέσσερις στήλες", "Four columns"),
-    ],
-  },
-  {
     id: "why",
     label: { el: "Γιατί", en: "Why" },
     options: [

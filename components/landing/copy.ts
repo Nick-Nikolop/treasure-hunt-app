@@ -6,7 +6,7 @@ const FILM_IMAGES = ["/landing/plateia.webp", "/landing/kastro.webp", "/landing/
 export const LANDING_COPY = {
   el: {
     nav: { how: "Πώς παίζεται", missions: "Αποστολές", faq: "Ερωτήσεις" },
-    intro: { skip: "Παράλειψη" },
+    intro: { skip: "Παράλειψη", loading: "Φόρτωση" },
     hero: {
       eyebrow: "Ένα παιχνίδι μυστηρίου στον πραγματικό κόσμο",
       title: ["Η Καλαμάτα", "είναι γεμάτη ιστορίες."],
@@ -56,8 +56,8 @@ export const LANDING_COPY = {
     },
     how: {
       label: "Πώς παίζεται",
-      title: "Τέσσερις σκηνές. Μία ιστορία.",
-      scene: "Σκηνή",
+      title: "Τέσσερα βήματα. Μία ιστορία.",
+      scene: "Βήμα",
       steps: [
         {
           title: "Διάλεξε αποστολή",
@@ -109,7 +109,7 @@ export const LANDING_COPY = {
       rules: [
         { title: "Κοίτα δύο φορές.", body: "Τα στοιχεία σπάνια φωνάζουν. Μια λεπτομέρεια που προσπέρασες μπορεί να είναι η απάντηση." },
         { title: "Μη βιάζεσαι.", body: "Το παιχνίδι ανταμείβει τη σκέψη, όχι την ταχύτητα. Περπάτα, παρατήρησε, συζήτησε." },
-        { title: "Σεβάσου τον χώρο.", body: "Παίζουμε σε δημόσιους χώρους που ανήκουν σε ό��ους. Τους αφήνουμε όπως τους βρήκαμε." },
+        { title: "Σεβάσου τον χώρο.", body: "Παίζουμε σε δημόσιους χώρους που ανήκουν σε ό����ους. Τους αφήνουμε όπως τους βρήκαμε." },
         { title: "Η ασφάλεια πρώτα.", body: "Αν κάτι μοιάζει επικίνδυνο, δεν είναι ο δρόμος. Κανένα στοιχείο δεν αξίζει ρίσκο." },
       ],
     },
@@ -210,7 +210,7 @@ export const LANDING_COPY = {
   },
   en: {
     nav: { how: "How it works", missions: "Hunts", faq: "FAQ" },
-    intro: { skip: "Skip" },
+    intro: { skip: "Skip", loading: "Loading" },
     hero: {
       eyebrow: "A mystery game played in the real world",
       title: ["Kalamata", "is full of stories."],
@@ -260,8 +260,8 @@ export const LANDING_COPY = {
     },
     how: {
       label: "How it works",
-      title: "Four scenes. One story.",
-      scene: "Scene",
+      title: "Four steps. One story.",
+      scene: "Step",
       steps: [
         {
           title: "Pick a Hunt",
