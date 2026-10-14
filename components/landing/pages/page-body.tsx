@@ -12,7 +12,7 @@ import { FaqIndex } from "../blocks/faq-index"
 import { FaqOpen } from "../blocks/faq-open"
 import { HowAccordion } from "../blocks/how-accordion"
 import { MissionsBoard } from "../blocks/missions-board"
-import { StoryOneLine } from "../blocks/story-oneline"
+import { WhatIs } from "../blocks/what-is"
 import { WhyBoard } from "../blocks/why-board"
 import type { LandingCopy } from "../copy"
 import {
@@ -21,23 +21,15 @@ import {
   FaqSection,
   MissionsSection,
   SiteFooter,
-  StorySection,
   WhySection,
 } from "../sections"
 import { useVariant } from "../variants"
-import { DossierCode, DossierMissions, DossierStory, DossierWhy } from "./dossier"
-import { MapCode, MapMissions, MapStory, MapWhy } from "./map"
-import { NightCode, NightMissions, NightStory, NightWhy } from "./night"
+import { DossierCode, DossierMissions, DossierWhy } from "./dossier"
+import { MapCode, MapMissions, MapWhy } from "./map"
+import { NightCode, NightMissions, NightWhy } from "./night"
 
 type WhyProps = { copy: LandingCopy["why"]; who: LandingCopy["who"] }
 
-const STORY: Record<string, ComponentType<{ copy: LandingCopy["story"] }>> = {
-  dossier: DossierStory,
-  night: NightStory,
-  oneline: StoryOneLine,
-  map: MapStory,
-  current: StorySection,
-}
 const WHY: Record<string, ComponentType<WhyProps>> = {
   dossier: DossierWhy,
   night: NightWhy,
@@ -74,9 +66,9 @@ const CLOSING: Record<string, ComponentType<{ copy: LandingCopy["closing"] }>> =
   minimal: ClosingMinimal,
 }
 
-/** Everything between the film and the end of the page; each section renders the variant picked for it. */
+/** Everything below the hero; each section renders the variant picked for it. */
 export function PageBody({ copy }: { copy: LandingCopy }) {
-  const Story = STORY[useVariant("story")] ?? DossierStory
+  const whatVariant = useVariant("what")
   const Why = WHY[useVariant("why")] ?? DossierWhy
   const Code = CODE[useVariant("code")] ?? DossierCode
   const Missions = MISSIONS[useVariant("missions")] ?? DossierMissions
@@ -85,7 +77,7 @@ export function PageBody({ copy }: { copy: LandingCopy }) {
 
   return (
     <>
-      <Story copy={copy.story} />
+      <WhatIs copy={copy.what} variant={whatVariant} />
       <HowAccordion copy={copy.how} />
       <Why copy={copy.why} who={copy.who} />
       <Code copy={copy.code} />

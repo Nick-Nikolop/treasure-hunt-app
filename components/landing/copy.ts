@@ -16,6 +16,23 @@ export const LANDING_COPY = {
       hint: "Ακολούθησε το φως. Και κοίτα προσεκτικά: επτά σύμβολα κρύβονται σε αυτή τη σελίδα.",
       scroll: "Κύλισε",
     },
+    what: {
+      label: "Τι είναι το The Hunt",
+      title: "Ένα κυνήγι θησαυρού στην πόλη, με το κινητό σου.",
+      body: "Βγαίνεις με την παρέα σου στους δρόμους της πόλης. Το κινητό σού δίνει γρίφους. Τους λύνεις, βρίσκεις το σωστό σημείο, σκανάρεις ένα QR και παίρνεις τον επόμενο γρίφο, μέχρι το τέλος.",
+      compare: "Σαν escape room, αλλά σε ολόκληρη την πόλη.",
+      equation: ["Escape room", "Η πόλη σου", "Το κινητό σου"],
+      facts: [
+        { q: "Τι κάνεις;", a: "Λύνεις γρίφους και βρίσκεις σημεία στην πόλη." },
+        { q: "Πού;", a: "Έξω, σε πραγματικούς δρόμους και δημόσιους χώρους." },
+        { q: "Με ποιους;", a: "Με την παρέα σου, σαν ομάδα." },
+        { q: "Τι χρειάζεσαι;", a: "Ένα κινητό. Τίποτα άλλο." },
+      ],
+      phone: { step: "Γρίφος 3 από 10", clue: "Βρες το ρολόι που σταμάτησε. Κάτω από τους δείκτες κρύβεται ο επόμενος κωδικός.", scan: "Σκάναρε το QR", found: "Σωστό σημείο" },
+      image: "/landing/scene-clue.webp",
+      alt: "Φακός φωτίζει πλακέτα με QR σε πέτρινο τοίχο",
+      cta: "Δες πώς παίζεται",
+    },
     film: {
       open: "Ο κόσμος είναι γεμάτος ιστορίες που δεν έχεις ανακαλύψει ακόμα.",
       frames: [
@@ -109,7 +126,7 @@ export const LANDING_COPY = {
       rules: [
         { title: "Κοίτα δύο φορές.", body: "Τα στοιχεία σπάνια φωνάζουν. Μια λεπτομέρεια που προσπέρασες μπορεί να είναι η απάντηση." },
         { title: "Μη βιάζεσαι.", body: "Το παιχνίδι ανταμείβει τη σκέψη, όχι την ταχύτητα. Περπάτα, παρατήρησε, συζήτησε." },
-        { title: "Σεβάσου τον χώρο.", body: "Παίζουμε σε δημόσιους χώρους που ανήκουν σε ό����ους. Τους αφήνουμε όπως τους βρήκαμε." },
+        { title: "Σεβάσου τον χώρο.", body: "Παίζουμε σε δημόσιους χώρους που ανήκουν σε όλους. Τους αφήνουμε όπως τους βρήκαμε." },
         { title: "Η ασφάλεια πρώτα.", body: "Αν κάτι μοιάζει επικίνδυνο, δεν είναι ο δρόμος. Κανένα στοιχείο δεν αξίζει ρίσκο." },
       ],
     },
@@ -147,7 +164,7 @@ export const LANDING_COPY = {
       empty: "Διάλεξε μια ερώτηση από κάτω.",
       done: "Τις ρώτησες όλες.",
       items: [
-        { q: "Τι είναι το The Hunt;", a: "Μια ��ιαδραστική εμπειρία εξερεύνησης και γρίφων που ενώνει τον πραγματικό κόσμο με ένα ψηφιακό παιχνίδι." },
+        { q: "Τι είναι το The Hunt;", a: "Μια διαδραστική εμπειρία εξερεύνησης και γρίφων που ενώνει τον πραγματικό κόσμο με ένα ψηφιακό παιχνίδι." },
         { q: "Πώς συμμετέχω;", a: "Διαλέγεις μια διαθέσιμη αποστολή και ακολουθείς τις οδηγίες συμμετοχής της. Κάθε αποστολή έχει τους δικούς της όρους." },
         { q: "Χρειάζομαι κινητό;", a: "Ναι. Από το κινητό βλέπεις τα στοιχεία και σκανάρεις τα QR checkpoints. Οι ακριβείς απαιτήσεις αναφέρονται σε κάθε αποστολή." },
         { q: "Παίζω με φίλους;", a: "Φυσικά. Η ομάδα είναι η καρδιά του παιχνιδιού. Το μέγεθός της το ορίζει κάθε αποστολή." },
@@ -158,7 +175,7 @@ export const LANDING_COPY = {
     },
     closing: {
       title: "Το επόμενο στοιχείο σε περιμένει.",
-      body: "Μάζεψε την ομάδα σου, ανακάλυψε τις αποστολές και ετοιμά��ου να δεις την πόλη αλλιώς.",
+      body: "Μάζεψε την ομάδα σου, ανακάλυψε τις αποστολές και ετοιμάσου να δεις την πόλη αλλιώς.",
       cta: "Ανακάλυψε τις αποστολές",
     },
     footer: {
@@ -219,6 +236,23 @@ export const LANDING_COPY = {
       secondary: "How it works",
       hint: "Follow the light. And look closely: seven symbols are hidden on this page.",
       scroll: "Scroll",
+    },
+    what: {
+      label: "What The Hunt is",
+      title: "A treasure hunt across the city, on your phone.",
+      body: "You head out into the city with your friends. Your phone gives you a puzzle. You solve it, find the right spot, scan a QR code and get the next puzzle, all the way to the end.",
+      compare: "Like an escape room, but the whole city is the room.",
+      equation: ["Escape room", "Your city", "Your phone"],
+      facts: [
+        { q: "What do you do?", a: "Solve puzzles and find places around the city." },
+        { q: "Where?", a: "Outdoors, on real streets and in public places." },
+        { q: "With whom?", a: "With your friends, as a team." },
+        { q: "What do you need?", a: "A phone. Nothing else." },
+      ],
+      phone: { step: "Puzzle 3 of 10", clue: "Find the clock that stopped. The next code is hidden under its hands.", scan: "Scan the QR", found: "Right spot" },
+      image: "/landing/scene-clue.webp",
+      alt: "A flashlight lights up a QR plaque on a stone wall",
+      cta: "See how it works",
     },
     film: {
       open: "The world is full of stories you have not discovered yet.",

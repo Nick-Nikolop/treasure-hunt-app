@@ -25,25 +25,14 @@ export const SECTIONS: SectionDef[] = [
     ],
   },
   {
-    id: "film",
-    label: { el: "Τα τρία σημεία", en: "The three places" },
+    id: "what",
+    label: { el: "Τι είναι", en: "What it is" },
     options: [
-      o("postcards", "Καρτ ποστάλ · στοίβα που μοιράζεται", "Postcards · a stack that deals"),
-      o("spotlight", "Φακός · ψάξε στο σκοτάδι", "Flashlight · search the dark"),
-      o("triptych", "Τρίπτυχο · τρεις φωτογραφίες", "Triptych · three photographs"),
-      o("filmstrip", "Φιλμ · οριζόντια ταινία", "Filmstrip · sideways reel"),
-      o("current", "Πλάνα σε όλη την οθόνη", "Full-screen shots"),
-    ],
-  },
-  {
-    id: "story",
-    label: { el: "Η ιδέα", en: "The idea" },
-    options: [
-      o("dossier", "Χαρτί · σελίδα με περιθώριο", "Paper · ruled page"),
-      o("night", "Λέξη-λέξη στο σκοτάδι", "Word by word in the dark"),
-      o("oneline", "Μία φράση τη φορά", "One line at a time"),
-      o("map", "Περγαμηνή · διαδρομή", "Parchment · route"),
-      o("current", "Λιτό", "Plain"),
+      o("plain", "Λιτό · τέσσερις απαντήσεις", "Plain · four answers"),
+      o("phone", "Με την οθόνη του κινητού", "With the phone screen"),
+      o("equation", "Escape room + πόλη + κινητό", "Escape room + city + phone"),
+      o("photo", "Με φωτογραφία", "With a photo"),
+      o("questions", "Ερώτηση · απάντηση", "Question · answer"),
     ],
   },
   {
