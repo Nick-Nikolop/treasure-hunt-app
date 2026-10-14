@@ -14,13 +14,7 @@ export const SECTIONS: SectionDef[] = [
   {
     id: "hero",
     label: { el: "Hero", en: "Hero" },
-    options: [
-      { id: "desk", label: { el: "Το γραφείο", en: "The desk" } },
-      { id: "center", label: { el: "Στο κέντρο", en: "Centre stage" } },
-      { id: "split", label: { el: "Σκισμένος τίτλος", en: "Split title" } },
-      { id: "band", label: { el: "Η λωρίδα", en: "The band" } },
-      { id: "bookends", label: { el: "Πάνω και κάτω", en: "Bookends" } },
-    ],
+    options: [],
   },
   { id: "film", label: { el: "Πλάνα", en: "Film" }, options: [] },
   { id: "story", label: { el: "Η ιδέα", en: "The idea" }, options: [] },

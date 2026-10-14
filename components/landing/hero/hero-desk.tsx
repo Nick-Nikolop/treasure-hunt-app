@@ -3,22 +3,7 @@
 import Image from "next/image"
 import { motion } from "framer-motion"
 import { type ReactNode, useRef } from "react"
-import { BeamClue, type BeamPath, EASE, Grain, HeroActions, type HeroCopy, beamMask, useBeam, useTypewriter } from "./shared"
-
-/** Typed like a case report; the invisible full copy reserves the space so nothing jumps. */
-export function TypedBody({ text, className = "" }: { text: string; className?: string }) {
-  const { typed, done } = useTypewriter(text, 1.9)
-  return (
-    <p className={`relative max-w-md font-sans text-base leading-relaxed text-foreground/80 text-pretty md:text-lg ${className}`}>
-      <span className="invisible">{text}</span>
-      <span className="absolute inset-0" aria-hidden="true">
-        {typed}
-        {!done && <span className="ml-0.5 inline-block h-[1em] w-[0.5ch] translate-y-[0.15em] animate-pulse bg-brass" />}
-      </span>
-      <span className="sr-only">{text}</span>
-    </p>
-  )
-}
+import { BeamClue, type BeamPath, EASE, Grain, beamMask, useBeam } from "./shared"
 
 /** Title lines that slide up from behind a mask; `accent` styles the second line. */
 export function RevealTitle({
@@ -96,23 +81,5 @@ export function DeskStage({
       <Grain opacity={0.07} />
       {children(mask)}
     </section>
-  )
-}
-
-/** A: the original desk layout, left column over a dark fade. */
-export function HeroDesk({ copy }: { copy: HeroCopy }) {
-  return (
-    <DeskStage
-      beam={{ x: 0.66, y: 0.5, reachX: 0.2, reachY: 0.26, mobileX: 0.55, mobileReachX: 0.3, speed: 0.8 }}
-      shade="bg-background/75 md:bg-transparent md:bg-gradient-to-r md:from-background md:via-background/30 md:to-transparent"
-    >
-      {() => (
-        <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col gap-8 px-6 pb-16 pt-28 md:px-10">
-          <RevealTitle lines={copy.title} className="font-serif text-6xl leading-[0.95] text-foreground text-balance md:text-8xl" />
-          <TypedBody text={copy.body} />
-          <HeroActions copy={copy} delay={2.1} />
-        </div>
-      )}
-    </DeskStage>
   )
 }
