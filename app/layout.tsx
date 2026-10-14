@@ -11,6 +11,8 @@ import { getPhaseContext, getPublicPhase } from '@/lib/phase-guard'
 import { isHeldByMaintenance } from '@/lib/site-maintenance'
 import { Atmosphere } from '@/components/pythea/atmosphere'
 import { MaintenanceScreen } from '@/components/pythea/maintenance-screen'
+import { ReturnSplash } from '@/components/return-splash'
+import { SPLASH_BOOT_SCRIPT } from '@/lib/return-splash'
 import { DEFAULT_LOCALE, isLocale, LANG_COOKIE, type Locale } from '@/lib/i18n'
 import { SITE, TEASER, SITE_URL, KEYWORDS, BRAND, BRAND_NAME_EN, VERIFICATION } from '@/lib/seo'
 import './globals.css'
@@ -162,7 +164,11 @@ export default async function RootLayout({
       suppressHydrationWarning
       className={`${alegreya.variable} ${alegreyaSans.variable} scroll-smooth bg-background`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: SPLASH_BOOT_SCRIPT }} />
+      </head>
       <body className="font-serif antialiased">
+        <ReturnSplash />
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

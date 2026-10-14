@@ -612,3 +612,11 @@ body {
 .font-brand * {
   font-family: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
 }
+
+/* Return splash: hidden unless the <head> boot script flagged a returning visitor. */
+.th-splash {
+  display: none;
+}
+html[data-th-splash] .th-splash {
+  display: block;
+}
