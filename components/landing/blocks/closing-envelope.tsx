@@ -13,20 +13,20 @@ const POCKET = "polygon(0 0, 50% 62%, 100% 0, 100% 100%, 0 100%)"
 export function ClosingEnvelope({ copy }: { copy: LandingCopy["closing"] }) {
   const logoSrc = useLogoSrc()
   return (
-    <section className="light relative overflow-hidden bg-background px-6 py-28 text-foreground md:py-40">
+    <section className="light relative flex min-h-[calc(100svh-4rem)] items-center overflow-hidden bg-background px-6 py-8 text-foreground md:py-12">
       <div className="relative mx-auto w-full max-w-2xl">
         <div className="absolute inset-x-0 bottom-0 top-1/3 rounded-sm bg-card shadow-[0_50px_80px_-40px_oklch(0.2_0.03_60/0.7)]" aria-hidden="true" />
 
         <motion.div
-          className="relative mx-4 flex flex-col items-center gap-6 border border-foreground/10 bg-background px-6 pb-44 pt-12 text-center shadow-[0_20px_40px_-20px_oklch(0.2_0.03_60/0.4)] md:mx-10 md:px-12 md:pb-52"
+          className="relative mx-4 flex flex-col items-center gap-4 border border-foreground/10 bg-background px-5 pb-32 pt-8 text-center shadow-[0_20px_40px_-20px_oklch(0.2_0.03_60/0.4)] md:mx-10 md:gap-5 md:px-12 md:pb-40 md:pt-10"
           initial={{ y: "28%" }}
           whileInView={{ y: 0 }}
           viewport={{ once: true, margin: "-20% 0px" }}
           transition={{ delay: 0.3, duration: 1.4, ease: EASE }}
         >
           <span className="h-px w-12 bg-brass" aria-hidden="true" />
-          <h2 className="font-serif text-4xl leading-tight text-balance md:text-6xl">{copy.title}</h2>
-          <p className="max-w-md font-sans text-base leading-relaxed text-foreground/75 md:text-lg">{copy.body}</p>
+          <h2 className="font-serif text-3xl leading-tight text-balance md:text-5xl">{copy.title}</h2>
+          <p className="max-w-md font-sans text-[15px] leading-relaxed text-foreground/75 md:text-base">{copy.body}</p>
           <ClueReward />
           <a
             href="#missions"
@@ -36,7 +36,7 @@ export function ClosingEnvelope({ copy }: { copy: LandingCopy["closing"] }) {
           </a>
         </motion.div>
 
-        <div className="relative -mt-36 h-36 md:-mt-44 md:h-44">
+        <div className="relative -mt-28 h-28 md:-mt-36 md:h-36">
           <div className="absolute inset-0 border-t border-foreground/10 bg-card" style={{ clipPath: POCKET }} aria-hidden="true" />
           <div className="absolute inset-0 bg-gradient-to-t from-foreground/5 to-transparent" style={{ clipPath: POCKET }} aria-hidden="true" />
           <motion.div

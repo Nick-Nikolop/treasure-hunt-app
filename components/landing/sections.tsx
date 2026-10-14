@@ -97,17 +97,17 @@ export function HowSection({ copy }: { copy: LandingCopy["how"] }) {
 
 export function WhySection({ copy, who }: { copy: LandingCopy["why"]; who: LandingCopy["who"] }) {
   return (
-    <section className="border-t border-border/60 py-24 md:py-32">
-      <div className="mx-auto grid max-w-7xl gap-16 px-6 md:px-10 lg:grid-cols-[1fr_1.2fr]">
-        <div className="flex flex-col gap-6 lg:sticky lg:top-28 lg:self-start">
+    <section className="flex min-h-[calc(100svh-4rem)] items-center border-t border-border/60 py-8 md:py-12">
+      <div className="mx-auto grid w-full max-w-7xl gap-6 px-6 md:px-10 lg:grid-cols-[1fr_1.2fr] lg:gap-16">
+        <div className="flex flex-col gap-3 md:gap-5 lg:self-start">
           <Label>{copy.label}</Label>
-          <h2 className="font-serif text-4xl leading-tight text-foreground text-balance md:text-5xl">{who.title}</h2>
-          <p className="max-w-md font-sans text-base leading-relaxed text-muted-foreground">{who.body}</p>
-          <div className="flex flex-col gap-3 pt-2">
-            <p className="font-sans text-xs uppercase tracking-[0.3em] text-foreground/60">{who.needLabel}</p>
-            <ul className="flex flex-wrap gap-2">
+          <h2 className="font-serif text-3xl leading-tight text-foreground text-balance md:text-5xl">{who.title}</h2>
+          <p className="hidden max-w-md font-sans text-base leading-relaxed text-muted-foreground md:block">{who.body}</p>
+          <div className="flex flex-col gap-2 md:gap-3 md:pt-2">
+            <p className="hidden font-sans text-xs uppercase tracking-[0.3em] text-foreground/60 md:block">{who.needLabel}</p>
+            <ul className="flex flex-wrap gap-1.5 md:gap-2" aria-label={who.needLabel}>
               {who.needs.map((need) => (
-                <li key={need} className="rounded-full border border-brass/40 px-4 py-1.5 font-sans text-sm text-foreground">
+                <li key={need} className="rounded-full border border-brass/40 px-3 py-1 font-sans text-sm text-foreground md:px-4 md:py-1.5">
                   {need}
                 </li>
               ))}
@@ -118,14 +118,14 @@ export function WhySection({ copy, who }: { copy: LandingCopy["why"]; who: Landi
           {copy.items.map((item, index) => (
             <motion.li
               key={item.title}
-              className="flex flex-col gap-2 border-b border-border/60 py-8 first:pt-0"
+              className="flex flex-col gap-1 border-b border-border/60 py-3 first:pt-0 md:py-4"
               initial={{ opacity: 0, x: 24 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, margin: "-10% 0px" }}
               transition={{ delay: index * 0.08, duration: 0.9, ease: EASE }}
             >
-              <h3 className="font-serif text-2xl text-foreground md:text-3xl">{item.title}</h3>
-              <p className="max-w-lg font-sans text-base leading-relaxed text-muted-foreground">{item.body}</p>
+              <h3 className="font-serif text-xl text-foreground md:text-2xl">{item.title}</h3>
+              <p className="hidden max-w-lg font-sans text-[15px] leading-relaxed text-muted-foreground sm:block">{item.body}</p>
             </motion.li>
           ))}
         </ul>
@@ -137,10 +137,10 @@ export function WhySection({ copy, who }: { copy: LandingCopy["why"]; who: Landi
 export function CodeSection({ copy }: { copy: LandingCopy["code"] }) {
   const logoSrc = useLogoSrc()
   return (
-    <section className="border-t border-border/60 py-24 md:py-32">
-      <div className="mx-auto max-w-7xl px-6 md:px-10">
+    <section className="flex min-h-[calc(100svh-4rem)] items-center border-t border-border/60 py-6 md:py-12">
+      <div className="mx-auto w-full max-w-7xl px-4 md:px-10">
         <motion.div
-          className="relative isolate overflow-hidden rounded-sm border border-brass/30 bg-card px-6 py-14 md:px-14 md:py-20"
+          className="relative isolate overflow-hidden rounded-sm border border-brass/30 bg-card px-5 py-7 md:px-12 md:py-14"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-15% 0px" }}
@@ -154,27 +154,27 @@ export function CodeSection({ copy }: { copy: LandingCopy["code"] }) {
             height={505}
             className="pointer-events-none absolute -right-24 -top-16 -z-10 w-[26rem] opacity-[0.06] md:w-[34rem]"
           />
-          <Clue id="code" className="absolute right-[5.5rem] top-[7.5rem] md:right-[8.5rem] md:top-[10.5rem]" />
-          <div className="flex flex-col gap-12">
-            <div className="flex max-w-2xl flex-col gap-4">
+          <Clue id="code" className="absolute right-4 top-4 md:right-[8.5rem] md:top-[8.5rem]" />
+          <div className="flex flex-col gap-5 md:gap-10">
+            <div className="flex max-w-2xl flex-col gap-2 pr-10 md:gap-4">
               <Label>{copy.label}</Label>
-              <h2 className="font-serif text-4xl leading-tight text-foreground text-balance md:text-5xl">{copy.title}</h2>
+              <h2 className="font-serif text-2xl leading-tight text-foreground text-balance md:text-5xl">{copy.title}</h2>
             </div>
-            <ul className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+            <ul className="grid grid-cols-2 gap-x-4 gap-y-5 md:gap-8 lg:grid-cols-4">
               {copy.rules.map((rule, index) => {
                 const Icon = RULE_ICONS[index] ?? Eye
                 return (
                   <motion.li
                     key={rule.title}
-                    className="flex flex-col gap-4 border-t border-brass/30 pt-6"
+                    className="flex flex-col gap-2 border-t border-brass/30 pt-3 md:gap-4 md:pt-6"
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: "-10% 0px" }}
                     transition={{ delay: 0.2 + index * 0.1, duration: 0.9, ease: EASE }}
                   >
-                    <Icon className="size-6 text-brass" aria-hidden="true" />
-                    <h3 className="font-serif text-2xl italic text-foreground">{rule.title}</h3>
-                    <p className="font-sans text-base leading-relaxed text-muted-foreground">{rule.body}</p>
+                    <Icon className="size-5 text-brass md:size-6" aria-hidden="true" />
+                    <h3 className="font-serif text-lg italic text-foreground md:text-2xl">{rule.title}</h3>
+                    <p className="font-sans text-sm leading-relaxed text-muted-foreground md:text-base">{rule.body}</p>
                   </motion.li>
                 )
               })}
@@ -192,18 +192,21 @@ export function MissionsSection({ copy }: { copy: LandingCopy["missions"] }) {
     { ...copy.past, image: "/landing/scene-finale.webp", live: false, ref: "TH-01" },
   ]
   return (
-    <section id="missions" className="scroll-mt-20 border-t border-border/60 py-24 md:py-32">
-      <div className="mx-auto flex max-w-7xl flex-col gap-14 px-6 md:px-10">
-        <div className="flex max-w-2xl flex-col gap-4">
+    <section
+      id="missions"
+      className="flex min-h-[calc(100svh-4rem)] scroll-mt-16 items-center border-t border-border/60 py-6 md:py-10"
+    >
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-6 md:gap-8 md:px-10">
+        <div className="flex max-w-2xl flex-col gap-2 md:gap-3">
           <Label>{copy.label}</Label>
-          <h2 className="font-serif text-4xl text-foreground text-balance md:text-6xl">{copy.title}</h2>
-          <p className="font-sans text-base leading-relaxed text-muted-foreground">{copy.body}</p>
+          <h2 className="font-serif text-3xl text-foreground text-balance md:text-5xl">{copy.title}</h2>
+          <p className="hidden font-sans text-base leading-relaxed text-muted-foreground md:block">{copy.body}</p>
         </div>
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-3 md:grid-cols-2 md:gap-6">
           {cards.map((card, index) => (
             <motion.article
               key={card.title}
-              className="group relative isolate flex min-h-[32rem] flex-col justify-between overflow-hidden rounded-sm border border-border/60 p-8"
+              className="group relative isolate flex min-h-[15rem] flex-col justify-between gap-6 overflow-hidden rounded-sm border border-border/60 p-4 md:min-h-[26rem] md:p-7"
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-10% 0px" }}
@@ -226,16 +229,18 @@ export function MissionsSection({ copy }: { copy: LandingCopy["missions"] }) {
                   {copy.file} {card.ref}
                 </span>
               </div>
-              <div className="flex flex-col gap-6">
-                <div className="flex flex-col gap-3">
-                  <h3 className="font-serif text-3xl text-foreground md:text-4xl">{card.title}</h3>
-                  <p className="max-w-md font-sans text-base leading-relaxed text-foreground/75">{card.body}</p>
+              <div className="flex flex-col gap-3 md:gap-5">
+                <div className="flex flex-col gap-1 md:gap-2">
+                  <h3 className="font-serif text-2xl text-foreground md:text-4xl">{card.title}</h3>
+                  <p className="max-w-md font-sans text-sm leading-relaxed text-foreground/75 md:text-[15px]">{card.body}</p>
                 </div>
-                <dl className="grid grid-cols-3 gap-4 border-t border-foreground/15 pt-5">
+                <dl className="grid grid-cols-3 gap-3 border-t border-foreground/15 pt-2 md:gap-4 md:pt-4">
                   {(["city", "period", "entry"] as const).map((field) => (
-                    <div key={field} className="flex flex-col gap-1">
-                      <dt className="font-sans text-[11px] uppercase tracking-[0.25em] text-foreground/50">{copy.fields[field]}</dt>
-                      <dd className="font-serif text-base text-foreground md:text-lg">{card[field]}</dd>
+                    <div key={field} className="flex min-w-0 flex-col gap-0.5 md:gap-1">
+                      <dt className="truncate font-sans text-[10px] uppercase tracking-[0.2em] text-foreground/50 md:text-[11px] md:tracking-[0.25em]">
+                        {copy.fields[field]}
+                      </dt>
+                      <dd className="font-serif text-sm text-foreground md:text-lg">{card[field]}</dd>
                     </div>
                   ))}
                 </dl>
@@ -243,7 +248,7 @@ export function MissionsSection({ copy }: { copy: LandingCopy["missions"] }) {
             </motion.article>
           ))}
         </div>
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-8">
+        <div className="hidden flex-col gap-4 md:flex md:flex-row md:items-center md:gap-8">
           <p className="shrink-0 font-sans text-xs uppercase tracking-[0.3em] text-foreground/60">{copy.definesLabel}</p>
           <ul className="flex flex-wrap gap-2">
             {copy.defines.map((item) => (
@@ -260,20 +265,27 @@ export function MissionsSection({ copy }: { copy: LandingCopy["missions"] }) {
 
 export function FaqSection({ copy }: { copy: LandingCopy["faq"] }) {
   return (
-    <section id="faq" className="scroll-mt-20 border-t border-border/60 py-24 md:py-32">
-      <div className="mx-auto grid max-w-7xl gap-12 px-6 md:px-10 lg:grid-cols-[1fr_2fr]">
-        <div className="flex flex-col gap-4 lg:sticky lg:top-28 lg:self-start">
+    <section
+      id="faq"
+      className="flex min-h-[calc(100svh-4rem)] scroll-mt-16 items-center border-t border-border/60 py-8 md:py-12"
+    >
+      <div className="mx-auto grid w-full max-w-7xl gap-5 px-6 md:px-10 lg:grid-cols-[1fr_2fr] lg:gap-12">
+        <div className="flex flex-col gap-2 md:gap-4 lg:self-start">
           <Label>{copy.label}</Label>
-          <h2 className="font-serif text-4xl text-foreground md:text-5xl">{copy.title}</h2>
+          <h2 className="font-serif text-3xl text-foreground md:text-5xl">{copy.title}</h2>
         </div>
         <div className="flex flex-col">
           {copy.items.map((item, index) => (
-            <details key={item.q} className="group border-b border-border/60 py-6 [&_summary::-webkit-details-marker]:hidden">
-              <summary className="flex cursor-pointer items-center justify-between gap-6 font-serif text-xl text-foreground md:text-2xl">
+            <details
+              key={item.q}
+              name="faq"
+              className="group border-b border-border/60 py-3 md:py-4 [&_summary::-webkit-details-marker]:hidden"
+            >
+              <summary className="flex cursor-pointer items-center justify-between gap-4 font-serif text-lg leading-snug text-foreground md:gap-6 md:text-2xl">
                 {item.q}
                 <Plus className="size-5 shrink-0 text-brass transition-transform duration-300 group-open:rotate-45" aria-hidden="true" />
               </summary>
-              <p className="max-w-2xl pt-4 font-sans text-base leading-relaxed text-muted-foreground">
+              <p className="max-w-2xl pt-2 font-sans text-[15px] leading-relaxed text-muted-foreground md:pt-3 md:text-base">
                 {item.a}
                 {index === copy.items.length - 1 && <Clue id="faq" className="-my-2 ml-1" />}
               </p>
@@ -288,10 +300,10 @@ export function FaqSection({ copy }: { copy: LandingCopy["faq"] }) {
 export function ClosingSection({ copy }: { copy: LandingCopy["closing"] }) {
   const logoSrc = useLogoSrc()
   return (
-      <section className="relative isolate overflow-hidden border-t border-border/60 py-32 md:py-48">
+      <section className="relative isolate flex min-h-[calc(100svh-4rem)] items-center overflow-hidden border-t border-border/60 py-8 md:py-12">
         <Image unoptimized loading="eager" src="/landing/scene-clue.webp" alt="" fill sizes="100vw" className="-z-10 object-cover brightness-[0.25]" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-background via-transparent to-background" aria-hidden="true" />
-        <div className="mx-auto flex max-w-4xl flex-col items-center gap-8 px-6 text-center">
+        <div className="mx-auto flex max-w-4xl flex-col items-center gap-5 px-6 text-center md:gap-6">
           <motion.div
             initial={{ opacity: 0, scale: 0.8, rotate: -90 }}
             whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
@@ -299,10 +311,10 @@ export function ClosingSection({ copy }: { copy: LandingCopy["closing"] }) {
             transition={{ duration: 2.2, ease: EASE }}
             className="drop-shadow-[0_0_40px_rgba(226,176,72,0.35)]"
           >
-            <Image unoptimized loading="eager" key={logoSrc} src={logoSrc} alt="The Hunt" width={176} height={171} className="h-auto w-32 md:w-44 animate-in fade-in duration-700" />
+            <Image unoptimized loading="eager" key={logoSrc} src={logoSrc} alt="The Hunt" width={176} height={171} className="h-auto w-20 md:w-32 animate-in fade-in duration-700" />
           </motion.div>
-          <h2 className="font-serif text-5xl leading-tight text-foreground text-balance md:text-7xl">{copy.title}</h2>
-          <p className="max-w-lg font-sans text-lg leading-relaxed text-foreground/80">{copy.body}</p>
+          <h2 className="font-serif text-4xl leading-tight text-foreground text-balance md:text-6xl">{copy.title}</h2>
+          <p className="max-w-lg font-sans text-[15px] leading-relaxed text-foreground/80 md:text-base">{copy.body}</p>
           <ClueReward />
           <a
             href="#missions"

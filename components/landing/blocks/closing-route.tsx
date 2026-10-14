@@ -17,12 +17,12 @@ const STOPS = [
 export function ClosingRoute({ copy }: { copy: LandingCopy["closing"] }) {
   const viewport = { once: true, margin: "-20% 0px" }
   return (
-    <section className="light relative isolate overflow-hidden bg-background py-28 text-foreground md:py-40">
+    <section className="light relative isolate flex min-h-[calc(100svh-4rem)] items-center overflow-hidden bg-background py-8 text-foreground md:py-12">
       <Image unoptimized loading="eager" src="/landing/old-map.webp" alt="" fill sizes="100vw" className="-z-10 object-cover opacity-30 mix-blend-multiply" />
-      <div className="mx-auto grid max-w-7xl items-center gap-12 px-6 md:px-10 lg:grid-cols-2">
-        <div className="flex flex-col gap-7">
-          <h2 className="font-serif text-5xl leading-[1.02] text-balance md:text-7xl">{copy.title}</h2>
-          <p className="max-w-md font-sans text-lg leading-relaxed text-foreground/75">{copy.body}</p>
+      <div className="mx-auto grid w-full max-w-7xl items-center gap-6 px-6 md:px-10 lg:grid-cols-2 lg:gap-12">
+        <div className="flex flex-col gap-4 md:gap-6">
+          <h2 className="font-serif text-4xl leading-[1.02] text-balance md:text-6xl">{copy.title}</h2>
+          <p className="max-w-md font-sans text-[15px] leading-relaxed text-foreground/75 md:text-base">{copy.body}</p>
           <ClueReward />
           <a
             href="#missions"
@@ -32,7 +32,7 @@ export function ClosingRoute({ copy }: { copy: LandingCopy["closing"] }) {
           </a>
         </div>
 
-        <svg viewBox="0 0 560 400" className="w-full" aria-hidden="true">
+        <svg viewBox="0 0 560 400" className="max-h-[32svh] w-full lg:max-h-[60svh]" aria-hidden="true">
           <path d={ROUTE} fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="2 10" strokeLinecap="round" className="text-foreground/35" />
           <motion.path
             d={ROUTE}

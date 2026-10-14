@@ -34,11 +34,14 @@ export function FaqChat({ copy }: { copy: LandingCopy["faq"] }) {
   }
 
   return (
-    <section id="faq" className="scroll-mt-16 border-t border-border/60 bg-background py-28 md:py-36">
-      <div className="mx-auto grid max-w-7xl gap-12 px-6 md:px-10 lg:grid-cols-[1fr_1.4fr] lg:gap-20">
-        <div className="flex flex-col gap-4 lg:sticky lg:top-28 lg:self-start">
+    <section
+      id="faq"
+      className="flex min-h-[calc(100svh-4rem)] scroll-mt-16 items-center border-t border-border/60 bg-background py-6 md:py-10"
+    >
+      <div className="mx-auto grid w-full max-w-7xl gap-5 px-6 md:px-10 lg:grid-cols-[1fr_1.4fr] lg:gap-20">
+        <div className="flex flex-col gap-2 md:gap-4 lg:self-start">
           <Label>{copy.label}</Label>
-          <h2 className="font-serif text-4xl text-foreground text-balance md:text-6xl">{copy.title}</h2>
+          <h2 className="font-serif text-3xl text-foreground text-balance md:text-5xl">{copy.title}</h2>
         </div>
 
         <div className="flex flex-col overflow-hidden rounded-md border border-border bg-card">
@@ -50,7 +53,11 @@ export function FaqChat({ copy }: { copy: LandingCopy["faq"] }) {
             <span className="ml-auto size-2 rounded-full bg-brass" aria-hidden="true" />
           </div>
 
-          <div ref={threadRef} className="flex h-[26rem] flex-col gap-4 overflow-y-auto px-5 py-6" aria-live="polite">
+          <div
+            ref={threadRef}
+            className="flex h-[min(20rem,40svh)] flex-col gap-3 overflow-y-auto px-4 py-4 md:h-[min(22rem,46svh)] md:gap-4 md:px-5 md:py-5"
+            aria-live="polite"
+          >
             {!asked.length && <p className="m-auto font-serif text-lg italic text-muted-foreground">{copy.empty}</p>}
             {asked.map((index) => {
               const item = copy.items[index]
@@ -100,19 +107,19 @@ export function FaqChat({ copy }: { copy: LandingCopy["faq"] }) {
             })}
           </div>
 
-          <div className="flex flex-col gap-3 border-t border-border p-4">
+          <div className="flex flex-col gap-2 border-t border-border p-3 md:gap-3 md:p-4">
             <p className="font-sans text-[11px] uppercase tracking-[0.3em] text-foreground/50">
               {remaining.length ? copy.ask : copy.done}
             </p>
             {remaining.length > 0 && (
-              <div className="flex flex-wrap gap-2">
+              <div className="-mx-3 flex gap-2 overflow-x-auto px-3 pb-1 md:mx-0 md:flex-wrap md:overflow-visible md:px-0 md:pb-0">
                 {remaining.map((index) => (
                   <button
                     key={copy.items[index].q}
                     type="button"
                     onClick={() => ask(index)}
                     disabled={typing !== null}
-                    className="rounded-full border border-foreground/25 px-4 py-2 text-left font-sans text-sm text-foreground transition-colors hover:border-brass hover:text-brass disabled:opacity-50"
+                    className="shrink-0 whitespace-nowrap rounded-full border border-foreground/25 px-4 py-2 text-left font-sans text-sm text-foreground transition-colors hover:border-brass hover:text-brass disabled:opacity-50 md:whitespace-normal"
                   >
                     {copy.items[index].q}
                   </button>

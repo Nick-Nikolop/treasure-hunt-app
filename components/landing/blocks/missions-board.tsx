@@ -48,12 +48,12 @@ export function MissionsBoard({ copy }: { copy: LandingCopy["missions"] }) {
   const head = "font-sans text-[11px] uppercase tracking-[0.3em] text-foreground/45"
 
   return (
-    <section id="missions" className="scroll-mt-16 bg-background py-28 md:py-36">
-      <div className="mx-auto flex max-w-7xl flex-col gap-12 px-6 md:px-10">
-        <div className="flex max-w-2xl flex-col gap-4">
+    <section id="missions" className="flex min-h-[calc(100svh-4rem)] scroll-mt-16 items-center bg-background py-8 md:py-12">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-6 md:gap-10 md:px-10">
+        <div className="flex max-w-2xl flex-col gap-2 md:gap-3">
           <Label>{copy.label}</Label>
-          <h2 className="font-serif text-4xl leading-[1.05] text-foreground text-balance md:text-6xl">{copy.title}</h2>
-          <p className="font-sans text-lg leading-relaxed text-muted-foreground">{copy.body}</p>
+          <h2 className="font-serif text-3xl leading-[1.05] text-foreground text-balance md:text-5xl">{copy.title}</h2>
+          <p className="font-sans text-[15px] leading-relaxed text-muted-foreground md:text-base">{copy.body}</p>
         </div>
 
         <div ref={boardRef} className="overflow-hidden rounded-sm border border-foreground/15 bg-ink shadow-[0_40px_80px_-40px_black]">
@@ -78,24 +78,24 @@ export function MissionsBoard({ copy }: { copy: LandingCopy["missions"] }) {
           {rows.map((row, rowIndex) => (
             <article
               key={row.ref}
-              className={`relative grid gap-3 border-b border-foreground/10 px-5 py-6 last:border-b-0 md:grid-cols-[7rem_1.6fr_1fr_1fr_10rem] md:items-center md:gap-6 md:px-8 ${
+              className={`relative grid grid-cols-2 gap-x-4 gap-y-2 border-b border-foreground/10 px-5 py-4 last:border-b-0 md:grid-cols-[7rem_1.6fr_1fr_1fr_10rem] md:items-center md:gap-6 md:px-8 md:py-5 ${
                 row.live ? "" : "opacity-60"
               }`}
             >
-              <span className="font-sans text-sm tracking-[0.2em] text-foreground/70">
+              <span className="col-span-2 font-sans text-sm tracking-[0.2em] text-foreground/70 md:col-span-1">
                 <Flap text={row.ref} start={inView} delay={rowIndex * 0.3} />
               </span>
-              <div className="flex flex-col gap-1">
-                <h3 className="font-serif text-2xl text-foreground md:text-3xl">
+              <div className="col-span-2 flex flex-col gap-1 md:col-span-1">
+                <h3 className="font-serif text-xl text-foreground md:text-3xl">
                   <Flap text={row.title} start={inView} delay={0.2 + rowIndex * 0.3} />
                 </h3>
-                <p className="font-sans text-sm leading-relaxed text-muted-foreground">{row.body}</p>
+                <p className="hidden font-sans text-sm leading-relaxed text-muted-foreground md:block">{row.body}</p>
               </div>
-              <span className="font-serif text-lg text-foreground/85">
+              <span className="font-serif text-base text-foreground/85 md:text-lg">
                 <span className="mr-2 font-sans text-[11px] uppercase tracking-[0.25em] text-foreground/45 md:hidden">{copy.fields.city}</span>
                 {row.city}
               </span>
-              <span className="font-serif text-lg text-foreground/85">
+              <span className="font-serif text-base text-foreground/85 md:text-lg">
                 <span className="mr-2 font-sans text-[11px] uppercase tracking-[0.25em] text-foreground/45 md:hidden">{copy.fields.period}</span>
                 {row.period}
               </span>
@@ -111,11 +111,11 @@ export function MissionsBoard({ copy }: { copy: LandingCopy["missions"] }) {
           ))}
         </div>
 
-        <Rise className="flex flex-col gap-4 md:flex-row md:items-center md:gap-8">
+        <Rise className="flex flex-col gap-2 md:flex-row md:items-center md:gap-8">
           <p className="shrink-0 font-sans text-xs uppercase tracking-[0.3em] text-foreground/60">{copy.definesLabel}</p>
-          <ul className="flex flex-wrap gap-2">
+          <ul className="flex flex-wrap gap-1.5 md:gap-2">
             {copy.defines.map((item) => (
-              <li key={item} className="rounded-full border border-border px-4 py-1.5 font-sans text-sm text-muted-foreground">
+              <li key={item} className="rounded-full border border-border px-3 py-1 font-sans text-sm text-muted-foreground md:px-4 md:py-1.5">
                 {item}
               </li>
             ))}

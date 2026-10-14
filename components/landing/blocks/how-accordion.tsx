@@ -15,25 +15,27 @@ export function HowAccordion({ copy }: { copy: LandingCopy["how"] }) {
   const [active, setActive] = useState(0)
 
   return (
-    <section id="how" className="scroll-mt-16 bg-background py-28 md:py-36">
-      <div className="mx-auto flex max-w-7xl flex-col gap-12 px-6 md:px-10">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="flex max-w-3xl flex-col gap-4">
+    <section id="how" className="flex h-[calc(100svh-4rem)] scroll-mt-16 bg-background py-6 md:py-10">
+      <div className="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col gap-5 px-6 md:gap-8 md:px-10">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
+          <div className="flex max-w-3xl flex-col gap-2 md:gap-3">
             <Label>{copy.label}</Label>
-            <h2 className="font-serif text-4xl leading-[1.05] text-foreground text-balance md:text-6xl">{copy.title}</h2>
+            <h2 className="font-serif text-3xl leading-[1.05] text-foreground text-balance md:text-5xl">{copy.title}</h2>
           </div>
-          <p className="max-w-sm font-serif text-xl italic leading-relaxed text-foreground/70 text-pretty">{copy.note}</p>
+          <p className="hidden max-w-sm font-serif text-xl italic leading-relaxed text-foreground/70 text-pretty md:block">
+            {copy.note}
+          </p>
         </div>
 
-        <ol className="flex flex-col gap-3 lg:h-[72svh] lg:flex-row">
+        <ol className="flex min-h-0 flex-1 flex-col gap-2 lg:flex-row lg:gap-3">
           {copy.steps.map((step, index) => {
             const open = active === index
             return (
               <li
                 key={step.title}
                 onMouseEnter={() => setActive(index)}
-                className={`relative isolate min-h-[60svh] overflow-hidden rounded-sm transition-[flex-grow] duration-700 ease-out lg:min-h-0 ${
-                  open ? "lg:flex-[3.2]" : "lg:flex-1"
+                className={`relative isolate min-h-0 overflow-hidden rounded-sm transition-[flex-grow] duration-700 ease-out ${
+                  open ? "flex-[6] lg:flex-[3.2]" : "flex-1"
                 }`}
               >
                 <button
@@ -57,8 +59,13 @@ export function HowAccordion({ copy }: { copy: LandingCopy["how"] }) {
                 <div className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/20 to-transparent" aria-hidden="true" />
                 {index === 2 && <Clue id="scene" className="absolute right-6 top-6 z-20" />}
 
-                <span className="absolute left-5 top-5 font-sans text-xs uppercase tracking-[0.3em] text-brass">
+                <span
+                  className={`absolute left-4 font-sans text-xs uppercase tracking-[0.3em] text-brass lg:left-5 lg:top-5 lg:translate-y-0 ${
+                    open ? "top-4" : "top-1/2 -translate-y-1/2"
+                  }`}
+                >
                   {copy.scene} {String(index + 1).padStart(2, "0")}
+                  {!open && <span className="ml-3 font-serif text-base normal-case tracking-normal text-foreground/85 lg:hidden">{step.title}</span>}
                 </span>
 
                 <span
@@ -70,10 +77,12 @@ export function HowAccordion({ copy }: { copy: LandingCopy["how"] }) {
                   {step.title}
                 </span>
 
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col gap-3 p-6 md:p-8 lg:hidden">
-                  <h3 className="font-serif text-3xl text-foreground">{step.title}</h3>
-                  <p className="max-w-md font-sans text-base leading-relaxed text-foreground/80">{step.body}</p>
-                </div>
+                {open && (
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col gap-2 p-5 md:p-8 lg:hidden">
+                    <h3 className="font-serif text-2xl text-foreground md:text-3xl">{step.title}</h3>
+                    <p className="max-w-md font-sans text-[15px] leading-relaxed text-foreground/80">{step.body}</p>
+                  </div>
+                )}
                 <AnimatePresence initial={false}>
                   {open && (
                     <motion.div
@@ -82,8 +91,8 @@ export function HowAccordion({ copy }: { copy: LandingCopy["how"] }) {
                       animate={{ opacity: 1, y: 0, transition: { delay: 0.45, duration: 0.5, ease: EASE } }}
                       exit={{ opacity: 0, transition: { duration: 0.15 } }}
                     >
-                      <h3 className="font-serif text-5xl leading-tight text-foreground">{step.title}</h3>
-                      <p className="max-w-md font-sans text-lg leading-relaxed text-foreground/80">{step.body}</p>
+                      <h3 className="font-serif text-4xl leading-tight text-foreground">{step.title}</h3>
+                      <p className="max-w-md font-sans text-base leading-relaxed text-foreground/80">{step.body}</p>
                     </motion.div>
                   )}
                 </AnimatePresence>

@@ -121,35 +121,35 @@ export function DossierHow({ copy }: { copy: LandingCopy["how"] }) {
 /** Paper: who it is for, then a ruled grid of reasons. The last cell is a dark index card. */
 export function DossierWhy({ copy, who }: { copy: LandingCopy["why"]; who: LandingCopy["who"] }) {
   return (
-    <section className="light bg-background text-foreground">
-      <div className="mx-auto flex max-w-7xl flex-col gap-16 px-6 py-28 md:px-10 md:py-36">
-        <div className="grid gap-8 lg:grid-cols-[1.3fr_1fr] lg:items-end">
-          <div className="flex flex-col gap-5">
+    <section className="light flex min-h-[calc(100svh-4rem)] items-center bg-background text-foreground">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-6 py-8 md:gap-10 md:px-10 md:py-12">
+        <div className="grid gap-3 lg:grid-cols-[1.3fr_1fr] lg:items-end lg:gap-8">
+          <div className="flex flex-col gap-3 md:gap-4">
             <Label>{copy.label}</Label>
-            <h2 className="font-serif text-4xl leading-[1.05] text-balance md:text-7xl">{who.title}</h2>
+            <h2 className="font-serif text-3xl leading-[1.05] text-balance md:text-5xl">{who.title}</h2>
           </div>
-          <p className="max-w-md font-sans text-lg leading-relaxed text-foreground/75 text-pretty">{who.body}</p>
+          <p className="hidden max-w-md font-sans text-base leading-relaxed text-foreground/75 text-pretty md:block">{who.body}</p>
         </div>
 
-        <ul className="grid gap-px border border-foreground/15 bg-foreground/15 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid grid-cols-2 gap-px border border-foreground/15 bg-foreground/15 lg:grid-cols-3">
           {copy.items.map((item, index) => (
             <motion.li
               key={item.title}
-              className="flex flex-col gap-3 bg-background p-8 md:p-10"
+              className="flex flex-col gap-2 bg-background p-4 md:p-6"
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true, margin: "-10% 0px" }}
               transition={{ delay: index * 0.08, duration: 0.8 }}
             >
-              <h3 className="font-serif text-2xl leading-tight md:text-3xl">{item.title}</h3>
-              <p className="font-sans text-base leading-relaxed text-muted-foreground">{item.body}</p>
+              <h3 className="font-serif text-lg leading-tight md:text-2xl">{item.title}</h3>
+              <p className="hidden font-sans text-[15px] leading-relaxed text-muted-foreground sm:block">{item.body}</p>
             </motion.li>
           ))}
-          <li className="dark flex flex-col justify-between gap-8 bg-background p-8 text-foreground md:p-10">
-            <p className="font-sans text-xs uppercase tracking-[0.3em] text-brass">{who.needLabel}</p>
-            <ul className="flex flex-col gap-2">
+          <li className="dark flex flex-col justify-between gap-3 bg-background p-4 text-foreground md:gap-6 md:p-6">
+            <p className="font-sans text-[11px] uppercase tracking-[0.25em] text-brass md:text-xs md:tracking-[0.3em]">{who.needLabel}</p>
+            <ul className="flex flex-col gap-1 md:gap-2">
               {who.needs.map((need) => (
-                <li key={need} className="font-serif text-2xl italic">
+                <li key={need} className="font-serif text-base italic md:text-2xl">
                   {need}
                 </li>
               ))}
@@ -165,7 +165,7 @@ export function DossierWhy({ copy, who }: { copy: LandingCopy["why"]; who: Landi
 export function DossierCode({ copy }: { copy: LandingCopy["code"] }) {
   const logoSrc = useLogoSrc()
   return (
-    <section className="relative isolate overflow-hidden bg-background py-28 md:py-40">
+    <section className="relative isolate flex min-h-[calc(100svh-4rem)] items-center overflow-hidden bg-background py-8 md:py-12">
       <Image
         unoptimized
         loading="eager"
@@ -176,22 +176,22 @@ export function DossierCode({ copy }: { copy: LandingCopy["code"] }) {
         height={622}
         className="pointer-events-none absolute -right-40 top-10 -z-10 w-[36rem] opacity-[0.05] md:w-[44rem]"
       />
-      <div className="mx-auto flex max-w-7xl flex-col gap-14 px-6 md:px-10">
-        <div className="relative flex max-w-2xl flex-col gap-4">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-6 md:gap-10 md:px-10">
+        <div className="relative flex max-w-2xl flex-col gap-3 pr-12 md:gap-4">
           <Label>{copy.label}</Label>
-          <h2 className="font-serif text-4xl leading-tight text-foreground text-balance md:text-6xl">{copy.title}</h2>
-          <Clue id="code" className="absolute -right-12 top-0 md:-right-20" />
+          <h2 className="font-serif text-3xl leading-tight text-foreground text-balance md:text-5xl">{copy.title}</h2>
+          <Clue id="code" className="absolute right-0 top-0 md:-right-20" />
         </div>
         <ul className="flex flex-col">
           {copy.rules.map((rule, index) => {
             const Icon = RULE_ICONS[index] ?? Eye
             return (
               <Rise key={rule.title} delay={index * 0.08} y={20}>
-                <li className="grid gap-4 border-t border-border/60 py-10 md:grid-cols-[1.2fr_1fr] md:items-center md:gap-12">
-                  <h3 className="font-serif text-4xl italic leading-none text-brass md:text-6xl">{rule.title}</h3>
-                  <div className="flex items-start gap-4">
-                    <Icon className="mt-1 size-5 shrink-0 text-foreground/60" aria-hidden="true" />
-                    <p className="font-sans text-lg leading-relaxed text-muted-foreground">{rule.body}</p>
+                <li className="grid gap-2 border-t border-border/60 py-4 md:grid-cols-[1.2fr_1fr] md:items-center md:gap-12 md:py-6">
+                  <h3 className="font-serif text-2xl italic leading-none text-brass md:text-5xl">{rule.title}</h3>
+                  <div className="flex items-start gap-3 md:gap-4">
+                    <Icon className="mt-1 size-4 shrink-0 text-foreground/60 md:size-5" aria-hidden="true" />
+                    <p className="font-sans text-[15px] leading-relaxed text-muted-foreground md:text-base">{rule.body}</p>
                   </div>
                 </li>
               </Rise>
@@ -210,23 +210,23 @@ export function DossierMissions({ copy }: { copy: LandingCopy["missions"] }) {
     { ...copy.past, image: "/landing/scene-finale.webp", live: false, ref: "TH-01" },
   ]
   return (
-    <section id="missions" className="light scroll-mt-16 bg-background text-foreground">
-      <div className="mx-auto flex max-w-7xl flex-col gap-14 px-6 py-28 md:px-10 md:py-36">
-        <div className="flex max-w-2xl flex-col gap-4">
+    <section id="missions" className="light flex min-h-[calc(100svh-4rem)] scroll-mt-16 items-center bg-background text-foreground">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-6 py-6 md:gap-7 md:px-10 md:py-8">
+        <div className="flex max-w-2xl flex-col gap-2 md:gap-3">
           <Label>{copy.label}</Label>
-          <h2 className="font-serif text-4xl leading-[1.05] text-balance md:text-6xl">{copy.title}</h2>
-          <p className="font-sans text-lg leading-relaxed text-foreground/75">{copy.body}</p>
+          <h2 className="font-serif text-3xl leading-[1.05] text-balance md:text-5xl">{copy.title}</h2>
+          <p className="hidden font-sans text-base leading-relaxed text-foreground/75 md:block">{copy.body}</p>
         </div>
 
-        <div className="grid gap-10 md:grid-cols-2 md:gap-8">
+        <div className="grid gap-5 md:grid-cols-2 md:gap-8">
           {cards.map((card, index) => (
             <Rise key={card.ref} delay={index * 0.12}>
-              <article className="relative pt-9">
-                <div className="absolute left-0 top-0 flex h-10 items-center rounded-t-md border border-b-0 border-foreground/15 bg-card px-5 font-sans text-xs uppercase tracking-[0.3em] text-foreground/70">
+              <article className="relative pt-7 md:pt-9">
+                <div className="absolute left-0 top-0 flex h-8 items-center rounded-t-md border border-b-0 border-foreground/15 bg-card px-4 font-sans text-[11px] uppercase tracking-[0.25em] text-foreground/70 md:h-10 md:px-5 md:text-xs md:tracking-[0.3em]">
                   {copy.file} {card.ref}
                 </div>
-                <div className="relative flex flex-col gap-6 rounded-sm rounded-tl-none border border-foreground/15 bg-card p-5 shadow-[0_40px_60px_-40px_oklch(0.2_0.03_60/0.6)] md:p-7">
-                  <div className="relative aspect-[16/10] overflow-hidden rounded-sm">
+                <div className="relative grid grid-cols-[6.5rem_1fr] gap-x-4 gap-y-3 rounded-sm rounded-tl-none border border-foreground/15 bg-card p-3 shadow-[0_40px_60px_-40px_oklch(0.2_0.03_60/0.6)] md:flex md:flex-col md:gap-5 md:p-6">
+                  <div className="relative aspect-square overflow-hidden rounded-sm md:aspect-[5/2]">
                     <Image
                       unoptimized
                       loading="eager"
@@ -237,7 +237,7 @@ export function DossierMissions({ copy }: { copy: LandingCopy["missions"] }) {
                       className={`object-cover ${card.live ? "sepia-[0.35]" : "grayscale brightness-75"}`}
                     />
                     <span
-                      className={`absolute right-4 top-4 -rotate-6 border-2 bg-card/90 px-3 py-1 font-sans text-xs font-medium uppercase tracking-[0.25em] ${
+                      className={`absolute right-1 top-1 -rotate-6 border-2 bg-card/90 px-1.5 py-0.5 font-sans text-[10px] font-medium uppercase tracking-[0.15em] md:right-4 md:top-4 md:px-3 md:py-1 md:text-xs md:tracking-[0.25em] ${
                         card.live ? "border-brass text-brass" : "border-foreground/50 text-foreground/70"
                       }`}
                     >
@@ -245,15 +245,17 @@ export function DossierMissions({ copy }: { copy: LandingCopy["missions"] }) {
                     </span>
                     {!card.live && <Clue id="file" className="absolute bottom-[22%] left-[18%] opacity-70" />}
                   </div>
-                  <div className="flex flex-col gap-2">
-                    <h3 className="font-serif text-3xl leading-tight md:text-4xl">{card.title}</h3>
-                    <p className="font-sans text-base leading-relaxed text-muted-foreground">{card.body}</p>
+                  <div className="flex flex-col gap-1 md:gap-2">
+                    <h3 className="font-serif text-xl leading-tight md:text-3xl">{card.title}</h3>
+                    <p className="font-sans text-sm leading-relaxed text-muted-foreground md:text-[15px]">{card.body}</p>
                   </div>
-                  <dl className="grid grid-cols-2 gap-x-4 gap-y-3 border-t border-dashed sm:grid-cols-3 border-foreground/25 pt-5">
+                  <dl className="col-span-2 grid grid-cols-3 gap-x-3 gap-y-2 border-t border-dashed border-foreground/25 pt-2 md:pt-4">
                     {(["city", "period", "entry"] as const).map((field) => (
-                      <div key={field} className="flex flex-col gap-1">
-                        <dt className="font-sans text-[11px] uppercase tracking-[0.2em] text-foreground/55">{copy.fields[field]}</dt>
-                        <dd className="font-serif text-base leading-snug md:text-lg">{card[field]}</dd>
+                      <div key={field} className="flex min-w-0 flex-col gap-0.5 md:gap-1">
+                        <dt className="truncate font-sans text-[10px] uppercase tracking-[0.15em] text-foreground/55 md:text-[11px] md:tracking-[0.2em]">
+                          {copy.fields[field]}
+                        </dt>
+                        <dd className="font-serif text-sm leading-snug md:text-base">{card[field]}</dd>
                       </div>
                     ))}
                   </dl>
@@ -263,11 +265,11 @@ export function DossierMissions({ copy }: { copy: LandingCopy["missions"] }) {
           ))}
         </div>
 
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-8">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-8">
           <p className="shrink-0 font-sans text-xs uppercase tracking-[0.3em] text-foreground/60">{copy.definesLabel}</p>
-          <ul className="flex flex-wrap gap-2">
+          <ul className="flex flex-wrap gap-1.5 md:gap-2">
             {copy.defines.map((item) => (
-              <li key={item} className="rounded-full border border-foreground/25 px-4 py-1.5 font-sans text-sm text-foreground/80">
+              <li key={item} className="rounded-full border border-foreground/25 px-3 py-1 font-sans text-sm text-foreground/80 md:px-4 md:py-1.5">
                 {item}
               </li>
             ))}

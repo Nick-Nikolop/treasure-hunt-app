@@ -21,7 +21,7 @@ function Station({ children, id, className = "" }: { children: ReactNode; id?: s
     <section
       ref={ref}
       id={id}
-      className={`light relative isolate scroll-mt-16 bg-background py-24 text-foreground md:py-32 ${className}`}
+      className={`light relative isolate min-h-[calc(100svh-4rem)] scroll-mt-16 bg-background py-8 text-foreground md:py-12 ${className}`}
     >
       <div className="pointer-events-none absolute inset-y-0 left-6 w-0 border-l border-dashed border-foreground/25 md:left-12" aria-hidden="true" />
       <motion.div
@@ -30,7 +30,7 @@ function Station({ children, id, className = "" }: { children: ReactNode; id?: s
         aria-hidden="true"
       />
       <span
-        className="absolute left-6 top-[6.6rem] size-3 -translate-x-1/2 rounded-full border-2 border-brass bg-background md:left-12 md:top-[8.6rem] md:size-4"
+        className="absolute left-6 top-[2.6rem] size-3 -translate-x-1/2 rounded-full border-2 border-brass bg-background md:left-12 md:top-[3.6rem] md:size-4"
         aria-hidden="true"
       />
       <div className="mx-auto max-w-7xl pl-14 pr-6 md:pl-28 md:pr-10">{children}</div>
@@ -106,34 +106,34 @@ export function MapHow({ copy }: { copy: LandingCopy["how"] }) {
 export function MapWhy({ copy, who }: { copy: LandingCopy["why"]; who: LandingCopy["who"] }) {
   return (
     <Station>
-      <div className="flex flex-col gap-14">
-        <div className="grid gap-8 lg:grid-cols-[1.2fr_1fr] lg:items-end">
-          <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-6 md:gap-10">
+        <div className="grid gap-3 lg:grid-cols-[1.2fr_1fr] lg:items-end lg:gap-8">
+          <div className="flex flex-col gap-3 md:gap-4">
             <Label>{copy.label}</Label>
-            <h2 className="font-serif text-4xl leading-[1.05] text-foreground text-balance md:text-6xl">{who.title}</h2>
+            <h2 className="font-serif text-3xl leading-[1.05] text-foreground text-balance md:text-5xl">{who.title}</h2>
           </div>
-          <div className="flex flex-col gap-5">
-            <p className="font-sans text-lg leading-relaxed text-foreground/75 text-pretty">{who.body}</p>
-            <ul className="flex flex-wrap gap-2" aria-label={who.needLabel}>
+          <div className="flex flex-col gap-3 md:gap-4">
+            <p className="hidden font-sans text-base leading-relaxed text-foreground/75 text-pretty md:block">{who.body}</p>
+            <ul className="flex flex-wrap gap-1.5 md:gap-2" aria-label={who.needLabel}>
               {who.needs.map((need) => (
-                <li key={need} className="rounded-full border border-foreground/30 px-4 py-1.5 font-sans text-sm text-foreground">
+                <li key={need} className="rounded-full border border-foreground/30 px-3 py-1 font-sans text-sm text-foreground md:px-4 md:py-1.5">
                   {need}
                 </li>
               ))}
             </ul>
           </div>
         </div>
-        <ul className="grid gap-x-10 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid grid-cols-2 gap-x-4 gap-y-5 md:gap-x-10 md:gap-y-8 lg:grid-cols-3">
           {copy.items.map((item, index) => {
             const Icon = WHY_ICONS[index] ?? Compass
             return (
               <Rise key={item.title} delay={index * 0.07} y={20}>
-                <li className="flex flex-col gap-4">
-                  <span className="flex size-12 items-center justify-center rounded-full border border-brass/60 text-brass">
-                    <Icon className="size-5" aria-hidden="true" />
+                <li className="flex flex-col gap-2 md:gap-3">
+                  <span className="flex size-9 items-center justify-center rounded-full border border-brass/60 text-brass md:size-11">
+                    <Icon className="size-4 md:size-5" aria-hidden="true" />
                   </span>
-                  <h3 className="font-serif text-2xl leading-tight text-foreground md:text-3xl">{item.title}</h3>
-                  <p className="font-sans text-base leading-relaxed text-muted-foreground">{item.body}</p>
+                  <h3 className="font-serif text-lg leading-tight text-foreground md:text-2xl">{item.title}</h3>
+                  <p className="hidden font-sans text-[15px] leading-relaxed text-muted-foreground sm:block">{item.body}</p>
                 </li>
               </Rise>
             )
@@ -150,7 +150,7 @@ export function MapCode({ copy }: { copy: LandingCopy["code"] }) {
   return (
     <Station>
       <Rise>
-        <div className="dark relative isolate overflow-hidden rounded-sm bg-background px-6 py-14 text-foreground md:px-14 md:py-20">
+        <div className="dark relative isolate overflow-hidden rounded-sm bg-background px-5 py-7 text-foreground md:px-12 md:py-12">
           <Image
             unoptimized
             loading="eager"
@@ -161,21 +161,21 @@ export function MapCode({ copy }: { copy: LandingCopy["code"] }) {
             height={505}
             className="pointer-events-none absolute -right-24 -top-16 -z-10 w-[26rem] opacity-[0.07] md:w-[34rem]"
           />
-          <Clue id="code" className="absolute right-[5.5rem] top-[7.5rem] md:right-[8.5rem] md:top-[10.5rem]" />
-          <div className="flex flex-col gap-12">
-            <div className="flex max-w-2xl flex-col gap-4">
+          <Clue id="code" className="absolute right-4 top-4 md:right-[8.5rem] md:top-[6.5rem]" />
+          <div className="flex flex-col gap-5 md:gap-10">
+            <div className="flex max-w-2xl flex-col gap-2 pr-10 md:gap-4">
               <Label>{copy.label}</Label>
-              <h2 className="font-serif text-4xl leading-tight text-balance md:text-5xl">{copy.title}</h2>
+              <h2 className="font-serif text-2xl leading-tight text-balance md:text-5xl">{copy.title}</h2>
             </div>
-            <ul className="grid gap-10 sm:grid-cols-2">
+            <ul className="grid gap-4 sm:grid-cols-2 md:gap-8">
               {copy.rules.map((rule, index) => {
                 const Icon = RULE_ICONS[index] ?? Eye
                 return (
-                  <li key={rule.title} className="flex gap-5 border-t border-brass/30 pt-6">
-                    <Icon className="mt-1 size-6 shrink-0 text-brass" aria-hidden="true" />
-                    <div className="flex flex-col gap-2">
-                      <h3 className="font-serif text-2xl italic">{rule.title}</h3>
-                      <p className="font-sans text-base leading-relaxed text-muted-foreground">{rule.body}</p>
+                  <li key={rule.title} className="flex gap-3 border-t border-brass/30 pt-3 md:gap-5 md:pt-5">
+                    <Icon className="mt-1 size-5 shrink-0 text-brass md:size-6" aria-hidden="true" />
+                    <div className="flex flex-col gap-1 md:gap-2">
+                      <h3 className="font-serif text-lg italic md:text-2xl">{rule.title}</h3>
+                      <p className="font-sans text-sm leading-relaxed text-muted-foreground md:text-base">{rule.body}</p>
                     </div>
                   </li>
                 )
@@ -204,30 +204,32 @@ function Ticket({
 }) {
   return (
     <article className={`relative flex flex-col overflow-hidden rounded-md border border-foreground/20 bg-card md:flex-row ${live ? "" : "opacity-90"}`}>
-      <div className="relative aspect-[16/9] md:aspect-auto md:w-72 md:shrink-0">
-        <Image unoptimized loading="eager" src={image} alt="" fill sizes="(min-width: 768px) 18rem, 100vw" className={`object-cover ${live ? "sepia-[0.3]" : "grayscale brightness-75"}`} />
-        {!live && <Clue id="file" className="absolute right-4 top-4 opacity-70" />}
+      <div className="relative h-14 shrink-0 md:h-auto md:w-60">
+        <Image unoptimized loading="eager" src={image} alt="" fill sizes="(min-width: 768px) 15rem, 100vw" className={`object-cover ${live ? "sepia-[0.3]" : "grayscale brightness-75"}`} />
+        {!live && <Clue id="file" className="absolute right-2 top-2 opacity-70 md:right-4 md:top-4" />}
       </div>
-      <div className="flex flex-1 flex-col gap-5 p-6 md:p-8">
+      <div className="flex min-w-0 flex-1 flex-col gap-2 p-3 md:gap-3 md:p-5">
         <div className="flex items-center gap-3">
-          <span className={`rounded-full border px-3 py-1 font-sans text-xs uppercase tracking-[0.2em] ${live ? "border-brass text-brass" : "border-foreground/30 text-muted-foreground"}`}>
+          <span className={`rounded-full border px-2.5 py-0.5 font-sans text-[11px] uppercase tracking-[0.2em] md:px-3 md:py-1 md:text-xs ${live ? "border-brass text-brass" : "border-foreground/30 text-muted-foreground"}`}>
             {card.status}
           </span>
         </div>
-        <div className="flex flex-col gap-2">
-          <h3 className="font-serif text-3xl leading-tight text-foreground md:text-4xl">{card.title}</h3>
-          <p className="max-w-lg font-sans text-base leading-relaxed text-muted-foreground">{card.body}</p>
+        <div className="flex flex-col gap-1 md:gap-2">
+          <h3 className="font-serif text-xl leading-tight text-foreground md:text-3xl">{card.title}</h3>
+          <p className="max-w-lg font-sans text-sm leading-relaxed text-muted-foreground md:text-[15px]">{card.body}</p>
         </div>
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
+        <dl className="grid grid-cols-3 gap-x-3">
           {(["city", "period", "entry"] as const).map((field) => (
-            <div key={field} className="flex flex-col gap-1">
-              <dt className="font-sans text-[11px] uppercase tracking-[0.2em] text-foreground/55">{copy.fields[field]}</dt>
-              <dd className="font-serif text-base leading-snug text-foreground md:text-lg">{card[field]}</dd>
+            <div key={field} className="flex min-w-0 flex-col gap-0.5 md:gap-1">
+              <dt className="truncate font-sans text-[10px] uppercase tracking-[0.15em] text-foreground/55 md:text-[11px] md:tracking-[0.2em]">
+                {copy.fields[field]}
+              </dt>
+              <dd className="font-serif text-sm leading-snug text-foreground md:text-base">{card[field]}</dd>
             </div>
           ))}
         </dl>
       </div>
-      <div className="relative flex items-center justify-between gap-4 border-t-2 border-dashed border-foreground/25 px-6 py-4 md:w-28 md:flex-col md:justify-center md:border-l-2 md:border-t-0 md:px-0 md:py-6">
+      <div className="relative hidden w-24 flex-col items-center justify-center gap-4 border-l-2 border-dashed border-foreground/25 py-6 md:flex">
         <span className="absolute -left-3 -top-3 size-6 rounded-full border border-foreground/20 bg-background md:-left-3 md:-top-3" aria-hidden="true" />
         <span className="absolute -right-3 -top-3 size-6 rounded-full border border-foreground/20 bg-background md:-bottom-3 md:-left-3 md:right-auto md:top-auto" aria-hidden="true" />
         <span className="font-sans text-[11px] uppercase tracking-[0.3em] text-foreground/55">{copy.file}</span>
@@ -249,13 +251,12 @@ export function MapMissions({ copy }: { copy: LandingCopy["missions"] }) {
         sizes="100vw"
         className="pointer-events-none -z-10 object-cover opacity-[0.22] mix-blend-multiply"
       />
-      <div className="flex flex-col gap-12">
-        <div className="flex max-w-2xl flex-col gap-4">
+      <div className="flex flex-col gap-5 md:gap-6">
+        <div className="flex max-w-2xl flex-col gap-2 md:gap-3">
           <Label>{copy.label}</Label>
-          <h2 className="font-serif text-4xl leading-[1.05] text-foreground text-balance md:text-6xl">{copy.title}</h2>
-          <p className="font-sans text-lg leading-relaxed text-foreground/75">{copy.body}</p>
+          <h2 className="font-serif text-3xl leading-[1.05] text-foreground text-balance md:text-5xl">{copy.title}</h2>
         </div>
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-3 md:gap-5">
           <Rise>
             <Ticket card={copy.next} copy={copy} live ticketRef="TH-02" image="/landing/scene-mission.webp" />
           </Rise>
@@ -263,11 +264,11 @@ export function MapMissions({ copy }: { copy: LandingCopy["missions"] }) {
             <Ticket card={copy.past} copy={copy} live={false} ticketRef="TH-01" image="/landing/scene-finale.webp" />
           </Rise>
         </div>
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-8">
+        <div className="hidden md:flex md:flex-row md:items-center md:gap-8">
           <p className="shrink-0 font-sans text-xs uppercase tracking-[0.3em] text-foreground/60">{copy.definesLabel}</p>
-          <ul className="flex flex-wrap gap-2">
+          <ul className="flex flex-wrap gap-1.5 md:gap-2">
             {copy.defines.map((item) => (
-              <li key={item} className="rounded-full border border-foreground/25 bg-background/70 px-4 py-1.5 font-sans text-sm text-foreground/80">
+              <li key={item} className="rounded-full border border-foreground/25 bg-background/70 px-3 py-1 font-sans text-sm text-foreground/80 md:px-4 md:py-1.5">
                 {item}
               </li>
             ))}
