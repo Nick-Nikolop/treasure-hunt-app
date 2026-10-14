@@ -45,7 +45,14 @@ function PytheaFrame({
     >
       {backdrop}
       <div className={`pointer-events-none absolute inset-0 -z-10 ${scrim}`} aria-hidden="true" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-40 bg-gradient-to-t from-background to-transparent" aria-hidden="true" />
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-56 md:h-72"
+        style={{
+          background:
+            "linear-gradient(to top, var(--ink) 0%, color-mix(in oklab, var(--ink) 88%, transparent) 16%, color-mix(in oklab, var(--ink) 55%, transparent) 45%, transparent 100%)",
+        }}
+        aria-hidden="true"
+      />
       <Grain opacity={0.06} />
 
       <div className="flex max-w-4xl flex-col items-center gap-6 md:gap-8">

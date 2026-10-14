@@ -29,13 +29,7 @@ export const SECTIONS: SectionDef[] = [
   {
     id: "what",
     label: { el: "Τι είναι", en: "What it is" },
-    options: [
-      o("equation", "Εξίσωση · σε μία σειρά", "Equation · one row"),
-      o("cards", "Εξίσωση · κάρτες με εξήγηση", "Equation · explained cards"),
-      o("stack", "Εξίσωση · μεγάλα γράμματα", "Equation · big type stack"),
-      o("build", "Εξίσωση · χτίζεται με το scroll", "Equation · builds on scroll"),
-      o("sentence", "Εξίσωση · ως τίτλος", "Equation · as the headline"),
-    ],
+    options: [],
   },
   {
     id: "missions",
