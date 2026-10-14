@@ -116,7 +116,7 @@ export function LandingPage() {
       <main id="top">
         <Hero take={heroTake} copy={copy.hero} />
         <FilmBody copy={copy.film} />
-        <PageBody copy={copy} logoSrc={logoSrc} />
+        <PageBody copy={copy} />
       </main>
     </div>
     </ClueProvider>

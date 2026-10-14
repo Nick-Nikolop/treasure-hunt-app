@@ -12,7 +12,7 @@ import { EASE, Label, Rise } from "./kit"
 const RULE_ICONS = [Eye, Hourglass, Landmark, ShieldCheck]
 
 /** Paper: the idea is written on a ruled page, left margin carries the label. */
-function DossierStory({ copy }: { copy: LandingCopy["story"] }) {
+export function DossierStory({ copy }: { copy: LandingCopy["story"] }) {
   return (
     <section className="light relative bg-background text-foreground">
       <div className="mx-auto grid max-w-7xl gap-10 px-6 py-28 md:grid-cols-[11rem_1fr] md:px-10 md:py-44">
@@ -46,7 +46,7 @@ function DossierStory({ copy }: { copy: LandingCopy["story"] }) {
 }
 
 /** Night: one sticky photograph that swaps as each scene scrolls past. */
-function DossierHow({ copy }: { copy: LandingCopy["how"] }) {
+export function DossierHow({ copy }: { copy: LandingCopy["how"] }) {
   const [active, setActive] = useState(0)
   const step = copy.steps[active]
 
@@ -119,7 +119,7 @@ function DossierHow({ copy }: { copy: LandingCopy["how"] }) {
 }
 
 /** Paper: who it is for, then a ruled grid of reasons. The last cell is a dark index card. */
-function DossierWhy({ copy, who }: { copy: LandingCopy["why"]; who: LandingCopy["who"] }) {
+export function DossierWhy({ copy, who }: { copy: LandingCopy["why"]; who: LandingCopy["who"] }) {
   return (
     <section className="light bg-background text-foreground">
       <div className="mx-auto flex max-w-7xl flex-col gap-16 px-6 py-28 md:px-10 md:py-36">
@@ -162,7 +162,7 @@ function DossierWhy({ copy, who }: { copy: LandingCopy["why"]; who: LandingCopy[
 }
 
 /** Night: the code read like a manifesto, one rule per ruled line. */
-function DossierCode({ copy }: { copy: LandingCopy["code"] }) {
+export function DossierCode({ copy }: { copy: LandingCopy["code"] }) {
   const logoSrc = useLogoSrc()
   return (
     <section className="relative isolate overflow-hidden bg-background py-28 md:py-40">
@@ -204,7 +204,7 @@ function DossierCode({ copy }: { copy: LandingCopy["code"] }) {
 }
 
 /** Paper: each hunt is a manila case folder with a tab and a stamp. */
-function DossierMissions({ copy }: { copy: LandingCopy["missions"] }) {
+export function DossierMissions({ copy }: { copy: LandingCopy["missions"] }) {
   const cards = [
     { ...copy.next, image: "/landing/scene-mission.webp", live: true, ref: "TH-02" },
     { ...copy.past, image: "/landing/scene-finale.webp", live: false, ref: "TH-01" },
@@ -275,17 +275,5 @@ function DossierMissions({ copy }: { copy: LandingCopy["missions"] }) {
         </div>
       </div>
     </section>
-  )
-}
-
-export function DossierBody({ copy }: { copy: LandingCopy }) {
-  return (
-    <>
-      <DossierStory copy={copy.story} />
-      <DossierHow copy={copy.how} />
-      <DossierWhy copy={copy.why} who={copy.who} />
-      <DossierCode copy={copy.code} />
-      <DossierMissions copy={copy.missions} />
-    </>
   )
 }

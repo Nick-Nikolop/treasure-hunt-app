@@ -285,19 +285,9 @@ export function FaqSection({ copy }: { copy: LandingCopy["faq"] }) {
   )
 }
 
-export function ClosingSection({
-  copy,
-  footer,
-  nav,
-  logoSrc,
-}: {
-  copy: LandingCopy["closing"]
-  footer: LandingCopy["footer"]
-  nav: LandingCopy["nav"]
-  logoSrc: string
-}) {
+export function ClosingSection({ copy }: { copy: LandingCopy["closing"] }) {
+  const logoSrc = useLogoSrc()
   return (
-    <>
       <section className="relative isolate overflow-hidden border-t border-border/60 py-32 md:py-48">
         <Image unoptimized loading="eager" src="/landing/scene-clue.webp" alt="" fill sizes="100vw" className="-z-10 object-cover brightness-[0.25]" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-background via-transparent to-background" aria-hidden="true" />
@@ -322,6 +312,12 @@ export function ClosingSection({
           </a>
         </div>
       </section>
+  )
+}
+
+export function SiteFooter({ footer, nav }: { footer: LandingCopy["footer"]; nav: LandingCopy["nav"] }) {
+  const logoSrc = useLogoSrc()
+  return (
       <footer className="border-t border-border/60">
         <div className="mx-auto grid max-w-7xl gap-12 px-6 py-16 md:grid-cols-[1.2fr_1fr_1.4fr] md:px-10">
           <div className="flex flex-col gap-4">
@@ -360,6 +356,5 @@ export function ClosingSection({
           </div>
         </div>
       </footer>
-    </>
   )
 }

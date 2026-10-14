@@ -1,6 +1,6 @@
 "use client"
 
-import { Check, SlidersHorizontal } from "lucide-react"
+import { Check, RotateCcw, Shuffle, SlidersHorizontal } from "lucide-react"
 import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from "react"
 import type { Locale } from "@/lib/i18n"
 
@@ -9,50 +9,121 @@ const STORAGE_KEY = "thehunt:landing-variants"
 type Option = { id: string; label: Record<Locale, string> }
 type SectionDef = { id: string; label: Record<Locale, string>; options: Option[] }
 
-/** Every landing section, in page order. Sections with one option are listed but not switchable yet. */
+const o = (id: string, el: string, en: string): Option => ({ id, label: { el, en } })
+
+/** Every landing section, in page order. Each one is chosen independently so they can be mixed and matched. */
 export const SECTIONS: SectionDef[] = [
-  {
-    id: "page",
-    label: { el: "Ολόκληρη σελίδα", en: "Whole page" },
-    options: [
-      { id: "dossier", label: { el: "Ο φάκελος · νύχτα και χαρτί", en: "The dossier · night and paper" } },
-      { id: "night", label: { el: "Νύχτα · κινηματογραφικό", en: "Night · cinematic" } },
-      { id: "map", label: { el: "Ο χάρτης · περγαμηνή", en: "The map · parchment" } },
-      { id: "current", label: { el: "Η τωρινή (για σύγκριση)", en: "Current (for comparison)" } },
-    ],
-  },
   {
     id: "hero",
     label: { el: "Hero", en: "Hero" },
-    options: [],
+    options: [
+      o("desk-line", "Γραφείο · τίτλος κάτω", "Desk · title at the bottom"),
+      o("desk-center", "Γραφείο · κεντραρισμένο", "Desk · centred"),
+      o("photo", "Παλιά φωτογραφία που εμφανίζεται", "Old photo developing"),
+      o("map", "Χάρτης · περγαμηνή", "Map · parchment"),
+      o("split", "Διπλό · φακός στη φωτογραφία", "Split · flashlight on a photo"),
+    ],
   },
   {
     id: "film",
     label: { el: "Τα τρία σημεία", en: "The three places" },
     options: [
-      { id: "postcards", label: { el: "Καρτ ποστάλ · στοίβα που μοιράζεται", en: "Postcards · a stack that deals" } },
-      { id: "spotlight", label: { el: "Φακός · ψάξε στο σκοτάδι", en: "Flashlight · search the dark" } },
-      { id: "triptych", label: { el: "Τρίπτυχο · τρεις φωτογραφίες", en: "Triptych · three photographs" } },
-      { id: "current", label: { el: "Η τωρινή (για σύγκριση)", en: "Current (for comparison)" } },
+      o("postcards", "Καρτ ποστάλ · στοίβα που μοιράζεται", "Postcards · a stack that deals"),
+      o("spotlight", "Φακός · ψάξε στο σκοτάδι", "Flashlight · search the dark"),
+      o("triptych", "Τρίπτυχο · τρεις φωτογραφίες", "Triptych · three photographs"),
+      o("filmstrip", "Φιλμ · οριζόντια ταινία", "Filmstrip · sideways reel"),
+      o("current", "Πλάνα σε όλη την οθόνη", "Full-screen shots"),
     ],
   },
-  { id: "story", label: { el: "Η ιδέα", en: "The idea" }, options: [] },
-  { id: "how", label: { el: "Πώς παίζεται", en: "How it works" }, options: [] },
-  { id: "why", label: { el: "Γιατί", en: "Why" }, options: [] },
-  { id: "code", label: { el: "Ο κώδικας", en: "The code" }, options: [] },
-  { id: "missions", label: { el: "Αποστολές", en: "Hunts" }, options: [] },
-  { id: "faq", label: { el: "Ερωτήσεις", en: "FAQ" }, options: [] },
-  { id: "closing", label: { el: "Κλείσιμο", en: "Closing" }, options: [] },
+  {
+    id: "story",
+    label: { el: "Η ιδέα", en: "The idea" },
+    options: [
+      o("dossier", "Χαρτί · σελίδα με περιθώριο", "Paper · ruled page"),
+      o("night", "Λέξη-λέξη στο σκοτάδι", "Word by word in the dark"),
+      o("oneline", "Μία φράση τη φορά", "One line at a time"),
+      o("map", "Περγαμηνή · διαδρομή", "Parchment · route"),
+      o("current", "Λιτό", "Plain"),
+    ],
+  },
+  {
+    id: "how",
+    label: { el: "Πώς παίζεται", en: "How it works" },
+    options: [
+      o("dossier", "Φωτογραφία που μένει σταθερή", "Pinned photo"),
+      o("night", "Οριζόντια κύλιση σκηνών", "Scenes scroll sideways"),
+      o("accordion", "Πάνελ που ανοίγουν", "Expanding panels"),
+      o("map", "Φωτογραφίες σε χαρτί", "Prints on paper"),
+      o("current", "Τέσσερις στήλες", "Four columns"),
+    ],
+  },
+  {
+    id: "why",
+    label: { el: "Γιατί", en: "Why" },
+    options: [
+      o("dossier", "Πλέγμα σε χαρτί", "Grid on paper"),
+      o("night", "Μεγάλες γραμμές", "Oversized lines"),
+      o("board", "Πίνακας με σημειώσεις", "Evidence board"),
+      o("map", "Με εικονίδια σε χαρτί", "Icons on paper"),
+      o("current", "Δύο στήλες", "Two columns"),
+    ],
+  },
+  {
+    id: "code",
+    label: { el: "Ο κώδικας", en: "The code" },
+    options: [
+      o("dossier", "Μανιφέστο", "Manifesto"),
+      o("night", "Χρυσή λωρίδα", "Brass band"),
+      o("pledge", "Όρκος με σφραγίδα", "Sealed pledge"),
+      o("map", "Μελάνι σε χαρτί", "Ink plate on paper"),
+      o("current", "Κάρτα", "Card"),
+    ],
+  },
+  {
+    id: "missions",
+    label: { el: "Αποστολές", en: "Hunts" },
+    options: [
+      o("dossier", "Φάκελοι υπόθεσης", "Case folders"),
+      o("night", "Ολόκληρη οθόνη + αρχείο", "Full screen + archive"),
+      o("board", "Πίνακας αναχωρήσεων", "Departure board"),
+      o("map", "Εισιτήρια", "Tickets"),
+      o("current", "Δύο κάρτες", "Two cards"),
+    ],
+  },
+  {
+    id: "faq",
+    label: { el: "Ερωτήσεις", en: "FAQ" },
+    options: [
+      o("current", "Λίστα που ανοίγει", "Accordion list"),
+      o("chat", "Ανάκριση · συνομιλία", "Interrogation · chat"),
+      o("cards", "Κάρτες που γυρίζουν", "Flip cards"),
+      o("index", "Ευρετήριο", "Index"),
+      o("open", "Όλα ανοιχτά σε χαρτί", "All open on paper"),
+    ],
+  },
+  {
+    id: "closing",
+    label: { el: "Κλείσιμο", en: "Closing" },
+    options: [
+      o("current", "Φωτογραφία & λογότυπο", "Photo & logo"),
+      o("envelope", "Γράμμα από φάκελο", "Letter from an envelope"),
+      o("route", "Διαδρομή στον χάρτη", "Route on the map"),
+      o("marquee", "Χρυσή λωρίδα που κυλά", "Scrolling brass band"),
+      o("minimal", "Μόνο τυπογραφία", "Type only"),
+    ],
+  },
 ]
 
 type Choices = Record<string, string>
 
 const DEFAULTS: Choices = Object.fromEntries(SECTIONS.filter((s) => s.options.length).map((s) => [s.id, s.options[0].id]))
 
-const VariantContext = createContext<{ choices: Choices; choose: (section: string, option: string) => void }>({
-  choices: DEFAULTS,
-  choose: () => {},
-})
+const VariantContext = createContext<{
+  choices: Choices
+  choose: (section: string, option: string) => void
+  shuffle: () => void
+  reset: () => void
+}>({ choices: DEFAULTS, choose: () => {}, shuffle: () => {}, reset: () => {} })
 
 export function VariantProvider({ children }: { children: ReactNode }) {
   const [choices, setChoices] = useState<Choices>(DEFAULTS)
@@ -69,15 +140,18 @@ export function VariantProvider({ children }: { children: ReactNode }) {
     } catch {}
   }, [])
 
-  const choose = (section: string, option: string) => {
-    setChoices((current) => {
-      const next = { ...current, [section]: option }
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
-      return next
-    })
+  const save = (next: Choices) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+    return next
   }
+  const choose = (section: string, option: string) => setChoices((current) => save({ ...current, [section]: option }))
+  const shuffle = () =>
+    setChoices(() =>
+      save(Object.fromEntries(SECTIONS.map((s) => [s.id, s.options[Math.floor(Math.random() * s.options.length)].id]))),
+    )
+  const reset = () => setChoices(() => save(DEFAULTS))
 
-  return <VariantContext.Provider value={{ choices, choose }}>{children}</VariantContext.Provider>
+  return <VariantContext.Provider value={{ choices, choose, shuffle, reset }}>{children}</VariantContext.Provider>
 }
 
 export function useVariant(section: string) {
@@ -85,12 +159,12 @@ export function useVariant(section: string) {
 }
 
 const LABELS = {
-  el: { button: "Παραλλαγές", title: "Παραλλαγές ενοτήτων", soon: "Μία εκδοχή" },
-  en: { button: "Variants", title: "Section variants", soon: "One version" },
+  el: { button: "Παραλλαγές", title: "Ενότητες", soon: "Μία εκδοχή", shuffle: "Τυχαίο", reset: "Επαναφορά" },
+  en: { button: "Variants", title: "Sections", soon: "One version", shuffle: "Shuffle", reset: "Reset" },
 }
 
 export function VariantMenu({ locale }: { locale: Locale }) {
-  const { choices, choose } = useContext(VariantContext)
+  const { choices, choose, shuffle, reset } = useContext(VariantContext)
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
   const t = LABELS[locale]
@@ -124,8 +198,29 @@ export function VariantMenu({ locale }: { locale: Locale }) {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-3 w-72 max-w-[calc(100vw-2rem)] border border-border bg-background/95 p-2 shadow-2xl backdrop-blur animate-in fade-in slide-in-from-top-1 duration-200">
-          <p className="px-3 pb-2 pt-1 font-sans text-[11px] uppercase tracking-[0.3em] text-brass">{t.title}</p>
+        <div className="absolute right-0 top-full mt-3 w-80 max-w-[calc(100vw-2rem)] border border-border bg-background/95 p-2 shadow-2xl backdrop-blur animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="flex items-center justify-between gap-2 px-3 pb-2 pt-1">
+            <p className="font-sans text-[11px] uppercase tracking-[0.3em] text-brass">{t.title}</p>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={shuffle}
+                className="flex items-center gap-1.5 rounded-full border border-foreground/20 px-2.5 py-1 font-sans text-xs text-foreground/80 hover:border-brass hover:text-brass"
+              >
+                <Shuffle className="size-3" aria-hidden="true" />
+                {t.shuffle}
+              </button>
+              <button
+                type="button"
+                onClick={reset}
+                aria-label={t.reset}
+                title={t.reset}
+                className="flex size-7 items-center justify-center rounded-full border border-foreground/20 text-foreground/80 hover:border-brass hover:text-brass"
+              >
+                <RotateCcw className="size-3" aria-hidden="true" />
+              </button>
+            </div>
+          </div>
           <div className="flex max-h-[70svh] flex-col overflow-y-auto">
             {SECTIONS.map((section) => (
               <div key={section.id} className="flex flex-col border-t border-border/60 py-2 first:border-t-0">

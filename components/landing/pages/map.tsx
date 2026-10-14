@@ -6,17 +6,29 @@ import { Compass, Eye, Footprints, Hourglass, Landmark, Search, ShieldCheck, Shu
 import { type ReactNode, useRef } from "react"
 import { Clue } from "../clues"
 import type { LandingCopy } from "../copy"
-import { FaqSection } from "../sections"
 import { useLogoSrc } from "../logo-context"
 import { Label, Rise } from "./kit"
 
 const RULE_ICONS = [Eye, Hourglass, Landmark, ShieldCheck]
 const WHY_ICONS = [Footprints, Search, Users, Compass, Shuffle]
 
-/** A station on the route: the dot sits on the line in the left gutter. */
+/** A parchment station on the route: a dashed line down the left gutter that inks in as you scroll, with a dot. */
 function Station({ children, id, className = "" }: { children: ReactNode; id?: string; className?: string }) {
+  const ref = useRef<HTMLElement>(null)
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 70%", "end 50%"] })
+  const ink = useSpring(scrollYProgress, { stiffness: 120, damping: 30 })
   return (
-    <section id={id} className={`relative scroll-mt-16 py-24 md:py-32 ${className}`}>
+    <section
+      ref={ref}
+      id={id}
+      className={`light relative isolate scroll-mt-16 bg-background py-24 text-foreground md:py-32 ${className}`}
+    >
+      <div className="pointer-events-none absolute inset-y-0 left-6 w-0 border-l border-dashed border-foreground/25 md:left-12" aria-hidden="true" />
+      <motion.div
+        className="pointer-events-none absolute inset-y-0 left-6 w-0.5 origin-top -translate-x-1/2 bg-brass md:left-12"
+        style={{ scaleY: ink }}
+        aria-hidden="true"
+      />
       <span
         className="absolute left-6 top-[6.6rem] size-3 -translate-x-1/2 rounded-full border-2 border-brass bg-background md:left-12 md:top-[8.6rem] md:size-4"
         aria-hidden="true"
@@ -26,7 +38,7 @@ function Station({ children, id, className = "" }: { children: ReactNode; id?: s
   )
 }
 
-function MapStory({ copy }: { copy: LandingCopy["story"] }) {
+export function MapStory({ copy }: { copy: LandingCopy["story"] }) {
   return (
     <Station>
       <div className="flex flex-col gap-10">
@@ -49,7 +61,7 @@ function MapStory({ copy }: { copy: LandingCopy["story"] }) {
   )
 }
 
-function MapHow({ copy }: { copy: LandingCopy["how"] }) {
+export function MapHow({ copy }: { copy: LandingCopy["how"] }) {
   return (
     <Station id="how">
       <div className="flex flex-col gap-16 md:gap-24">
@@ -91,7 +103,7 @@ function MapHow({ copy }: { copy: LandingCopy["how"] }) {
   )
 }
 
-function MapWhy({ copy, who }: { copy: LandingCopy["why"]; who: LandingCopy["who"] }) {
+export function MapWhy({ copy, who }: { copy: LandingCopy["why"]; who: LandingCopy["who"] }) {
   return (
     <Station>
       <div className="flex flex-col gap-14">
@@ -133,7 +145,7 @@ function MapWhy({ copy, who }: { copy: LandingCopy["why"]; who: LandingCopy["who
 }
 
 /** A dark ink plate set into the parchment, stamped with the logo. */
-function MapCode({ copy }: { copy: LandingCopy["code"] }) {
+export function MapCode({ copy }: { copy: LandingCopy["code"] }) {
   const logoSrc = useLogoSrc()
   return (
     <Station>
@@ -225,7 +237,7 @@ function Ticket({
   )
 }
 
-function MapMissions({ copy }: { copy: LandingCopy["missions"] }) {
+export function MapMissions({ copy }: { copy: LandingCopy["missions"] }) {
   return (
     <Station id="missions" className="overflow-hidden">
       <Image
@@ -263,31 +275,5 @@ function MapMissions({ copy }: { copy: LandingCopy["missions"] }) {
         </div>
       </div>
     </Station>
-  )
-}
-
-/** Parchment run with a dashed route down the left gutter that inks itself in as you scroll. */
-export function MapBody({ copy }: { copy: LandingCopy }) {
-  const ref = useRef<HTMLDivElement>(null)
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 60%", "end 60%"] })
-  const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 30 })
-
-  return (
-    <div className="light bg-background text-foreground">
-      <div ref={ref} className="relative isolate">
-        <div className="pointer-events-none absolute inset-y-0 left-6 w-0 border-l border-dashed border-foreground/25 md:left-12" aria-hidden="true" />
-        <motion.div
-          className="pointer-events-none absolute inset-y-0 left-6 w-0.5 origin-top -translate-x-1/2 bg-brass md:left-12"
-          style={{ scaleY: progress }}
-          aria-hidden="true"
-        />
-        <MapStory copy={copy.story} />
-        <MapHow copy={copy.how} />
-        <MapWhy copy={copy.why} who={copy.who} />
-        <MapCode copy={copy.code} />
-        <MapMissions copy={copy.missions} />
-      </div>
-      <FaqSection copy={copy.faq} />
-    </div>
   )
 }

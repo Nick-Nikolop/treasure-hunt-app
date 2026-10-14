@@ -105,6 +105,7 @@ export const LANDING_COPY = {
     code: {
       label: "Ο κώδικας του κυνηγού",
       title: "Λίγοι κανόνες. Τηρούνται σε κάθε αποστολή.",
+      sign: "Υπογραφή κυνηγού",
       rules: [
         { title: "Κοίτα δύο φορές.", body: "Τα στοιχεία σπάνια φωνάζουν. Μια λεπτομέρεια που προσπέρασες μπορεί να είναι η απάντηση." },
         { title: "Μη βιάζεσαι.", body: "Το παιχνίδι ανταμείβει τη σκέψη, όχι την ταχύτητα. Περπάτα, παρατήρησε, συζήτησε." },
@@ -135,13 +136,18 @@ export const LANDING_COPY = {
         entry: "Έκλεισε",
       },
       definesLabel: "Κάθε αποστολή ορίζει τα δικά της",
+      board: { title: "Αναχωρήσεις", mission: "Αποστολή", status: "Κατάσταση" },
       defines: ["Κόστος συμμετοχής", "Μέγεθος ομάδας", "Διάρκεια", "Μορφή παιχνιδιού", "Έπαθλα, αν υπάρχουν"],
     },
     faq: {
       label: "Ερωτήσεις",
       title: "Πριν ξεκινήσεις.",
+      ask: "Ρώτα κάτι",
+      flip: "Πάτα για την απάντηση",
+      empty: "Διάλεξε μια ερώτηση από κάτω.",
+      done: "Τις ρώτησες όλες.",
       items: [
-        { q: "Τι είναι το The Hunt;", a: "Μια διαδραστική εμπειρία εξερεύνησης και γρίφων που ενώνει τον πραγματικό κόσμο με ένα ψηφιακό παιχνίδι." },
+        { q: "Τι είναι το The Hunt;", a: "Μια ��ιαδραστική εμπειρία εξερεύνησης και γρίφων που ενώνει τον πραγματικό κόσμο με ένα ψηφιακό παιχνίδι." },
         { q: "Πώς συμμετέχω;", a: "Διαλέγεις μια διαθέσιμη αποστολή και ακολουθείς τις οδηγίες συμμετοχής της. Κάθε αποστολή έχει τους δικούς της όρους." },
         { q: "Χρειάζομαι κινητό;", a: "Ναι. Από το κινητό βλέπεις τα στοιχεία και σκανάρεις τα QR checkpoints. Οι ακριβείς απαιτήσεις αναφέρονται σε κάθε αποστολή." },
         { q: "Παίζω με φίλους;", a: "Φυσικά. Η ομάδα είναι η καρδιά του παιχνιδιού. Το μέγεθός της το ορίζει κάθε αποστολή." },
@@ -152,7 +158,7 @@ export const LANDING_COPY = {
     },
     closing: {
       title: "Το επόμενο στοιχείο σε περιμένει.",
-      body: "Μάζεψε την ομάδα σου, ανακάλυψε τις αποστολές και ετοιμάσου να δεις την πόλη αλλιώς.",
+      body: "Μάζεψε την ομάδα σου, ανακάλυψε τις αποστολές και ετοιμά��ου να δεις την πόλη αλλιώς.",
       cta: "Ανακάλυψε τις αποστολές",
     },
     footer: {
@@ -303,6 +309,7 @@ export const LANDING_COPY = {
     code: {
       label: "The hunter's code",
       title: "A few rules. Kept in every Hunt.",
+      sign: "Hunter's signature",
       rules: [
         { title: "Look twice.", body: "Clues rarely shout. A detail you walked past may be the answer." },
         { title: "Do not rush.", body: "The game rewards thinking, not speed. Walk, observe, talk it through." },
@@ -333,11 +340,16 @@ export const LANDING_COPY = {
         entry: "Closed",
       },
       definesLabel: "Each Hunt sets its own",
+      board: { title: "Departures", mission: "Hunt", status: "Status" },
       defines: ["Entry cost", "Team size", "Duration", "Game format", "Prizes, if any"],
     },
     faq: {
       label: "FAQ",
       title: "Before you start.",
+      ask: "Ask something",
+      flip: "Tap for the answer",
+      empty: "Pick a question below.",
+      done: "You asked them all.",
       items: [
         { q: "What is The Hunt?", a: "An interactive exploration and puzzle experience that connects the real world with a digital game." },
         { q: "How do I join?", a: "Pick an available Hunt and follow its sign-up instructions. Each Hunt has its own terms." },

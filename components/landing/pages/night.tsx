@@ -21,7 +21,7 @@ function Word({ word, progress, range }: { word: string; progress: MotionValue<n
 }
 
 /** The idea lights up word by word while the paragraph stays pinned. */
-function NightStory({ copy }: { copy: LandingCopy["story"] }) {
+export function NightStory({ copy }: { copy: LandingCopy["story"] }) {
   const ref = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] })
   const words = copy.lines.join(" ").split(" ")
@@ -73,7 +73,7 @@ function ScenePanel({ step, index, scene, className = "" }: { step: LandingCopy[
 }
 
 /** Desktop: the four scenes slide past horizontally while the section is pinned. Mobile: stacked. */
-function NightHow({ copy }: { copy: LandingCopy["how"] }) {
+export function NightHow({ copy }: { copy: LandingCopy["how"] }) {
   const ref = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] })
   const panels = copy.steps.length + 1
@@ -117,7 +117,7 @@ function NightHow({ copy }: { copy: LandingCopy["how"] }) {
 }
 
 /** Five reasons as oversized lines that light up on hover. */
-function NightWhy({ copy, who }: { copy: LandingCopy["why"]; who: LandingCopy["who"] }) {
+export function NightWhy({ copy, who }: { copy: LandingCopy["why"]; who: LandingCopy["who"] }) {
   return (
     <section className="bg-background py-28 md:py-40">
       <div className="mx-auto flex max-w-7xl flex-col gap-20 px-6 md:px-10">
@@ -153,7 +153,7 @@ function NightWhy({ copy, who }: { copy: LandingCopy["why"]; who: LandingCopy["w
 }
 
 /** The one bright moment on the page: a solid brass band. */
-function NightCode({ copy }: { copy: LandingCopy["code"] }) {
+export function NightCode({ copy }: { copy: LandingCopy["code"] }) {
   return (
     <section className="relative bg-brass py-24 text-ink md:py-32">
       <div className="mx-auto flex max-w-7xl flex-col gap-14 px-6 md:px-10">
@@ -189,7 +189,7 @@ function NightCode({ copy }: { copy: LandingCopy["code"] }) {
 }
 
 /** The next hunt takes the full screen; the finished one sits beneath as an archive row. */
-function NightMissions({ copy }: { copy: LandingCopy["missions"] }) {
+export function NightMissions({ copy }: { copy: LandingCopy["missions"] }) {
   const fields = ["city", "period", "entry"] as const
   return (
     <section id="missions" className="scroll-mt-16 bg-background">
@@ -251,17 +251,5 @@ function NightMissions({ copy }: { copy: LandingCopy["missions"] }) {
         </ul>
       </div>
     </section>
-  )
-}
-
-export function NightBody({ copy }: { copy: LandingCopy }) {
-  return (
-    <>
-      <NightStory copy={copy.story} />
-      <NightHow copy={copy.how} />
-      <NightWhy copy={copy.why} who={copy.who} />
-      <NightCode copy={copy.code} />
-      <NightMissions copy={copy.missions} />
-    </>
   )
 }
