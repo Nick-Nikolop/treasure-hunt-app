@@ -196,17 +196,27 @@ export function MissionsSection({ copy }: { copy: LandingCopy["missions"] }) {
       id="missions"
       className="flex min-h-[calc(100svh-4rem)] scroll-mt-16 items-center border-t border-border/60 py-6 md:py-10"
     >
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-6 md:gap-8 md:px-10">
-        <div className="flex max-w-2xl flex-col gap-2 md:gap-3">
+      <div className="mx-auto grid w-full max-w-7xl gap-5 px-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:gap-10 md:px-10">
+        <div className="flex max-w-2xl flex-col gap-2 md:gap-4">
           <Label>{copy.label}</Label>
           <h2 className="font-serif text-3xl text-foreground text-balance md:text-5xl">{copy.title}</h2>
           <p className="hidden font-sans text-base leading-relaxed text-muted-foreground md:block">{copy.body}</p>
+          <div className="hidden flex-col gap-3 pt-4 md:flex">
+            <p className="font-sans text-xs uppercase tracking-[0.3em] text-foreground/60">{copy.definesLabel}</p>
+            <ul className="flex flex-wrap gap-2">
+              {copy.defines.map((item) => (
+                <li key={item} className="rounded-full border border-border px-4 py-1.5 font-sans text-sm text-muted-foreground">
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
-        <div className="grid gap-3 md:grid-cols-2 md:gap-6">
+        <div className="-mx-6 flex snap-x snap-mandatory gap-3 overflow-x-auto px-6 pb-2 md:mx-0 md:gap-5 md:overflow-visible md:px-0 md:pb-0">
           {cards.map((card, index) => (
             <motion.article
               key={card.title}
-              className="group relative isolate flex min-h-[15rem] flex-col justify-between gap-6 overflow-hidden rounded-sm border border-border/60 p-4 md:min-h-[26rem] md:p-7"
+              className="group relative isolate flex aspect-[3/4] w-[78%] shrink-0 snap-start flex-col justify-between gap-4 overflow-hidden rounded-sm border border-border/60 p-4 md:h-[min(36rem,calc(100svh-12rem))] md:w-auto md:p-6"
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-10% 0px" }}
@@ -216,10 +226,11 @@ export function MissionsSection({ copy }: { copy: LandingCopy["missions"] }) {
                 src={card.image}
                 alt=""
                 fill
-                sizes="(min-width: 768px) 50vw, 100vw"
-                className={`-z-10 object-cover transition-transform duration-[2000ms] group-hover:scale-105 ${card.live ? "brightness-50" : "brightness-[0.3] grayscale"}`}
+                sizes="(min-width: 768px) 28rem, 80vw"
+                className={`-z-10 object-cover transition-transform duration-[2000ms] group-hover:scale-105 ${card.live ? "brightness-90" : "sepia-[0.25] brightness-75"}`}
               />
-              <div className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/70 to-background/10" aria-hidden="true" />
+              <div className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/40 via-45% to-transparent" aria-hidden="true" />
+              <div className="absolute inset-x-0 top-0 -z-10 h-20 bg-gradient-to-b from-background/60 to-transparent" aria-hidden="true" />
               {!card.live && <Clue id="file" className="absolute right-[14%] top-[34%] opacity-40" />}
               <div className="flex items-center justify-between gap-4">
                 <span className={`rounded-full border px-3 py-1 font-sans text-xs uppercase tracking-[0.2em] ${card.live ? "border-brass text-brass" : "border-foreground/30 text-muted-foreground"}`}>
@@ -247,16 +258,6 @@ export function MissionsSection({ copy }: { copy: LandingCopy["missions"] }) {
               </div>
             </motion.article>
           ))}
-        </div>
-        <div className="hidden flex-col gap-4 md:flex md:flex-row md:items-center md:gap-8">
-          <p className="shrink-0 font-sans text-xs uppercase tracking-[0.3em] text-foreground/60">{copy.definesLabel}</p>
-          <ul className="flex flex-wrap gap-2">
-            {copy.defines.map((item) => (
-              <li key={item} className="rounded-full border border-border px-4 py-1.5 font-sans text-sm text-muted-foreground">
-                {item}
-              </li>
-            ))}
-          </ul>
         </div>
       </div>
     </section>

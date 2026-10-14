@@ -211,30 +211,30 @@ export function DossierMissions({ copy }: { copy: LandingCopy["missions"] }) {
   ]
   return (
     <section id="missions" className="light flex min-h-[calc(100svh-4rem)] scroll-mt-16 items-center bg-background text-foreground">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-6 py-6 md:gap-7 md:px-10 md:py-8">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-6 py-4 md:gap-7 md:px-10 md:py-8">
         <div className="flex max-w-2xl flex-col gap-2 md:gap-3">
           <Label>{copy.label}</Label>
           <h2 className="font-serif text-3xl leading-[1.05] text-balance md:text-5xl">{copy.title}</h2>
           <p className="hidden font-sans text-base leading-relaxed text-foreground/75 md:block">{copy.body}</p>
         </div>
 
-        <div className="grid gap-5 md:grid-cols-2 md:gap-8">
+        <div className="grid gap-4 md:grid-cols-2 md:gap-8">
           {cards.map((card, index) => (
             <Rise key={card.ref} delay={index * 0.12}>
               <article className="relative pt-7 md:pt-9">
                 <div className="absolute left-0 top-0 flex h-8 items-center rounded-t-md border border-b-0 border-foreground/15 bg-card px-4 font-sans text-[11px] uppercase tracking-[0.25em] text-foreground/70 md:h-10 md:px-5 md:text-xs md:tracking-[0.3em]">
                   {copy.file} {card.ref}
                 </div>
-                <div className="relative grid grid-cols-[6.5rem_1fr] gap-x-4 gap-y-3 rounded-sm rounded-tl-none border border-foreground/15 bg-card p-3 shadow-[0_40px_60px_-40px_oklch(0.2_0.03_60/0.6)] md:flex md:flex-col md:gap-5 md:p-6">
-                  <div className="relative aspect-square overflow-hidden rounded-sm md:aspect-[5/2]">
+                <div className="relative grid grid-cols-[6.5rem_1fr] gap-x-4 gap-y-3 rounded-sm rounded-tl-none border border-foreground/15 bg-card p-3 shadow-[0_40px_60px_-40px_oklch(0.2_0.03_60/0.6)] md:grid-cols-[minmax(0,13.5rem)_1fr] md:gap-x-6 md:gap-y-4 md:p-5 lg:grid-cols-[minmax(0,15rem)_1fr]">
+                  <div className="relative aspect-[3/4] self-start overflow-hidden rounded-sm md:row-span-2">
                     <Image
                       unoptimized
                       loading="eager"
                       src={card.image}
                       alt=""
                       fill
-                      sizes="(min-width: 768px) 45vw, 100vw"
-                      className={`object-cover ${card.live ? "sepia-[0.35]" : "grayscale brightness-75"}`}
+                      sizes="(min-width: 768px) 15rem, 6.5rem"
+                      className={`object-cover ${card.live ? "" : "sepia-[0.25] brightness-90"}`}
                     />
                     <span
                       className={`absolute right-1 top-1 -rotate-6 border-2 bg-card/90 px-1.5 py-0.5 font-sans text-[10px] font-medium uppercase tracking-[0.15em] md:right-4 md:top-4 md:px-3 md:py-1 md:text-xs md:tracking-[0.25em] ${
@@ -249,7 +249,7 @@ export function DossierMissions({ copy }: { copy: LandingCopy["missions"] }) {
                     <h3 className="font-serif text-xl leading-tight md:text-3xl">{card.title}</h3>
                     <p className="font-sans text-sm leading-relaxed text-muted-foreground md:text-[15px]">{card.body}</p>
                   </div>
-                  <dl className="col-span-2 grid grid-cols-3 gap-x-3 gap-y-2 border-t border-dashed border-foreground/25 pt-2 md:pt-4">
+                  <dl className="col-span-2 grid grid-cols-3 gap-x-3 gap-y-2 self-end border-t border-dashed border-foreground/25 pt-2 md:col-span-1 md:grid-cols-1 md:gap-y-3 md:pt-4">
                     {(["city", "period", "entry"] as const).map((field) => (
                       <div key={field} className="flex min-w-0 flex-col gap-0.5 md:gap-1">
                         <dt className="truncate font-sans text-[10px] uppercase tracking-[0.15em] text-foreground/55 md:text-[11px] md:tracking-[0.2em]">

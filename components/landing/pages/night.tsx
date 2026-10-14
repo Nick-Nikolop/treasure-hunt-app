@@ -192,15 +192,26 @@ export function NightMissions({ copy }: { copy: LandingCopy["missions"] }) {
   const fields = ["city", "period", "entry"] as const
   return (
     <section id="missions" className="flex h-[calc(100svh-4rem)] scroll-mt-16 flex-col bg-background">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-6 pb-4 pt-6 md:gap-3 md:px-10 md:pb-6 md:pt-10">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-6 pb-4 pt-6 md:gap-3 md:px-10 md:pb-4 md:pt-7">
         <Label>{copy.label}</Label>
         <h2 className="max-w-3xl font-serif text-3xl text-foreground text-balance md:text-5xl">{copy.title}</h2>
       </div>
 
       <article className="relative isolate flex min-h-0 flex-1 items-end overflow-hidden">
-        <Image unoptimized loading="eager" src="/landing/mission-carnival.webp" alt="" fill sizes="100vw" className="-z-10 object-cover brightness-50" />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/40 to-background/10" aria-hidden="true" />
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-6 pb-5 md:gap-5 md:px-10 md:pb-8">
+        <Image
+          unoptimized
+          loading="eager"
+          src="/landing/mission-carnival.webp"
+          alt=""
+          fill
+          sizes="100vw"
+          className="-z-10 object-cover brightness-75 md:scale-110 md:blur-2xl md:brightness-[0.35]"
+        />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/30 to-transparent md:bg-gradient-to-r md:from-background md:via-background/60 md:to-transparent" aria-hidden="true" />
+        <div className="absolute inset-y-2 right-6 -z-10 hidden aspect-[3/4] overflow-hidden rounded-sm shadow-2xl md:block lg:right-[max(2.5rem,calc((100vw-80rem)/2+2.5rem))]">
+          <Image unoptimized loading="eager" src="/landing/mission-carnival.webp" alt="" fill sizes="40vw" className="object-cover" />
+        </div>
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-6 pb-5 md:gap-5 md:self-center md:px-10 md:pb-0 md:pr-[min(48%,32rem)]">
           <div className="flex items-center gap-4">
             <span className="rounded-full border border-brass px-3 py-1 font-sans text-xs uppercase tracking-[0.2em] text-brass">{copy.next.status}</span>
             <span className="font-sans text-xs uppercase tracking-[0.3em] text-foreground/60">{copy.file} TH-02</span>
@@ -221,9 +232,9 @@ export function NightMissions({ copy }: { copy: LandingCopy["missions"] }) {
       </article>
 
       <div className="mx-auto w-full max-w-7xl px-6 py-4 md:px-10 md:py-6">
-        <article className="relative grid grid-cols-[5rem_1fr] items-center gap-4 border-y border-border/60 py-3 md:grid-cols-[10rem_1fr_auto] md:gap-8 md:py-4">
-          <div className="relative aspect-[16/10] overflow-hidden rounded-sm">
-            <Image unoptimized loading="eager" src="/landing/mission-pythea.webp" alt="" fill sizes="10rem" className="object-cover brightness-75 grayscale" />
+        <article className="relative grid grid-cols-[3.75rem_1fr] items-center gap-4 border-y border-border/60 py-3 md:grid-cols-[5.5rem_1fr_auto] md:gap-8 md:py-4">
+          <div className="relative aspect-[3/4] overflow-hidden rounded-sm">
+            <Image unoptimized loading="eager" src="/landing/mission-pythea.webp" alt="" fill sizes="6rem" className="object-cover sepia-[0.2] brightness-90" />
             <Clue id="file" className="absolute bottom-1 right-1 scale-75 opacity-60 md:bottom-2 md:right-2 md:scale-100" />
           </div>
           <div className="flex min-w-0 flex-col gap-1">

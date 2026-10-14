@@ -203,9 +203,9 @@ function Ticket({
   image: string
 }) {
   return (
-    <article className={`relative flex flex-col overflow-hidden rounded-md border border-foreground/20 bg-card md:flex-row ${live ? "" : "opacity-90"}`}>
-      <div className="relative h-14 shrink-0 md:h-auto md:w-60">
-        <Image unoptimized loading="eager" src={image} alt="" fill sizes="(min-width: 768px) 15rem, 100vw" className={`object-cover ${live ? "sepia-[0.3]" : "grayscale brightness-75"}`} />
+    <article className={`relative flex flex-row overflow-hidden rounded-md border border-foreground/20 bg-card ${live ? "" : "opacity-95"}`}>
+      <div className="relative aspect-[3/4] w-24 shrink-0 self-start md:w-40 md:self-stretch">
+        <Image unoptimized loading="eager" src={image} alt="" fill sizes="(min-width: 768px) 10rem, 6rem" className={`object-cover ${live ? "" : "sepia-[0.25] brightness-90"}`} />
         {!live && <Clue id="file" className="absolute right-2 top-2 opacity-70 md:right-4 md:top-4" />}
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-2 p-3 md:gap-3 md:p-5">
