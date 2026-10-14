@@ -9,7 +9,7 @@ export const EASE = [0.16, 1, 0.3, 1] as const
 
 export type HeroCopy = LandingCopy["hero"]
 
-type BeamPath = {
+export type BeamPath = {
   /** Centre of the sweep as a fraction of the stage width / height. */
   x: number
   y: number
@@ -151,7 +151,17 @@ export function BeamClue({ mask, className }: { mask: string; className: string 
 }
 
 /** `centered: "mobile"` centres below md and left-aligns above it. */
-export function HeroActions({ copy, centered = false, delay = 2 }: { copy: HeroCopy; centered?: boolean | "mobile"; delay?: number }) {
+export function HeroActions({
+  copy,
+  centered = false,
+  delay = 2,
+  hint = true,
+}: {
+  copy: HeroCopy
+  centered?: boolean | "mobile"
+  delay?: number
+  hint?: boolean
+}) {
   const column = centered === "mobile" ? "items-center text-center md:items-start md:text-left" : centered ? "items-center text-center" : ""
   const row = centered === "mobile" ? "justify-center md:justify-start" : centered ? "justify-center" : ""
   return (
@@ -175,7 +185,7 @@ export function HeroActions({ copy, centered = false, delay = 2 }: { copy: HeroC
           {copy.secondary}
         </a>
       </div>
-      <p className="font-serif text-sm italic text-muted-foreground text-pretty">{copy.hint}</p>
+      {hint && <p className="font-serif text-sm italic text-muted-foreground text-pretty">{copy.hint}</p>}
     </motion.div>
   )
 }

@@ -15,7 +15,6 @@ export const LANDING_COPY = {
       secondary: "Πώς παίζεται",
       hint: "Ακολούθησε το φως. Και κοίτα προσεκτικά: επτά σύμβολα κρύβονται σε αυτή τη σελίδα.",
       scroll: "Κύλισε",
-      caseLabel: "Ανοιχτή υπόθεση · Αρ. 001",
     },
     film: {
       open: "Ο κόσμος είναι γεμάτος ιστορίες που δεν έχεις ανακαλύψει ακόμα.",
@@ -197,7 +196,6 @@ export const LANDING_COPY = {
       secondary: "How it works",
       hint: "Follow the light. And look closely: seven symbols are hidden on this page.",
       scroll: "Scroll",
-      caseLabel: "Open case · No. 001",
     },
     film: {
       open: "The world is full of stories you have not discovered yet.",

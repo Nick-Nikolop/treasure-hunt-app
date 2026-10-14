@@ -11,7 +11,17 @@ type SectionDef = { id: string; label: Record<Locale, string>; options: Option[]
 
 /** Every landing section, in page order. Sections with one option are listed but not switchable yet. */
 export const SECTIONS: SectionDef[] = [
-  { id: "hero", label: { el: "Hero", en: "Hero" }, options: [] },
+  {
+    id: "hero",
+    label: { el: "Hero", en: "Hero" },
+    options: [
+      { id: "desk", label: { el: "Το γραφείο", en: "The desk" } },
+      { id: "center", label: { el: "Στο κέντρο", en: "Centre stage" } },
+      { id: "split", label: { el: "Σκισμένος τίτλος", en: "Split title" } },
+      { id: "band", label: { el: "Η λωρίδα", en: "The band" } },
+      { id: "bookends", label: { el: "Πάνω και κάτω", en: "Bookends" } },
+    ],
+  },
   { id: "film", label: { el: "Πλάνα", en: "Film" }, options: [] },
   { id: "story", label: { el: "Η ιδέα", en: "The idea" }, options: [] },
   { id: "how", label: { el: "Πώς παίζεται", en: "How it works" }, options: [] },
