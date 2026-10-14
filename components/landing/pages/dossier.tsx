@@ -206,8 +206,8 @@ export function DossierCode({ copy }: { copy: LandingCopy["code"] }) {
 /** Paper: each hunt is a manila case folder with a tab and a stamp. */
 export function DossierMissions({ copy }: { copy: LandingCopy["missions"] }) {
   const cards = [
-    { ...copy.next, image: "/landing/scene-mission.webp", live: true, ref: "TH-02" },
-    { ...copy.past, image: "/landing/scene-finale.webp", live: false, ref: "TH-01" },
+    { ...copy.next, image: "/landing/mission-carnival.webp", live: true, ref: "TH-02" },
+    { ...copy.past, image: "/landing/mission-pythea.webp", live: false, ref: "TH-01" },
   ]
   return (
     <section id="missions" className="light flex min-h-[calc(100svh-4rem)] scroll-mt-16 items-center bg-background text-foreground">

@@ -1,15 +1,5 @@
-import type { Metadata, Viewport } from "next"
-import { CarnivalScreen } from "@/components/carnival/carnival-screen"
-
-export const metadata: Metadata = {
-  title: "Carnival",
-  description: "The Hunt Carnival. Περισσότερες πληροφορίες στο σύντομο μέλλον.",
-}
-
-export const viewport: Viewport = {
-  themeColor: "#3a0105",
-}
+import { redirect } from "next/navigation"
 
 export default function CarnivalPage() {
-  return <CarnivalScreen />
+  redirect("/karnavali")
 }

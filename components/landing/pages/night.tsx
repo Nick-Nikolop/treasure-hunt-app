@@ -198,7 +198,7 @@ export function NightMissions({ copy }: { copy: LandingCopy["missions"] }) {
       </div>
 
       <article className="relative isolate flex min-h-0 flex-1 items-end overflow-hidden">
-        <Image unoptimized loading="eager" src="/landing/scene-mission.webp" alt="" fill sizes="100vw" className="-z-10 object-cover brightness-50" />
+        <Image unoptimized loading="eager" src="/landing/mission-carnival.webp" alt="" fill sizes="100vw" className="-z-10 object-cover brightness-50" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/40 to-background/10" aria-hidden="true" />
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-6 pb-5 md:gap-5 md:px-10 md:pb-8">
           <div className="flex items-center gap-4">
@@ -223,7 +223,7 @@ export function NightMissions({ copy }: { copy: LandingCopy["missions"] }) {
       <div className="mx-auto w-full max-w-7xl px-6 py-4 md:px-10 md:py-6">
         <article className="relative grid grid-cols-[5rem_1fr] items-center gap-4 border-y border-border/60 py-3 md:grid-cols-[10rem_1fr_auto] md:gap-8 md:py-4">
           <div className="relative aspect-[16/10] overflow-hidden rounded-sm">
-            <Image unoptimized loading="eager" src="/landing/scene-finale.webp" alt="" fill sizes="10rem" className="object-cover brightness-75 grayscale" />
+            <Image unoptimized loading="eager" src="/landing/mission-pythea.webp" alt="" fill sizes="10rem" className="object-cover brightness-75 grayscale" />
             <Clue id="file" className="absolute bottom-1 right-1 scale-75 opacity-60 md:bottom-2 md:right-2 md:scale-100" />
           </div>
           <div className="flex min-w-0 flex-col gap-1">

@@ -258,10 +258,10 @@ export function MapMissions({ copy }: { copy: LandingCopy["missions"] }) {
         </div>
         <div className="flex flex-col gap-3 md:gap-5">
           <Rise>
-            <Ticket card={copy.next} copy={copy} live ticketRef="TH-02" image="/landing/scene-mission.webp" />
+            <Ticket card={copy.next} copy={copy} live ticketRef="TH-02" image="/landing/mission-carnival.webp" />
           </Rise>
           <Rise delay={0.1}>
-            <Ticket card={copy.past} copy={copy} live={false} ticketRef="TH-01" image="/landing/scene-finale.webp" />
+            <Ticket card={copy.past} copy={copy} live={false} ticketRef="TH-01" image="/landing/mission-pythea.webp" />
           </Rise>
         </div>
         <div className="hidden md:flex md:flex-row md:items-center md:gap-8">
