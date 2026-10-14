@@ -16,6 +16,7 @@ import { analyticsEvent } from "@/lib/db/schema"
 import { and, desc, eq, gte, sql } from "drizzle-orm"
 import { randomUUID } from "node:crypto"
 import { EV } from "@/lib/analytics-events"
+import { linkVisitor, recordTouch } from "@/lib/journey"
 
 export { EV } from "@/lib/analytics-events"
 export type { EventName } from "@/lib/analytics-events"
@@ -129,13 +130,35 @@ export async function recordEvents(
     })
 
   if (rows.length === 0) return 0
+  let written = 0
   try {
     await db.insert(analyticsEvent).values(rows)
-    return rows.length
+    written = rows.length
   } catch (err) {
     console.log("[v0] analytics insert failed:", (err as Error)?.message)
-    return 0
   }
+
+  // Journey: every new session's entry point, and tie signed-in devices to their account.
+  const journey: Promise<void>[] = rows
+    .filter((r) => r.name === EV.sessionStart && r.anonId)
+    .map((r) =>
+      recordTouch({
+        anonId: r.anonId as string,
+        sessionId: r.sessionId,
+        userId: r.userId,
+        device: r.device,
+        browser: r.browser,
+        os: r.os,
+        props: r.props,
+      }),
+    )
+  if (ctx.userId) {
+    for (const anonId of new Set(rows.map((r) => r.anonId).filter(Boolean))) {
+      journey.push(linkVisitor(anonId, ctx.userId, "event"))
+    }
+  }
+  await Promise.all(journey)
+  return written
 }
 
 // ── Aggregate queries (admin dashboard) ─────────────────────────────────────

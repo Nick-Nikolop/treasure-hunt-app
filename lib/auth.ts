@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth"
 import { APIError } from "better-auth/api"
 import { Pool } from "pg"
 import { logActivity } from "@/lib/activity"
+import { anonIdFromCookieHeader, linkVisitor } from "@/lib/journey"
 import { REGISTRATION_OPEN } from "@/lib/registration"
 
 // Relay a transactional email to the Google Apps Script web app. The script
@@ -111,7 +112,9 @@ export const auth = betterAuth({
           }
           return { data: newUser }
         },
-        after: async (createdUser) => {
+        after: async (createdUser, ctx) => {
+          // Tie the signing-up device (and its whole pre-signup journey) to the account.
+          await linkVisitor(anonIdFromCookieHeader(ctx?.headers?.get("cookie")), createdUser.id, "signup")
           try {
             const u = createdUser as {
               id: string
@@ -142,7 +145,8 @@ export const auth = betterAuth({
     },
     session: {
       create: {
-        after: async (createdSession) => {
+        after: async (createdSession, ctx) => {
+          await linkVisitor(anonIdFromCookieHeader(ctx?.headers?.get("cookie")), createdSession.userId, "login")
           try {
             const s = createdSession as { userId: string }
             // Resolve the user's display name lazily to avoid a stale snapshot.

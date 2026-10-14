@@ -223,6 +223,7 @@ export function trackTiming(
  */
 export function ensureSession(startEventName: string) {
   if (!isBrowser()) return
+  mirrorAnonCookie()
   const { isNew } = getSession()
   if (isNew) {
     track(startEventName, {
@@ -231,6 +232,59 @@ export function ensureSession(startEventName: string) {
       os: detectOS(),
       viewport: `${window.innerWidth}x${window.innerHeight}`,
       language: navigator.language,
+      ...landingAttribution(),
     })
   }
+}
+
+/**
+ * Copy the anonId into a first-party cookie so server-side auth hooks can tie
+ * this device to the account at sign-up (the verify email may open elsewhere).
+ */
+function mirrorAnonCookie() {
+  const id = getAnonId()
+  if (!id) return
+  try {
+    const secure = window.location.protocol === "https:" ? "; secure" : ""
+    document.cookie = `pythea_aid=${encodeURIComponent(id)}; max-age=31536000; path=/; samesite=lax${secure}`
+  } catch {
+    // Storage blocked: journey linking falls back to signed-in events.
+  }
+}
+
+const CLICK_IDS = ["gclid", "fbclid", "ttclid", "msclkid", "igshid", "li_fat_id"]
+
+/**
+ * Where this visit entered: landing path, the external referrer, UTM tags and ad
+ * click ids. Only whitelisted query keys are read, never the full query string,
+ * which can carry tokens (reset links, invites).
+ */
+function landingAttribution(): Record<string, string> {
+  const out: Record<string, string> = {
+    landingPath: window.location.pathname,
+    host: window.location.hostname,
+  }
+  if (document.referrer) out.landingReferrer = document.referrer
+  try {
+    const q = new URLSearchParams(window.location.search)
+    const utm: [string, string][] = [
+      ["utm_source", "utmSource"],
+      ["utm_medium", "utmMedium"],
+      ["utm_campaign", "utmCampaign"],
+      ["utm_content", "utmContent"],
+      ["utm_term", "utmTerm"],
+    ]
+    for (const [key, prop] of utm) {
+      const v = q.get(key)
+      if (v) out[prop] = v.slice(0, 128)
+    }
+    // Short-hand ?ref=instagram / ?src=flyer behaves like utm_source.
+    const ref = q.get("ref") ?? q.get("src")
+    if (ref && !out.utmSource) out.utmSource = ref.slice(0, 128)
+    const click = CLICK_IDS.find((k) => q.has(k))
+    if (click) out.clickId = click
+  } catch {
+    // Malformed query: keep path + referrer only.
+  }
+  return out
 }

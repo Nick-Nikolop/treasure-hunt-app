@@ -394,6 +394,77 @@ export const analyticsEvent = pgTable(
   }),
 )
 
+// User journey / attribution. One row per device (`anonId`, the analytics
+// localStorage id). Holds FIRST-touch attribution (where this device first came
+// from) and, once known, the account it belongs to. Several devices can point at
+// the same user. Every visit's own entry point lives in `visitor_touch`; what the
+// visitor DID is the `analytics_event` stream keyed by the same anonId.
+export const visitor = pgTable(
+  "visitor",
+  {
+    anonId: text("anonId").primaryKey(),
+    firstSeenAt: timestamp("firstSeenAt").notNull().defaultNow(),
+    lastSeenAt: timestamp("lastSeenAt").notNull().defaultNow(),
+    visitCount: integer("visitCount").notNull().default(1),
+    /** Page the very first visit landed on, e.g. "/carnival". */
+    firstPath: text("firstPath"),
+    firstReferrer: text("firstReferrer"),
+    /** Hostname of firstReferrer, or "direct". Pre-split for grouping. */
+    firstReferrerHost: text("firstReferrerHost"),
+    utmSource: text("utmSource"),
+    utmMedium: text("utmMedium"),
+    utmCampaign: text("utmCampaign"),
+    utmContent: text("utmContent"),
+    utmTerm: text("utmTerm"),
+    /** Printed-campaign token (/c/<token>) that brought the device in. */
+    campaign: text("campaign"),
+    device: text("device"),
+    browser: text("browser"),
+    os: text("os"),
+    language: text("language"),
+    userId: text("userId"),
+    /** When the device was tied to the account, and how ("signup" | "login" | "event"). */
+    linkedAt: timestamp("linkedAt"),
+    linkedVia: text("linkedVia"),
+  },
+  (t) => ({
+    userIdIdx: index("visitor_userId_idx").on(t.userId),
+    firstPathIdx: index("visitor_firstPath_idx").on(t.firstPath),
+    firstSeenAtIdx: index("visitor_firstSeenAt_idx").on(t.firstSeenAt),
+  }),
+)
+
+// One row per browsing session: the entry point of every visit (first AND
+// returning), so multi-touch journeys like "flyer -> left -> came back via
+// Instagram -> signed up" can be reconstructed.
+export const visitorTouch = pgTable(
+  "visitor_touch",
+  {
+    id: text("id").primaryKey(),
+    anonId: text("anonId").notNull(),
+    sessionId: text("sessionId"),
+    userId: text("userId"),
+    landingPath: text("landingPath"),
+    referrer: text("referrer"),
+    referrerHost: text("referrerHost"),
+    utmSource: text("utmSource"),
+    utmMedium: text("utmMedium"),
+    utmCampaign: text("utmCampaign"),
+    utmContent: text("utmContent"),
+    utmTerm: text("utmTerm"),
+    campaign: text("campaign"),
+    /** Ad click id present on the landing URL: "gclid" | "fbclid" | "ttclid" | ... */
+    clickId: text("clickId"),
+    device: text("device"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (t) => ({
+    anonIdIdx: index("visitor_touch_anonId_idx").on(t.anonId),
+    landingPathIdx: index("visitor_touch_landingPath_idx").on(t.landingPath),
+    createdAtIdx: index("visitor_touch_createdAt_idx").on(t.createdAt),
+  }),
+)
+
 // Cookie/consent decisions. One row per decision a visitor makes in the cookie
 // banner, so we keep an auditable GDPR record of who consented to what and when.
 //

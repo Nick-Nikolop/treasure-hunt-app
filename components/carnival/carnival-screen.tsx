@@ -5,6 +5,8 @@ import { motion, useReducedMotion } from "framer-motion"
 import { Instagram } from "lucide-react"
 import type { CSSProperties } from "react"
 import { LEGAL_ORG } from "@/lib/legal"
+import { flush, track } from "@/lib/analytics-client"
+import { EV } from "@/lib/analytics-events"
 
 const EASE = [0.16, 1, 0.3, 1] as const
 const TITLE = "Περισσότερες Πληροφορίες"
@@ -173,6 +175,10 @@ export function CarnivalScreen() {
           href={LEGAL_ORG.instagramUrl}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => {
+            track(EV.ctaClick, { id: "carnival_instagram", location: "carnival", href: LEGAL_ORG.instagramUrl }, { category: "cta" })
+            flush(true)
+          }}
           className="group relative mt-2 inline-flex items-center gap-2.5 overflow-hidden rounded-full border border-[var(--cv-gold)]/60 bg-[var(--cv-deep)]/60 px-6 py-3 font-sans text-sm font-bold tracking-wide text-[var(--cv-gold)] backdrop-blur-sm transition-colors hover:bg-[var(--cv-gold)] hover:text-[var(--cv-deep)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--cv-gold)]"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
