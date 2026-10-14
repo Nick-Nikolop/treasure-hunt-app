@@ -1,10 +1,11 @@
 "use client"
 
 import { AnimatePresence, motion } from "framer-motion"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import { SPLASH_MS } from "@/lib/return-splash"
 
-const MIN_MS = 1200
-const MAX_MS = 8000
+const MIN_MS = SPLASH_MS
+const MAX_MS = SPLASH_MS + 4000
 
 /**
  * Full-screen loop of the emblem while the page's images and fonts load.
@@ -14,6 +15,8 @@ const MAX_MS = 8000
 export function PageLoader({ label, onDone }: { label: string; onDone: () => void }) {
   const [visible, setVisible] = useState(true)
   const [orientation, setOrientation] = useState<"portrait" | "landscape" | null>(null)
+  const [playing, setPlaying] = useState(false)
+  const pageLoaded = useRef(false)
 
   useEffect(() => {
     const query = window.matchMedia("(orientation: portrait)")
@@ -21,25 +24,33 @@ export function PageLoader({ label, onDone }: { label: string; onDone: () => voi
     pick()
     query.addEventListener("change", pick)
 
-    const started = performance.now()
-    let finished = false
-    const finish = () => {
-      if (finished) return
-      finished = true
-      const wait = Math.max(0, MIN_MS - (performance.now() - started))
-      setTimeout(() => setVisible(false), wait)
+    const markLoaded = () => {
+      pageLoaded.current = true
     }
-    const cap = setTimeout(finish, MAX_MS)
-    if (document.readyState === "complete") finish()
-    else window.addEventListener("load", finish, { once: true })
+    if (document.readyState === "complete") markLoaded()
+    else window.addEventListener("load", markLoaded, { once: true })
 
+    const cap = setTimeout(() => setVisible(false), MAX_MS)
     document.documentElement.style.overflow = "hidden"
     return () => {
       query.removeEventListener("change", pick)
-      window.removeEventListener("load", finish)
+      window.removeEventListener("load", markLoaded)
       clearTimeout(cap)
     }
   }, [])
+
+  // The 5s are counted from the first rendered frame, so a slow phone
+  // connection doesn't eat into the time the video is actually on screen.
+  useEffect(() => {
+    if (!playing) return
+    let timer: ReturnType<typeof setTimeout>
+    const tryHide = () => {
+      if (pageLoaded.current) setVisible(false)
+      else timer = setTimeout(tryHide, 200)
+    }
+    timer = setTimeout(tryHide, MIN_MS)
+    return () => clearTimeout(timer)
+  }, [playing])
 
   return (
     <AnimatePresence
@@ -67,6 +78,7 @@ export function PageLoader({ label, onDone }: { label: string; onDone: () => voi
               loop
               playsInline
               preload="auto"
+              onPlaying={() => setPlaying(true)}
               aria-hidden="true"
               className="h-full w-full object-cover"
             />
