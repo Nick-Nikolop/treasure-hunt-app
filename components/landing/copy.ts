@@ -9,7 +9,7 @@ export const LANDING_COPY = {
     intro: { skip: "Παράλειψη" },
     hero: {
       eyebrow: "Ένα παιχνίδι μυστηρίου στον πραγματικό κόσμο",
-      title: ["Η Καλαμάτα", "είναι γεμάτη μυστήρια."],
+      title: ["Η Καλαμάτα", "είναι γεμάτη ιστορίες."],
       body: "Το The Hunt μετατρέπει την πόλη σε παιχνίδι. Ακολουθείς στοιχεία, λύνεις γρίφους, βρίσκεις κρυμμένα σημεία και φτάνεις με την ομάδα σου μέχρι το τέλος.",
       primary: "Ανακάλυψε τις αποστολές",
       secondary: "Πώς παίζεται",
@@ -109,7 +109,7 @@ export const LANDING_COPY = {
       rules: [
         { title: "Κοίτα δύο φορές.", body: "Τα στοιχεία σπάνια φωνάζουν. Μια λεπτομέρεια που προσπέρασες μπορεί να είναι η απάντηση." },
         { title: "Μη βιάζεσαι.", body: "Το παιχνίδι ανταμείβει τη σκέψη, όχι την ταχύτητα. Περπάτα, παρατήρησε, συζήτησε." },
-        { title: "Σεβάσου τον χώρο.", body: "Παίζουμε σε δημόσιους χώρους που ανήκουν σε όλους. Τους αφήνουμε όπως τους βρήκαμε." },
+        { title: "Σεβάσου τον χώρο.", body: "Παίζουμε σε δημόσιους χώρους που ανήκουν σε ό��ους. Τους αφήνουμε όπως τους βρήκαμε." },
         { title: "Η ασφάλεια πρώτα.", body: "Αν κάτι μοιάζει επικίνδυνο, δεν είναι ο δρόμος. Κανένα στοιχείο δεν αξίζει ρίσκο." },
       ],
     },
@@ -213,7 +213,7 @@ export const LANDING_COPY = {
     intro: { skip: "Skip" },
     hero: {
       eyebrow: "A mystery game played in the real world",
-      title: ["Kalamata", "is full of mysteries."],
+      title: ["Kalamata", "is full of stories."],
       body: "The Hunt turns the city into a game. Follow clues, solve puzzles, find hidden spots and reach the end with your team.",
       primary: "Explore the Hunts",
       secondary: "How it works",

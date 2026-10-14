@@ -33,6 +33,7 @@ export function RevealTitle({
           >
             {line}
           </motion.span>
+          {index < lines.length - 1 && " "}
         </span>
       ))}
     </Tag>
