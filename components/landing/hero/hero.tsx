@@ -3,7 +3,7 @@
 import { useVariant } from "../variants"
 import { HeroDeskLine } from "./hero-desk-more"
 import { HeroBand, HeroFramed, HeroHalf, HeroTwoThirds } from "./hero-desk-layouts"
-import { HeroPythea } from "./hero-pythea"
+import { HeroPythea, HeroPytheaSpotlight } from "./hero-pythea"
 import type { HeroCopy } from "./shared"
 
 const HEROES = {
@@ -13,6 +13,7 @@ const HEROES = {
   band: HeroBand,
   framed: HeroFramed,
   pythea: HeroPythea,
+  "pythea-spot": HeroPytheaSpotlight,
 }
 
 export function Hero({ copy, take }: { copy: HeroCopy; take: number }) {
