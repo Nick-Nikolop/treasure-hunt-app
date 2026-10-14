@@ -1,8 +1,9 @@
 "use client"
 
 import Image from "next/image"
-import { AnimatePresence, motion } from "framer-motion"
-import { useState } from "react"
+import { AnimatePresence, motion, useInView, useReducedMotion } from "framer-motion"
+import { ChevronLeft, ChevronRight } from "lucide-react"
+import { useRef, useState } from "react"
 import { Clue } from "../clues"
 import type { LandingCopy } from "../copy"
 import { EASE, Label } from "../pages/kit"
@@ -27,7 +28,9 @@ export function HowAccordion({ copy }: { copy: LandingCopy["how"] }) {
           </p>
         </div>
 
-        <ol className="flex min-h-0 flex-1 flex-col gap-2 lg:flex-row lg:gap-3">
+        <MobileSteps copy={copy} />
+
+        <ol className="hidden min-h-0 flex-1 flex-col gap-2 lg:flex lg:flex-row lg:gap-3">
           {copy.steps.map((step, index) => {
             const open = active === index
             return (
@@ -102,5 +105,119 @@ export function HowAccordion({ copy }: { copy: LandingCopy["how"] }) {
         </ol>
       </div>
     </section>
+  )
+}
+
+const STEP_MS = 6000
+
+/**
+ * Phones: one step at a time, story-style. Gold bars at the top fill and advance on their own
+ * while the section is on screen; swipe or use the arrows to move manually.
+ */
+function MobileSteps({ copy }: { copy: LandingCopy["how"] }) {
+  const [active, setActive] = useState(0)
+  const ref = useRef<HTMLDivElement>(null)
+  const inView = useInView(ref, { amount: 0.6 })
+  const reduce = useReducedMotion()
+  const total = copy.steps.length
+  const step = copy.steps[active]
+  const go = (index: number) => setActive((index + total) % total)
+  const playing = inView && !reduce
+
+  return (
+    <div ref={ref} className="flex min-h-0 flex-1 flex-col gap-3 lg:hidden">
+      <div className="flex gap-1.5" role="tablist" aria-label={copy.label}>
+        {copy.steps.map((item, index) => (
+          <button
+            key={item.title}
+            type="button"
+            role="tab"
+            aria-selected={index === active}
+            aria-label={`${copy.scene} ${index + 1}: ${item.title}`}
+            onClick={() => go(index)}
+            className="flex h-6 flex-1 items-center"
+          >
+            <span className="relative h-0.5 w-full overflow-hidden rounded-full bg-foreground/15">
+              {index < active && <span className="absolute inset-0 bg-brass" />}
+              {index === active && (
+                <motion.span
+                  key={`${active}-${playing}`}
+                  className="absolute inset-y-0 left-0 bg-brass"
+                  initial={{ width: playing ? "0%" : "100%" }}
+                  animate={{ width: "100%" }}
+                  transition={{ duration: playing ? STEP_MS / 1000 : 0, ease: "linear" }}
+                  onAnimationComplete={() => playing && go(active + 1)}
+                />
+              )}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      <motion.div
+        className="relative isolate min-h-0 flex-1 touch-pan-y overflow-hidden rounded-sm border border-brass/25"
+        drag="x"
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.18}
+        onDragEnd={(_, info) => {
+          if (info.offset.x < -50) go(active + 1)
+          else if (info.offset.x > 50) go(active - 1)
+        }}
+      >
+        <AnimatePresence initial={false}>
+          <motion.div
+            key={step.image}
+            className="absolute inset-0 -z-10"
+            initial={{ opacity: 0, scale: 1.08 }}
+            animate={{ opacity: 1, scale: 1, transition: { duration: 0.9, ease: EASE } }}
+            exit={{ opacity: 0, transition: { duration: 0.5 } }}
+          >
+            <Image unoptimized loading="eager" src={step.image} alt={step.alt} fill sizes="100vw" className="object-cover brightness-[0.62]" draggable={false} />
+          </motion.div>
+        </AnimatePresence>
+        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/35 to-transparent" aria-hidden="true" />
+        {active === 2 && <Clue id="scene" className="absolute right-4 top-4 z-20" />}
+
+        <div className="absolute inset-x-0 bottom-0 flex flex-col gap-3 p-5">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={active}
+              className="flex flex-col gap-2"
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0, transition: { duration: 0.45, ease: EASE, delay: 0.1 } }}
+              exit={{ opacity: 0, y: -8, transition: { duration: 0.2 } }}
+            >
+              <span className="font-serif text-5xl leading-none text-brass">{String(active + 1).padStart(2, "0")}</span>
+              <h3 className="font-serif text-[1.7rem] leading-tight text-foreground text-balance">{step.title}</h3>
+              <p className="font-sans text-[15px] leading-relaxed text-foreground/80 text-pretty">{step.body}</p>
+            </motion.div>
+          </AnimatePresence>
+
+          <div className="flex items-center justify-between border-t border-foreground/15 pt-3">
+            <span className="font-sans text-xs uppercase tracking-[0.25em] text-foreground/60">
+              {copy.scene} {active + 1} / {total}
+            </span>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => go(active - 1)}
+                aria-label={`${copy.scene} ${((active - 1 + total) % total) + 1}`}
+                className="flex size-10 items-center justify-center rounded-full border border-brass/40 text-brass"
+              >
+                <ChevronLeft className="size-5" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                onClick={() => go(active + 1)}
+                aria-label={`${copy.scene} ${((active + 1) % total) + 1}`}
+                className="flex size-10 items-center justify-center rounded-full bg-brass text-background"
+              >
+                <ChevronRight className="size-5" aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </div>
   )
 }
