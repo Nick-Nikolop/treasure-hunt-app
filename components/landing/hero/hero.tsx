@@ -2,15 +2,15 @@
 
 import { useVariant } from "../variants"
 import { HeroDeskLine } from "./hero-desk-more"
-import { HeroLit, HeroMarker, HeroRotate, HeroTyped } from "./hero-desk-texts"
+import { HeroBand, HeroFramed, HeroHalf, HeroTwoThirds } from "./hero-desk-layouts"
 import type { HeroCopy } from "./shared"
 
 const HEROES = {
   "desk-line": HeroDeskLine,
-  typed: HeroTyped,
-  rotate: HeroRotate,
-  lit: HeroLit,
-  marker: HeroMarker,
+  half: HeroHalf,
+  "two-thirds": HeroTwoThirds,
+  band: HeroBand,
+  framed: HeroFramed,
 }
 
 export function Hero({ copy, take }: { copy: HeroCopy; take: number }) {

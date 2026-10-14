@@ -18,10 +18,10 @@ export const SECTIONS: SectionDef[] = [
     label: { el: "Hero", en: "Hero" },
     options: [
       o("desk-line", "Γραφείο · τίτλος κάτω", "Desk · title at the bottom"),
-      o("typed", "Γραφομηχανή", "Typewriter"),
-      o("rotate", "Λέξη που αλλάζει", "Changing word"),
-      o("lit", "Φωτίζεται από τη λάμπα", "Lit by the lamp"),
-      o("marker", "Φάκελος · κυκλωμένη λέξη", "Case file · circled word"),
+      o("half", "Μισό-μισό · εικόνα δεξιά", "Half and half · image right"),
+      o("two-thirds", "Εικόνα 2/3 · κείμενο στο πλάι", "Image 2/3 · text column"),
+      o("band", "Εικόνα πάνω · κείμενο κάτω", "Image band · text below"),
+      o("framed", "Κάδρο · τίτλος πάνω στην εικόνα", "Framed · title over the edge"),
     ],
   },
   {
