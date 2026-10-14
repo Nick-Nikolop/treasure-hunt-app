@@ -22,9 +22,9 @@ function DeskPhoto({ className, children }: { className: string; children?: Reac
         animate={{ scale: 1, rotate: 0 }}
         transition={{ duration: 3.2, ease: EASE }}
       >
-        <Image unoptimized src="/landing/hero-desk.webp" alt="" fill priority sizes="(min-width: 768px) 66vw, 100vw" className="object-cover object-[50%_35%] brightness-[0.2] saturate-[0.5]" />
+        <Image unoptimized src="/landing/hero-kalamata-map.png" alt="" fill priority sizes="(min-width: 768px) 66vw, 100vw" className="object-cover object-center brightness-[0.2] saturate-[0.5]" />
         <div className="absolute inset-0" style={{ maskImage: mask, WebkitMaskImage: mask }} aria-hidden="true">
-          <Image unoptimized loading="eager" src="/landing/hero-desk.webp" alt="" fill sizes="(min-width: 768px) 66vw, 100vw" className="object-cover object-[50%_35%] brightness-[1.15] saturate-[1.05] sepia-[0.15]" />
+          <Image unoptimized loading="eager" src="/landing/hero-kalamata-map.png" alt="" fill sizes="(min-width: 768px) 66vw, 100vw" className="object-cover object-center brightness-[1.15] saturate-[1.05] sepia-[0.15]" />
         </div>
       </motion.div>
       <Grain opacity={0.07} />
