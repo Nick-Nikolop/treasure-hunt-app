@@ -11,7 +11,7 @@ import { FilmSequence } from "./film-sequence"
 import { Hero } from "./hero/hero"
 import { VariantMenu, VariantProvider } from "./variants"
 import { ALT_LOGO, DEFAULT_LOGO, LogoContext } from "./logo-context"
-import { ClosingSection, CodeSection, FaqSection, HowSection, MissionsSection, StorySection, WhySection } from "./sections"
+import { PageBody } from "./pages/page-body"
 
 const GRAIN =
   "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")"
@@ -116,13 +116,7 @@ export function LandingPage() {
       <main id="top">
         <Hero take={heroTake} copy={copy.hero} />
         <FilmSequence copy={copy.film} />
-        <StorySection copy={copy.story} />
-        <HowSection copy={copy.how} />
-        <WhySection copy={copy.why} who={copy.who} />
-        <CodeSection copy={copy.code} />
-        <MissionsSection copy={copy.missions} />
-        <FaqSection copy={copy.faq} />
-        <ClosingSection copy={copy.closing} footer={copy.footer} nav={copy.nav} logoSrc={logoSrc} />
+        <PageBody copy={copy} logoSrc={logoSrc} />
       </main>
     </div>
     </ClueProvider>
