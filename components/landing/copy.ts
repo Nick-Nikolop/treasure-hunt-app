@@ -158,7 +158,7 @@ export const LANDING_COPY = {
         entry: "Δωρεάν",
       },
       archive: {
-        closed: "Δεν είναι πλέον διαθέσιμο",
+        closed: "Δεν είναι πλέον διαθέσιμη",
         entryLabel: "Συμμετοχή",
         entryValue: "Δωρεάν",
         prizeLabel: "Χρηματικό έπαθλο",

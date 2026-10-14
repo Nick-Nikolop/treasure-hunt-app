@@ -213,13 +213,13 @@ export function MissionsSection({ copy }: { copy: LandingCopy["missions"] }) {
             </ul>
           </div>
         </div>
-        <div className="-mx-6 flex snap-x snap-mandatory gap-3 overflow-x-auto px-6 pb-2 md:mx-0 md:gap-5 md:overflow-visible md:px-0 md:pb-0">
+        <div className="flex flex-col gap-3 md:flex-row md:gap-5">
           {cards.map((card, index) => (
             <motion.article
               key={card.title}
               tabIndex={card.live ? undefined : 0}
               aria-label={card.live ? undefined : `${card.title}. ${archive.closed}`}
-              className="group relative isolate flex aspect-[3/4] w-[78%] shrink-0 snap-start flex-col justify-between gap-4 overflow-hidden rounded-sm border border-border/60 p-3 outline-none focus-visible:ring-2 focus-visible:ring-brass md:h-[min(36rem,calc(100svh-12rem))] md:w-auto md:p-4"
+              className="group relative isolate flex h-[clamp(15rem,calc((100svh-15rem)/2),20rem)] w-full flex-col justify-between gap-3 overflow-hidden rounded-sm border border-border/60 p-3 outline-none focus-visible:ring-2 focus-visible:ring-brass md:aspect-[3/4] md:h-[min(36rem,calc(100svh-12rem))] md:w-auto md:gap-4 md:p-4"
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-10% 0px" }}
@@ -249,7 +249,11 @@ export function MissionsSection({ copy }: { copy: LandingCopy["missions"] }) {
               <div className="absolute inset-x-0 bottom-0 -z-10 h-1/2 bg-gradient-to-t from-background/80 to-transparent" aria-hidden="true" />
               {!card.live && <Clue id="file" className="absolute right-[14%] top-[34%] -z-[5] opacity-40" />}
 
-              <div className="flex flex-row-reverse items-center justify-between gap-2">
+              <div
+                className={`flex flex-row-reverse items-center justify-between gap-2 transition-opacity duration-500 ease-out ${
+                  card.live ? "" : "group-hover:opacity-0 group-focus-within:opacity-0"
+                }`}
+              >
                 <span
                   className={`whitespace-nowrap rounded-full px-2.5 py-1 font-sans text-[11px] font-medium uppercase tracking-[0.15em] md:px-3 md:text-xs md:tracking-[0.2em] ${
                     card.live ? "bg-brass text-background" : "bg-background/85 text-foreground backdrop-blur-sm"
@@ -268,8 +272,8 @@ export function MissionsSection({ copy }: { copy: LandingCopy["missions"] }) {
                 }`}
               >
                 <div className="flex flex-col gap-1">
-                  <h3 className="font-serif text-xl text-foreground md:text-3xl">{card.title}</h3>
-                  <p className="font-sans text-sm leading-relaxed text-foreground/85">{card.body}</p>
+                  <h3 className="font-serif text-xl text-foreground text-balance md:text-3xl">{card.title}</h3>
+                  <p className="hidden font-sans text-sm leading-relaxed text-foreground/85 md:block">{card.body}</p>
                 </div>
                 <dl className="grid grid-cols-2 gap-3 border-t border-foreground/15 pt-2">
                   {(["period", "entry"] as const).map((field) => (
@@ -282,13 +286,13 @@ export function MissionsSection({ copy }: { copy: LandingCopy["missions"] }) {
               </div>
 
               {!card.live && (
-                <div className="pointer-events-none absolute inset-0 flex flex-col justify-center gap-5 bg-background/55 p-5 opacity-0 transition-opacity duration-500 ease-out group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 md:p-7">
-                  <div className="flex flex-col gap-2">
+                <div className="pointer-events-none absolute inset-0 flex flex-col justify-center gap-3 bg-background/55 p-4 opacity-0 transition-opacity duration-500 ease-out group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 md:gap-5 md:p-7">
+                  <div className="flex flex-col gap-1 md:gap-2">
                     <p className="font-sans text-xs uppercase tracking-[0.25em] text-foreground/70">{archive.closed}</p>
-                    <h3 className="font-serif text-2xl text-foreground md:text-3xl">{card.title}</h3>
+                    <h3 className="hidden font-serif text-3xl text-foreground md:block">{card.title}</h3>
                     <p className="font-sans text-sm text-foreground/80">{card.period}</p>
                   </div>
-                  <dl className="flex flex-col gap-4 border-y border-foreground/20 py-4">
+                  <dl className="flex flex-col gap-2 border-y border-foreground/20 py-2 md:gap-4 md:py-4">
                     <div className="flex items-baseline justify-between gap-4">
                       <dt className="font-sans text-xs uppercase tracking-[0.2em] text-foreground/70">{archive.entryLabel}</dt>
                       <dd className="font-serif text-lg text-foreground">{archive.entryValue}</dd>
@@ -296,11 +300,11 @@ export function MissionsSection({ copy }: { copy: LandingCopy["missions"] }) {
                     <div className="flex flex-col gap-2">
                       <div className="flex items-baseline justify-between gap-4">
                         <dt className="font-sans text-xs uppercase tracking-[0.2em] text-foreground/70">{archive.prizeLabel}</dt>
-                        <dd className="font-serif text-3xl text-foreground">{archive.prizeValue}</dd>
+                        <dd className="font-serif text-2xl text-foreground md:text-3xl">{archive.prizeValue}</dd>
                       </div>
                       <ul className="grid grid-cols-3 gap-2">
                         {archive.split.map((tier) => (
-                          <li key={tier.place} className="flex flex-col items-center gap-0.5 rounded-sm border border-foreground/15 bg-background/70 py-2">
+                          <li key={tier.place} className="flex flex-col items-center gap-0.5 rounded-sm border border-foreground/15 bg-background/70 py-1.5 md:py-2">
                             <span className="font-sans text-[11px] uppercase tracking-[0.2em] text-foreground/70">{tier.place}</span>
                             <span className="font-serif text-base text-foreground">{tier.amount}</span>
                           </li>
@@ -310,7 +314,7 @@ export function MissionsSection({ copy }: { copy: LandingCopy["missions"] }) {
                   </dl>
                   <Link
                     href="/standings"
-                    className="inline-flex items-center justify-between gap-3 rounded-sm border border-foreground/30 px-4 py-3 font-sans text-sm text-foreground transition-colors hover:border-foreground hover:bg-foreground hover:text-background"
+                    className="inline-flex items-center justify-between gap-3 rounded-sm border border-foreground/30 px-4 py-2.5 font-sans text-sm md:py-3 text-foreground transition-colors hover:border-foreground hover:bg-foreground hover:text-background"
                   >
                     {archive.standings}
                     <ArrowUpRight className="size-4" aria-hidden="true" />
