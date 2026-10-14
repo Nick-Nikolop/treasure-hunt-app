@@ -13,7 +13,7 @@ export const LANDING_COPY = {
       body: "Το The Hunt μετατρέπει την πόλη σε παιχνίδι. Ακολουθείς στοιχεία, λύνεις γρίφους, βρίσκεις κρυμμένα σημεία και φτάνεις με την ομάδα σου μέχρι το τέλος.",
       primary: "Ανακάλυψε τις αποστολές",
       secondary: "Πώς παίζεται",
-      hint: "Ακολούθησε το φως. Και κοίτα προσεκτικά: επτά σύμβολα κρύβονται σε αυτή τη σελίδα.",
+      hint: "Ακολούθησε το φως.",
       scroll: "Κύλισε",
     },
     what: {
@@ -241,7 +241,7 @@ export const LANDING_COPY = {
       body: "The Hunt turns the city into a game. Follow clues, solve puzzles, find hidden spots and reach the end with your team.",
       primary: "Explore the Hunts",
       secondary: "How it works",
-      hint: "Follow the light. And look closely: seven symbols are hidden on this page.",
+      hint: "Follow the light.",
       scroll: "Scroll",
     },
     what: {

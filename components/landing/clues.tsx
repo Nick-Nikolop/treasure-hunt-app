@@ -5,6 +5,9 @@ import { BookOpen, Check, Compass, Copy, Mail, RotateCcw, X } from "lucide-react
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
 import { LANDING_CONTACT, type LandingCopy } from "./copy"
 
+/** Hidden-symbol puzzle is switched off for now; flip to true to bring every placement back. */
+export const CLUES_ENABLED = false
+
 export const CLUE_IDS = ["hero", "story", "scene", "code", "file", "faq", "footer"] as const
 export type ClueId = (typeof CLUE_IDS)[number]
 
@@ -283,7 +286,13 @@ export function ClueProvider({ copy, children }: { copy: LandingCopy["clues"]; c
   )
 }
 
-export function Clue({ id, large = false, className = "" }: { id: ClueId; large?: boolean; className?: string }) {
+type ClueProps = { id: ClueId; large?: boolean; className?: string }
+
+export function Clue(props: ClueProps) {
+  return CLUES_ENABLED ? <ClueButton {...props} /> : null
+}
+
+function ClueButton({ id, large = false, className = "" }: ClueProps) {
   const { found, copy, find } = useClues()
   const isFound = found.includes(id)
 
@@ -310,6 +319,10 @@ export function Clue({ id, large = false, className = "" }: { id: ClueId; large?
 }
 
 export function ClueTracker() {
+  return CLUES_ENABLED ? <ClueTrackerPanel /> : null
+}
+
+function ClueTrackerPanel() {
   const { found, solved, copy, reset, openChart } = useClues()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -740,6 +753,10 @@ function RevealFile() {
 }
 
 export function ClueReward() {
+  return CLUES_ENABLED ? <ClueRewardPanel /> : null
+}
+
+function ClueRewardPanel() {
   const { found, solved, copy, openChart } = useClues()
   const remaining = COUNT - found.length
 
