@@ -79,9 +79,9 @@ export function PageBody({ copy }: { copy: LandingCopy }) {
     <>
       <WhatIs copy={copy.what} variant={whatVariant} />
       <HowAccordion copy={copy.how} />
+      <Missions copy={copy.missions} />
       <Why copy={copy.why} who={copy.who} />
       <Code copy={copy.code} />
-      <Missions copy={copy.missions} />
       <Faq copy={copy.faq} />
       <Closing copy={copy.closing} />
       <SiteFooter footer={copy.footer} nav={copy.nav} />
