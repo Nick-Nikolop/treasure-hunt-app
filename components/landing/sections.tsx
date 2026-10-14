@@ -232,7 +232,7 @@ export function MissionsSection({ copy }: { copy: LandingCopy["missions"] }) {
                 alt=""
                 fill
                 sizes="(min-width: 768px) 28rem, 80vw"
-                className={`-z-10 object-cover transition-transform duration-700 ease-out will-change-transform group-hover:scale-105 ${card.live ? "" : "sepia-[0.15]"}`}
+                className={`-z-10 object-cover transition-transform duration-700 ease-out will-change-transform group-hover:scale-105 ${card.live ? "object-[60%_20%]" : "object-[50%_80%] md:object-[50%_30%] sepia-[0.15]"}`}
               />
               {!card.live && (
                 <Image
@@ -243,10 +243,16 @@ export function MissionsSection({ copy }: { copy: LandingCopy["missions"] }) {
                   fill
                   sizes="(min-width: 768px) 28rem, 80vw"
                   aria-hidden="true"
-                  className="-z-10 object-cover opacity-0 brightness-[0.35] grayscale transition-[opacity,transform] duration-700 ease-out will-change-[opacity,transform] group-hover:scale-105 group-hover:opacity-100 group-focus-within:opacity-100"
+                  className="-z-10 object-cover object-[50%_80%] md:object-[50%_30%] opacity-0 brightness-[0.35] grayscale transition-[opacity,transform] duration-700 ease-out will-change-[opacity,transform] group-hover:scale-105 group-hover:opacity-100 group-focus-within:opacity-100"
                 />
               )}
-              <div className="absolute inset-x-0 bottom-0 -z-10 h-1/2 bg-gradient-to-t from-background/80 to-transparent" aria-hidden="true" />
+              <div
+                className={`absolute inset-x-0 bottom-0 -z-10 h-3/4 bg-gradient-to-t from-background via-background/75 to-transparent transition-opacity duration-500 ease-out ${
+                  card.live ? "" : "group-hover:opacity-0 group-focus-within:opacity-0"
+                }`}
+                aria-hidden="true"
+              />
+              <div className="absolute inset-x-0 top-0 -z-10 h-1/4 bg-gradient-to-b from-background/50 to-transparent" aria-hidden="true" />
               {!card.live && <Clue id="file" className="absolute right-[14%] top-[34%] -z-[5] opacity-40" />}
 
               <div
@@ -267,18 +273,20 @@ export function MissionsSection({ copy }: { copy: LandingCopy["missions"] }) {
               </div>
 
               <div
-                className={`flex flex-col gap-2 rounded-sm border border-foreground/10 bg-background/90 p-3 transition-opacity duration-500 ease-out md:gap-3 md:p-4 ${
+                className={`flex flex-col gap-3 px-1 pb-1 transition-opacity duration-500 ease-out md:gap-4 md:px-2 md:pb-2 ${
                   card.live ? "" : "group-hover:opacity-0 group-focus-within:opacity-0"
                 }`}
               >
-                <div className="flex flex-col gap-1">
-                  <h3 className="font-serif text-xl text-foreground text-balance md:text-3xl">{card.title}</h3>
-                  <p className="hidden font-sans text-sm leading-relaxed text-foreground/85 md:block">{card.body}</p>
+                <div className="flex flex-col gap-1.5">
+                  <h3 className="font-serif text-2xl leading-tight text-foreground text-balance [text-shadow:0_2px_12px_rgb(0_0_0/0.6)] md:text-4xl">
+                    {card.title}
+                  </h3>
+                  <p className="hidden max-w-sm font-sans text-sm leading-relaxed text-foreground/85 md:block">{card.body}</p>
                 </div>
-                <dl className="grid grid-cols-2 gap-3 border-t border-foreground/15 pt-2">
+                <dl className="flex items-stretch gap-4">
                   {(["period", "entry"] as const).map((field) => (
-                    <div key={field} className="flex min-w-0 flex-col gap-0.5">
-                      <dt className="font-sans text-[11px] uppercase tracking-[0.2em] text-foreground/70">{copy.fields[field]}</dt>
+                    <div key={field} className="flex min-w-0 flex-col gap-0.5 border-l-2 border-brass/70 pl-3">
+                      <dt className="font-sans text-[11px] uppercase tracking-[0.2em] text-brass">{copy.fields[field]}</dt>
                       <dd className="font-serif text-base text-foreground md:text-lg">{card[field]}</dd>
                     </div>
                   ))}
