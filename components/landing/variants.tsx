@@ -22,6 +22,7 @@ export const SECTIONS: SectionDef[] = [
       o("two-thirds", "Εικόνα 2/3 · κείμενο στο πλάι", "Image 2/3 · text column"),
       o("band", "Εικόνα πάνω · κείμενο κάτω", "Image band · text below"),
       o("framed", "Κάδρο · τίτλος πάνω στην εικόνα", "Framed · title over the edge"),
+      o("pythea", "Κεντραρισμένο · όπως το Πυθέα", "Centred · Pythea style"),
     ],
   },
   {
