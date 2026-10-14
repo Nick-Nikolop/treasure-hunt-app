@@ -95,12 +95,6 @@ export function beamMask(inner = "9rem", outer = "19rem") {
   return `radial-gradient(circle at var(--beam-x, 60%) var(--beam-y, 55%), #000 0, #000 ${inner}, transparent ${outer})`
 }
 
-/** Inverse of `beamMask`: darkens everything except the beam. Cheap way to put a whole scene "in the dark". */
-export function BeamShade({ inner = "10rem", outer = "24rem", className = "bg-background/80" }: { inner?: string; outer?: string; className?: string }) {
-  const mask = `radial-gradient(circle at var(--beam-x, 60%) var(--beam-y, 55%), transparent 0, transparent ${inner}, #000 ${outer})`
-  return <div className={`pointer-events-none absolute inset-0 ${className}`} style={{ maskImage: mask, WebkitMaskImage: mask }} aria-hidden="true" />
-}
-
 const NOISE =
   "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")"
 
@@ -119,35 +113,6 @@ export function Grain({ opacity = 0.09 }: { opacity?: number }) {
       />
     </div>
   )
-}
-
-/** Resolves random glyphs into `text`, left to right, between `start` and `start + duration` seconds. */
-export function useScramble(text: string, start: number, duration: number, pool: string) {
-  const reduceMotion = useReducedMotion()
-  const [output, setOutput] = useState(() => text.replace(/\S/g, "\u00a0"))
-
-  useEffect(() => {
-    if (reduceMotion) {
-      setOutput(text)
-      return
-    }
-    const begin = performance.now()
-    const id = window.setInterval(() => {
-      const elapsed = (performance.now() - begin) / 1000 - start
-      if (elapsed < 0) return
-      const progress = Math.min(1, elapsed / duration)
-      const settled = Math.floor(progress * text.length)
-      setOutput(
-        [...text]
-          .map((char, index) => (char === " " || index < settled ? char : pool[Math.floor(Math.random() * pool.length)]))
-          .join(""),
-      )
-      if (progress === 1) window.clearInterval(id)
-    }, 45)
-    return () => window.clearInterval(id)
-  }, [text, start, duration, pool, reduceMotion])
-
-  return output
 }
 
 /** Types `text` out at `cps` characters per second after `delay` seconds. */
@@ -172,31 +137,6 @@ export function useTypewriter(text: string, delay: number, cps = 38) {
   }, [text, delay, cps, reduceMotion])
 
   return { typed: text.slice(0, count), done: count >= text.length }
-}
-
-export const isGreek = (text: string) => /[\u0370-\u03ff]/.test(text)
-
-export type Mark = { x: string; y: string; text: string; className?: string; rotate?: number }
-
-export function HiddenMarks({ marks, tone = "brass" }: { marks: Mark[]; tone?: "brass" | "ink" }) {
-  return (
-    <>
-      {marks.map((mark) => (
-        <span
-          key={mark.text}
-          className={`absolute font-serif italic ${tone === "ink" ? "text-[oklch(0.45_0.17_28)]" : "text-brass/90"} ${mark.className ?? "text-3xl"}`}
-          style={{
-            left: mark.x,
-            top: mark.y,
-            transform: `rotate(${mark.rotate ?? 0}deg)`,
-            textShadow: tone === "ink" ? "none" : "0 0 18px oklch(0.78 0.13 78 / 0.6)",
-          }}
-        >
-          {mark.text}
-        </span>
-      ))}
-    </>
-  )
 }
 
 /** The hero's hidden symbol: rendered inside a beam-masked layer so it only shows in the light. */
@@ -240,7 +180,3 @@ export function HeroActions({ copy, centered = false, delay = 2 }: { copy: HeroC
   )
 }
 
-/** Greek all-caps must drop accents. */
-export function toCaps(text: string) {
-  return text.normalize("NFD").replace(/[\u0301\u0308]/g, "").toUpperCase().normalize("NFC")
-}

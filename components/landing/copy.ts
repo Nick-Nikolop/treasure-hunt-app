@@ -15,25 +15,8 @@ export const LANDING_COPY = {
       secondary: "Πώς παίζεται",
       hint: "Ακολούθησε το φως. Και κοίτα προσεκτικά: επτά σύμβολα κρύβονται σε αυτή τη σελίδα.",
       scroll: "Κύλισε",
-      slate: "Σκηνή 01 · Πλάνο 03",
-  caseLabel: "Ανοιχτή υπόθεση · Αρ. 001",
-  subtitles: ["— Το είδες κι εσύ;", "— Ήταν εκεί από την αρχή.", "— Κοίτα πιο κοντά."],
-  cipher: { decoding: "Αποκρυπτογράφηση", decoded: "Αποκρυπτογραφήθηκε", key: "Κλειδί" },
-  board: {
-  label: "Αναχωρήσεις",
-  columns: ["Ώρα", "Αποστολή", "Κατάσταση"],
-  rows: [
-  ["20:00", "Αποστολή 001", "Επιβίβαση"],
-  ["20:45", "Αποστολή 002", "Στην ώρα"],
-  ["21:30", "Αποστολή 003", "Απόρρητο"],
-  ],
-  },
-  evidence: {
-  label: "Ο τοίχος με τα στοιχεία",
-  photos: ["Το Κάστρο", "Η Πλατεία", "Το σημάδι", "Το Λιμάνι"],
-  note: "Ποιος το άφησε;",
-  },
-  },
+      caseLabel: "Ανοιχτή υπόθεση · Αρ. 001",
+    },
     film: {
       open: "Ο κόσμος είναι γεμάτος ιστορίες που δεν έχεις ανακαλύψει ακόμα.",
       frames: [
@@ -214,25 +197,8 @@ export const LANDING_COPY = {
       secondary: "How it works",
       hint: "Follow the light. And look closely: seven symbols are hidden on this page.",
       scroll: "Scroll",
-      slate: "Scene 01 · Take 03",
-  caseLabel: "Open case · No. 001",
-  subtitles: ["— Did you see it too?", "— It was there all along.", "— Look closer."],
-  cipher: { decoding: "Decoding", decoded: "Decoded", key: "Key" },
-  board: {
-  label: "Departures",
-  columns: ["Time", "Hunt", "Status"],
-  rows: [
-  ["20:00", "Hunt 001", "Boarding"],
-  ["20:45", "Hunt 002", "On time"],
-  ["21:30", "Hunt 003", "Classified"],
-  ],
-  },
-  evidence: {
-  label: "The evidence wall",
-  photos: ["The Castle", "The Square", "The mark", "The Port"],
-  note: "Who left this?",
-  },
-  },
+      caseLabel: "Open case · No. 001",
+    },
     film: {
       open: "The world is full of stories you have not discovered yet.",
       frames: [
