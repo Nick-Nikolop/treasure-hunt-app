@@ -3,7 +3,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { Eye, Hourglass, Instagram, Landmark, Mail, Plus, ShieldCheck } from "lucide-react"
+import { ArrowUpRight, Eye, Hourglass, Instagram, Landmark, Mail, Plus, ShieldCheck } from "lucide-react"
 import { LANDING_CONTACT, type LandingCopy } from "./copy"
 import { Clue, ClueReward } from "./clues"
 import { useLogoSrc } from "./logo-context"
@@ -191,6 +191,7 @@ export function MissionsSection({ copy }: { copy: LandingCopy["missions"] }) {
     { ...copy.next, image: "/landing/mission-carnival.webp", live: true, ref: "TH-02" },
     { ...copy.past, image: "/landing/mission-pythea.webp", live: false, ref: "TH-01" },
   ]
+  const archive = copy.archive
   return (
     <section
       id="missions"
@@ -200,12 +201,12 @@ export function MissionsSection({ copy }: { copy: LandingCopy["missions"] }) {
         <div className="flex max-w-2xl flex-col gap-2 md:gap-4">
           <Label>{copy.label}</Label>
           <h2 className="font-serif text-3xl text-foreground text-balance md:text-5xl">{copy.title}</h2>
-          <p className="hidden font-sans text-base leading-relaxed text-muted-foreground md:block">{copy.body}</p>
+          <p className="hidden font-sans text-base leading-relaxed text-foreground/80 md:block">{copy.body}</p>
           <div className="hidden flex-col gap-3 pt-4 md:flex">
-            <p className="font-sans text-xs uppercase tracking-[0.3em] text-foreground/60">{copy.definesLabel}</p>
+            <p className="font-sans text-xs uppercase tracking-[0.3em] text-foreground/80">{copy.definesLabel}</p>
             <ul className="flex flex-wrap gap-2">
               {copy.defines.map((item) => (
-                <li key={item} className="rounded-full border border-border px-4 py-1.5 font-sans text-sm text-muted-foreground">
+                <li key={item} className="rounded-full border border-brass/40 bg-brass/10 px-4 py-1.5 font-sans text-sm text-foreground">
                   {item}
                 </li>
               ))}
@@ -216,46 +217,106 @@ export function MissionsSection({ copy }: { copy: LandingCopy["missions"] }) {
           {cards.map((card, index) => (
             <motion.article
               key={card.title}
-              className="group relative isolate flex aspect-[3/4] w-[78%] shrink-0 snap-start flex-col justify-between gap-4 overflow-hidden rounded-sm border border-border/60 p-4 md:h-[min(36rem,calc(100svh-12rem))] md:w-auto md:p-6"
+              tabIndex={card.live ? undefined : 0}
+              aria-label={card.live ? undefined : `${card.title}. ${archive.closed}`}
+              className="group relative isolate flex aspect-[3/4] w-[78%] shrink-0 snap-start flex-col justify-between gap-4 overflow-hidden rounded-sm border border-border/60 p-3 outline-none focus-visible:ring-2 focus-visible:ring-brass md:h-[min(36rem,calc(100svh-12rem))] md:w-auto md:p-4"
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-10% 0px" }}
               transition={{ delay: index * 0.15, duration: 1, ease: EASE }}
             >
-              <Image unoptimized loading="eager"
+              <Image
+                unoptimized
+                loading="eager"
                 src={card.image}
                 alt=""
                 fill
                 sizes="(min-width: 768px) 28rem, 80vw"
-                className={`-z-10 object-cover transition-transform duration-[2000ms] group-hover:scale-105 ${card.live ? "brightness-90" : "sepia-[0.25] brightness-75"}`}
+                className={`-z-10 object-cover transition-transform duration-700 ease-out will-change-transform group-hover:scale-105 ${card.live ? "" : "sepia-[0.15]"}`}
               />
-              <div className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/40 via-45% to-transparent" aria-hidden="true" />
-              <div className="absolute inset-x-0 top-0 -z-10 h-20 bg-gradient-to-b from-background/60 to-transparent" aria-hidden="true" />
-              {!card.live && <Clue id="file" className="absolute right-[14%] top-[34%] opacity-40" />}
-              <div className="flex items-center justify-between gap-4">
-                <span className={`rounded-full border px-3 py-1 font-sans text-xs uppercase tracking-[0.2em] ${card.live ? "border-brass text-brass" : "border-foreground/30 text-muted-foreground"}`}>
+              {!card.live && (
+                <Image
+                  unoptimized
+                  loading="eager"
+                  src={card.image}
+                  alt=""
+                  fill
+                  sizes="(min-width: 768px) 28rem, 80vw"
+                  aria-hidden="true"
+                  className="-z-10 object-cover opacity-0 brightness-[0.35] grayscale transition-[opacity,transform] duration-700 ease-out will-change-[opacity,transform] group-hover:scale-105 group-hover:opacity-100 group-focus-within:opacity-100"
+                />
+              )}
+              <div className="absolute inset-x-0 bottom-0 -z-10 h-1/2 bg-gradient-to-t from-background/80 to-transparent" aria-hidden="true" />
+              {!card.live && <Clue id="file" className="absolute right-[14%] top-[34%] -z-[5] opacity-40" />}
+
+              <div className="flex items-center justify-between gap-2">
+                <span
+                  className={`whitespace-nowrap rounded-full px-2.5 py-1 font-sans text-[11px] font-medium uppercase tracking-[0.15em] md:px-3 md:text-xs md:tracking-[0.2em] ${
+                    card.live ? "bg-brass text-background" : "bg-background/85 text-foreground backdrop-blur-sm"
+                  }`}
+                >
                   {card.status}
                 </span>
-                <span className="font-sans text-xs uppercase tracking-[0.3em] text-foreground/60">
+                <span className="whitespace-nowrap rounded-full bg-background/85 px-2.5 py-1 font-sans text-[11px] uppercase tracking-[0.15em] md:px-3 md:text-xs md:tracking-[0.25em] text-foreground/90 backdrop-blur-sm">
                   {copy.file} {card.ref}
                 </span>
               </div>
-              <div className="flex flex-col gap-3 md:gap-5">
-                <div className="flex flex-col gap-1 md:gap-2">
-                  <h3 className="font-serif text-2xl text-foreground md:text-4xl">{card.title}</h3>
-                  <p className="max-w-md font-sans text-sm leading-relaxed text-foreground/75 md:text-[15px]">{card.body}</p>
+
+              <div
+                className={`flex flex-col gap-2 rounded-sm border border-foreground/10 bg-background/90 p-3 transition-opacity duration-500 ease-out md:gap-3 md:p-4 ${
+                  card.live ? "" : "group-hover:opacity-0 group-focus-within:opacity-0"
+                }`}
+              >
+                <div className="flex flex-col gap-1">
+                  <h3 className="font-serif text-xl text-foreground md:text-3xl">{card.title}</h3>
+                  <p className="font-sans text-sm leading-relaxed text-foreground/85">{card.body}</p>
                 </div>
-                <dl className="grid grid-cols-3 gap-3 border-t border-foreground/15 pt-2 md:gap-4 md:pt-4">
-                  {(["city", "period", "entry"] as const).map((field) => (
-                    <div key={field} className="flex min-w-0 flex-col gap-0.5 md:gap-1">
-                      <dt className="truncate font-sans text-[10px] uppercase tracking-[0.2em] text-foreground/50 md:text-[11px] md:tracking-[0.25em]">
-                        {copy.fields[field]}
-                      </dt>
-                      <dd className="font-serif text-sm text-foreground md:text-lg">{card[field]}</dd>
+                <dl className="grid grid-cols-2 gap-3 border-t border-foreground/15 pt-2">
+                  {(["period", "entry"] as const).map((field) => (
+                    <div key={field} className="flex min-w-0 flex-col gap-0.5">
+                      <dt className="font-sans text-[11px] uppercase tracking-[0.2em] text-foreground/70">{copy.fields[field]}</dt>
+                      <dd className="font-serif text-base text-foreground md:text-lg">{card[field]}</dd>
                     </div>
                   ))}
                 </dl>
               </div>
+
+              {!card.live && (
+                <div className="pointer-events-none absolute inset-0 flex flex-col justify-center gap-5 bg-background/55 p-5 opacity-0 transition-opacity duration-500 ease-out group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 md:p-7">
+                  <div className="flex flex-col gap-2">
+                    <p className="font-sans text-xs uppercase tracking-[0.25em] text-foreground/70">{archive.closed}</p>
+                    <h3 className="font-serif text-2xl text-foreground md:text-3xl">{card.title}</h3>
+                    <p className="font-sans text-sm text-foreground/80">{card.period}</p>
+                  </div>
+                  <dl className="flex flex-col gap-4 border-y border-foreground/20 py-4">
+                    <div className="flex items-baseline justify-between gap-4">
+                      <dt className="font-sans text-xs uppercase tracking-[0.2em] text-foreground/70">{archive.entryLabel}</dt>
+                      <dd className="font-serif text-lg text-foreground">{archive.entryValue}</dd>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-baseline justify-between gap-4">
+                        <dt className="font-sans text-xs uppercase tracking-[0.2em] text-foreground/70">{archive.prizeLabel}</dt>
+                        <dd className="font-serif text-3xl text-foreground">{archive.prizeValue}</dd>
+                      </div>
+                      <ul className="grid grid-cols-3 gap-2">
+                        {archive.split.map((tier) => (
+                          <li key={tier.place} className="flex flex-col items-center gap-0.5 rounded-sm border border-foreground/15 bg-background/70 py-2">
+                            <span className="font-sans text-[11px] uppercase tracking-[0.2em] text-foreground/70">{tier.place}</span>
+                            <span className="font-serif text-base text-foreground">{tier.amount}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </dl>
+                  <Link
+                    href="/standings"
+                    className="inline-flex items-center justify-between gap-3 rounded-sm border border-foreground/30 px-4 py-3 font-sans text-sm text-foreground transition-colors hover:border-foreground hover:bg-foreground hover:text-background"
+                  >
+                    {archive.standings}
+                    <ArrowUpRight className="size-4" aria-hidden="true" />
+                  </Link>
+                </div>
+              )}
             </motion.article>
           ))}
         </div>

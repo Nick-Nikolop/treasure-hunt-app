@@ -32,17 +32,6 @@ export const SECTIONS: SectionDef[] = [
     options: [],
   },
   {
-    id: "missions",
-    label: { el: "Αποστολές", en: "Hunts" },
-    options: [
-      o("dossier", "Φάκελοι υπόθεσης", "Case folders"),
-      o("night", "Ολόκληρη οθόνη + αρχείο", "Full screen + archive"),
-      o("board", "Πίνακας αναχωρήσεων", "Departure board"),
-      o("map", "Εισιτήρια", "Tickets"),
-      o("current", "Δύο κάρτες", "Two cards"),
-    ],
-  },
-  {
     id: "why",
     label: { el: "Γιατί", en: "Why" },
     options: [
