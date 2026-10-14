@@ -67,7 +67,7 @@ function PytheaFrame({
             </motion.span>
           ) : null}
           <motion.span
-            className="mt-1 block bg-[linear-gradient(180deg,color-mix(in_oklab,var(--brass)_55%,var(--foreground))_0%,var(--brass)_48%,color-mix(in_oklab,var(--brass)_72%,var(--ink))_100%)] bg-clip-text pb-3 text-[19vw] font-black leading-[1.05] tracking-[-0.025em] text-transparent drop-shadow-[0_6px_18px_color-mix(in_oklab,var(--ink)_70%,transparent)] sm:text-8xl md:text-[8.75rem]"
+            className="mt-1 block bg-[linear-gradient(180deg,color-mix(in_oklab,var(--brass)_55%,var(--foreground))_0%,var(--brass)_48%,color-mix(in_oklab,var(--brass)_72%,var(--ink))_100%)] bg-clip-text pb-2 text-[14vw] font-black leading-[1.05] tracking-[-0.02em] text-transparent drop-shadow-[0_6px_18px_color-mix(in_oklab,var(--ink)_70%,transparent)] sm:text-7xl md:text-8xl"
             initial={{ opacity: 0, scale: 0.92, filter: "blur(10px)" }}
             animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
             transition={{ delay: 1.3, duration: 1.4, ease: EASE }}
