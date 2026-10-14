@@ -11,7 +11,7 @@ import { FaqChat } from "../blocks/faq-chat"
 import { FaqIndex } from "../blocks/faq-index"
 import { FaqOpen } from "../blocks/faq-open"
 import { HowAccordion } from "../blocks/how-accordion"
-import { MissionsBoard } from "../blocks/missions-board"
+import { ArchiveMissions, CardMissions, FeatureMissions, TicketMissions } from "../blocks/missions-light"
 import { WhatIs } from "../blocks/what-is"
 import { WhyBoard } from "../blocks/why-board"
 import type { LandingCopy } from "../copy"
@@ -19,14 +19,13 @@ import {
   ClosingSection,
   CodeSection,
   FaqSection,
-  MissionsSection,
   SiteFooter,
   WhySection,
 } from "../sections"
 import { useVariant } from "../variants"
-import { DossierCode, DossierMissions, DossierWhy } from "./dossier"
-import { MapCode, MapMissions, MapWhy } from "./map"
-import { NightCode, NightMissions, NightWhy } from "./night"
+import { DossierCode, DossierWhy } from "./dossier"
+import { MapCode, MapWhy } from "./map"
+import { NightCode, NightWhy } from "./night"
 
 type WhyProps = { copy: LandingCopy["why"]; who: LandingCopy["who"] }
 
@@ -45,11 +44,10 @@ const CODE: Record<string, ComponentType<{ copy: LandingCopy["code"] }>> = {
   current: CodeSection,
 }
 const MISSIONS: Record<string, ComponentType<{ copy: LandingCopy["missions"] }>> = {
-  dossier: DossierMissions,
-  night: NightMissions,
-  board: MissionsBoard,
-  map: MapMissions,
-  current: MissionsSection,
+  dossier: ArchiveMissions,
+  night: FeatureMissions,
+  map: TicketMissions,
+  current: CardMissions,
 }
 const FAQ: Record<string, ComponentType<{ copy: LandingCopy["faq"] }>> = {
   current: FaqSection,
@@ -71,7 +69,7 @@ export function PageBody({ copy }: { copy: LandingCopy }) {
   const whatVariant = useVariant("what")
   const Why = WHY[useVariant("why")] ?? DossierWhy
   const Code = CODE[useVariant("code")] ?? DossierCode
-  const Missions = MISSIONS[useVariant("missions")] ?? DossierMissions
+  const Missions = MISSIONS[useVariant("missions")] ?? ArchiveMissions
   const Faq = FAQ[useVariant("faq")] ?? FaqSection
   const Closing = CLOSING[useVariant("closing")] ?? ClosingSection
 
