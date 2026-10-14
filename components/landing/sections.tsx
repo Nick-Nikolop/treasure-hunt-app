@@ -249,7 +249,7 @@ export function MissionsSection({ copy }: { copy: LandingCopy["missions"] }) {
               <div className="absolute inset-x-0 bottom-0 -z-10 h-1/2 bg-gradient-to-t from-background/80 to-transparent" aria-hidden="true" />
               {!card.live && <Clue id="file" className="absolute right-[14%] top-[34%] -z-[5] opacity-40" />}
 
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex flex-row-reverse items-center justify-between gap-2">
                 <span
                   className={`whitespace-nowrap rounded-full px-2.5 py-1 font-sans text-[11px] font-medium uppercase tracking-[0.15em] md:px-3 md:text-xs md:tracking-[0.2em] ${
                     card.live ? "bg-brass text-background" : "bg-background/85 text-foreground backdrop-blur-sm"
