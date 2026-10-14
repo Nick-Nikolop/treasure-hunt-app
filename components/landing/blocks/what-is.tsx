@@ -15,10 +15,10 @@ function ShadowEdge() {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none absolute inset-x-0 top-0 h-48 md:h-72"
+      className="pointer-events-none absolute inset-x-0 top-0 h-24 md:h-36"
       style={{
         background:
-          "linear-gradient(to bottom, var(--ink) 0%, color-mix(in oklab, var(--ink) 85%, transparent) 16%, color-mix(in oklab, var(--ink) 48%, transparent) 42%, color-mix(in oklab, var(--ink) 15%, transparent) 70%, transparent 100%)",
+          "linear-gradient(to bottom, var(--ink) 0%, color-mix(in oklab, var(--ink) 70%, transparent) 22%, color-mix(in oklab, var(--ink) 30%, transparent) 50%, color-mix(in oklab, var(--ink) 8%, transparent) 78%, transparent 100%)",
       }}
     />
   )
@@ -38,13 +38,13 @@ export function WhatIs({ copy }: { copy: WhatCopy; variant?: string }) {
     <>
       <section
         id="what"
-        className="light relative flex min-h-[calc(100svh-4rem)] scroll-mt-16 items-center overflow-hidden bg-background pb-8 pt-28 text-foreground md:pb-14 md:pt-40"
+        className="light relative flex min-h-[calc(100svh-4rem)] scroll-mt-16 items-center overflow-hidden bg-background pb-8 pt-24 text-foreground md:pb-14 md:pt-36"
       >
         <ShadowEdge />
         <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-7 px-6 md:gap-10">
           <Rise>
             <div className="flex max-w-4xl flex-col gap-3 md:gap-4">
-              <Label>{copy.label}</Label>
+              <Label className="font-semibold md:text-sm">{copy.label}</Label>
               <h2 className="text-balance font-serif text-3xl leading-[1.1] md:text-5xl">{copy.title}</h2>
             </div>
           </Rise>
@@ -66,7 +66,7 @@ export function WhatIs({ copy }: { copy: WhatCopy; variant?: string }) {
             </ol>
             <div className="flex flex-col gap-2 bg-foreground px-5 py-4 text-background md:flex-row md:items-center md:justify-between md:gap-8 md:px-10 md:py-6">
               <span className="font-serif text-3xl leading-none md:text-5xl">
-                <span className="text-brass">= </span>The Hunt
+                <span className="text-[oklch(0.78_0.13_78)]">= </span>The Hunt
               </span>
               <span className="max-w-[40ch] font-sans text-sm leading-relaxed text-background/75 md:text-right md:text-base">
                 {copy.result}
