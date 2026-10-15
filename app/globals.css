@@ -154,6 +154,7 @@
   --font-serif: var(--font-alegreya), ui-serif, Georgia, serif;
   --font-mono: var(--font-alegreya-sans), ui-monospace, monospace;
   --color-parchment: var(--parchment);
+  --color-thread: oklch(0.56 0.17 27);
   --color-ink: var(--ink);
   --color-brass: var(--brass);
   --color-silver: var(--silver);
