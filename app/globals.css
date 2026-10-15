@@ -160,6 +160,14 @@
   --color-reel-mute: #a6a29b;
   --color-reel-white: #f6f2ea;
   --color-reel-red: oklch(0.46 0.15 22);
+  /* /landing3 trail palette */
+  --color-hill-paper: #f1e9d6;
+  --color-hill-deep: #e3d6b8;
+  --color-hill-card: #fbf7ee;
+  --color-hill-ink: #2b2219;
+  --color-hill-wax: #7a1f2b;
+  --font-plate: var(--font-l3-plate), ui-serif, Georgia, serif;
+  --font-field: var(--font-l3-field), ui-sans-serif, system-ui, sans-serif;
   --color-ink: var(--ink);
   --color-brass: var(--brass);
   --color-silver: var(--silver);

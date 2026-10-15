@@ -1,0 +1,246 @@
+export const COORDS = { lat: "37.0389°", lng: "22.1142°" }
+
+export const TRAIL_COPY = {
+  el: {
+    nav: {
+      label: "Κύρια πλοήγηση",
+      menu: "Μενού",
+      close: "Κλείσιμο",
+      hunts: "Αποστολές",
+      how: "Πώς παίζεται",
+      faq: "Ερωτήσεις",
+      contact: "Επικοινωνία",
+      lang: "EN",
+      langLabel: "Switch to English",
+    },
+    loader: { skip: "Παράλειψη", label: "Φόρτωση" },
+    hero: {
+      eyebrow: "Καλώς ήρθες στο",
+      title: "The Hunt",
+      tag: "Την ξέρουν πολλοί. Τη βρίσκουν λίγοι.",
+      plain: "Ένα κυνήγι θησαυρού στους δρόμους της Καλαμάτας, με την ομάδα σου και το κινητό σου.",
+      scroll: "Κύλισε για να εξερευνήσεις",
+      alt: "Πλακόστρωτο σοκάκι της Καλαμάτας το σούρουπο με το κάστρο και τον Ταΰγετο στην ομίχλη",
+    },
+    lat: "Β",
+    lng: "Α",
+    first: {
+      statement:
+        "Υπάρχει μια πόλη που περπατάς κάθε μέρα. Και μια άλλη, κρυμμένη μέσα της, που δεν τη δείχνει κανένας χάρτης.",
+      sub: "Πίσω από τις προσόψεις, κάτω από τα σημάδια, για όσους κοιτάζουν δύο φορές.",
+    },
+    second: {
+      statement:
+        "Εδώ οι συνηθισμένοι δρόμοι γίνονται γρίφοι, η παρέα γίνεται ομάδα και μια απλή βόλτα γίνεται ιστορία.",
+      body: [
+        "Το The Hunt είναι ένα κυνήγι θησαυρού στους πραγματικούς δρόμους της Καλαμάτας. Βγαίνεις με την παρέα σου και ακολουθείς μια ιστορία.",
+        "Το κινητό σού δίνει γρίφους. Τους λύνετε μαζί, βρίσκετε το σωστό σημείο, σκανάρετε ένα QR και η ιστορία συνεχίζεται, μέχρι το τέλος.",
+        "Σαν escape room, αλλά ολόκληρη η πόλη είναι το δωμάτιο. Χρειάζεσαι μόνο περιέργεια, την ομάδα σου και ένα κινητό.",
+      ],
+      slides: [
+        { code: "00119_01", place: "Πλατεία", src: "/landing/plateia.webp", alt: "Παλιά φωτογραφία της κεντρικής πλατείας της Καλαμάτας" },
+        { code: "00121_04", place: "Κάστρο", src: "/landing/kastro.webp", alt: "Ο λόφος του Κάστρου της Καλαμάτας" },
+        { code: "00125_03", place: "Λιμάνι", src: "/landing/limani.webp", alt: "Παλιά φωτογραφία του λιμανιού της Καλαμάτας" },
+      ],
+      roll: "Ταξίδι στην Καλαμάτα",
+      plateAlt: "Παλιός χάρτης της πόλης",
+    },
+    keepers: {
+      statement: "Γνώρισε τις αποστολές. Κάθε μία είναι μια καινούργια ιστορία.",
+      label: "Οι αποστολές",
+      prev: "Προηγούμενη αποστολή",
+      next: "Επόμενη αποστολή",
+      goTo: "Πήγαινε στην αποστολή",
+      items: [
+        {
+          id: "2",
+          status: "Σύντομα",
+          title: "Hunt #2",
+          tag: "Η επόμενη αποστολή ετοιμάζεται. Οι λεπτομέρειες ανακοινώνονται σύντομα.",
+          facts: [
+            { k: "Περίοδος", v: "Ανακοινώνεται" },
+            { k: "Συμμετοχή", v: "Ανακοινώνεται" },
+          ],
+          cta: "Ειδοποίησέ με",
+          art: "/landing3/keeper-carnival.webp",
+          artAlt: "Χαρακτικό αποκριάτικης μάσκας με φτερά και κορδέλες",
+          photo: "/landing/mission-carnival.webp",
+          photoAlt: "Στιγμιότυπο από την επόμενη αποστολή",
+        },
+        {
+          id: "1",
+          status: "Ολοκληρώθηκε",
+          title: "Το ταξίδι του Πυθέα",
+          tag: "Δέκα σταθμοί, ένα ημερολόγιο, ένας θησαυρός. Η πρώτη αποστολή του The Hunt.",
+          facts: [
+            { k: "Περίοδος", v: "Καλοκαίρι 2026" },
+            { k: "Συμμετοχή", v: "Δωρεάν" },
+            { k: "Έπαθλο", v: "500 €" },
+          ],
+          cta: "Δες την κατάταξη",
+          art: "/landing3/keeper-pytheas.webp",
+          artAlt: "Χαρακτικό αρχαίου πλοίου με πανί, ημερολόγιο και ανεμολόγιο",
+          photo: "/landing/mission-pythea.webp",
+          photoAlt: "Στιγμιότυπο από το ταξίδι του Πυθέα",
+        },
+      ],
+    },
+    deck: {
+      label: "Πώς παίζεται",
+      ghost: ["Τέσσερα", "βήματα,", "μία", "ιστορία."],
+      hint: "Πάτα την κάρτα για την επόμενη",
+      next: "Επόμενο βήμα",
+      step: "Βήμα",
+      cards: [
+        { title: "Διάλεξε", body: "Κάθε αποστολή έχει τη δική της ιστορία, διάρκεια και κανόνες.", src: "/landing3/step-envelope.webp", alt: "Σφραγισμένος φάκελος με χάρτη" },
+        { title: "Μάζεψε", body: "Φτιάξε την ομάδα σου. Η παρατηρητικότητα κάνει τη διαφορά.", src: "/landing3/step-team.webp", alt: "Τρεις φίλοι μελετούν έναν χάρτη" },
+        { title: "Ψάξε", body: "Λύσε γρίφους, βρες το σημείο, σκάναρε το QR.", src: "/landing3/step-clue.webp", alt: "Μεγεθυντικός φακός πάνω από πέτρινη πλάκα" },
+        { title: "Φτάσε", body: "Ένωσε τα κομμάτια και ανακάλυψε το τέλος της ιστορίας.", src: "/landing3/step-chest.webp", alt: "Ανοιχτό σεντούκι με νομίσματα" },
+      ],
+    },
+    faq: {
+      label: "Ερωτήσεις",
+      title: "Πριν ξεκινήσεις.",
+      items: [
+        { q: "Τι είναι το The Hunt;", a: "Ένα κυνήγι θησαυρού στον πραγματικό κόσμο. Ακολουθείς μια ιστορία στους δρόμους της Καλαμάτας και λύνεις γρίφους από το κινητό σου." },
+        { q: "Πώς συμμετέχω;", a: "Διαλέγεις μια διαθέσιμη αποστολή και ακολουθείς τις οδηγίες συμμετοχής της. Κάθε αποστολή έχει τους δικούς της όρους." },
+        { q: "Παίζω με φίλους;", a: "Φυσικά. Η ομάδα είναι η καρδιά του παιχνιδιού. Το μέγεθός της το ορίζει κάθε αποστολή." },
+        { q: "Πόσο διαρκεί;", a: "Εξαρτάται από την αποστολή. Κάποιες ολοκληρώνονται σε λίγες ώρες, άλλες εξελίσσονται σε μέρες." },
+        { q: "Κοστίζει; Έχει έπαθλα;", a: "Το κόστος και τα έπαθλα διαφέρουν ανά αποστολή και αναφέρονται στη σελίδα της. Η πρώτη αποστολή ήταν δωρεάν, με έπαθλο 500 €." },
+        { q: "Πρέπει να τρέχω;", a: "Όχι. Το The Hunt ανταμείβει την παρατήρηση και τη σκέψη, όχι την ταχύτητα. Η ασφάλεια έρχεται πρώτη." },
+      ],
+    },
+    closing: {
+      eyebrow: "Το επόμενο στοιχείο σε περιμένει",
+      title: "Βγες στην πόλη. Κοίτα δύο φορές.",
+      cta: "Ειδοποίησέ με για το επόμενο Hunt",
+      subject: "Ειδοποίησέ με για το επόμενο Hunt",
+      terms: "Όροι & Απόρρητο",
+      standings: "Κατάταξη",
+      rights: "Με επιφύλαξη παντός δικαιώματος.",
+    },
+  },
+  en: {
+    nav: {
+      label: "Main navigation",
+      menu: "Menu",
+      close: "Close",
+      hunts: "Hunts",
+      how: "How it works",
+      faq: "FAQ",
+      contact: "Contact",
+      lang: "ΕΛ",
+      langLabel: "Αλλαγή σε Ελληνικά",
+    },
+    loader: { skip: "Skip", label: "Loading" },
+    hero: {
+      eyebrow: "Step into",
+      title: "The Hunt",
+      tag: "Known to many. Found by few.",
+      plain: "A treasure hunt across the streets of Kalamata, with your team and your phone.",
+      scroll: "Scroll to explore",
+      alt: "A cobbled Kalamata alley at dusk with the castle and Mount Taygetos in the mist",
+    },
+    lat: "N",
+    lng: "E",
+    first: {
+      statement: "There is a city you walk through every day. And another one, hidden inside it, that no map will show.",
+      sub: "Behind the facades, beneath the signs, for those who look twice.",
+    },
+    second: {
+      statement: "Here, ordinary streets turn into puzzles, friends turn into a team and a simple walk turns into a story.",
+      body: [
+        "The Hunt is a treasure hunt on the real streets of Kalamata. You head out with your friends and follow a story.",
+        "Your phone gives you puzzles. You solve them together, find the right spot, scan a QR code and the story continues, all the way to the end.",
+        "Like an escape room, but the whole city is the room. All you need is curiosity, your team and a phone.",
+      ],
+      slides: [
+        { code: "00119_01", place: "Square", src: "/landing/plateia.webp", alt: "An old photo of the main square in Kalamata" },
+        { code: "00121_04", place: "Castle", src: "/landing/kastro.webp", alt: "The Kalamata castle hill" },
+        { code: "00125_03", place: "Harbour", src: "/landing/limani.webp", alt: "An old photo of Kalamata harbour" },
+      ],
+      roll: "Journey to Kalamata",
+      plateAlt: "An old map of the city",
+    },
+    keepers: {
+      statement: "Meet the Hunts. Every one of them is a brand new story.",
+      label: "The Hunts",
+      prev: "Previous Hunt",
+      next: "Next Hunt",
+      goTo: "Go to Hunt",
+      items: [
+        {
+          id: "2",
+          status: "Coming soon",
+          title: "Hunt #2",
+          tag: "The next Hunt is in the making. Details will be announced soon.",
+          facts: [
+            { k: "Period", v: "To be announced" },
+            { k: "Entry", v: "To be announced" },
+          ],
+          cta: "Notify me",
+          art: "/landing3/keeper-carnival.webp",
+          artAlt: "An engraving of a feathered carnival mask with ribbons",
+          photo: "/landing/mission-carnival.webp",
+          photoAlt: "A still from the next Hunt",
+        },
+        {
+          id: "1",
+          status: "Completed",
+          title: "Pytheas' Voyage",
+          tag: "Ten stops, one journal, one treasure. The very first Hunt.",
+          facts: [
+            { k: "Period", v: "Summer 2026" },
+            { k: "Entry", v: "Free" },
+            { k: "Prize", v: "€500" },
+          ],
+          cta: "See the standings",
+          art: "/landing3/keeper-pytheas.webp",
+          artAlt: "An engraving of an ancient sailing ship, a journal and a compass rose",
+          photo: "/landing/mission-pythea.webp",
+          photoAlt: "A still from Pytheas' Voyage",
+        },
+      ],
+    },
+    deck: {
+      label: "How it works",
+      ghost: ["Four", "steps,", "one", "story."],
+      hint: "Tap the card for the next one",
+      next: "Next step",
+      step: "Step",
+      cards: [
+        { title: "Pick", body: "Every Hunt has its own story, length and rules.", src: "/landing3/step-envelope.webp", alt: "A sealed envelope with a map" },
+        { title: "Gather", body: "Build your team. A sharp eye makes the difference.", src: "/landing3/step-team.webp", alt: "Three friends studying a map" },
+        { title: "Search", body: "Solve puzzles, find the spot, scan the QR.", src: "/landing3/step-clue.webp", alt: "A magnifying glass over a stone plaque" },
+        { title: "Arrive", body: "Connect the pieces and uncover how the story ends.", src: "/landing3/step-chest.webp", alt: "An open chest with coins" },
+      ],
+    },
+    faq: {
+      label: "FAQ",
+      title: "Before you start.",
+      items: [
+        { q: "What is The Hunt?", a: "A treasure hunt in the real world. You follow a story across the streets of Kalamata and solve puzzles on your phone." },
+        { q: "How do I join?", a: "Pick an available Hunt and follow its sign-up instructions. Every Hunt has its own terms." },
+        { q: "Can I play with friends?", a: "Of course. The team is the heart of the game. Each Hunt sets its own team size." },
+        { q: "How long does it take?", a: "It depends on the Hunt. Some finish in a few hours, others unfold over days." },
+        { q: "Does it cost anything? Are there prizes?", a: "Cost and prizes differ per Hunt and are listed on its page. The first Hunt was free, with a €500 prize pool." },
+        { q: "Do I have to run?", a: "No. The Hunt rewards noticing and thinking, not speed. Safety always comes first." },
+      ],
+    },
+    closing: {
+      eyebrow: "The next clue is waiting",
+      title: "Head into the city. Look twice.",
+      cta: "Notify me about the next Hunt",
+      subject: "Notify me about the next Hunt",
+      terms: "Terms & Privacy",
+      standings: "Standings",
+      rights: "All rights reserved.",
+    },
+  },
+}
+
+export type TrailCopy = (typeof TRAIL_COPY)["el"]
+
+export function caps(text: string) {
+  return text.normalize("NFD").replace(/\u0301/g, "").normalize("NFC").toUpperCase()
+}
