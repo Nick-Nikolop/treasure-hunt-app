@@ -14,18 +14,30 @@ import { Intro } from "./intro"
 import { HuntsRow, TopThree, WhyRow } from "./rows"
 import { ClosingBanner, CodeSection, WhatSection } from "./spotlights"
 
+const SPY_IDS = ["top", "hunts", "how", "faq"]
+
 export function Landing2Page() {
   const { locale, toggle } = useI18n()
   const copy = LANDING_COPY[locale]
   const reel = REEL_COPY[locale]
   const [ready, setReady] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [active, setActive] = useState<string>("top")
   const [modal, setModal] = useState<ModalId | null>(null)
 
   const notifyHref = `mailto:${LANDING_CONTACT.email}?subject=${encodeURIComponent(reel.signup.subject)}`
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24)
+    const onScroll = () => {
+      setScrolled(window.scrollY > 24)
+      const line = window.innerHeight * 0.35
+      let current = SPY_IDS[0]
+      for (const id of SPY_IDS) {
+        const el = document.getElementById(id)
+        if (el && el.getBoundingClientRect().top <= line) current = id
+      }
+      setActive(current)
+    }
     onScroll()
     window.addEventListener("scroll", onScroll, { passive: true })
     return () => window.removeEventListener("scroll", onScroll)
@@ -60,16 +72,30 @@ export function Landing2Page() {
             <span className="font-serif text-xl font-black tracking-[0.12em] text-brass md:text-2xl">THE HUNT</span>
           </a>
           <ul className="hidden items-center gap-5 text-base lg:flex">
-            {navLinks.map((link, index) => (
-              <li key={link.href}>
-                <a
-                  href={link.href}
-                  className={cn("transition hover:text-reel-mute", index === 0 ? "font-bold text-reel-white" : "text-reel-white/85")}
-                >
-                  {link.label}
-                </a>
-              </li>
-            ))}
+            {navLinks.map((link) => {
+              const isActive = active === link.href.slice(1)
+              return (
+                <li key={link.href}>
+                  <a
+                    href={link.href}
+                    aria-current={isActive ? "location" : undefined}
+                    className={cn(
+                      "relative py-1 transition-colors duration-300",
+                      isActive ? "font-bold text-brass" : "text-reel-white/85 hover:text-brass/80",
+                    )}
+                  >
+                    {link.label}
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        "absolute inset-x-0 -bottom-1 h-0.5 origin-left rounded-full bg-brass transition-transform duration-300",
+                        isActive ? "scale-x-100" : "scale-x-0",
+                      )}
+                    />
+                  </a>
+                </li>
+              )
+            })}
           </ul>
           <div className="ml-auto flex items-center gap-3 md:gap-4">
             <button
