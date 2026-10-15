@@ -12,6 +12,7 @@ import { HowSection } from "./episodes"
 import { Faq, Footer } from "./finale"
 import { Intro } from "./intro"
 import { HuntsRow, TopThree, WhyRow } from "./rows"
+import { ClosingBanner, CodeSection, WhatSection } from "./spotlights"
 
 export function Landing2Page() {
   const { locale, toggle } = useI18n()
@@ -95,13 +96,24 @@ export function Landing2Page() {
           onExplore={explore}
           onMore={() => setModal("show")}
         />
-        <div className="relative z-10 -mt-16 flex flex-col gap-12 pb-20 md:-mt-28 md:gap-16 md:pb-28">
+        <div className="flex flex-col gap-24 py-20 md:gap-32 md:py-28">
+          <WhatSection what={copy.what} reel={reel} />
           <HuntsRow missions={copy.missions} reel={reel} notifyHref={notifyHref} onOpen={setModal} />
-          <TopThree missions={copy.missions} reel={reel} />
+        </div>
+        <TopThree missions={copy.missions} reel={reel} />
+        <div className="flex flex-col gap-24 py-20 md:gap-32 md:py-28">
           <HowSection how={copy.how} reel={reel} />
           <WhyRow why={copy.why} reel={reel} />
+          <CodeSection who={copy.who} code={copy.code} />
         </div>
-        <Faq faq={copy.faq} reel={reel} notifyHref={notifyHref} />
+        <Faq faq={copy.faq} reel={reel} />
+        <ClosingBanner
+          closing={copy.closing}
+          line={reel.signup.line}
+          cta={reel.signup.cta}
+          notifyHref={notifyHref}
+          onExplore={explore}
+        />
       </main>
 
       <Footer copy={copy} reel={reel} onToggleLocale={toggle} />

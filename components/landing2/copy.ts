@@ -20,7 +20,14 @@ export const REEL_COPY = {
       details: "Περισσότερες πληροφορίες",
       tags: { "#2": ["Νέα ιστορία", "Καλαμάτα", "Ομαδικό"], "#1": ["10 σταθμοί", "Ένα ημερολόγιο", "Ένας θησαυρός"] },
     },
-    top: { title: "500 € για τις τρεις πρώτες ομάδες.", body: "Η πρώτη αποστολή ήταν δωρεάν για όλους. Οι τρεις ομάδες που έφτασαν πρώτες στο τέλος μοιράστηκαν το χρηματικό έπαθλο." },
+    top: {
+      title: "500 € για τις τρεις πρώτες ομάδες.",
+      body: "Η πρώτη αποστολή ήταν δωρεάν για όλους. Οι τρεις ομάδες που έφτασαν πρώτες στο τέλος μοιράστηκαν το χρηματικό έπαθλο.",
+      stations: "Σταθμοί",
+      share: "του επάθλου",
+      podium: "Οι νικητές",
+    },
+    what: { facts: "Με μια ματιά", demo: "Έτσι μοιάζει ένας γρίφος" },
     episodes: { step: "Βήμα", count: "4 βήματα" },
     modal: {
       close: "Κλείσιμο",
@@ -59,7 +66,14 @@ export const REEL_COPY = {
       details: "More info",
       tags: { "#2": ["New story", "Kalamata", "Team game"], "#1": ["10 stations", "One journal", "One treasure"] },
     },
-    top: { title: "500 € for the top three teams.", body: "The first Hunt was free for everyone. The three teams that reached the end first shared the cash prize." },
+    top: {
+      title: "500 € for the top three teams.",
+      body: "The first Hunt was free for everyone. The three teams that reached the end first shared the cash prize.",
+      stations: "Stations",
+      share: "of the prize",
+      podium: "The winners",
+    },
+    what: { facts: "At a glance", demo: "This is what a clue looks like" },
     episodes: { step: "Step", count: "4 steps" },
     modal: {
       close: "Close",

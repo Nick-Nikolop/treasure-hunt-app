@@ -1,14 +1,14 @@
 "use client"
 
 import Link from "next/link"
-import { ChevronRight, Globe, Plus } from "lucide-react"
+import { Globe, Plus } from "lucide-react"
 import { useState } from "react"
 import { LANDING_CONTACT, type LandingCopy } from "@/components/landing/copy"
 import { LEGAL_ORG } from "@/lib/legal"
 import { cn } from "@/lib/utils"
 import type { ReelCopy } from "./copy"
 
-export function Faq({ faq, reel, notifyHref }: { faq: LandingCopy["faq"]; reel: ReelCopy; notifyHref: string }) {
+export function Faq({ faq, reel }: { faq: LandingCopy["faq"]; reel: ReelCopy }) {
   const [open, setOpen] = useState<number | null>(null)
 
   return (
@@ -17,6 +17,7 @@ export function Faq({ faq, reel, notifyHref }: { faq: LandingCopy["faq"]; reel: 
         <h2 id="faq-title" className="text-center font-sans text-3xl font-extrabold text-reel-white md:text-5xl">
           {reel.faq.title}
         </h2>
+        <p className="-mt-2 text-center font-serif text-xl italic text-reel-mute md:text-2xl">{faq.title}</p>
         <ul className="flex flex-col gap-2">
           {faq.items.map((item, index) => {
             const isOpen = open === index
@@ -47,17 +48,6 @@ export function Faq({ faq, reel, notifyHref }: { faq: LandingCopy["faq"]; reel: 
             )
           })}
         </ul>
-      </div>
-
-      <div className="mx-auto flex max-w-3xl flex-col items-center gap-5 text-center">
-        <p className="text-balance font-serif text-2xl leading-snug text-reel-white md:text-3xl">{reel.signup.line}</p>
-        <a
-          href={notifyHref}
-          className="flex items-center gap-2 rounded-md bg-reel-red px-8 py-3.5 font-sans text-xl font-bold text-reel-white transition hover:bg-reel-red/85 md:text-2xl"
-        >
-          {reel.signup.cta}
-          <ChevronRight className="size-6 md:size-7" aria-hidden="true" />
-        </a>
       </div>
     </section>
   )

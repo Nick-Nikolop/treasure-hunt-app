@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
-import { Info, Pause, Play, RotateCcw } from "lucide-react"
+import { ChevronDown, Info, Pause, Play, RotateCcw } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import type { LandingCopy } from "@/components/landing/copy"
 import { BILLBOARD, type ReelCopy } from "./copy"
@@ -77,7 +77,7 @@ export function Billboard({ ready, hero, film, reel, onExplore, onMore }: Props)
       ref={sectionRef}
       id="top"
       aria-label="The Hunt"
-      className="relative h-[88svh] min-h-[560px] overflow-hidden bg-reel md:h-[min(56.25vw,100svh)] md:min-h-[600px]"
+      className="relative h-svh min-h-[560px] overflow-hidden bg-reel"
     >
       <AnimatePresence initial={false}>
         <motion.div
@@ -123,7 +123,7 @@ export function Billboard({ ready, hero, film, reel, onExplore, onMore }: Props)
         )}
       </AnimatePresence>
 
-      <div className="relative z-10 flex h-full flex-col justify-end gap-4 px-5 pb-24 md:w-1/2 md:gap-5 md:px-14 md:pb-44">
+      <div className="relative z-10 flex h-full flex-col justify-end gap-4 px-5 pb-24 md:w-1/2 md:gap-5 md:px-14 md:pb-[14svh]">
         <div className="flex items-center gap-2.5 font-sans text-sm font-bold uppercase tracking-[0.35em] text-reel-white/85">
           <Image unoptimized src="/landing/logo.webp" alt="" width={28} height={27} className="h-auto w-7" />
           {reel.kind}
@@ -184,7 +184,15 @@ export function Billboard({ ready, hero, film, reel, onExplore, onMore }: Props)
         </div>
       </div>
 
-      <div className="absolute right-5 top-20 z-10 flex items-center gap-3 md:bottom-44 md:right-0 md:top-auto">
+      <a
+        href="#what"
+        className="absolute bottom-6 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-1 font-sans text-xs font-bold uppercase tracking-[0.3em] text-reel-white/70 transition hover:text-reel-white"
+      >
+        {hero.scroll}
+        <ChevronDown className="size-5 motion-safe:animate-bounce" aria-hidden="true" />
+      </a>
+
+      <div className="absolute right-5 top-20 z-10 flex items-center gap-3 md:bottom-[14svh] md:right-0 md:top-auto">
         <button
           type="button"
           onClick={control}

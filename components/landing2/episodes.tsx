@@ -9,9 +9,9 @@ export function EpisodeList({ how, reel, compact = false }: { how: LandingCopy["
       {how.steps.map((step, index) => (
         <li
           key={step.title}
-          className="group/ep grid grid-cols-[7rem_1fr] items-center gap-x-4 gap-y-3 border-b border-reel-white/10 py-5 transition first:rounded-t-md last:border-b-0 hover:bg-reel-white/5 md:grid-cols-[2.5rem_11rem_1fr] md:gap-x-6 md:px-5"
+          className="group/ep grid grid-cols-[7rem_1fr] items-center gap-x-4 gap-y-3 border-b border-reel-white/10 py-5 transition first:rounded-t-md last:border-b-0 hover:bg-reel-white/5 md:grid-cols-[3rem_15rem_1fr] md:gap-x-8 md:px-6 md:py-7"
         >
-          <span aria-hidden="true" className="hidden text-center font-sans text-3xl text-reel-mute md:row-span-2 md:block">
+          <span aria-hidden="true" className="hidden text-center font-sans text-4xl text-reel-mute md:row-span-2 md:block">
             {index + 1}
           </span>
           <div className="relative aspect-video overflow-hidden rounded-sm md:row-span-2">
@@ -48,13 +48,16 @@ export function EpisodeList({ how, reel, compact = false }: { how: LandingCopy["
 
 export function HowSection({ how, reel }: { how: LandingCopy["how"]; reel: ReelCopy }) {
   return (
-    <section id="how" aria-labelledby="how-title" className="mx-auto flex w-full max-w-5xl scroll-mt-20 flex-col gap-4 px-5 md:px-14">
-      <div className="flex flex-wrap items-end justify-between gap-4 border-b border-reel-white/15 pb-4">
-        <div className="flex flex-col gap-1">
-          <h2 id="how-title" className="font-sans text-2xl font-bold text-reel-white md:text-3xl">
+    <section id="how" aria-labelledby="how-title" className="mx-auto flex w-full max-w-6xl scroll-mt-20 flex-col gap-6 px-5 md:px-14">
+      <div className="flex flex-wrap items-end justify-between gap-4 border-b border-reel-white/15 pb-6">
+        <div className="flex flex-col gap-3">
+          <p className="flex items-center gap-3 font-sans text-sm font-bold uppercase tracking-[0.3em] text-reel-red">
+            <span aria-hidden="true" className="h-0.5 w-8 bg-reel-red" />
             {how.label}
+          </p>
+          <h2 id="how-title" className="font-serif text-4xl font-black text-reel-white md:text-5xl">
+            {how.title}
           </h2>
-          <p className="font-serif text-xl italic text-reel-mute">{how.title}</p>
         </div>
         <span className="rounded-sm border border-reel-mute/50 bg-reel-raised px-4 py-2 font-sans text-base font-bold text-reel-white">
           {reel.episodes.count}
