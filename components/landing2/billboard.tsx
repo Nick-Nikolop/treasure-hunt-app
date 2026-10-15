@@ -1,15 +1,17 @@
 "use client"
 
 import Image from "next/image"
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
-import { ChevronDown, Info, Pause, Play, Volume2, VolumeX } from "lucide-react"
-import { useEffect, useRef, useState } from "react"
+import { motion } from "framer-motion"
+import { ChevronDown, Info, Play } from "lucide-react"
+import { useRef } from "react"
 import type { LandingCopy } from "@/components/landing/copy"
+import { type BeamPath, Grain, beamMask, useBeam } from "@/components/landing/hero/shared"
 import type { ReelCopy } from "./copy"
-import { HeroFilm } from "./film/hero-film"
-import { STILL_TIME } from "./film/render"
 
 const EASE = [0.22, 1, 0.36, 1] as const
+const HERO_IMAGE = "/landing/hero-kalamata-map.png"
+
+const BEAM: BeamPath = { x: 0.74, y: 0.44, reachX: 0.13, reachY: 0.17, mobileX: 0.5, mobileReachX: 0.22, speed: 0.8 }
 
 type Props = {
   ready: boolean
@@ -19,55 +21,35 @@ type Props = {
   onMore: () => void
 }
 
-export function Billboard({ ready, hero, reel, onExplore, onMore }: Props) {
-  const reduce = useReducedMotion()
+export function Billboard({ hero, reel, onExplore, onMore }: Props) {
   const sectionRef = useRef<HTMLElement>(null)
-  const [started, setStarted] = useState(false)
-  const [paused, setPaused] = useState(false)
-  const [muted, setMuted] = useState(true)
-  const [inView, setInView] = useState(true)
-
-  useEffect(() => {
-    const el = sectionRef.current
-    if (!el) return
-    const observer = new IntersectionObserver(([entry]) => setInView(entry.intersectionRatio > 0.45), { threshold: [0, 0.45, 1] })
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
-
-  useEffect(() => {
-    if (!ready || started || reduce) return
-    const timer = setTimeout(() => setStarted(true), 1600)
-    return () => clearTimeout(timer)
-  }, [ready, started, reduce])
-
-  const playing = started && !paused
-  const control = () => {
-    if (!started) setStarted(true)
-    else setPaused((p) => !p)
-  }
-  const controlLabel = !started ? reel.start : paused ? reel.resume : reel.pause
-  const ControlIcon = !started || paused ? Play : Pause
-  const muteLabel = muted ? reel.unmute : reel.mute
-  const MuteIcon = muted ? VolumeX : Volume2
+  useBeam(sectionRef, BEAM)
+  const mask = beamMask("12rem", "26rem")
 
   return (
     <section
       ref={sectionRef}
       id="top"
       aria-label="The Hunt"
-      className="relative h-svh min-h-[560px] overflow-hidden bg-reel"
+      className="relative isolate h-svh min-h-[560px] overflow-hidden bg-reel"
     >
-      <HeroFilm
-        active={playing && inView}
-        muted={muted}
-        startAt={reduce ? STILL_TIME : 0}
-        className="absolute inset-0 size-full"
-      />
+      <motion.div
+        aria-hidden="true"
+        className="absolute inset-0 -z-10"
+        initial={{ scale: 1.15 }}
+        animate={{ scale: 1 }}
+        transition={{ duration: 3.2, ease: EASE }}
+      >
+        <Image unoptimized src={HERO_IMAGE} alt="" fill priority sizes="100vw" className="object-cover object-center brightness-[0.2] saturate-[0.5]" />
+        <div className="absolute inset-0" style={{ maskImage: mask, WebkitMaskImage: mask }}>
+          <Image unoptimized loading="eager" src={HERO_IMAGE} alt="" fill sizes="100vw" className="object-cover object-center brightness-[1.15] saturate-[1.05] sepia-[0.15]" />
+        </div>
+      </motion.div>
 
-      <div aria-hidden="true" className="absolute inset-0 hidden bg-linear-to-r from-reel/95 via-reel/30 to-transparent md:block" />
+      <div aria-hidden="true" className="absolute inset-0 hidden bg-linear-to-r from-reel/90 via-reel/20 to-transparent md:block" />
       <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-3/4 bg-linear-to-t from-reel via-reel/75 to-transparent md:h-2/5 md:via-reel/60" />
       <div aria-hidden="true" className="absolute inset-x-0 top-0 h-32 bg-linear-to-b from-reel/70 to-transparent" />
+      <Grain opacity={0.07} />
 
       <div className="relative z-10 flex h-full flex-col justify-end gap-4 px-5 pb-24 md:w-1/2 md:gap-5 md:px-14 md:pb-[14svh]">
         <div className="flex items-center gap-2.5 font-sans text-sm font-bold uppercase tracking-[0.35em] text-reel-white/85">
@@ -75,14 +57,9 @@ export function Billboard({ ready, hero, reel, onExplore, onMore }: Props) {
           {reel.kind}
         </div>
 
-        <motion.h1
-          animate={{ scale: playing ? 0.74 : 1 }}
-          transition={{ duration: 1.2, ease: EASE }}
-          style={{ originX: 0, originY: 1 }}
-          className="font-serif text-7xl font-black leading-[0.85] tracking-tight text-reel-white [text-shadow:0_4px_30px_rgb(0_0_0/0.6)] md:text-[clamp(5rem,8.5vw,9.5rem)]"
-        >
+        <h1 className="font-serif text-7xl font-black leading-[0.85] tracking-tight text-reel-white [text-shadow:0_4px_30px_rgb(0_0_0/0.6)] md:text-[clamp(5rem,8.5vw,9.5rem)]">
           The Hunt
-        </motion.h1>
+        </h1>
 
         <p className="font-serif text-2xl italic leading-tight text-reel-white/90 md:text-3xl">{hero.title.join(" ")}</p>
 
@@ -95,20 +72,7 @@ export function Billboard({ ready, hero, reel, onExplore, onMore }: Props) {
           ))}
         </div>
 
-        <AnimatePresence initial={false}>
-          {!playing && (
-            <motion.p
-              key="body"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.6, ease: EASE }}
-              className="max-w-xl overflow-hidden text-pretty font-sans text-base leading-relaxed text-reel-white/85 md:text-lg"
-            >
-              {hero.body}
-            </motion.p>
-          )}
-        </AnimatePresence>
+        <p className="max-w-xl text-pretty font-sans text-base leading-relaxed text-reel-white/85 md:text-lg">{hero.body}</p>
 
         <div className="flex flex-wrap items-center gap-3 pt-1">
           <button
@@ -138,32 +102,9 @@ export function Billboard({ ready, hero, reel, onExplore, onMore }: Props) {
         <ChevronDown className="size-5 motion-safe:animate-bounce" aria-hidden="true" />
       </a>
 
-      <div className="absolute right-5 top-20 z-10 flex items-center gap-3 md:bottom-[14svh] md:right-0 md:top-auto">
-        <button
-          type="button"
-          onClick={control}
-          aria-label={controlLabel}
-          title={controlLabel}
-          className="flex size-11 items-center justify-center rounded-full border border-reel-white/70 bg-reel/30 text-reel-white transition hover:bg-reel-white/15"
-        >
-          <ControlIcon className="size-5" aria-hidden="true" />
-        </button>
-        {!reduce && (
-          <button
-            type="button"
-            onClick={() => setMuted((m) => !m)}
-            aria-label={muteLabel}
-            aria-pressed={!muted}
-            title={muteLabel}
-            className="flex size-11 items-center justify-center rounded-full border border-reel-white/70 bg-reel/30 text-reel-white transition hover:bg-reel-white/15"
-          >
-            <MuteIcon className="size-5" aria-hidden="true" />
-          </button>
-        )}
-        <span className="hidden border-l-[3px] border-reel-white/80 bg-reel/50 py-1.5 pl-3 pr-16 font-sans text-base text-reel-white md:inline">
-          {reel.rating}
-        </span>
-      </div>
+      <span className="absolute bottom-[14svh] right-0 z-10 hidden border-l-[3px] border-reel-white/80 bg-reel/50 py-1.5 pl-3 pr-16 font-sans text-base text-reel-white md:inline">
+        {reel.rating}
+      </span>
     </section>
   )
 }
