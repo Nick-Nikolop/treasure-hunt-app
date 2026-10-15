@@ -45,7 +45,7 @@ export function DetailModal({ open, onClose, onExplore, copy, reel, notifyHref }
       {open && (
         <motion.div
           key="backdrop"
-          className="fixed inset-0 z-50 overflow-y-auto bg-reel/80 md:px-6 md:py-10"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-reel/80 md:px-6 md:py-8"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -60,7 +60,7 @@ export function DetailModal({ open, onClose, onExplore, copy, reel, notifyHref }
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 32, scale: 0.97 }}
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            className="relative mx-auto min-h-svh w-full max-w-4xl overflow-hidden bg-reel-raised shadow-2xl md:min-h-0 md:rounded-lg"
+            className="relative flex h-svh w-full max-w-4xl flex-col overflow-hidden bg-reel-raised shadow-2xl md:h-auto md:max-h-[calc(100svh-4rem)] md:rounded-lg"
           >
             <button
               ref={closeRef}
@@ -71,11 +71,16 @@ export function DetailModal({ open, onClose, onExplore, copy, reel, notifyHref }
             >
               <X className="size-5" aria-hidden="true" />
             </button>
-            {open === "show" ? (
-              <ShowDetail copy={copy} reel={reel} onExplore={onExplore} />
-            ) : (
-              <HuntDetail id={open} copy={copy} reel={reel} notifyHref={notifyHref} />
-            )}
+            <div
+              data-lenis-prevent
+              className="reel-modal-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain"
+            >
+              {open === "show" ? (
+                <ShowDetail copy={copy} reel={reel} onExplore={onExplore} />
+              ) : (
+                <HuntDetail id={open} copy={copy} reel={reel} notifyHref={notifyHref} />
+              )}
+            </div>
           </motion.div>
         </motion.div>
       )}
