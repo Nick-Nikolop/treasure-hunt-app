@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react"
 import { useI18n } from "@/components/pythea/language-provider"
 import { LANDING_CONTACT, LANDING_COPY } from "@/components/landing/copy"
 import { cn } from "@/lib/utils"
-import { Billboard } from "./billboard"
+import { Billboard, HERO_IMAGES, type HeroImageId } from "./billboard"
 import { REEL_COPY, type ModalId } from "./copy"
 import { DetailModal } from "./detail-modal"
 import { HowSection } from "./episodes"
@@ -23,6 +23,17 @@ export function Landing2Page() {
   const [scrolled, setScrolled] = useState(false)
   const [active, setActive] = useState<string>("top")
   const [modal, setModal] = useState<ModalId | null>(null)
+  const [heroImage, setHeroImage] = useState<HeroImageId>("hd")
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem("thehunt:landing2-hero")
+    if (HERO_IMAGES.some((h) => h.id === saved)) setHeroImage(saved as HeroImageId)
+  }, [])
+
+  const pickHero = (id: HeroImageId) => {
+    setHeroImage(id)
+    window.localStorage.setItem("thehunt:landing2-hero", id)
+  }
 
   const notifyHref = `mailto:${LANDING_CONTACT.email}?subject=${encodeURIComponent(reel.signup.subject)}`
 
@@ -96,6 +107,35 @@ export function Landing2Page() {
             })}
           </ul>
           <div className="ml-auto flex items-center gap-3 md:gap-4">
+            <div
+              role="radiogroup"
+              aria-label="Hero image"
+              className="flex items-center gap-0.5 rounded-full border border-reel-white/20 p-0.5"
+            >
+              <span className="hidden pl-2 pr-1 text-xs font-bold uppercase tracking-wider text-reel-white/50 sm:inline">
+                Hero
+              </span>
+              {HERO_IMAGES.map((h) => {
+                const on = heroImage === h.id
+                return (
+                  <button
+                    key={h.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={on}
+                    aria-label={`Hero ${h.label}`}
+                    onClick={() => pickHero(h.id)}
+                    className={
+                      on
+                        ? "size-7 rounded-full bg-reel-white text-xs font-bold text-reel"
+                        : "size-7 rounded-full text-xs font-bold text-reel-white/70 transition hover:bg-reel-white/10 hover:text-reel-white"
+                    }
+                  >
+                    {h.label}
+                  </button>
+                )
+              })}
+            </div>
             <button
               type="button"
               onClick={toggle}
@@ -121,6 +161,7 @@ export function Landing2Page() {
           reel={reel.billboard}
           onExplore={explore}
           onMore={() => setModal("show")}
+          image={heroImage}
         />
         <div className="flex flex-col gap-24 py-20 md:gap-32 md:py-28">
           <WhatSection what={copy.what} reel={reel} />
