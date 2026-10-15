@@ -81,7 +81,7 @@ export function Landing2Page() {
                     aria-current={isActive ? "location" : undefined}
                     className={cn(
                       "relative py-1 transition-colors duration-300",
-                      isActive ? "font-bold text-brass" : "text-reel-white/85 hover:text-brass/80",
+                      isActive ? "font-bold text-reel-white" : "text-reel-white/85 hover:text-reel-white",
                     )}
                   >
                     {link.label}
