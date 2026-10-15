@@ -18,8 +18,8 @@ const reveal = {
 
 export function SectionEyebrow({ children }: { children: React.ReactNode }) {
   return (
-    <p className="flex items-center gap-3 font-sans text-sm font-bold uppercase tracking-[0.3em] text-reel-red">
-      <span aria-hidden="true" className="h-0.5 w-8 bg-reel-red" />
+    <p className="flex items-center gap-3 font-sans text-sm font-bold uppercase tracking-[0.3em] text-brass">
+      <span aria-hidden="true" className="h-0.5 w-8 bg-brass" />
       {children}
     </p>
   )
@@ -35,7 +35,7 @@ export function WhatSection({ what, reel }: { what: LandingCopy["what"]; reel: R
             {what.title}
           </h2>
           <p className="max-w-[60ch] text-pretty font-sans text-lg leading-relaxed text-reel-white/80">{what.body}</p>
-          <p className="border-l-[3px] border-reel-red pl-4 font-serif text-2xl italic leading-snug text-reel-white">{what.compare}</p>
+          <p className="border-l-[3px] border-brass pl-4 font-serif text-2xl italic leading-snug text-reel-white">{what.compare}</p>
 
           <div className="flex flex-col gap-3 pt-2">
             <p className="font-sans text-sm font-bold uppercase tracking-[0.2em] text-reel-mute">{reel.what.facts}</p>
@@ -84,7 +84,7 @@ function PhoneDemo({ what, label }: { what: LandingCopy["what"]; label: string }
                 <span className="font-sans text-xs font-bold uppercase tracking-[0.2em] text-reel-mute">{what.phone.step}</span>
                 <span aria-hidden="true" className="flex gap-1">
                   {Array.from({ length: 5 }, (_, i) => (
-                    <span key={i} className={cn("h-1 w-3 rounded-full", i < 2 ? "bg-reel-red" : "bg-reel-white/20")} />
+                    <span key={i} className={cn("h-1 w-3 rounded-full", i < 2 ? "bg-brass" : "bg-reel-white/20")} />
                   ))}
                 </span>
               </div>

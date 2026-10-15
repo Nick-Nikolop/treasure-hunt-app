@@ -141,7 +141,7 @@ export function Billboard({ ready, hero, film, reel, onExplore, onMore }: Props)
         <p className="font-serif text-2xl italic leading-tight text-reel-white/90 md:text-3xl">{hero.title.join(" ")}</p>
 
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 font-sans text-base">
-          <span className="rounded-sm bg-reel-red px-2 py-0.5 text-sm font-bold uppercase tracking-wider text-reel-white">{reel.badge}</span>
+          <span className="rounded-sm bg-brass px-2 py-0.5 text-sm font-bold uppercase tracking-wider text-reel">{reel.badge}</span>
           {reel.meta.map((item) => (
             <span key={item} className="text-reel-white/80">
               {item}
@@ -188,7 +188,7 @@ export function Billboard({ ready, hero, film, reel, onExplore, onMore }: Props)
         href="#what"
         className="absolute bottom-6 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-1 font-sans text-xs font-bold uppercase tracking-[0.3em] text-reel-white/70 transition hover:text-reel-white"
       >
-        {hero.scroll}
+        {reel.scroll}
         <ChevronDown className="size-5 motion-safe:animate-bounce" aria-hidden="true" />
       </a>
 

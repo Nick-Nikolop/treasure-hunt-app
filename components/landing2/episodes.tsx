@@ -25,7 +25,7 @@ export function EpisodeList({ how, reel, compact = false }: { how: LandingCopy["
               </span>
             </span>
             <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-1 bg-reel-mute/40">
-              <span className="block h-full bg-reel-red" style={{ width: `${((index + 1) / how.steps.length) * 100}%` }} />
+              <span className="block h-full bg-brass" style={{ width: `${((index + 1) / how.steps.length) * 100}%` }} />
             </span>
           </div>
           <div className="flex min-w-0 items-baseline justify-between gap-3 md:self-end">
@@ -51,8 +51,8 @@ export function HowSection({ how, reel }: { how: LandingCopy["how"]; reel: ReelC
     <section id="how" aria-labelledby="how-title" className="mx-auto flex w-full max-w-6xl scroll-mt-20 flex-col gap-6 px-5 md:px-14">
       <div className="flex flex-wrap items-end justify-between gap-4 border-b border-reel-white/15 pb-6">
         <div className="flex flex-col gap-3">
-          <p className="flex items-center gap-3 font-sans text-sm font-bold uppercase tracking-[0.3em] text-reel-red">
-            <span aria-hidden="true" className="h-0.5 w-8 bg-reel-red" />
+          <p className="flex items-center gap-3 font-sans text-sm font-bold uppercase tracking-[0.3em] text-brass">
+            <span aria-hidden="true" className="h-0.5 w-8 bg-brass" />
             {how.label}
           </p>
           <h2 id="how-title" className="font-serif text-4xl font-black text-reel-white md:text-5xl">
@@ -64,7 +64,7 @@ export function HowSection({ how, reel }: { how: LandingCopy["how"]; reel: ReelC
         </span>
       </div>
       <EpisodeList how={how} reel={reel} />
-      <p className="text-pretty border-l-[3px] border-reel-red pl-4 font-serif text-xl italic leading-snug text-reel-white/90 md:text-2xl">
+      <p className="text-pretty border-l-[3px] border-brass pl-4 font-serif text-xl italic leading-snug text-reel-white/90 md:text-2xl">
         {how.note}
       </p>
     </section>

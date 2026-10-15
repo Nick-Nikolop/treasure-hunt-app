@@ -41,13 +41,13 @@ export function HuntsRow({
         {hunts.map((hunt) => (
           <li
             key={hunt.ref}
-            className="group/card relative flex flex-col overflow-hidden rounded-md bg-reel-raised shadow-2xl shadow-reel transition duration-300 md:hover:z-10 md:hover:scale-[1.025]"
+            className="group/card relative isolate flex flex-col overflow-hidden rounded-md bg-reel-raised shadow-2xl shadow-reel transition-transform duration-300 [backface-visibility:hidden] [transform:translateZ(0)] md:hover:z-10 md:hover:[transform:translateZ(0)_scale(1.025)]"
           >
             <button
               type="button"
               onClick={() => onOpen(hunt.ref)}
               aria-label={`${reel.hunts.details}: ${hunt.title}`}
-              className="relative aspect-video overflow-hidden text-left"
+              className="relative isolate aspect-video overflow-hidden text-left [clip-path:inset(0)]"
             >
               <Image
                 src={HUNT_IMAGES[hunt.ref]}
@@ -55,8 +55,8 @@ export function HuntsRow({
                 fill
                 sizes="(min-width: 768px) 50vw, 100vw"
                 className={cn(
-                  "object-cover transition duration-700 group-hover/card:scale-105",
-                  hunt.live ? "object-center" : "object-[50%_42%]",
+                  "object-cover transition-transform duration-700 will-change-transform group-hover/card:scale-105",
+                  "object-center",
                 )}
               />
               <div aria-hidden="true" className="absolute inset-0 bg-linear-to-t from-reel via-reel/30 to-transparent" />
@@ -68,7 +68,7 @@ export function HuntsRow({
                 <span
                   className={cn(
                     "rounded-sm px-2 py-0.5 font-sans text-xs font-bold uppercase tracking-wider",
-                    hunt.live ? "bg-reel-red text-reel-white" : "bg-reel-white/90 text-reel",
+                    hunt.live ? "bg-brass text-reel" : "bg-reel-white/90 text-reel",
                   )}
                 >
                   {hunt.status}

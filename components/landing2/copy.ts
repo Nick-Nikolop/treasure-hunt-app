@@ -4,6 +4,7 @@ export const REEL_COPY = {
     intro: { skip: "Παράλειψη" },
     billboard: {
       kind: "Παιχνίδι μυστηρίου",
+      scroll: "ΚΑΝΕ SCROLL",
       badge: "Νέα αποστολή σύντομα",
       meta: ["2026", "Ομαδικό", "Με το κινητό"],
       rating: "Καλαμάτα",
@@ -50,6 +51,7 @@ export const REEL_COPY = {
     intro: { skip: "Skip" },
     billboard: {
       kind: "Mystery game",
+      scroll: "Scroll",
       badge: "New Hunt coming soon",
       meta: ["2026", "Team game", "On your phone"],
       rating: "Kalamata",
@@ -99,8 +101,8 @@ export type HuntRef = "#2" | "#1"
 export type ModalId = "show" | HuntRef
 
 export const HUNT_IMAGES: Record<HuntRef, string> = {
-  "#2": "/landing/mission-carnival.webp",
-  "#1": "/landing/mission-pythea.webp",
+  "#2": "/landing2/mission-carnival.png",
+  "#1": "/landing2/mission-pythea.png",
 }
 
 export const BILLBOARD = "/landing2/billboard.webp"

@@ -133,7 +133,7 @@ function ShowDetail({ copy, reel, onExplore }: { copy: LandingCopy; reel: ReelCo
         <div className="grid gap-8 md:grid-cols-[1.6fr_1fr]">
           <div className="flex flex-col gap-4">
             <p className="flex flex-wrap items-center gap-3 font-sans text-base">
-              <span className="rounded-sm bg-reel-red px-2 py-0.5 text-sm font-bold uppercase tracking-wider text-reel-white">{reel.billboard.badge}</span>
+              <span className="rounded-sm bg-brass px-2 py-0.5 text-sm font-bold uppercase tracking-wider text-reel">{reel.billboard.badge}</span>
               <span className="text-reel-white/80">{reel.billboard.meta.join(" · ")}</span>
             </p>
             <p className="text-pretty font-sans text-lg leading-relaxed text-reel-white">{copy.what.body}</p>
@@ -198,7 +198,7 @@ function HuntDetail({ id, copy, reel, notifyHref }: { id: "#2" | "#1"; copy: Lan
               <span
                 className={cn(
                   "rounded-sm px-2 py-0.5 text-sm font-bold uppercase tracking-wider",
-                  live ? "bg-reel-red text-reel-white" : "bg-reel-white/90 text-reel",
+                  live ? "bg-brass text-reel" : "bg-reel-white/90 text-reel",
                 )}
               >
                 {hunt.status}

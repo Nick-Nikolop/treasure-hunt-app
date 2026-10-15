@@ -159,7 +159,7 @@
   --color-reel-raised: #232323;
   --color-reel-mute: #a6a29b;
   --color-reel-white: #f6f2ea;
-  --color-reel-red: oklch(0.55 0.21 27);
+  --color-reel-red: oklch(0.46 0.15 22);
   --color-ink: var(--ink);
   --color-brass: var(--brass);
   --color-silver: var(--silver);
