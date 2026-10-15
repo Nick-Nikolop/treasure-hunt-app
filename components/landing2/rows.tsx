@@ -87,7 +87,7 @@ export function HuntsRow({
                 <span
                   className={cn(
                     "rounded-sm px-2 py-0.5 font-sans text-xs font-bold uppercase tracking-wider",
-                    hunt.live ? "bg-reel-red text-reel-white ring-1 ring-brass/50" : "bg-reel-white/90 text-reel",
+                    hunt.live ? "bg-reel-red text-reel-white ring-1 ring-reel-red-hover" : "bg-reel-white/90 text-reel",
                   )}
                 >
                   {hunt.status}

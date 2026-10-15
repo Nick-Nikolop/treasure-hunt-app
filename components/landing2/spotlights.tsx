@@ -191,7 +191,7 @@ export function ClosingBanner({
         <div className="flex flex-wrap justify-center gap-3 pt-2">
           <a
             href={notifyHref}
-            className="flex items-center gap-2 rounded-md border border-brass/60 bg-reel-red px-8 py-3.5 font-sans text-lg font-bold text-reel-white transition hover:border-brass hover:bg-reel-red-hover md:text-xl"
+            className="flex items-center gap-2 rounded-md border border-reel-red-hover bg-reel-red px-8 py-3.5 font-sans text-lg font-bold text-reel-white shadow-[inset_0_1px_0_rgb(255_255_255/0.08)] transition hover:bg-reel-red-hover md:text-xl"
           >
             {cta}
             <ChevronRight className="size-6" aria-hidden="true" />
