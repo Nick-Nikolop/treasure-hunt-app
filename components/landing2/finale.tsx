@@ -1,109 +1,126 @@
 "use client"
 
-import Image from "next/image"
 import Link from "next/link"
-import { motion } from "framer-motion"
-import { Instagram, Mail } from "lucide-react"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { ChevronRight, Globe, Plus } from "lucide-react"
+import { useState } from "react"
 import { LANDING_CONTACT, type LandingCopy } from "@/components/landing/copy"
-import type { Landing2Copy } from "./copy"
+import { LEGAL_ORG } from "@/lib/legal"
+import { cn } from "@/lib/utils"
+import type { ReelCopy } from "./copy"
 
-export function Faq({ faq, extra }: { faq: LandingCopy["faq"]; extra: Landing2Copy }) {
+export function Faq({ faq, reel, notifyHref }: { faq: LandingCopy["faq"]; reel: ReelCopy; notifyHref: string }) {
+  const [open, setOpen] = useState<number | null>(null)
+
   return (
-    <section id="faq" className="scroll-mt-16 border-t border-border/60 px-6 py-24 md:px-10 md:py-32">
-      <div className="mx-auto grid max-w-6xl gap-12 md:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] md:gap-20">
-        <div className="flex flex-col gap-4 md:sticky md:top-28 md:self-start">
-          <p className="font-sans text-xs uppercase tracking-[0.3em] text-brass">{faq.label}</p>
-          <h2 className="font-serif text-4xl leading-tight text-foreground md:text-6xl">{faq.title}</h2>
-          <a
-            href={`mailto:${LANDING_CONTACT.email}`}
-            className="mt-2 flex items-center gap-2 font-sans text-[15px] text-muted-foreground hover:text-brass"
-          >
-            <Mail className="size-4 text-brass" aria-hidden="true" />
-            {extra.faqMore}
-          </a>
-        </div>
-        <Accordion type="single" collapsible className="border-t border-border/60">
-          {faq.items.map((item) => (
-            <AccordionItem key={item.q} value={item.q} className="border-border/60">
-              <AccordionTrigger className="py-5 text-left font-serif text-xl text-foreground hover:text-brass hover:no-underline md:text-2xl">
-                {item.q}
-              </AccordionTrigger>
-              <AccordionContent className="pb-6 font-sans text-[15px] leading-relaxed text-muted-foreground md:text-base">
-                {item.a}
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+    <section id="faq" aria-labelledby="faq-title" className="flex scroll-mt-20 flex-col gap-12 border-t-8 border-reel-raised px-5 py-16 md:px-14 md:py-24">
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
+        <h2 id="faq-title" className="text-center font-sans text-3xl font-extrabold text-reel-white md:text-5xl">
+          {reel.faq.title}
+        </h2>
+        <ul className="flex flex-col gap-2">
+          {faq.items.map((item, index) => {
+            const isOpen = open === index
+            return (
+              <li key={item.q} className="flex flex-col gap-px">
+                <button
+                  type="button"
+                  aria-expanded={isOpen}
+                  aria-controls={`faq-panel-${index}`}
+                  onClick={() => setOpen(isOpen ? null : index)}
+                  className="flex w-full items-center justify-between gap-6 bg-reel-raised px-6 py-5 text-left font-sans text-lg text-reel-white transition hover:bg-reel-mute/25 md:px-8 md:py-6 md:text-2xl"
+                >
+                  {item.q}
+                  <Plus className={cn("size-7 shrink-0 transition-transform duration-300 md:size-9", isOpen && "rotate-45")} aria-hidden="true" />
+                </button>
+                <div
+                  id={`faq-panel-${index}`}
+                  role="region"
+                  className={cn("grid transition-[grid-template-rows] duration-300 ease-out", isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]")}
+                >
+                  <div className="overflow-hidden">
+                    <p className="bg-reel-raised px-6 py-5 font-sans text-lg leading-relaxed text-reel-white md:px-8 md:py-6 md:text-2xl md:leading-relaxed">
+                      {item.a}
+                    </p>
+                  </div>
+                </div>
+              </li>
+            )
+          })}
+        </ul>
       </div>
-    </section>
-  )
-}
 
-export function Closing({ closing }: { closing: LandingCopy["closing"] }) {
-  return (
-    <section className="relative overflow-hidden border-t border-border/60 px-6 py-28 md:px-10 md:py-40">
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{ background: "radial-gradient(circle at 50% 38%, oklch(0.78 0.13 78 / 0.14), transparent 55%)" }}
-        aria-hidden="true"
-      />
-      <div className="relative mx-auto flex max-w-3xl flex-col items-center gap-8 text-center">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.85 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true, amount: 0.8 }}
-          transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <Image unoptimized src="/landing/logo.webp" alt="" width={128} height={124} className="h-auto w-24 drop-shadow-[0_0_30px_oklch(0.78_0.13_78/0.35)] md:w-32" />
-        </motion.div>
-        <h2 className="font-serif text-4xl leading-tight text-foreground text-balance md:text-6xl">{closing.title}</h2>
-        <p className="max-w-lg font-sans text-[15px] leading-relaxed text-muted-foreground md:text-base">{closing.body}</p>
+      <div className="mx-auto flex max-w-3xl flex-col items-center gap-5 text-center">
+        <p className="text-balance font-serif text-2xl leading-snug text-reel-white md:text-3xl">{reel.signup.line}</p>
         <a
-          href="#missions"
-          className="rounded-sm bg-brass px-8 py-3.5 font-sans text-sm font-semibold tracking-wide text-ink transition-transform hover:-translate-y-0.5"
+          href={notifyHref}
+          className="flex items-center gap-2 rounded-md bg-reel-red px-8 py-3.5 font-sans text-xl font-bold text-reel-white transition hover:bg-reel-red/85 md:text-2xl"
         >
-          {closing.cta}
+          {reel.signup.cta}
+          <ChevronRight className="size-6 md:size-7" aria-hidden="true" />
         </a>
       </div>
     </section>
   )
 }
 
-export function Footer({ footer, nav }: { footer: LandingCopy["footer"]; nav: LandingCopy["nav"] }) {
+export function Footer({
+  copy,
+  reel,
+  onToggleLocale,
+}: {
+  copy: LandingCopy
+  reel: ReelCopy
+  onToggleLocale: () => void
+}) {
+  const links = [
+    { label: reel.nav.hunts, href: "#hunts" },
+    { label: reel.nav.how, href: "#how" },
+    { label: reel.nav.faq, href: "#faq" },
+    { label: reel.footer.standings, href: "/standings" },
+    { label: copy.footer.terms, href: "/terms" },
+    { label: LANDING_CONTACT.instagram, href: LANDING_CONTACT.instagramUrl, external: true },
+  ]
+
   return (
-    <footer className="border-t border-border/60">
-      <div className="mx-auto grid max-w-6xl gap-12 px-6 py-14 md:grid-cols-[1.3fr_1fr_1.3fr] md:px-10">
-        <div className="flex flex-col gap-4">
-          <p className="flex items-center gap-3 font-serif text-base tracking-[0.3em] text-foreground">
-            <Image unoptimized src="/landing/logo.webp" alt="" width={36} height={35} className="h-auto w-9" />
-            THE HUNT
-          </p>
-          <p className="max-w-xs font-sans text-sm leading-relaxed text-muted-foreground">{footer.tagline}</p>
-        </div>
-        <nav className="flex flex-col gap-3 font-sans text-sm" aria-label={footer.exploreLabel}>
-          <p className="text-xs uppercase tracking-[0.3em] text-foreground/60">{footer.exploreLabel}</p>
-          <a href="#how" className="text-foreground/80 hover:text-brass">{nav.how}</a>
-          <a href="#missions" className="text-foreground/80 hover:text-brass">{nav.missions}</a>
-          <a href="#faq" className="text-foreground/80 hover:text-brass">{nav.faq}</a>
-          <Link href="/terms" className="text-foreground/80 hover:text-brass">{footer.terms}</Link>
-        </nav>
-        <div className="flex flex-col gap-3 font-sans text-sm">
-          <p className="text-xs uppercase tracking-[0.3em] text-foreground/60">{footer.contactLabel}</p>
-          <p className="max-w-sm leading-relaxed text-muted-foreground">{footer.contactBody}</p>
-          <a href={`mailto:${LANDING_CONTACT.email}`} className="flex items-center gap-3 text-foreground hover:text-brass">
-            <Mail className="size-4 text-brass" aria-hidden="true" />
+    <footer className="border-t-8 border-reel-raised px-5 py-14 font-sans text-reel-mute md:px-14 md:py-20">
+      <div className="mx-auto flex max-w-5xl flex-col gap-8">
+        <p className="text-base">
+          {reel.footer.questions}{" "}
+          <a href={`mailto:${LANDING_CONTACT.email}`} className="underline underline-offset-4 hover:text-reel-white">
             {LANDING_CONTACT.email}
           </a>
-          <a href={LANDING_CONTACT.instagramUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-foreground hover:text-brass">
-            <Instagram className="size-4 text-brass" aria-hidden="true" />
-            {LANDING_CONTACT.instagram}
-          </a>
-        </div>
-      </div>
-      <div className="border-t border-border/60">
-        <p className="mx-auto max-w-6xl px-6 py-4 font-sans text-xs text-muted-foreground md:px-10">
-          © {new Date().getFullYear()} thehunt.gr · {footer.rights}
+        </p>
+        <ul className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm md:grid-cols-4">
+          {links.map((link) => (
+            <li key={link.label}>
+              {link.external ? (
+                <a href={link.href} target="_blank" rel="noopener noreferrer" className="underline-offset-4 hover:underline">
+                  {link.label}
+                </a>
+              ) : link.href.startsWith("#") ? (
+                <a href={link.href} className="underline-offset-4 hover:underline">
+                  {link.label}
+                </a>
+              ) : (
+                <Link href={link.href} className="underline-offset-4 hover:underline">
+                  {link.label}
+                </Link>
+              )}
+            </li>
+          ))}
+        </ul>
+        <button
+          type="button"
+          onClick={onToggleLocale}
+          aria-label={copy.langLabel}
+          className="flex w-fit items-center gap-2 rounded-sm border border-reel-mute/50 px-4 py-2 text-base text-reel-white hover:border-reel-white"
+        >
+          <Globe className="size-4" aria-hidden="true" />
+          {reel.footer.current}
+          <span className="text-reel-mute">· {copy.lang}</span>
+        </button>
+        <p className="text-sm">
+          {copy.footer.tagline} © {new Date().getFullYear()} {LEGAL_ORG.name}. {copy.footer.rights}
         </p>
       </div>
     </footer>

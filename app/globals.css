@@ -155,6 +155,11 @@
   --font-mono: var(--font-alegreya-sans), ui-monospace, monospace;
   --color-parchment: var(--parchment);
   --color-thread: oklch(0.56 0.17 27);
+  --color-reel: #141414;
+  --color-reel-raised: #232323;
+  --color-reel-mute: #a6a29b;
+  --color-reel-white: #f6f2ea;
+  --color-reel-red: oklch(0.55 0.21 27);
   --color-ink: var(--ink);
   --color-brass: var(--brass);
   --color-silver: var(--silver);

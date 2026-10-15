@@ -1,86 +1,112 @@
 "use client"
 
 import Image from "next/image"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useI18n } from "@/components/pythea/language-provider"
-import { LANDING_COPY } from "@/components/landing/copy"
-import { PageLoader } from "@/components/landing/page-loader"
+import { LANDING_CONTACT, LANDING_COPY } from "@/components/landing/copy"
 import { cn } from "@/lib/utils"
-import { LANDING2_COPY } from "./copy"
-import { Closing, Faq, Footer } from "./finale"
-import { Missions } from "./missions"
-import { PhoneClue } from "./phone-clue"
-import { RouteSteps } from "./route-steps"
-import { Equation, Manifesto } from "./story"
-import { TorchHero } from "./torch-hero"
-
-const GRAIN =
-  "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")"
-
-const PRELOAD = ["/landing/old-map.webp", "/landing/logo.webp", "/landing/scene-clue.webp"]
+import { Billboard } from "./billboard"
+import { REEL_COPY, type ModalId } from "./copy"
+import { DetailModal } from "./detail-modal"
+import { HowSection } from "./episodes"
+import { Faq, Footer } from "./finale"
+import { Intro } from "./intro"
+import { HuntsRow, TopThree, WhyRow } from "./rows"
 
 export function Landing2Page() {
   const { locale, toggle } = useI18n()
   const copy = LANDING_COPY[locale]
-  const extra = LANDING2_COPY[locale]
-  const [loaded, setLoaded] = useState(false)
+  const reel = REEL_COPY[locale]
+  const [ready, setReady] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [modal, setModal] = useState<ModalId | null>(null)
+
+  const notifyHref = `mailto:${LANDING_CONTACT.email}?subject=${encodeURIComponent(reel.signup.subject)}`
 
   useEffect(() => {
-    PRELOAD.forEach((src) => {
-      const img = new window.Image()
-      img.src = src
-      img.decode().catch(() => {})
-    })
-    const onScroll = () => setScrolled(window.scrollY > 40)
+    const onScroll = () => setScrolled(window.scrollY > 24)
     onScroll()
     window.addEventListener("scroll", onScroll, { passive: true })
     return () => window.removeEventListener("scroll", onScroll)
   }, [])
 
+  const closeModal = useCallback(() => setModal(null), [])
+  const explore = useCallback(() => {
+    setModal(null)
+    requestAnimationFrame(() => document.getElementById("hunts")?.scrollIntoView({ behavior: "smooth" }))
+  }, [])
+
+  const navLinks = [
+    { href: "#top", label: reel.nav.home },
+    { href: "#hunts", label: reel.nav.hunts },
+    { href: "#how", label: reel.nav.how },
+    { href: "#faq", label: reel.nav.faq },
+  ]
+
   return (
-    <div className="dark min-h-svh bg-background text-foreground">
-      <PageLoader label={copy.intro.loading} onDone={() => setLoaded(true)} />
-      <div className="pointer-events-none fixed inset-0 z-30 opacity-[0.06]" style={{ backgroundImage: GRAIN }} aria-hidden="true" />
+    <div className="min-h-svh overflow-x-clip bg-reel font-sans text-reel-white">
+      <Intro onDone={() => setReady(true)} skipLabel={reel.intro.skip} />
 
       <header
         className={cn(
-          "fixed inset-x-0 top-0 z-40 border-b transition-colors duration-500",
-          scrolled ? "border-border/60 bg-background/85 backdrop-blur" : "border-transparent bg-transparent",
+          "fixed inset-x-0 top-0 z-40 transition-colors duration-500",
+          scrolled ? "bg-reel" : "bg-linear-to-b from-reel/80 to-transparent",
         )}
       >
-        <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-6 px-6 md:px-10" aria-label="Main">
-          <a href="#top" className="flex items-center gap-3 font-serif text-sm tracking-[0.3em] text-foreground md:text-base">
-            <Image unoptimized src="/landing/logo.webp" alt="" width={36} height={35} className="h-auto w-9" priority />
-            THE HUNT
+        <nav aria-label={reel.nav.label} className="flex h-16 items-center gap-6 px-5 md:h-[4.5rem] md:gap-10 md:px-14">
+          <a href="#top" className="flex shrink-0 items-center gap-2.5">
+            <Image unoptimized src="/landing/logo.webp" alt="" width={34} height={33} className="h-auto w-8 md:w-9" priority />
+            <span className="font-serif text-xl font-black tracking-[0.12em] text-brass md:text-2xl">THE HUNT</span>
           </a>
-          <div className="flex items-center gap-4 font-sans text-sm md:gap-7">
-            <a href="#how" className="hidden text-foreground/75 hover:text-brass md:inline">{copy.nav.how}</a>
-            <a href="#missions" className="hidden text-foreground/75 hover:text-brass md:inline">{copy.nav.missions}</a>
-            <a href="#faq" className="hidden text-foreground/75 hover:text-brass md:inline">{copy.nav.faq}</a>
+          <ul className="hidden items-center gap-5 text-base lg:flex">
+            {navLinks.map((link, index) => (
+              <li key={link.href}>
+                <a
+                  href={link.href}
+                  className={cn("transition hover:text-reel-mute", index === 0 ? "font-bold text-reel-white" : "text-reel-white/85")}
+                >
+                  {link.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+          <div className="ml-auto flex items-center gap-3 md:gap-4">
             <button
               type="button"
               onClick={toggle}
               aria-label={copy.langLabel}
-              className="rounded-full border border-foreground/30 px-3 py-1 text-xs tracking-[0.2em] text-foreground hover:border-brass hover:text-brass"
+              className="rounded-sm border border-reel-white/40 px-2.5 py-1 text-sm font-bold tracking-wider text-reel-white hover:border-reel-white"
             >
               {copy.lang}
             </button>
+            <a href={notifyHref} className="rounded-sm bg-reel-red px-3 py-1.5 text-sm font-bold text-reel-white hover:bg-reel-red/85 md:px-4">
+              {reel.nav.cta}
+            </a>
           </div>
         </nav>
       </header>
 
-      <main id="top">
-        {loaded ? <TorchHero copy={copy.hero} extra={extra} /> : <div className="min-h-svh" aria-hidden="true" />}
-        <Manifesto story={copy.story} />
-        <Equation what={copy.what} />
-        <RouteSteps how={copy.how} />
-        <PhoneClue what={copy.what} who={copy.who} extra={extra} />
-        <Missions missions={copy.missions} />
-        <Faq faq={copy.faq} extra={extra} />
-        <Closing closing={copy.closing} />
+      <main>
+        <Billboard
+          ready={ready}
+          hero={copy.hero}
+          film={copy.film}
+          reel={reel.billboard}
+          onExplore={explore}
+          onMore={() => setModal("show")}
+        />
+        <div className="relative z-10 -mt-16 flex flex-col gap-12 pb-20 md:-mt-28 md:gap-16 md:pb-28">
+          <HuntsRow missions={copy.missions} reel={reel} notifyHref={notifyHref} onOpen={setModal} />
+          <TopThree missions={copy.missions} reel={reel} />
+          <HowSection how={copy.how} reel={reel} />
+          <WhyRow why={copy.why} reel={reel} />
+        </div>
+        <Faq faq={copy.faq} reel={reel} notifyHref={notifyHref} />
       </main>
-      <Footer footer={copy.footer} nav={copy.nav} />
+
+      <Footer copy={copy} reel={reel} onToggleLocale={toggle} />
+
+      <DetailModal open={modal} onClose={closeModal} onExplore={explore} copy={copy} reel={reel} notifyHref={notifyHref} />
     </div>
   )
 }
