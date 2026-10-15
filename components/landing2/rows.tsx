@@ -47,7 +47,7 @@ export function HuntsRow({
               type="button"
               onClick={() => onOpen(hunt.ref)}
               aria-label={`${reel.hunts.details}: ${hunt.title}`}
-              className="relative isolate aspect-video overflow-hidden text-left [clip-path:inset(0)]"
+              className="relative isolate aspect-video overflow-hidden text-left outline-none [clip-path:inset(0)] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-reel-white"
             >
               <Image
                 src={HUNT_IMAGES[hunt.ref]}
@@ -59,7 +59,7 @@ export function HuntsRow({
                   "object-center",
                 )}
               />
-              <div aria-hidden="true" className="absolute inset-0 bg-linear-to-t from-reel via-reel/30 to-transparent" />
+              <div aria-hidden="true" className="absolute inset-x-0 top-0 -bottom-px bg-linear-to-t from-reel-raised from-2% via-reel-raised/40 to-transparent" />
               <CornerMark />
               <span className="absolute left-10 top-3 font-sans text-xs font-bold uppercase tracking-[0.3em] text-reel-white/85">
                 {missions.file} {hunt.ref}
@@ -77,7 +77,7 @@ export function HuntsRow({
               </span>
             </button>
 
-            <div className="flex flex-col gap-3 p-4 md:p-5">
+            <div className="relative z-10 -mt-px flex flex-col gap-3 bg-reel-raised p-4 md:p-5">
               <div className="flex items-center gap-2">
                 {hunt.live ? (
                   <a
