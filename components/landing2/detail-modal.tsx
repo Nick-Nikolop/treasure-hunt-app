@@ -175,7 +175,7 @@ function HuntDetail({ id, copy, reel, notifyHref }: { id: "#2" | "#1"; copy: Lan
   const live = id === "#2"
   const hunt = live ? missions.next : missions.past
   const action = live ? (
-    <a href={notifyHref} className="flex items-center gap-2 rounded-md bg-reel-white px-6 py-2.5 font-sans text-base font-bold text-reel hover:bg-reel-white/85">
+    <a href={notifyHref} className="flex items-center gap-2 rounded-md bg-[#7a1f2b] px-6 py-2.5 font-sans text-base font-bold text-reel-white hover:brightness-125">
       <Bell className="size-5" aria-hidden="true" />
       {reel.hunts.notify}
     </a>
@@ -198,7 +198,7 @@ function HuntDetail({ id, copy, reel, notifyHref }: { id: "#2" | "#1"; copy: Lan
               <span
                 className={cn(
                   "rounded-sm px-2 py-0.5 text-sm font-bold uppercase tracking-wider",
-                  live ? "bg-brass text-reel" : "bg-reel-white/90 text-reel",
+                  live ? "bg-[#7a1f2b] text-reel-white" : "bg-reel-white/90 text-reel",
                 )}
               >
                 {hunt.status}
@@ -223,7 +223,7 @@ function HuntDetail({ id, copy, reel, notifyHref }: { id: "#2" | "#1"; copy: Lan
             <SubTitle>{missions.definesLabel}</SubTitle>
             <ul className="flex flex-wrap gap-2">
               {missions.defines.map((item) => (
-                <li key={item} className="rounded-sm bg-reel px-3 py-2 font-sans text-base text-reel-white">
+                <li key={item} className="rounded-sm border border-[#7a1f2b]/60 bg-[#7a1f2b]/20 px-3 py-2 font-sans text-base text-reel-white">
                   {item}
                 </li>
               ))}

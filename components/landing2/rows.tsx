@@ -61,15 +61,33 @@ export function HuntsRow({
                 )}
               />
               <div aria-hidden="true" className="absolute inset-x-0 top-0 -bottom-px bg-linear-to-t from-reel-raised from-2% via-reel-raised/40 to-transparent" />
-              <CornerMark />
-              <span className="absolute left-10 top-3 font-sans text-xs font-bold uppercase tracking-[0.3em] text-reel-white/85">
-                {missions.file} {hunt.ref}
+              <span className="absolute left-3 top-3 z-10 flex items-center gap-2 rounded-full bg-reel/80 py-1 pl-1.5 pr-3.5 shadow-lg shadow-reel/60 ring-1 ring-reel-white/15 backdrop-blur-sm">
+                <Image unoptimized src="/landing/logo.webp" alt="" width={24} height={23} className="h-auto w-6" />
+                <span className="font-sans text-xs font-bold uppercase tracking-[0.3em] text-reel-white">
+                  {missions.file} {hunt.ref}
+                </span>
+              </span>
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "pointer-events-none absolute inset-0 z-20 flex items-center justify-center opacity-0 transition-opacity duration-500 group-hover/card:opacity-100 group-focus-within/card:opacity-100",
+                  hunt.live ? "bg-[#7a1f2b]/75" : "bg-reel/75",
+                )}
+              >
+                <span
+                  className={cn(
+                    "-rotate-6 scale-90 rounded-md border-4 px-6 py-2 font-sans text-3xl font-extrabold uppercase tracking-[0.2em] transition-transform duration-500 ease-out group-hover/card:scale-100 group-focus-within/card:scale-100 md:text-5xl",
+                    hunt.live ? "border-reel-white text-reel-white" : "border-reel-white/85 text-reel-white/85",
+                  )}
+                >
+                  {hunt.status}
+                </span>
               </span>
               <span className="absolute bottom-4 left-4 flex flex-col items-start gap-2 md:bottom-5 md:left-5">
                 <span
                   className={cn(
                     "rounded-sm px-2 py-0.5 font-sans text-xs font-bold uppercase tracking-wider",
-                    hunt.live ? "bg-brass text-reel" : "bg-reel-white/90 text-reel",
+                    hunt.live ? "bg-[#7a1f2b] text-reel-white" : "bg-reel-white/90 text-reel",
                   )}
                 >
                   {hunt.status}
