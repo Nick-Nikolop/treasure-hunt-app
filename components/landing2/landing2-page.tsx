@@ -10,7 +10,6 @@ import { REEL_COPY, type ModalId } from "./copy"
 import { DetailModal } from "./detail-modal"
 import { HowSection } from "./episodes"
 import { Faq, Footer } from "./finale"
-import { Intro } from "./intro"
 import { HuntsRow, TopThree, WhyRow } from "./rows"
 import { ClosingBanner, CodeSection, WhatSection } from "./spotlights"
 
@@ -20,7 +19,7 @@ export function Landing2Page() {
   const { locale, toggle } = useI18n()
   const copy = LANDING_COPY[locale]
   const reel = REEL_COPY[locale]
-  const [ready, setReady] = useState(false)
+  const ready = true
   const [scrolled, setScrolled] = useState(false)
   const [active, setActive] = useState<string>("top")
   const [modal, setModal] = useState<ModalId | null>(null)
@@ -58,7 +57,6 @@ export function Landing2Page() {
 
   return (
     <div className="min-h-svh overflow-x-clip bg-reel font-sans text-reel-white">
-      <Intro onDone={() => setReady(true)} skipLabel={reel.intro.skip} />
 
       <header
         className={cn(

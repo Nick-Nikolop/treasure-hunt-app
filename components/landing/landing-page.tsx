@@ -10,7 +10,6 @@ import { Hero } from "./hero/hero"
 import { VariantMenu, VariantProvider } from "./variants"
 import { ALT_LOGO, DEFAULT_LOGO, LogoContext } from "./logo-context"
 import { PageBody } from "./pages/page-body"
-import { PageLoader } from "./page-loader"
 
 const GRAIN =
   "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")"
@@ -31,7 +30,6 @@ const PRELOAD_IMAGES = [
 export function LandingPage() {
   const { locale, toggle } = useI18n()
   const copy = LANDING_COPY[locale]
-  const [loaded, setLoaded] = useState(false)
   const [altLogo, setAltLogo] = useState(false)
   const logoClicks = useRef<number[]>([])
   const logoSrc = altLogo ? ALT_LOGO : DEFAULT_LOGO
@@ -64,7 +62,6 @@ export function LandingPage() {
     <VariantProvider>
     <ClueProvider copy={copy.clues}>
     <div className="dark min-h-svh bg-background text-foreground">
-      <PageLoader label={copy.intro.loading} onDone={() => setLoaded(true)} />
       <div
         className="pointer-events-none fixed inset-0 z-30 opacity-[0.07]"
         style={{ backgroundImage: GRAIN }}
@@ -113,7 +110,7 @@ export function LandingPage() {
       </header>
 
       <main id="top">
-        {loaded ? <Hero take={0} copy={copy.hero} /> : <div className="min-h-svh" aria-hidden="true" />}
+        <Hero take={0} copy={copy.hero} />
         <PageBody copy={copy} />
       </main>
     </div>
