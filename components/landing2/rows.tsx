@@ -145,9 +145,10 @@ const RISE_ORDER = [2, 1, 0]
 const EASE = [0.22, 1, 0.36, 1] as const
 
 function PrizeAmount({ amount, delay }: { amount: string; delay: number }) {
-  const target = parseInt(amount, 10)
+  const digits = amount.match(/\d+/)?.[0] ?? "0"
+  const target = Number(digits)
   const value = useMotionValue(0)
-  const text = useTransform(value, (v) => `${Math.round(v)} €`)
+  const text = useTransform(value, (v) => amount.replace(digits, String(Math.round(v))))
   const ref = useRef<HTMLSpanElement>(null)
   const inView = useInView(ref, { once: true, margin: "-60px" })
   const reduced = useReducedMotion()
