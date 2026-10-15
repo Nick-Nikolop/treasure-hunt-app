@@ -122,8 +122,7 @@ export function HuntsRow({
 }
 
 const PODIUM_ORDER = [1, 0, 2]
-const PODIUM_HEIGHT = ["h-full", "h-[74%]", "h-[56%]"]
-const MEDALS = ["var(--brass)", "var(--silver)", "var(--bronze)"]
+const PODIUM_HEIGHT = ["h-full", "h-[72%]", "h-[52%]"]
 const RISE_ORDER = [2, 1, 0]
 const EASE = [0.22, 1, 0.36, 1] as const
 
@@ -160,11 +159,12 @@ export function TopThree({ missions, reel }: { missions: LandingCopy["missions"]
     { label: archive.prizeLabel, value: archive.prizeValue },
     { label: reel.top.stations, value: "10" },
   ]
-  const [amount, ...rest] = reel.top.title.split(" ")
-  const restTitle = rest.join(" ")
 
   return (
     <section aria-labelledby="top-title" className="relative isolate overflow-hidden px-5 py-20 md:px-14 md:py-28">
+      <Image src={HUNT_IMAGES["#1"]} alt="" fill sizes="100vw" className="-z-10 object-cover object-[50%_40%] opacity-40" />
+      <div aria-hidden="true" className="absolute inset-0 -z-10 bg-linear-to-r from-reel via-reel/90 to-reel/60" />
+      <div aria-hidden="true" className="absolute inset-0 -z-10 bg-linear-to-b from-reel via-transparent to-reel" />
 
       <div className="mx-auto grid max-w-7xl items-end gap-14 lg:grid-cols-[1fr_1.1fr] lg:gap-20">
         <motion.div
@@ -175,20 +175,18 @@ export function TopThree({ missions, reel }: { missions: LandingCopy["missions"]
           className="flex flex-col gap-6"
         >
           <div className="flex flex-wrap items-center gap-3">
-            <span className="rounded-sm bg-brass px-2 py-0.5 font-sans text-xs font-bold uppercase tracking-wider text-reel">{past.status}</span>
-            <h2 id="top-title" className="font-sans text-base font-bold uppercase tracking-[0.25em] text-brass">
+            <span className="rounded-sm bg-reel-white/90 px-2 py-0.5 font-sans text-xs font-bold uppercase tracking-wider text-reel">{past.status}</span>
+            <h2 id="top-title" className="font-sans text-base font-bold uppercase tracking-[0.25em] text-reel-white/85">
               {file} #1 · {past.title}
             </h2>
           </div>
-          <p className="text-balance font-serif text-4xl font-black leading-[1.05] text-reel-white md:text-6xl">
-            <span className="bg-linear-to-b from-[oklch(0.9_0.11_85)] to-brass bg-clip-text text-transparent">{amount}</span> {restTitle}
-          </p>
+          <p className="text-balance font-serif text-4xl font-black leading-[1.05] text-reel-white md:text-6xl">{reel.top.title}</p>
           <p className="max-w-[55ch] text-pretty font-sans text-lg leading-relaxed text-reel-white/80">{reel.top.body}</p>
 
-          <dl className="grid max-w-lg grid-cols-3 overflow-hidden rounded-md border border-brass/30 bg-brass/10">
+          <dl className="grid max-w-lg grid-cols-3 divide-x divide-reel-white/15 border-y border-reel-white/15">
             {stats.map((stat) => (
-              <div key={stat.label} className="flex flex-col gap-1 border-l border-brass/25 px-4 py-4 first:border-l-0">
-                <dt className="font-sans text-xs font-bold uppercase tracking-[0.15em] text-brass/80">{stat.label}</dt>
+              <div key={stat.label} className="flex flex-col gap-1 px-4 py-4 first:pl-0">
+                <dt className="font-sans text-xs font-bold uppercase tracking-[0.15em] text-reel-mute">{stat.label}</dt>
                 <dd className="font-serif text-2xl font-black text-reel-white md:text-3xl">{stat.value}</dd>
               </div>
             ))}
@@ -196,7 +194,7 @@ export function TopThree({ missions, reel }: { missions: LandingCopy["missions"]
 
           <Link
             href="/standings"
-            className="flex w-fit items-center gap-2.5 rounded-md bg-brass px-6 py-3 font-sans text-lg font-bold text-reel shadow-lg shadow-brass/20 transition hover:brightness-110"
+            className="flex w-fit items-center gap-2.5 rounded-md bg-reel-white px-6 py-3 font-sans text-lg font-bold text-reel transition hover:bg-reel-white/80"
           >
             <Trophy className="size-5" aria-hidden="true" />
             {archive.standings}
@@ -204,67 +202,59 @@ export function TopThree({ missions, reel }: { missions: LandingCopy["missions"]
         </motion.div>
 
         <div className="flex flex-col gap-4">
-          <p className="font-sans text-sm font-bold uppercase tracking-[0.25em] text-brass/80">{reel.top.podium}</p>
-          <ol className="flex h-[24rem] items-end gap-3 md:h-[30rem] md:gap-4">
+          <p className="font-sans text-sm font-bold uppercase tracking-[0.25em] text-reel-mute">{reel.top.podium}</p>
+          <ol className="flex h-[22rem] items-end gap-3 md:h-[28rem] md:gap-4">
             {PODIUM_ORDER.map((index) => {
               const prize = archive.split[index]
-              const medal = MEDALS[index]
+              const first = index === 0
               const delay = RISE_ORDER[index] * 0.22
               return (
-                <li key={prize.place} className="flex h-full flex-1 flex-col items-center justify-end gap-3">
-                  <motion.span
-                    initial={{ opacity: 0, y: -40, scale: 0.4, rotate: -25 }}
-                    whileInView={{ opacity: 1, y: 0, scale: 1, rotate: 0 }}
-                    viewport={{ once: true, margin: "-60px" }}
-                    transition={{ type: "spring", stiffness: 260, damping: 14, delay: delay + 0.75 }}
-                    aria-hidden="true"
-                    className="flex size-12 items-center justify-center rounded-full font-serif text-xl font-black text-reel shadow-lg md:size-14 md:text-2xl"
-                    style={{
-                      background: `radial-gradient(circle at 32% 28%, color-mix(in oklch, ${medal} 55%, white), ${medal} 55%, color-mix(in oklch, ${medal} 70%, black))`,
-                      boxShadow: `0 0 28px color-mix(in oklch, ${medal} 45%, transparent)`,
-                    }}
-                  >
-                    {index + 1}
-                  </motion.span>
+                <li key={prize.place} className="flex h-full flex-1 flex-col justify-end">
                   <motion.div
-                    initial={{ clipPath: "inset(100% 0 0 0 round 6px 6px 0 0)" }}
-                    whileInView={{ clipPath: "inset(0% 0 0 0 round 6px 6px 0 0)" }}
+                    initial={{ clipPath: "inset(100% 0 0 0)" }}
+                    whileInView={{ clipPath: "inset(0% 0 0 0)" }}
                     viewport={{ once: true, margin: "-60px" }}
                     transition={{ duration: 0.9, ease: EASE, delay }}
-                    className={cn("relative flex w-full flex-col overflow-hidden rounded-t-md p-4 md:p-6", PODIUM_HEIGHT[index])}
-                    style={{
-                      background: `linear-gradient(180deg, color-mix(in oklch, ${medal} 34%, var(--color-reel-raised)) 0%, color-mix(in oklch, ${medal} 12%, var(--color-reel-raised)) 55%, var(--color-reel-raised) 100%)`,
-                      borderTop: `4px solid ${medal}`,
-                    }}
+                    className={cn(
+                      "relative flex flex-col overflow-hidden rounded-t-md border-x border-t-4 border-x-reel-white/5 bg-linear-to-b from-reel-raised to-reel p-4 shadow-[inset_0_1px_0_0_rgb(255_255_255/0.06)] md:p-6",
+                      PODIUM_HEIGHT[index],
+                      first ? "border-t-brass" : index === 1 ? "border-t-reel-white/70" : "border-t-reel-mute/60",
+                    )}
                   >
                     <motion.span
                       aria-hidden="true"
                       initial={{ x: "-120%" }}
                       whileInView={{ x: "220%" }}
                       viewport={{ once: true, margin: "-60px" }}
-                      transition={{ duration: 1.1, ease: "easeInOut", delay: delay + 0.9 }}
-                      className="pointer-events-none absolute inset-y-0 left-0 w-1/2 -skew-x-12 bg-linear-to-r from-transparent via-reel-white/20 to-transparent"
+                      transition={{ duration: 1.1, ease: "easeInOut", delay: delay + 0.8 }}
+                      className="pointer-events-none absolute inset-y-0 left-0 w-1/2 -skew-x-12 bg-linear-to-r from-transparent via-reel-white/10 to-transparent"
                     />
-                    <span
+                    <motion.span
                       aria-hidden="true"
-                      className="pointer-events-none absolute -bottom-8 -right-3 font-sans text-[9rem] font-extrabold leading-none tracking-tighter md:text-[13rem]"
-                      style={{ color: `color-mix(in oklch, ${medal} 14%, transparent)` }}
+                      initial={{ opacity: 0, y: 40 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, margin: "-60px" }}
+                      transition={{ duration: 1, ease: EASE, delay: delay + 0.5 }}
+                      className={cn(
+                        "pointer-events-none absolute -bottom-6 -right-2 font-sans text-[9rem] font-extrabold leading-none tracking-tighter text-transparent md:text-[13rem]",
+                        first ? "[-webkit-text-stroke:2px_var(--color-brass)]" : "[-webkit-text-stroke:2px_var(--color-reel-mute)]",
+                      )}
                     >
                       {index + 1}
-                    </span>
-                    <div className="relative flex flex-col gap-1">
-                      <span className="font-sans text-sm font-bold uppercase tracking-[0.2em]" style={{ color: medal }}>
-                        {prize.place}
-                      </span>
-                      <span className="font-serif text-3xl font-black leading-none text-reel-white md:text-5xl">
+                    </motion.span>
+                    <div className="relative flex flex-col gap-3">
+                      <span className="font-sans text-sm font-bold uppercase tracking-[0.2em] text-reel-white/80">{prize.place}</span>
+                      <span className={cn("font-serif text-3xl font-black leading-none md:text-5xl", first ? "text-brass" : "text-reel-white")}>
                         <PrizeAmount amount={prize.amount} delay={delay + 0.3} />
                       </span>
+                      <span aria-hidden="true" className="h-px w-10 bg-reel-white/20" />
                     </div>
                   </motion.div>
                 </li>
               )
             })}
           </ol>
+          <div aria-hidden="true" className="-mt-4 h-px bg-reel-white/15" />
         </div>
       </div>
     </section>
