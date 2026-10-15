@@ -117,7 +117,6 @@ export function Landing2Page() {
         <Billboard
           ready={ready}
           hero={copy.hero}
-          film={copy.film}
           reel={reel.billboard}
           onExplore={explore}
           onMore={() => setModal("show")}

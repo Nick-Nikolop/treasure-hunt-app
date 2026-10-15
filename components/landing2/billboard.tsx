@@ -2,31 +2,29 @@
 
 import Image from "next/image"
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
-import { ChevronDown, Info, Pause, Play, RotateCcw } from "lucide-react"
+import { ChevronDown, Info, Pause, Play, Volume2, VolumeX } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import type { LandingCopy } from "@/components/landing/copy"
-import { BILLBOARD, type ReelCopy } from "./copy"
+import type { ReelCopy } from "./copy"
+import { HeroFilm } from "./film/hero-film"
+import { STILL_TIME } from "./film/render"
 
 const EASE = [0.22, 1, 0.36, 1] as const
-/** Trailer phases: 0 = opening line on the still, 1-3 = archive shots, 4 = closing line, 5 = ended. */
-const PHASE_MS = [3800, 4800, 4800, 4800, 4200]
-const ENDED = 5
-const ARCHIVE_FILTER = "grayscale(1) sepia(0.35) contrast(1.12) brightness(0.72)"
 
 type Props = {
   ready: boolean
   hero: LandingCopy["hero"]
-  film: LandingCopy["film"]
   reel: ReelCopy["billboard"]
   onExplore: () => void
   onMore: () => void
 }
 
-export function Billboard({ ready, hero, film, reel, onExplore, onMore }: Props) {
+export function Billboard({ ready, hero, reel, onExplore, onMore }: Props) {
   const reduce = useReducedMotion()
   const sectionRef = useRef<HTMLElement>(null)
-  const [phase, setPhase] = useState(-1)
+  const [started, setStarted] = useState(false)
   const [paused, setPaused] = useState(false)
+  const [muted, setMuted] = useState(true)
   const [inView, setInView] = useState(true)
 
   useEffect(() => {
@@ -38,39 +36,20 @@ export function Billboard({ ready, hero, film, reel, onExplore, onMore }: Props)
   }, [])
 
   useEffect(() => {
-    if (!ready || phase !== -1) return
-    if (reduce) {
-      setPhase(ENDED)
-      return
-    }
-    const timer = setTimeout(() => setPhase(0), 2400)
+    if (!ready || started || reduce) return
+    const timer = setTimeout(() => setStarted(true), 1600)
     return () => clearTimeout(timer)
-  }, [ready, reduce, phase])
+  }, [ready, started, reduce])
 
-  useEffect(() => {
-    if (phase < 0 || phase >= ENDED || paused || !inView) return
-    const timer = setTimeout(() => setPhase((p) => p + 1), PHASE_MS[phase])
-    return () => clearTimeout(timer)
-  }, [phase, paused, inView])
-
-  const playing = phase >= 0 && phase < ENDED
-  const shot = phase >= 1 && phase <= 3 ? film.frames[phase - 1] : null
-  const layerKey = shot ? `shot-${phase}` : phase >= 4 ? "still-end" : "still"
-  const subtitle =
-    phase === 0 ? film.open : shot ? `${shot.title} ${shot.hint}` : phase === 4 ? film.close : null
-
+  const playing = started && !paused
   const control = () => {
-    if (phase === ENDED) {
-      setPaused(false)
-      setPhase(0)
-    } else if (phase === -1) {
-      setPhase(0)
-    } else {
-      setPaused((p) => !p)
-    }
+    if (!started) setStarted(true)
+    else setPaused((p) => !p)
   }
-  const controlLabel = phase === ENDED ? reel.replay : phase === -1 ? reel.start : paused ? reel.resume : reel.pause
-  const ControlIcon = phase === ENDED ? RotateCcw : phase === -1 || paused ? Play : Pause
+  const controlLabel = !started ? reel.start : paused ? reel.resume : reel.pause
+  const ControlIcon = !started || paused ? Play : Pause
+  const muteLabel = muted ? reel.unmute : reel.mute
+  const MuteIcon = muted ? VolumeX : Volume2
 
   return (
     <section
@@ -79,49 +58,16 @@ export function Billboard({ ready, hero, film, reel, onExplore, onMore }: Props)
       aria-label="The Hunt"
       className="relative h-svh min-h-[560px] overflow-hidden bg-reel"
     >
-      <AnimatePresence initial={false}>
-        <motion.div
-          key={layerKey}
-          className="absolute inset-0"
-          initial={{ opacity: 0, scale: 1.02 }}
-          animate={{ opacity: 1, scale: 1.1 }}
-          exit={{ opacity: 0 }}
-          transition={{ opacity: { duration: 1.4, ease: "easeInOut" }, scale: { duration: 14, ease: "linear" } }}
-        >
-          {shot ? (
-            <Image src={shot.image} alt={shot.alt} fill sizes="100vw" className="object-cover" style={{ filter: ARCHIVE_FILTER }} />
-          ) : (
-            <Image
-              src={BILLBOARD}
-              alt=""
-              fill
-              priority
-              sizes="100vw"
-              className="object-cover object-[72%_center] md:object-center"
-            />
-          )}
-        </motion.div>
-      </AnimatePresence>
+      <HeroFilm
+        active={playing && inView}
+        muted={muted}
+        startAt={reduce ? STILL_TIME : 0}
+        className="absolute inset-0 size-full"
+      />
 
       <div aria-hidden="true" className="absolute inset-0 hidden bg-linear-to-r from-reel/95 via-reel/30 to-transparent md:block" />
       <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-3/4 bg-linear-to-t from-reel via-reel/75 to-transparent md:h-2/5 md:via-reel/60" />
       <div aria-hidden="true" className="absolute inset-x-0 top-0 h-32 bg-linear-to-b from-reel/70 to-transparent" />
-
-      <AnimatePresence mode="wait">
-        {subtitle && (
-          <motion.p
-            key={subtitle}
-            aria-live="polite"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
-            className="absolute inset-x-5 top-[26%] z-10 text-balance text-center font-sans text-lg font-medium leading-snug text-reel-white [text-shadow:0_2px_12px_rgb(0_0_0/0.9)] md:inset-x-auto md:left-[52%] md:right-[8%] md:top-auto md:bottom-[42%] md:text-2xl"
-          >
-            {subtitle}
-          </motion.p>
-        )}
-      </AnimatePresence>
 
       <div className="relative z-10 flex h-full flex-col justify-end gap-4 px-5 pb-24 md:w-1/2 md:gap-5 md:px-14 md:pb-[14svh]">
         <div className="flex items-center gap-2.5 font-sans text-sm font-bold uppercase tracking-[0.35em] text-reel-white/85">
@@ -202,6 +148,18 @@ export function Billboard({ ready, hero, film, reel, onExplore, onMore }: Props)
         >
           <ControlIcon className="size-5" aria-hidden="true" />
         </button>
+        {!reduce && (
+          <button
+            type="button"
+            onClick={() => setMuted((m) => !m)}
+            aria-label={muteLabel}
+            aria-pressed={!muted}
+            title={muteLabel}
+            className="flex size-11 items-center justify-center rounded-full border border-reel-white/70 bg-reel/30 text-reel-white transition hover:bg-reel-white/15"
+          >
+            <MuteIcon className="size-5" aria-hidden="true" />
+          </button>
+        )}
         <span className="hidden border-l-[3px] border-reel-white/80 bg-reel/50 py-1.5 pl-3 pr-16 font-sans text-base text-reel-white md:inline">
           {reel.rating}
         </span>

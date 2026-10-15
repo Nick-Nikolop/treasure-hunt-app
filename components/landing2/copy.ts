@@ -13,6 +13,8 @@ export const REEL_COPY = {
       pause: "Παύση τρέιλερ",
       resume: "Συνέχεια τρέιλερ",
       replay: "Ξανά το τρέιλερ",
+      mute: "Σίγαση ήχου",
+      unmute: "Ενεργοποίηση ήχου",
     },
     rows: { hunts: "Οι αποστολές", top: "Top 3 · Το ταξίδι του Πυθέα", prev: "Προηγούμενα", next: "Επόμενα" },
     hunts: {
@@ -60,6 +62,8 @@ export const REEL_COPY = {
       pause: "Pause trailer",
       resume: "Resume trailer",
       replay: "Replay trailer",
+      mute: "Mute",
+      unmute: "Unmute",
     },
     rows: { hunts: "The Hunts", top: "Top 3 · The Journey of Pytheas", prev: "Previous", next: "Next" },
     hunts: {
