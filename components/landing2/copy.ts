@@ -105,8 +105,8 @@ export type HuntRef = "#2" | "#1"
 export type ModalId = "show" | HuntRef
 
 export const HUNT_IMAGES: Record<HuntRef, string> = {
-  "#2": "/landing2/mission-carnival.png",
-  "#1": "/landing2/mission-pythea.png",
+  "#2": "/landing2/mission-carnival.webp",
+  "#1": "/landing2/mission-pythea.webp",
 }
 
 export const BILLBOARD = "/landing2/billboard.webp"

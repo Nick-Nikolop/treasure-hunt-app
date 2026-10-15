@@ -11,13 +11,13 @@ import { HUNT_IMAGES, type HuntRef, type ReelCopy } from "./copy"
 import { CornerMark, Row, RowTitle } from "./row"
 
 const WHY_IMAGES = [
-  "/landing/plateia.webp",
+  "/landing/plateia-card.webp",
   "/landing/scene-clue.webp",
   "/landing/scene-team.webp",
-  "/landing/kastro.webp",
-  "/landing/limani.webp",
+  "/landing/kastro-card.webp",
+  "/landing/limani-card.webp",
 ]
-const ARCHIVE = new Set(["/landing/plateia.webp", "/landing/kastro.webp", "/landing/limani.webp"])
+const ARCHIVE = new Set(["/landing/plateia-card.webp", "/landing/kastro-card.webp", "/landing/limani-card.webp"])
 
 export function HuntsRow({
   missions,
@@ -62,7 +62,7 @@ export function HuntsRow({
               />
               <div aria-hidden="true" className="absolute inset-x-0 top-0 -bottom-px bg-linear-to-t from-reel-raised from-2% via-reel-raised/40 to-transparent" />
               <span className="absolute left-3 top-3 z-10 flex items-center gap-2 rounded-full bg-reel/80 py-1 pl-1.5 pr-3.5 shadow-lg shadow-reel/60 ring-1 ring-reel-white/15 backdrop-blur-sm">
-                <Image unoptimized src="/landing/logo.webp" alt="" width={24} height={23} className="h-auto w-6" />
+                <Image unoptimized src="/landing/logo-sm.webp" alt="" width={24} height={23} className="h-auto w-6" />
                 <span className="font-sans text-xs font-bold uppercase tracking-[0.3em] text-reel-white">
                   {missions.file} {hunt.ref}
                 </span>

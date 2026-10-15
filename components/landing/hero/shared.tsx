@@ -66,7 +66,14 @@ export function useBeam(ref: RefObject<HTMLElement | null>, path: BeamPath) {
       const mouse = event.pointerType === "mouse"
       if (!mouse && !followTouch) return
       const rect = stage.getBoundingClientRect()
-      pointer = { x: event.clientX - rect.left, y: event.clientY - rect.top, at: performance.now(), mouse }
+      const px = event.clientX - rect.left
+      const py = event.clientY - rect.top
+      // Measured against the stage box (window listener), so fixed overlays like the topbar don't count as leaving.
+      if (px < 0 || py < 0 || px > rect.width || py > rect.height) {
+        pointer = null
+        return
+      }
+      pointer = { x: px, y: py, at: performance.now(), mouse }
     }
     const onLeave = () => {
       pointer = null
@@ -97,14 +104,14 @@ export function useBeam(ref: RefObject<HTMLElement | null>, path: BeamPath) {
       return
     }
     if (followPointer) {
-      stage.addEventListener("pointermove", onMove)
-      stage.addEventListener("pointerleave", onLeave)
+      window.addEventListener("pointermove", onMove, { passive: true })
+      document.documentElement.addEventListener("pointerleave", onLeave)
     }
     frame = requestAnimationFrame(sweep)
     return () => {
       cancelAnimationFrame(frame)
-      stage.removeEventListener("pointermove", onMove)
-      stage.removeEventListener("pointerleave", onLeave)
+      window.removeEventListener("pointermove", onMove)
+      document.documentElement.removeEventListener("pointerleave", onLeave)
     }
   }, [ref, reduceMotion, x, y, reachX, reachY, mobileX, mobileReachX, speed, followPointer, stickToMouse, followTouch])
 }

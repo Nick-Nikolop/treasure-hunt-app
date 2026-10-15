@@ -66,7 +66,7 @@ export function Landing2Page() {
       >
         <nav aria-label={reel.nav.label} className="flex h-16 items-center gap-6 px-5 md:h-[4.5rem] md:gap-10 md:px-14">
           <a href="#top" className="flex shrink-0 items-center gap-2.5">
-            <Image unoptimized src="/landing/logo.webp" alt="" width={34} height={33} className="h-auto w-8 md:w-9" priority />
+            <Image unoptimized src="/landing/logo-sm.webp" alt="" width={34} height={33} className="h-auto w-8 md:w-9" priority />
             <span className="font-serif text-xl font-black tracking-[0.12em] text-brass md:text-2xl">THE HUNT</span>
           </a>
           <ul className="hidden items-center gap-5 text-base lg:flex">

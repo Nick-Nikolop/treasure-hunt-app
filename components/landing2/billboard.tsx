@@ -36,6 +36,8 @@ export function Billboard({ hero, reel, onExplore, onMore }: Props) {
   const sectionRef = useRef<HTMLElement>(null)
   useBeam(sectionRef, BEAM)
   const mask = beamMask("12rem", "26rem")
+  const shadeMask =
+    "radial-gradient(circle at var(--beam-x, 60%) var(--beam-y, 55%), rgb(0 0 0 / 0.25) 0, rgb(0 0 0 / 0.25) 8rem, #000 22rem)"
 
   return (
     <section
@@ -57,14 +59,16 @@ export function Billboard({ hero, reel, onExplore, onMore }: Props) {
         </div>
       </motion.div>
 
-      <div aria-hidden="true" className="absolute inset-0 hidden bg-linear-to-r from-reel/90 via-reel/20 to-transparent md:block" />
-      <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-3/4 bg-linear-to-t from-reel via-reel/75 to-transparent md:h-2/5 md:via-reel/60" />
-      <div aria-hidden="true" className="absolute inset-x-0 top-0 h-32 bg-linear-to-b from-reel/70 to-transparent" />
+      <div aria-hidden="true" className="absolute inset-0" style={{ maskImage: shadeMask, WebkitMaskImage: shadeMask }}>
+        <div className="absolute inset-0 hidden bg-linear-to-r from-reel/90 via-reel/20 to-transparent md:block" />
+        <div className="absolute inset-x-0 bottom-0 h-3/4 bg-linear-to-t from-reel via-reel/75 to-transparent md:h-2/5 md:via-reel/60" />
+        <div className="absolute inset-x-0 top-0 h-32 bg-linear-to-b from-reel/70 to-transparent" />
+      </div>
       <Grain opacity={0.07} />
 
       <div className="relative z-10 flex h-full flex-col justify-end gap-4 px-5 pb-24 md:w-1/2 md:gap-5 md:px-14 md:pb-[14svh]">
         <div className="flex items-center gap-2.5 font-sans text-sm font-bold uppercase tracking-[0.35em] text-reel-white/85">
-          <Image unoptimized src="/landing/logo.webp" alt="" width={28} height={27} className="h-auto w-7" />
+          <Image unoptimized src="/landing/logo-sm.webp" alt="" width={28} height={27} className="h-auto w-7" />
           {reel.kind}
         </div>
 

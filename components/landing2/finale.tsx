@@ -97,7 +97,7 @@ export function Footer({
         <div className="grid gap-12 md:grid-cols-[1.4fr_1fr_1fr]">
           <div className="flex flex-col gap-5">
             <a href="#top" className="flex w-fit items-center gap-3">
-              <Image unoptimized src="/landing/logo.webp" alt="" width={44} height={43} className="h-auto w-11" />
+              <Image unoptimized src="/landing/logo-sm.webp" alt="" width={44} height={43} className="h-auto w-11" />
               <span className="font-serif text-2xl font-black tracking-[0.12em] text-reel-white">THE HUNT</span>
             </a>
             <p className="max-w-[36ch] text-pretty text-base leading-relaxed text-reel-mute">{copy.footer.tagline}</p>

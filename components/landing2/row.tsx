@@ -103,7 +103,7 @@ export function CornerMark() {
   return (
     <Image
       unoptimized
-      src="/landing/logo.webp"
+      src="/landing/logo-sm.webp"
       alt=""
       width={24}
       height={23}
