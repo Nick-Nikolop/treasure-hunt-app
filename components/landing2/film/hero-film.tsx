@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react"
 import { CUES, FilmAudio } from "./audio"
-import { FILM_LENGTH, renderFilm } from "./render"
+import { FILM_LENGTH, type FilmAssets, PLATE_IDS, renderFilm } from "./render"
 
 type Props = {
   active: boolean
@@ -35,6 +35,14 @@ export function HeroFilm({ active, muted, startAt = 0, className }: Props) {
     const img = new Image()
     img.src = "/landing/logo.webp"
     logo.current = img
+    const assets: FilmAssets = { logo: img, plates: {} }
+    for (const id of PLATE_IDS) {
+      const p = new Image()
+      p.decoding = "async"
+      p.src = `/landing2/film/${id}.webp`
+      p.onload = () => redraw.current()
+      assets.plates[id] = p
+    }
 
     let frozen = false
     const debugAt = new URLSearchParams(window.location.search).get("filmAt")
@@ -42,7 +50,7 @@ export function HeroFilm({ active, muted, startAt = 0, className }: Props) {
       clock.current.t = Number(debugAt)
       frozen = true
     }
-    const draw = () => renderFilm(ctx, clock.current.t, canvas.width, canvas.height, logo.current)
+    const draw = () => renderFilm(ctx, clock.current.t, canvas.width, canvas.height, assets)
     redraw.current = draw
     img.onload = draw
 
