@@ -86,7 +86,7 @@ export function Billboard({ hero, reel, onExplore, onMore }: Props) {
           <button
             type="button"
             onClick={onMore}
-            className="flex items-center gap-2.5 rounded-md bg-reel-mute/40 px-6 py-2.5 font-sans text-lg font-bold text-reel-white backdrop-blur-sm transition hover:bg-reel-mute/30 md:px-8 md:py-3"
+            className="flex items-center gap-2.5 rounded-md border border-reel-white/40 bg-reel/40 px-6 py-2.5 font-sans text-lg font-bold text-reel-white backdrop-blur-sm transition hover:border-reel-white hover:bg-reel-white/10 md:px-8 md:py-3"
           >
             <Info className="size-6" aria-hidden="true" />
             {reel.more}

@@ -1,7 +1,8 @@
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
-import { Globe, HelpCircle, Plus } from "lucide-react"
+import { ArrowUpRight, Globe, Plus } from "lucide-react"
 import { useState } from "react"
 import { LANDING_CONTACT, type LandingCopy } from "@/components/landing/copy"
 import { LEGAL_ORG } from "@/lib/legal"
@@ -12,51 +13,45 @@ export function Faq({ faq, reel }: { faq: LandingCopy["faq"]; reel: ReelCopy }) 
   const [open, setOpen] = useState<number | null>(null)
 
   return (
-    <section
-      id="faq"
-      aria-labelledby="faq-title"
-      className="relative isolate flex scroll-mt-20 flex-col gap-12 overflow-hidden px-5 py-16 md:px-14 md:py-24"
-    >
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 -z-10"
-        style={{ background: "radial-gradient(55% 40% at 50% 0%, color-mix(in oklch, var(--brass) 22%, transparent), transparent 75%)" }}
-      />
-      <div aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-brass/60 to-transparent" />
-      <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
-        <div className="flex flex-col items-center gap-4 pb-4 text-center">
-          <span aria-hidden="true" className="flex size-14 items-center justify-center rounded-full border border-brass/50 bg-brass/15 text-brass">
-            <HelpCircle className="size-7" />
-          </span>
-          <h2 id="faq-title" className="font-serif text-4xl font-black text-reel-white md:text-6xl">
+    <section id="faq" aria-labelledby="faq-title" className="scroll-mt-20 bg-reel-band px-5 py-16 md:px-14 md:py-24">
+      <div className="mx-auto grid w-full max-w-6xl gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
+        <div className="flex flex-col gap-4 lg:sticky lg:top-28 lg:self-start">
+          <p className="flex items-center gap-3 font-sans text-sm font-bold uppercase tracking-[0.3em] text-brass">
+            <span aria-hidden="true" className="h-0.5 w-8 bg-brass" />
+            {faq.title}
+          </p>
+          <h2 id="faq-title" className="text-balance font-serif text-4xl font-black leading-[1.05] text-reel-white md:text-5xl">
             {reel.faq.title}
           </h2>
-          <p className="flex items-center gap-3 font-serif text-xl italic text-brass md:text-2xl">
-            <span aria-hidden="true" className="h-px w-10 bg-brass/60" />
-            {faq.title}
-            <span aria-hidden="true" className="h-px w-10 bg-brass/60" />
+          <p className="font-sans text-base leading-relaxed text-reel-mute">
+            {reel.footer.questions}{" "}
+            <a href={`mailto:${LANDING_CONTACT.email}`} className="text-reel-white underline underline-offset-4 hover:text-brass">
+              {LANDING_CONTACT.email}
+            </a>
           </p>
         </div>
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col border-t border-reel-white/15">
           {faq.items.map((item, index) => {
             const isOpen = open === index
             return (
-              <li key={item.q} className="flex flex-col gap-px">
+              <li key={item.q} className="border-b border-reel-white/15">
                 <button
                   type="button"
                   aria-expanded={isOpen}
                   aria-controls={`faq-panel-${index}`}
                   onClick={() => setOpen(isOpen ? null : index)}
-                  className={cn(
-                    "flex w-full items-center justify-between gap-6 rounded-t-md border-l-4 px-6 py-5 text-left font-sans text-lg text-reel-white transition md:px-8 md:py-6 md:text-2xl",
-                    isOpen ? "border-brass bg-brass/15" : "rounded-b-md border-transparent bg-reel-raised hover:border-brass/50 hover:bg-reel-mute/20",
-                  )}
+                  className="group/faq flex w-full items-center justify-between gap-6 py-5 text-left font-sans text-lg font-bold text-reel-white md:py-6 md:text-xl"
                 >
-                  {item.q}
-                  <Plus
-                    className={cn("size-7 shrink-0 transition-transform duration-300 md:size-9", isOpen ? "rotate-45 text-brass" : "text-brass/70")}
+                  <span className="transition group-hover/faq:text-reel-white/80">{item.q}</span>
+                  <span
                     aria-hidden="true"
-                  />
+                    className={cn(
+                      "flex size-9 shrink-0 items-center justify-center rounded-full border transition",
+                      isOpen ? "border-reel-white bg-reel-white text-reel" : "border-reel-white/25 text-reel-white group-hover/faq:border-reel-white/60",
+                    )}
+                  >
+                    <Plus className={cn("size-4 transition-transform duration-300", isOpen && "rotate-45")} />
+                  </span>
                 </button>
                 <div
                   id={`faq-panel-${index}`}
@@ -64,7 +59,7 @@ export function Faq({ faq, reel }: { faq: LandingCopy["faq"]; reel: ReelCopy }) 
                   className={cn("grid transition-[grid-template-rows] duration-300 ease-out", isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]")}
                 >
                   <div className="overflow-hidden">
-                    <p className="rounded-b-md border-l-4 border-brass bg-brass/10 px-6 py-5 font-sans text-lg leading-relaxed text-reel-white/90 md:px-8 md:py-6 md:text-xl md:leading-relaxed">
+                    <p className="max-w-[65ch] pb-6 pr-12 font-sans text-base leading-relaxed text-reel-white/75 md:text-lg md:leading-relaxed">
                       {item.a}
                     </p>
                   </div>
@@ -87,56 +82,85 @@ export function Footer({
   reel: ReelCopy
   onToggleLocale: () => void
 }) {
-  const links = [
+  const explore = [
     { label: reel.nav.hunts, href: "#hunts" },
     { label: reel.nav.how, href: "#how" },
     { label: reel.nav.faq, href: "#faq" },
     { label: reel.footer.standings, href: "/standings" },
-    { label: copy.footer.terms, href: "/terms" },
-    { label: LANDING_CONTACT.instagram, href: LANDING_CONTACT.instagramUrl, external: true },
   ]
 
+  const linkClass = "text-reel-white/75 transition hover:text-reel-white"
+
   return (
-    <footer className="border-t-8 border-reel-raised px-5 py-14 font-sans text-reel-mute md:px-14 md:py-20">
-      <div className="mx-auto flex max-w-5xl flex-col gap-8">
-        <p className="text-base">
-          {reel.footer.questions}{" "}
-          <a href={`mailto:${LANDING_CONTACT.email}`} className="underline underline-offset-4 hover:text-reel-white">
-            {LANDING_CONTACT.email}
-          </a>
-        </p>
-        <ul className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm md:grid-cols-4">
-          {links.map((link) => (
-            <li key={link.label}>
-              {link.external ? (
-                <a href={link.href} target="_blank" rel="noopener noreferrer" className="underline-offset-4 hover:underline">
-                  {link.label}
+    <footer className="border-t border-reel-white/10 px-5 pb-10 pt-16 font-sans md:px-14 md:pt-20">
+      <div className="mx-auto flex max-w-6xl flex-col gap-14">
+        <div className="grid gap-12 md:grid-cols-[1.4fr_1fr_1fr]">
+          <div className="flex flex-col gap-5">
+            <a href="#top" className="flex w-fit items-center gap-3">
+              <Image unoptimized src="/landing/logo.webp" alt="" width={44} height={43} className="h-auto w-11" />
+              <span className="font-serif text-2xl font-black tracking-[0.12em] text-reel-white">THE HUNT</span>
+            </a>
+            <p className="max-w-[36ch] text-pretty text-base leading-relaxed text-reel-mute">{copy.footer.tagline}</p>
+            <a
+              href={`mailto:${LANDING_CONTACT.email}`}
+              className="group/mail flex w-fit items-center gap-2 font-serif text-xl font-bold text-reel-white transition hover:text-brass md:text-2xl"
+            >
+              {LANDING_CONTACT.email}
+              <ArrowUpRight className="size-5 transition-transform group-hover/mail:-translate-y-0.5 group-hover/mail:translate-x-0.5" aria-hidden="true" />
+            </a>
+          </div>
+
+          <nav aria-label={reel.nav.label} className="flex flex-col gap-4">
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-reel-mute">The Hunt</p>
+            <ul className="flex flex-col gap-3 text-base">
+              {explore.map((link) => (
+                <li key={link.label}>
+                  {link.href.startsWith("#") ? (
+                    <a href={link.href} className={linkClass}>
+                      {link.label}
+                    </a>
+                  ) : (
+                    <Link href={link.href} className={linkClass}>
+                      {link.label}
+                    </Link>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          <div className="flex flex-col gap-4">
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-reel-mute">Info</p>
+            <ul className="flex flex-col gap-3 text-base">
+              <li>
+                <a href={LANDING_CONTACT.instagramUrl} target="_blank" rel="noopener noreferrer" className={linkClass}>
+                  Instagram · {LANDING_CONTACT.instagram}
                 </a>
-              ) : link.href.startsWith("#") ? (
-                <a href={link.href} className="underline-offset-4 hover:underline">
-                  {link.label}
-                </a>
-              ) : (
-                <Link href={link.href} className="underline-offset-4 hover:underline">
-                  {link.label}
+              </li>
+              <li>
+                <Link href="/terms" className={linkClass}>
+                  {copy.footer.terms}
                 </Link>
-              )}
-            </li>
-          ))}
-        </ul>
-        <button
-          type="button"
-          onClick={onToggleLocale}
-          aria-label={copy.langLabel}
-          className="flex w-fit items-center gap-2 rounded-sm border border-reel-mute/50 px-4 py-2 text-base text-reel-white hover:border-reel-white"
-        >
-          <Globe className="size-4" aria-hidden="true" />
-          {reel.footer.current}
-          <span className="text-reel-mute">· {copy.lang}</span>
-        </button>
-        <p className="text-sm">
-          {copy.footer.tagline} © {new Date().getFullYear()} {LEGAL_ORG.name}. {copy.footer.rights}
-        </p>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="flex flex-col-reverse items-start justify-between gap-4 border-t border-reel-white/10 pt-6 md:flex-row md:items-center">
+          <p className="text-sm text-reel-mute">
+            © {new Date().getFullYear()} {LEGAL_ORG.name}. {copy.footer.rights}
+          </p>
+          <button
+            type="button"
+            onClick={onToggleLocale}
+            aria-label={copy.langLabel}
+            className="flex items-center gap-2 rounded-full border border-reel-white/20 px-4 py-1.5 text-sm text-reel-white/85 transition hover:border-reel-white/60 hover:text-reel-white"
+          >
+            <Globe className="size-4" aria-hidden="true" />
+            {reel.footer.current}
+            <span className="text-reel-mute">· {copy.lang}</span>
+          </button>
+        </div>
       </div>
     </footer>
   )

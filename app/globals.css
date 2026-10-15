@@ -159,7 +159,9 @@
   --color-reel-raised: #232323;
   --color-reel-mute: #a6a29b;
   --color-reel-white: #f6f2ea;
-  --color-reel-red: oklch(0.46 0.15 22);
+  --color-reel-red: #3a0105;
+  --color-reel-red-hover: #5a0a12;
+  --color-reel-band: #1b1613;
   /* /landing3 trail palette */
   --color-hill-paper: #f1e9d6;
   --color-hill-deep: #e3d6b8;

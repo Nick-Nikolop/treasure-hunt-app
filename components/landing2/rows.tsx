@@ -71,7 +71,7 @@ export function HuntsRow({
                 aria-hidden="true"
                 className={cn(
                   "pointer-events-none absolute inset-0 z-20 flex items-center justify-center opacity-0 transition-opacity duration-500 group-hover/card:opacity-100 group-focus-within/card:opacity-100",
-                  hunt.live ? "bg-[#7a1f2b]/75" : "bg-reel/75",
+                  hunt.live ? "bg-reel-red/80" : "bg-reel/75",
                 )}
               >
                 <span
@@ -87,7 +87,7 @@ export function HuntsRow({
                 <span
                   className={cn(
                     "rounded-sm px-2 py-0.5 font-sans text-xs font-bold uppercase tracking-wider",
-                    hunt.live ? "bg-[#7a1f2b] text-reel-white" : "bg-reel-white/90 text-reel",
+                    hunt.live ? "bg-reel-red text-reel-white ring-1 ring-brass/50" : "bg-reel-white/90 text-reel",
                   )}
                 >
                   {hunt.status}
@@ -250,12 +250,13 @@ export function TopThree({ missions, reel }: { missions: LandingCopy["missions"]
                     />
                     <motion.span
                       aria-hidden="true"
-                      initial={{ opacity: 0, y: 40 }}
+                      initial={{ opacity: 0, y: 24 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true, margin: "-60px" }}
-                      transition={{ duration: 1, ease: EASE, delay: delay + 0.5 }}
+                      transition={{ duration: 0.8, ease: EASE, delay: delay + 0.15 }}
                       className={cn(
-                        "pointer-events-none absolute -bottom-6 -right-2 font-sans text-[9rem] font-extrabold leading-none tracking-tighter text-transparent md:text-[13rem]",
+                        "pointer-events-none absolute -bottom-3 right-1 font-sans font-extrabold leading-none tracking-tighter text-transparent",
+                        first ? "text-[8rem] md:text-[12rem]" : "text-[6rem] md:text-[8.5rem]",
                         first ? "[-webkit-text-stroke:2px_var(--color-brass)]" : "[-webkit-text-stroke:2px_var(--color-reel-mute)]",
                       )}
                     >

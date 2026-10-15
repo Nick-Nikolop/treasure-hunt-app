@@ -135,8 +135,11 @@ export function CodeSection({ who, code }: { who: LandingCopy["who"]; code: Land
           </div>
         </motion.div>
 
-        <div className="flex flex-col gap-4">
-          <p className="font-serif text-xl italic text-reel-mute">{code.title}</p>
+        <div className="flex flex-col gap-5 lg:pt-10">
+          <h3 className="flex items-center gap-4 font-serif text-2xl font-bold text-reel-white md:text-3xl">
+            {code.title}
+            <span aria-hidden="true" className="h-px flex-1 bg-reel-white/15" />
+          </h3>
           <ul className="grid gap-3 sm:grid-cols-2">
             {code.rules.map((rule, index) => {
               const Icon = RULE_ICONS[index % RULE_ICONS.length]
@@ -188,7 +191,7 @@ export function ClosingBanner({
         <div className="flex flex-wrap justify-center gap-3 pt-2">
           <a
             href={notifyHref}
-            className="flex items-center gap-2 rounded-md bg-reel-red px-8 py-3.5 font-sans text-lg font-bold text-reel-white transition hover:bg-reel-red/85 md:text-xl"
+            className="flex items-center gap-2 rounded-md border border-brass/60 bg-reel-red px-8 py-3.5 font-sans text-lg font-bold text-reel-white transition hover:border-brass hover:bg-reel-red-hover md:text-xl"
           >
             {cta}
             <ChevronRight className="size-6" aria-hidden="true" />
@@ -196,7 +199,7 @@ export function ClosingBanner({
           <button
             type="button"
             onClick={onExplore}
-            className="rounded-md bg-reel-mute/40 px-8 py-3.5 font-sans text-lg font-bold text-reel-white backdrop-blur-sm transition hover:bg-reel-mute/30 md:text-xl"
+            className="rounded-md border border-reel-white/40 bg-reel/40 px-8 py-3.5 font-sans text-lg font-bold text-reel-white backdrop-blur-sm transition hover:border-reel-white hover:bg-reel-white/10 md:text-xl"
           >
             {closing.cta}
           </button>

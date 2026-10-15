@@ -102,11 +102,14 @@ export function Landing2Page() {
               type="button"
               onClick={toggle}
               aria-label={copy.langLabel}
-              className="rounded-sm border border-reel-white/40 px-2.5 py-1 text-sm font-bold tracking-wider text-reel-white hover:border-reel-white"
+              className="rounded-full border border-reel-white/20 px-3 py-1 text-sm font-bold tracking-wider text-reel-white/85 transition hover:border-reel-white/60 hover:text-reel-white"
             >
               {copy.lang}
             </button>
-            <a href={notifyHref} className="rounded-sm bg-reel-red px-3 py-1.5 text-sm font-bold text-reel-white hover:bg-reel-red/85 md:px-4">
+            <a
+              href={notifyHref}
+              className="rounded-full border border-brass/50 bg-reel-red px-4 py-1.5 text-sm font-bold text-reel-white transition hover:border-brass hover:bg-reel-red-hover md:px-5"
+            >
               {reel.nav.cta}
             </a>
           </div>
@@ -126,8 +129,8 @@ export function Landing2Page() {
           <HuntsRow missions={copy.missions} reel={reel} notifyHref={notifyHref} onOpen={setModal} />
         </div>
         <TopThree missions={copy.missions} reel={reel} />
+        <HowSection how={copy.how} reel={reel} />
         <div className="flex flex-col gap-24 py-20 md:gap-32 md:py-28">
-          <HowSection how={copy.how} reel={reel} />
           <WhyRow why={copy.why} reel={reel} />
           <CodeSection who={copy.who} code={copy.code} />
         </div>
