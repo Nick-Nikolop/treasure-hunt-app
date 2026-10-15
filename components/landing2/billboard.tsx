@@ -9,12 +9,7 @@ import { type BeamPath, Grain, beamMask, useBeam } from "@/components/landing/he
 import type { ReelCopy } from "./copy"
 
 const EASE = [0.22, 1, 0.36, 1] as const
-export const HERO_IMAGES = [
-  { id: "original", label: "1", src: "/landing/hero-kalamata-map.png" },
-  { id: "hd", label: "2", src: "/landing/hero-kalamata-map-hd.webp" },
-  { id: "hd2", label: "3", src: "/landing/hero-kalamata-map-hd2.webp" },
-] as const
-export type HeroImageId = (typeof HERO_IMAGES)[number]["id"]
+const HERO_IMAGE = "/landing/hero-kalamata-map.webp"
 
 const BEAM: BeamPath = { x: 0.74, y: 0.44, reachX: 0.13, reachY: 0.17, mobileX: 0.5, mobileReachX: 0.22, speed: 0.8 }
 
@@ -24,11 +19,9 @@ type Props = {
   reel: ReelCopy["billboard"]
   onExplore: () => void
   onMore: () => void
-  image: HeroImageId
 }
 
-export function Billboard({ hero, reel, onExplore, onMore, image }: Props) {
-  const HERO_IMAGE = (HERO_IMAGES.find((h) => h.id === image) ?? HERO_IMAGES[1]).src
+export function Billboard({ hero, reel, onExplore, onMore }: Props) {
   const sectionRef = useRef<HTMLElement>(null)
   useBeam(sectionRef, BEAM)
   const mask = beamMask("12rem", "26rem")

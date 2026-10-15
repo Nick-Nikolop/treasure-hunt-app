@@ -6,7 +6,7 @@ import { motion } from "framer-motion"
 import { ChevronDown } from "lucide-react"
 import { EASE, Grain, type HeroCopy, beamMask, useBeam } from "./shared"
 
-const MAP_SRC = "/landing/hero-kalamata-map.png"
+const MAP_SRC = "/landing/hero-kalamata-map.webp"
 
 /** Splits "is full of stories." into a quiet lead-in and the one word that gets the gold treatment. */
 function splitAccent(line: string) {

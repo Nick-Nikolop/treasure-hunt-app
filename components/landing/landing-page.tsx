@@ -17,7 +17,7 @@ const GRAIN =
 const PRELOAD_IMAGES = [
   "/landing/logo.webp",
   "/landing/logo-alt.webp",
-  "/landing/hero-kalamata-map.png",
+  "/landing/hero-kalamata-map.webp",
   "/landing/plateia.webp",
   "/landing/kastro.webp",
   "/landing/limani.webp",
