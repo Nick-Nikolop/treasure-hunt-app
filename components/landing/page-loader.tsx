@@ -73,6 +73,7 @@ export function PageLoader({ label, onDone }: { label: string; onDone: () => voi
             <video
               key={orientation}
               src={`/landing/th-loading-${orientation}.mp4`}
+              poster={`/landing/th-loading-${orientation}.webp`}
               autoPlay
               muted
               loop

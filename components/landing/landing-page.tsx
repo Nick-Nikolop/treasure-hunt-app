@@ -5,7 +5,6 @@ import { motion, useScroll } from "framer-motion"
 import { useEffect, useRef, useState } from "react"
 import { useI18n } from "@/components/pythea/language-provider"
 import { ClueProvider, ClueTracker } from "./clues"
-import { ColdOpen } from "./cold-open"
 import { LANDING_COPY } from "./copy"
 import { Hero } from "./hero/hero"
 import { VariantMenu, VariantProvider } from "./variants"
@@ -32,7 +31,6 @@ const PRELOAD_IMAGES = [
 export function LandingPage() {
   const { locale, toggle } = useI18n()
   const copy = LANDING_COPY[locale]
-  const [heroTake, setHeroTake] = useState(0)
   const [loaded, setLoaded] = useState(false)
   const [altLogo, setAltLogo] = useState(false)
   const logoClicks = useRef<number[]>([])
@@ -67,7 +65,6 @@ export function LandingPage() {
     <ClueProvider copy={copy.clues}>
     <div className="dark min-h-svh bg-background text-foreground">
       <PageLoader label={copy.intro.loading} onDone={() => setLoaded(true)} />
-      {loaded && <ColdOpen skipLabel={copy.intro.skip} onFinish={() => setHeroTake((take) => take + 1)} />}
       <div
         className="pointer-events-none fixed inset-0 z-30 opacity-[0.07]"
         style={{ backgroundImage: GRAIN }}
@@ -116,7 +113,7 @@ export function LandingPage() {
       </header>
 
       <main id="top">
-        <Hero take={heroTake} copy={copy.hero} />
+        {loaded ? <Hero take={0} copy={copy.hero} /> : <div className="min-h-svh" aria-hidden="true" />}
         <PageBody copy={copy} />
       </main>
     </div>

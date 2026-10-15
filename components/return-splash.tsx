@@ -51,6 +51,7 @@ export function ReturnSplash() {
       {orientation && (
         <video
           src={`/landing/th-loading-${orientation}.mp4`}
+          poster={`/landing/th-loading-${orientation}.webp`}
           autoPlay
           muted
           loop
