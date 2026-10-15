@@ -11,7 +11,18 @@ import type { ReelCopy } from "./copy"
 const EASE = [0.22, 1, 0.36, 1] as const
 const HERO_IMAGE = "/landing/hero-kalamata-map.webp"
 
-const BEAM: BeamPath = { x: 0.74, y: 0.44, reachX: 0.13, reachY: 0.17, mobileX: 0.5, mobileReachX: 0.22, speed: 0.8 }
+const BEAM: BeamPath = {
+  x: 0.74,
+  y: 0.44,
+  reachX: 0.13,
+  reachY: 0.17,
+  mobileX: 0.5,
+  mobileReachX: 0.22,
+  speed: 0.8,
+  followPointer: true,
+  stickToMouse: true,
+  followTouch: true,
+}
 
 type Props = {
   ready: boolean

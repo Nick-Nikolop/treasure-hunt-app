@@ -21,6 +21,10 @@ export type BeamPath = {
   speed?: number
   /** Set false to keep the beam on its own sweep and ignore the mouse. */
   followPointer?: boolean
+  /** Keep the beam on a resting mouse until it leaves the stage, instead of drifting back after a pause. */
+  stickToMouse?: boolean
+  /** Also follow a finger or pen while it touches the stage. */
+  followTouch?: boolean
 }
 
 /** How long the beam keeps following a still mouse before drifting back to its own sweep. */
@@ -32,7 +36,18 @@ const POINTER_HOLD_MS = 2400
  */
 export function useBeam(ref: RefObject<HTMLElement | null>, path: BeamPath) {
   const reduceMotion = useReducedMotion()
-  const { x, y, reachX, reachY, mobileX, mobileReachX, speed = 1, followPointer = false } = path
+  const {
+    x,
+    y,
+    reachX,
+    reachY,
+    mobileX,
+    mobileReachX,
+    speed = 1,
+    followPointer = false,
+    stickToMouse = false,
+    followTouch = false,
+  } = path
 
   useEffect(() => {
     const stage = ref.current
@@ -40,7 +55,7 @@ export function useBeam(ref: RefObject<HTMLElement | null>, path: BeamPath) {
     let frame = 0
     const start = performance.now()
     let current: { x: number; y: number } | null = null
-    let pointer: { x: number; y: number; at: number } | null = null
+    let pointer: { x: number; y: number; at: number; mouse: boolean } | null = null
 
     const place = (px: number, py: number) => {
       stage.style.setProperty("--beam-x", `${px}px`)
@@ -48,9 +63,10 @@ export function useBeam(ref: RefObject<HTMLElement | null>, path: BeamPath) {
     }
 
     const onMove = (event: PointerEvent) => {
-      if (event.pointerType !== "mouse") return
+      const mouse = event.pointerType === "mouse"
+      if (!mouse && !followTouch) return
       const rect = stage.getBoundingClientRect()
-      pointer = { x: event.clientX - rect.left, y: event.clientY - rect.top, at: performance.now() }
+      pointer = { x: event.clientX - rect.left, y: event.clientY - rect.top, at: performance.now(), mouse }
     }
     const onLeave = () => {
       pointer = null
@@ -64,11 +80,13 @@ export function useBeam(ref: RefObject<HTMLElement | null>, path: BeamPath) {
       const rx = mobile ? (mobileReachX ?? reachX) : reachX
       let tx = width * (cx + rx * Math.sin(t * 0.4))
       let ty = height * (y + reachY * Math.sin(t * 0.8))
-      if (pointer && now - pointer.at < POINTER_HOLD_MS) {
+      const following = pointer !== null && ((stickToMouse && pointer.mouse) || now - pointer.at < POINTER_HOLD_MS)
+      if (pointer && following) {
         tx = pointer.x
         ty = pointer.y
       }
-      current = current ? { x: current.x + (tx - current.x) * 0.08, y: current.y + (ty - current.y) * 0.08 } : { x: tx, y: ty }
+      const ease = following ? 0.16 : 0.06
+      current = current ? { x: current.x + (tx - current.x) * ease, y: current.y + (ty - current.y) * ease } : { x: tx, y: ty }
       place(current.x, current.y)
       frame = requestAnimationFrame(sweep)
     }
@@ -88,7 +106,7 @@ export function useBeam(ref: RefObject<HTMLElement | null>, path: BeamPath) {
       stage.removeEventListener("pointermove", onMove)
       stage.removeEventListener("pointerleave", onLeave)
     }
-  }, [ref, reduceMotion, x, y, reachX, reachY, mobileX, mobileReachX, speed, followPointer])
+  }, [ref, reduceMotion, x, y, reachX, reachY, mobileX, mobileReachX, speed, followPointer, stickToMouse, followTouch])
 }
 
 export function beamMask(inner = "9rem", outer = "19rem") {
