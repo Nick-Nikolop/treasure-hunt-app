@@ -1,15 +1,14 @@
-import type { Metadata, Viewport } from "next"
-import { CarnivalScreen } from "@/components/carnival/carnival-screen"
+import { redirect } from "next/navigation"
 
-export const metadata: Metadata = {
-  title: "Καρναβάλι",
-  description: "The Hunt Carnival. Περισσότερες πληροφορίες στο σύντομο μέλλον.",
-}
-
-export const viewport: Viewport = {
-  themeColor: "#3a0105",
-}
-
-export default function KarnavaliPage() {
-  return <CarnivalScreen />
+export default async function KarnavaliPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  const params = new URLSearchParams()
+  for (const [k, v] of Object.entries(await searchParams)) {
+    for (const value of Array.isArray(v) ? v : v ? [v] : []) params.append(k, value)
+  }
+  const qs = params.toString()
+  redirect(qs ? `/carnival?${qs}` : "/carnival")
 }

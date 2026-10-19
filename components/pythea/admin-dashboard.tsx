@@ -42,6 +42,7 @@ import { ConfirmDialog } from "@/components/pythea/confirm-dialog"
 import { AdminPasswordDialog } from "@/components/pythea/admin-password-dialog"
 import { AdminHintsPanel } from "@/components/pythea/admin-hints-panel"
 import { AdminCampaignsPanel } from "@/components/pythea/admin-campaigns-panel"
+import { AdminSourcesPanel } from "@/components/pythea/admin-sources-panel"
 import { AdminLeadsPanel } from "@/components/pythea/admin-leads-panel"
 import { AdminActivityPanel } from "@/components/pythea/admin-activity-panel"
 import { AdminAnalyticsPanel } from "@/components/pythea/admin-analytics-panel"
@@ -772,7 +773,10 @@ export function AdminDashboard({
         ) : tab === "hints" ? (
           <AdminHintsPanel hints={data.hints} leadOptions={data.leadOptions} />
         ) : tab === "campaigns" ? (
-          <AdminCampaignsPanel campaigns={data.campaigns} />
+          <div className="flex flex-col gap-8">
+            <AdminSourcesPanel snapshot={data.sources} />
+            <AdminCampaignsPanel campaigns={data.campaigns} />
+          </div>
         ) : tab === "leads" ? (
           <AdminLeadsPanel
             leads={data.leads}

@@ -46,6 +46,14 @@ function uid(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
 }
 
+let anonCreatedThisLoad = false
+
+/** True when this page load is the device's first ever visit (its anonId was just minted). */
+export function isFirstVisitThisLoad(): boolean {
+  getAnonId()
+  return anonCreatedThisLoad
+}
+
 /** Persistent anonymous id (localStorage). Stable across sessions. */
 export function getAnonId(): string {
   if (!isBrowser()) return ""
@@ -54,6 +62,7 @@ export function getAnonId(): string {
     if (!id) {
       id = uid()
       window.localStorage.setItem(ANON_KEY, id)
+      anonCreatedThisLoad = true
     }
     return id
   } catch {
@@ -90,6 +99,16 @@ function getCampaignSource(): string | undefined {
   try {
     const m = document.cookie.match(/(?:^|;\s*)cmp_src=([^;]+)/)
     return m ? decodeURIComponent(m[1]) : undefined
+  } catch {
+    return undefined
+  }
+}
+
+/** The first `?source=` this device ever arrived with (set by SourceTracker). */
+function getLinkSource(): string | undefined {
+  if (!isBrowser()) return undefined
+  try {
+    return window.localStorage.getItem("th_source_first") ?? undefined
   } catch {
     return undefined
   }
@@ -188,8 +207,9 @@ export function track(
   // Auto-attribute to the campaign that brought this device in, when present,
   // so any event (sign-up, first solve, ...) can be credited to its source.
   const source = getCampaignSource()
-  const enrichedProps =
-    source !== undefined ? { ...(props ?? {}), campaignSource: source } : props
+  const linkSource = getLinkSource()
+  let enrichedProps = source !== undefined ? { ...(props ?? {}), campaignSource: source } : props
+  if (linkSource) enrichedProps = { ...(enrichedProps ?? {}), entrySource: linkSource }
   queue.push({
     name,
     category: opts?.category,
@@ -278,8 +298,8 @@ function landingAttribution(): Record<string, string> {
       const v = q.get(key)
       if (v) out[prop] = v.slice(0, 128)
     }
-    // Short-hand ?ref=instagram / ?src=flyer behaves like utm_source.
-    const ref = q.get("ref") ?? q.get("src")
+    // Short-hand ?source=first_rollover / ?ref=instagram / ?src=flyer behaves like utm_source.
+    const ref = q.get("source") ?? q.get("ref") ?? q.get("src")
     if (ref && !out.utmSource) out.utmSource = ref.slice(0, 128)
     const click = CLICK_IDS.find((k) => q.has(k))
     if (click) out.clickId = click

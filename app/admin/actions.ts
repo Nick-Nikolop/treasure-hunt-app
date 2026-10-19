@@ -112,6 +112,7 @@ import {
   type CampaignRow,
   type CampaignStats,
 } from "@/lib/campaigns"
+import { listSources, type SourcesSnapshot } from "@/lib/source-hits"
 import { getEditableLeads, type EditableLead } from "@/lib/lead-content"
 import {
   COMPASS_LABELS,
@@ -288,6 +289,8 @@ export type AdminData = {
   hints: HintRow[]
   /** Trackable marketing links with visit summaries, newest first. */
   campaigns: CampaignRow[]
+  /** `?source=` link arrivals, rolled up per source + the latest hits. */
+  sources: SourcesSnapshot
   /** Lead options (order + country names) for the hint association dropdown. */
   leadOptions: { order: number; country: string; countryEn: string }[]
   /** Anti-cheat cooldown (seconds) enforced between consecutive QR solves. */
@@ -492,6 +495,7 @@ export async function getAdminData(): Promise<AdminData> {
     tokens: await getClueTokens(),
     hints: await listHints(),
     campaigns: await listCampaigns(),
+    sources: await listSources(),
     leadOptions: editableLeads.map((c) => ({
       order: c.order,
       country: c.country,

@@ -465,6 +465,76 @@ export const visitorTouch = pgTable(
   }),
 )
 
+// One row per arrival through a `?source=<name>` link (e.g. /carnival?source=first_rollover).
+// Recorded on every page, once per browser session per source+page, with everything the
+// request and browser reveal. Join to `analytics_event` by sessionId for what they did next,
+// and to `visitor` by anonId for whether that device later signed up.
+export const sourceHit = pgTable(
+  "source_hit",
+  {
+    id: text("id").primaryKey(),
+    source: text("source").notNull(),
+    /** Which query key carried it: "source" | "utm_source" | "ref" | "src". */
+    sourceKey: text("sourceKey"),
+    path: text("path").notNull(),
+    /** Every other query param on the URL, minus secrets (tokens, codes). */
+    query: jsonb("query"),
+    anonId: text("anonId"),
+    sessionId: text("sessionId"),
+    userId: text("userId"),
+    /** First time this device arrived via this source. */
+    isUnique: boolean("isUnique").notNull().default(true),
+    /** First time this network (hashed IP) arrived via this source. */
+    isUniqueIp: boolean("isUniqueIp").notNull().default(true),
+    /** Device had never visited the site before this hit. */
+    isNewVisitor: boolean("isNewVisitor").notNull().default(false),
+    /** Salted SHA-256 of the IP; never the raw address. */
+    ipHash: text("ipHash"),
+    country: text("country"),
+    region: text("region"),
+    city: text("city"),
+    postalCode: text("postalCode"),
+    latitude: doublePrecision("latitude"),
+    longitude: doublePrecision("longitude"),
+    ipTimezone: text("ipTimezone"),
+    referrer: text("referrer"),
+    referrerHost: text("referrerHost"),
+    userAgent: text("userAgent"),
+    device: text("device"),
+    deviceModel: text("deviceModel"),
+    browser: text("browser"),
+    browserVersion: text("browserVersion"),
+    os: text("os"),
+    osVersion: text("osVersion"),
+    /** In-app browser the link was opened in: "Instagram" | "Facebook" | "TikTok" | ... */
+    inApp: text("inApp"),
+    isBot: boolean("isBot").notNull().default(false),
+    language: text("language"),
+    languages: text("languages"),
+    acceptLanguage: text("acceptLanguage"),
+    timezone: text("timezone"),
+    screen: text("screen"),
+    viewport: text("viewport"),
+    pixelRatio: doublePrecision("pixelRatio"),
+    touch: boolean("touch"),
+    colorScheme: text("colorScheme"),
+    reducedMotion: boolean("reducedMotion"),
+    connection: text("connection"),
+    saveData: boolean("saveData"),
+    deviceMemory: doublePrecision("deviceMemory"),
+    cpuCores: integer("cpuCores"),
+    standalone: boolean("standalone"),
+    /** Visitor's local clock at arrival, e.g. "2026-10-19T21:04:11+03:00". */
+    localTime: text("localTime"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (t) => ({
+    sourceIdx: index("source_hit_source_idx").on(t.source),
+    anonIdIdx: index("source_hit_anonId_idx").on(t.anonId),
+    createdAtIdx: index("source_hit_createdAt_idx").on(t.createdAt),
+  }),
+)
+
 // Cookie/consent decisions. One row per decision a visitor makes in the cookie
 // banner, so we keep an auditable GDPR record of who consented to what and when.
 //
