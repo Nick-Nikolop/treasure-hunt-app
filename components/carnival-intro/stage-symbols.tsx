@@ -1,8 +1,8 @@
 "use client"
 
-import { ArrowDown, Eraser, RotateCcw } from "lucide-react"
+import { ArrowDown, Eraser, RotateCcw, Wand2 } from "lucide-react"
 import { useState } from "react"
-import { CODE_LENGTH, MANUAL_A, MONUMENT_SIDES, SYMBOL_IDS, SYMBOL_NAMES, type SymbolId } from "@/lib/carnival-intro/cipher"
+import { CODE_LENGTH, encodeWithManualA, MANUAL_A, MONUMENT_SIDES, SYMBOL_IDS, SYMBOL_NAMES, type SymbolId } from "@/lib/carnival-intro/cipher"
 import { cn } from "@/lib/utils"
 import { Recap } from "./recap"
 import { CipherSymbol } from "./symbols"
@@ -117,6 +117,18 @@ export function StageSymbols({
                 </p>
                 <div className="flex items-center gap-3">
                   <p className="font-sans text-xs text-[var(--cv-muted)]">Θέση {active + 1}</p>
+                  {/* TEMP: testing shortcut, fills every slot from the typed code via the slot rule. Remove before launch. */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSymbols(encodeWithManualA(code))
+                      setActive(CODE_LENGTH - 1)
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-[var(--cv-gold)]/60 px-3 py-1 font-sans text-xs font-bold text-[var(--cv-gold)] transition-colors hover:bg-[var(--cv-gold)]/10"
+                  >
+                    <Wand2 className="size-3.5" aria-hidden="true" />
+                    TEMP · Αυτόματο
+                  </button>
                   <button
                     type="button"
                     onClick={() => {
