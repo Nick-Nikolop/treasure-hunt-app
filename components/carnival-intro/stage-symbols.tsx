@@ -119,6 +119,125 @@ function ManualA({ page, onPage, active }: { page: number; onPage: (p: number) =
   )
 }
 
+function SlotGrid({
+  code,
+  symbols,
+  active,
+  onSelect,
+}: {
+  code: string[]
+  symbols: (SymbolId | null)[]
+  active: number
+  onSelect: (i: number) => void
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-x-3 gap-y-4 lg:grid-cols-4 xl:grid-cols-2">
+      {MONUMENT_SIDES.map((side, g) => (
+        <div key={side.code} className="flex flex-col gap-1.5">
+          <p className="font-sans text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--cv-muted)]">
+            {g + 1} · {side.short}
+          </p>
+          <div className="grid grid-cols-4 gap-1 sm:gap-1.5">
+            {[0, 1, 2, 3].map((k) => {
+              const i = g * 4 + k
+              const sym = symbols[i]
+              const isActive = i === active
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => onSelect(i)}
+                  aria-pressed={isActive}
+                  aria-label={`Θέση ${i + 1}, χαρακτήρας ${code[i] || "κενός"}, ${sym ? `σύμβολο ${SYMBOL_NAMES[sym]}` : "χωρίς σύμβολο"}`}
+                  className={cn(
+                    "flex flex-col items-center gap-0.5 rounded-lg border p-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--cv-gold)] sm:gap-1 sm:p-1.5",
+                    isActive
+                      ? "border-[var(--cv-gold)] bg-[var(--cv-gold)]/15"
+                      : "border-[var(--cv-gold)]/25 bg-[var(--cv-bg)]/60 hover:border-[var(--cv-gold)]/60",
+                  )}
+                >
+                  <span className="flex w-full items-baseline justify-between px-0.5">
+                    <span className="font-sans text-[9px] font-bold text-[var(--cv-muted)] sm:text-[10px]">{i + 1}</span>
+                    <span className="font-serif text-sm font-bold text-[var(--cv-ink)]">{code[i] || "·"}</span>
+                  </span>
+                  <span className="grid aspect-square w-full place-items-center">
+                    {sym ? (
+                      <CipherSymbol id={sym} className="size-5 text-[var(--cv-gold)] sm:size-7" />
+                    ) : (
+                      <span className="size-4 rounded-full border border-dashed border-[var(--cv-gold)]/40 sm:size-6" />
+                    )}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function SymbolPicker({
+  code,
+  symbols,
+  active,
+  onAssign,
+  className,
+}: {
+  code: string[]
+  symbols: (SymbolId | null)[]
+  active: number
+  onAssign: (id: SymbolId | null) => void
+  className?: string
+}) {
+  return (
+    <Panel className={cn("flex flex-col gap-3 border-[var(--cv-gold)]/45", className)}>
+      <div className="flex items-center justify-between gap-3">
+        <p className="flex items-baseline gap-2 font-sans text-sm font-bold text-[var(--cv-ink)]">
+          <span>Σύμβολο για τη θέση {active + 1}</span>
+          {code[active] && (
+            <span className="rounded-md bg-[var(--cv-gold)] px-2 py-0.5 font-serif text-base leading-none text-[var(--cv-deep)]">
+              {code[active]}
+            </span>
+          )}
+        </p>
+        <button
+          type="button"
+          onClick={() => onAssign(null)}
+          disabled={!symbols[active]}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-1 font-sans text-xs font-bold text-[var(--cv-muted)] transition-colors hover:text-[var(--cv-ink)] disabled:opacity-40"
+        >
+          <Eraser className="size-3.5" aria-hidden="true" />
+          Αφαίρεση
+        </button>
+      </div>
+      <div className="grid grid-cols-9 gap-1 sm:gap-1.5 xl:grid-cols-7" role="group" aria-label="Διαθέσιμα σύμβολα">
+        {SYMBOL_IDS.map((id) => {
+          const chosen = symbols[active] === id
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => onAssign(id)}
+              aria-pressed={chosen}
+              aria-label={SYMBOL_NAMES[id]}
+              title={SYMBOL_NAMES[id]}
+              className={cn(
+                "grid aspect-square place-items-center rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--cv-gold)]",
+                chosen
+                  ? "border-[var(--cv-gold)] bg-[var(--cv-gold)] text-[var(--cv-deep)]"
+                  : "border-[var(--cv-gold)]/25 text-[var(--cv-gold)] hover:bg-[var(--cv-gold)]/10",
+              )}
+            >
+              <CipherSymbol id={id} className="size-5 sm:size-7" />
+            </button>
+          )
+        })}
+      </div>
+    </Panel>
+  )
+}
+
 export function StageSymbols({
   code,
   symbols,
@@ -161,11 +280,13 @@ export function StageSymbols({
 
       <Recap code={code} onEditCode={onEditCode} />
 
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
-        <ManualA page={page} onPage={setPage} active={active} />
+      <div className="flex flex-col gap-4 xl:grid xl:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] xl:items-start xl:gap-6">
+        <div className="order-2 xl:order-none">
+          <ManualA page={page} onPage={setPage} active={active} />
+        </div>
 
-        <div className="flex flex-col gap-4 xl:sticky xl:top-6">
-          <Panel className="flex flex-col gap-5">
+        <div className="order-1 flex flex-col gap-4 xl:sticky xl:top-6 xl:order-none">
+          <Panel className="flex flex-col gap-4 sm:gap-5">
             <div className="flex flex-col gap-2">
               <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
                 <p className="font-sans text-sm font-bold text-[var(--cv-ink)]">
@@ -215,92 +336,20 @@ export function StageSymbols({
               </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-2">
-              {MONUMENT_SIDES.map((side, g) => (
-                <div key={side.code} className="flex flex-col gap-2">
-                  <p className="font-sans text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--cv-muted)]">
-                    {g + 1} · {side.short}
-                  </p>
-                  <div className="grid grid-cols-4 gap-1.5">
-                    {[0, 1, 2, 3].map((k) => {
-                      const i = g * 4 + k
-                      const sym = symbols[i]
-                      const isActive = i === active
-                      return (
-                        <button
-                          key={i}
-                          type="button"
-                          onClick={() => setActive(i)}
-                          aria-pressed={isActive}
-                          aria-label={`Θέση ${i + 1}, χαρακτήρας ${code[i] || "κενός"}, ${sym ? `σύμβολο ${SYMBOL_NAMES[sym]}` : "χωρίς σύμβολο"}`}
-                          className={cn(
-                            "flex flex-col items-center gap-1 rounded-lg border p-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--cv-gold)]",
-                            isActive
-                              ? "border-[var(--cv-gold)] bg-[var(--cv-gold)]/15"
-                              : "border-[var(--cv-gold)]/25 bg-[var(--cv-bg)]/60 hover:border-[var(--cv-gold)]/60",
-                          )}
-                        >
-                          <span className="flex w-full items-baseline justify-between px-0.5">
-                            <span className="font-sans text-[10px] font-bold text-[var(--cv-muted)]">{i + 1}</span>
-                            <span className="font-serif text-sm font-bold text-[var(--cv-ink)]">{code[i] || "·"}</span>
-                          </span>
-                          <span className="grid aspect-square w-full place-items-center">
-                            {sym ? (
-                              <CipherSymbol id={sym} className="size-7 text-[var(--cv-gold)]" />
-                            ) : (
-                              <span className="size-6 rounded-full border border-dashed border-[var(--cv-gold)]/40" />
-                            )}
-                          </span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <SlotGrid code={code} symbols={symbols} active={active} onSelect={setActive} />
           </Panel>
 
-          <Panel className="flex flex-col gap-3 border-[var(--cv-gold)]/45">
-            <div className="flex items-center justify-between gap-3">
-              <p className="font-sans text-sm font-bold text-[var(--cv-ink)]">
-                Σύμβολο για τη θέση {active + 1}
-                {code[active] ? ` (${code[active]})` : ""}
-              </p>
-              <button
-                type="button"
-                onClick={() => assign(null)}
-                disabled={!symbols[active]}
-                className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 font-sans text-xs font-bold text-[var(--cv-muted)] transition-colors hover:text-[var(--cv-ink)] disabled:opacity-40"
-              >
-                <Eraser className="size-3.5" aria-hidden="true" />
-                Αφαίρεση
-              </button>
-            </div>
-            <div className="grid grid-cols-7 gap-1 sm:grid-cols-9 sm:gap-1.5 xl:grid-cols-7" role="group" aria-label="Διαθέσιμα σύμβολα">
-              {SYMBOL_IDS.map((id) => {
-                const chosen = symbols[active] === id
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => assign(id)}
-                    aria-pressed={chosen}
-                    aria-label={SYMBOL_NAMES[id]}
-                    title={SYMBOL_NAMES[id]}
-                    className={cn(
-                      "grid aspect-square place-items-center rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--cv-gold)]",
-                      chosen
-                        ? "border-[var(--cv-gold)] bg-[var(--cv-gold)] text-[var(--cv-deep)]"
-                        : "border-[var(--cv-gold)]/25 text-[var(--cv-gold)] hover:bg-[var(--cv-gold)]/10",
-                    )}
-                  >
-                    <CipherSymbol id={id} className="size-6 sm:size-7" />
-                  </button>
-                )
-              })}
-            </div>
-          </Panel>
+          <SymbolPicker code={code} symbols={symbols} active={active} onAssign={assign} className="hidden xl:flex" />
         </div>
+
+        {/* Phones and tablets: the picker sits right under the manual and stays pinned to the bottom of the screen. */}
+        <SymbolPicker
+          code={code}
+          symbols={symbols}
+          active={active}
+          onAssign={assign}
+          className="sticky bottom-0 z-20 order-3 gap-2 rounded-b-none border-b-0 bg-[var(--cv-deep)] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-12px_32px_-8px_rgba(0,0,0,0.7)] xl:hidden"
+        />
       </div>
 
       <NextStepNotice
