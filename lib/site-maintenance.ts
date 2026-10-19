@@ -11,7 +11,7 @@ import { SITE_MAINTENANCE } from "@/lib/maintenance"
  * account get through, and both must still resolve as superadmin; every other
  * visitor, signed in or not, is held at the screen.
  */
-const OPEN_DURING_MAINTENANCE = ["/vote", "/brand", "/landing", "/landing2", "/landing3", "/carnival"]
+const OPEN_DURING_MAINTENANCE = ["/vote", "/brand", "/landing", "/landing2", "/landing3", "/carnival", "/carnival-intro"]
 
 function isOpenPath(pathname: string | null): boolean {
   if (!pathname) return false
