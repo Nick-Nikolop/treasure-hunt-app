@@ -1,0 +1,266 @@
+"use client"
+
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
+import { ChevronLeft, ChevronRight, Eraser } from "lucide-react"
+import { useState } from "react"
+import { CODE_LENGTH, MANUAL_A, MONUMENT_SIDES, SYMBOL_IDS, SYMBOL_NAMES, type SymbolId } from "@/lib/carnival-intro/cipher"
+import { cn } from "@/lib/utils"
+import { CipherSymbol } from "./symbols"
+import { EASE, Manuscript, NextStepNotice, Panel, StageHeading } from "./ui"
+
+const ORDINAL = ["1ος", "2ος", "3ος", "4ος"]
+
+function ManualA({ page, onPage, active }: { page: number; onPage: (p: number) => void; active: number }) {
+  const reduce = useReducedMotion()
+  const sheet = MANUAL_A[page]
+  const side = MONUMENT_SIDES[Math.floor(page / 4)]
+  return (
+    <Manuscript seal="Α" eyebrow="Εγχειρίδιο Α" title="Από τους χαρακτήρες στα σύμβολα">
+      <p className="mx-auto mb-5 max-w-[54ch] text-pretty text-center text-[15px] italic leading-relaxed text-[var(--cv-deep)]/80">
+        Κάθε θέση έχει τη δική της σελίδα με όλους τους χαρακτήρες. Το ίδιο γράμμα σε άλλη σελίδα κρύβει άλλο σύμβολο.
+      </p>
+
+      <nav aria-label="Σελίδες του Εγχειριδίου Α" className="mb-5 flex flex-col gap-3">
+        <div className="grid grid-cols-4 gap-2 sm:gap-3">
+          {MONUMENT_SIDES.map((s, g) => (
+            <div key={s.code} className="flex flex-col items-center gap-1">
+              <span className="font-sans text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--cv-deep)]/55">{s.short}</span>
+              <div className="grid w-full grid-cols-4 gap-0.5">
+                {[0, 1, 2, 3].map((k) => {
+                  const i = g * 4 + k
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => onPage(i)}
+                      aria-current={i === page ? "page" : undefined}
+                      aria-label={`Σελίδα θέσης ${i + 1}`}
+                      className={cn(
+                        "relative h-8 rounded-[3px] font-serif text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--cv-deep)]",
+                        i === page
+                          ? "bg-[var(--cv-deep)] text-[var(--cv-gold)]"
+                          : "bg-[var(--cv-deep)]/[0.07] text-[var(--cv-deep)]/75 hover:bg-[var(--cv-deep)]/15",
+                      )}
+                    >
+                      {i + 1}
+                      {i === active && i !== page && (
+                        <span aria-hidden="true" className="absolute -top-0.5 right-0.5 size-1.5 rounded-full bg-[var(--cv-gold)] ring-1 ring-[var(--cv-deep)]" />
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </nav>
+
+      <div className="flex items-center justify-between gap-3 border-y-2 border-double border-[var(--cv-deep)]/35 py-3">
+        <button
+          type="button"
+          onClick={() => onPage(Math.max(0, page - 1))}
+          disabled={page === 0}
+          aria-label="Προηγούμενη σελίδα"
+          className="grid size-9 place-items-center rounded-full text-[var(--cv-deep)] transition-colors hover:bg-[var(--cv-deep)]/10 disabled:opacity-30"
+        >
+          <ChevronLeft className="size-5" aria-hidden="true" />
+        </button>
+        <div className="text-center">
+          <p className="font-serif text-2xl font-bold sm:text-3xl" aria-live="polite">
+            Θέση {sheet.position}
+          </p>
+          <p className="font-sans text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--cv-deep)]/60">
+            {side.name} πλευρά · {ORDINAL[page % 4]} χαρακτήρας
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => onPage(Math.min(CODE_LENGTH - 1, page + 1))}
+          disabled={page === CODE_LENGTH - 1}
+          aria-label="Επόμενη σελίδα"
+          className="grid size-9 place-items-center rounded-full text-[var(--cv-deep)] transition-colors hover:bg-[var(--cv-deep)]/10 disabled:opacity-30"
+        >
+          <ChevronRight className="size-5" aria-hidden="true" />
+        </button>
+      </div>
+
+      <div className="[perspective:1400px]">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.dl
+            key={sheet.position}
+            className="grid origin-left grid-cols-3 gap-x-4 pt-2 sm:grid-cols-5 sm:gap-x-5"
+            initial={reduce ? { opacity: 0 } : { opacity: 0, rotateY: -14, x: 12 }}
+            animate={{ opacity: 1, rotateY: 0, x: 0 }}
+            exit={reduce ? { opacity: 0 } : { opacity: 0, rotateY: 10, x: -12 }}
+            transition={{ duration: 0.32, ease: EASE }}
+          >
+            {sheet.rows.map((row) => (
+              <div key={row.char} className="flex items-center justify-between gap-2 border-b border-dashed border-[var(--cv-deep)]/25 py-2.5">
+                <dt className="w-6 text-center font-serif text-2xl font-bold">{row.char}</dt>
+                <span aria-hidden="true" className="h-px min-w-2 flex-1 border-b border-dotted border-[var(--cv-deep)]/40" />
+                <dd>
+                  <CipherSymbol id={row.symbol} className="size-8" labelled />
+                </dd>
+              </div>
+            ))}
+          </motion.dl>
+        </AnimatePresence>
+      </div>
+    </Manuscript>
+  )
+}
+
+export function StageSymbols({
+  code,
+  symbols,
+  onSymbols,
+  onContinue,
+}: {
+  code: string[]
+  symbols: (SymbolId | null)[]
+  onSymbols: (next: (SymbolId | null)[]) => void
+  onContinue: () => void
+}) {
+  const [active, setActiveSlot] = useState(() => Math.max(0, symbols.findIndex((s) => !s)))
+  const [page, setPage] = useState(active)
+  const filled = symbols.filter(Boolean).length
+  const complete = filled === CODE_LENGTH
+
+  const setActive = (i: number) => {
+    setActiveSlot(i)
+    setPage(i)
+  }
+
+  const assign = (id: SymbolId | null) => {
+    const next = [...symbols]
+    next[active] = id
+    onSymbols(next)
+    if (!id) return
+    const after = next.findIndex((s, i) => i > active && !s)
+    const anyEmpty = next.findIndex((s) => !s)
+    setActive(after >= 0 ? after : anyEmpty >= 0 ? anyEmpty : active)
+  }
+
+  return (
+    <div className="flex flex-col gap-8">
+      <StageHeading kicker="Βήμα 2 από 5" title="Μετάτρεψε τους χαρακτήρες σε σύμβολα">
+        Διάλεξε μια θέση και το Εγχειρίδιο Α ανοίγει στη σελίδα της. Βρες εκεί τον χαρακτήρα σου και πάτα το σύμβολο που δείχνει.
+      </StageHeading>
+
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
+        <ManualA page={page} onPage={setPage} active={active} />
+
+        <div className="flex flex-col gap-4 xl:sticky xl:top-6">
+          <Panel className="flex flex-col gap-5">
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between gap-4">
+                <p className="font-sans text-sm font-bold text-[var(--cv-ink)]">
+                  {filled} / {CODE_LENGTH} σύμβολα
+                </p>
+                <p className="font-sans text-xs text-[var(--cv-muted)]">Θέση {active + 1}</p>
+              </div>
+              <div className="h-1.5 overflow-hidden rounded-full bg-[var(--cv-bg)]">
+                <div
+                  className="h-full rounded-full bg-[var(--cv-gold)] transition-[width] duration-500"
+                  style={{ width: `${(filled / CODE_LENGTH) * 100}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-2">
+              {MONUMENT_SIDES.map((side, g) => (
+                <div key={side.code} className="flex flex-col gap-2">
+                  <p className="font-sans text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--cv-muted)]">
+                    {g + 1} · {side.short}
+                  </p>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {[0, 1, 2, 3].map((k) => {
+                      const i = g * 4 + k
+                      const sym = symbols[i]
+                      const isActive = i === active
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setActive(i)}
+                          aria-pressed={isActive}
+                          aria-label={`Θέση ${i + 1}, χαρακτήρας ${code[i] || "κενός"}, ${sym ? `σύμβολο ${SYMBOL_NAMES[sym]}` : "χωρίς σύμβολο"}`}
+                          className={cn(
+                            "flex flex-col items-center gap-1 rounded-lg border p-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--cv-gold)]",
+                            isActive
+                              ? "border-[var(--cv-gold)] bg-[var(--cv-gold)]/15"
+                              : "border-[var(--cv-gold)]/25 bg-[var(--cv-bg)]/60 hover:border-[var(--cv-gold)]/60",
+                          )}
+                        >
+                          <span className="flex w-full items-baseline justify-between px-0.5">
+                            <span className="font-sans text-[10px] font-bold text-[var(--cv-muted)]">{i + 1}</span>
+                            <span className="font-serif text-sm font-bold text-[var(--cv-ink)]">{code[i] || "·"}</span>
+                          </span>
+                          <span className="grid aspect-square w-full place-items-center">
+                            {sym ? (
+                              <CipherSymbol id={sym} className="size-7 text-[var(--cv-gold)]" />
+                            ) : (
+                              <span className="size-6 rounded-full border border-dashed border-[var(--cv-gold)]/40" />
+                            )}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Panel>
+
+          <Panel className="sticky bottom-3 z-10 flex flex-col gap-3 border-[var(--cv-gold)]/45 bg-[var(--cv-deep)]/95 xl:static">
+            <div className="flex items-center justify-between gap-3">
+              <p className="font-sans text-sm font-bold text-[var(--cv-ink)]">
+                Σύμβολο για τη θέση {active + 1}
+                {code[active] ? ` (${code[active]})` : ""}
+              </p>
+              <button
+                type="button"
+                onClick={() => assign(null)}
+                disabled={!symbols[active]}
+                className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 font-sans text-xs font-bold text-[var(--cv-muted)] transition-colors hover:text-[var(--cv-ink)] disabled:opacity-40"
+              >
+                <Eraser className="size-3.5" aria-hidden="true" />
+                Αφαίρεση
+              </button>
+            </div>
+            <div className="grid grid-cols-7 gap-1 sm:grid-cols-9 sm:gap-1.5 xl:grid-cols-7" role="group" aria-label="Διαθέσιμα σύμβολα">
+              {SYMBOL_IDS.map((id) => {
+                const chosen = symbols[active] === id
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => assign(id)}
+                    aria-pressed={chosen}
+                    aria-label={SYMBOL_NAMES[id]}
+                    title={SYMBOL_NAMES[id]}
+                    className={cn(
+                      "grid aspect-square place-items-center rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--cv-gold)]",
+                      chosen
+                        ? "border-[var(--cv-gold)] bg-[var(--cv-gold)] text-[var(--cv-deep)]"
+                        : "border-[var(--cv-gold)]/25 text-[var(--cv-gold)] hover:bg-[var(--cv-gold)]/10",
+                    )}
+                  >
+                    <CipherSymbol id={id} className="size-6 sm:size-7" />
+                  </button>
+                )
+              })}
+            </div>
+          </Panel>
+        </div>
+      </div>
+
+      <NextStepNotice
+        show={complete}
+        note="Έβαλες σύμβολο και στις 16 θέσεις. Αυτό δεν σημαίνει ότι είναι όλα σωστά: θα το μάθεις μόνο στο τελευταίο βήμα."
+        actionLabel="Δες την ακολουθία σου"
+        onContinue={onContinue}
+      />
+    </div>
+  )
+}
