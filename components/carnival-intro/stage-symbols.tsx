@@ -8,6 +8,9 @@ import { Recap } from "./recap"
 import { CipherSymbol } from "./symbols"
 import { EASE, Manuscript, NextStepNotice, Panel, StageHeading } from "./ui"
 
+const MANUAL_A_SYMBOLS = new Set<SymbolId>(MANUAL_A.map((row) => row.symbol))
+const PICKER_SYMBOLS = SYMBOL_IDS.filter((id) => MANUAL_A_SYMBOLS.has(id))
+
 const ALPHA_INDEX = MANUAL_A.map((row, i) => ({ char: row.char, row: i + 1 })).sort((a, b) =>
   a.char === "-" ? 1 : b.char === "-" ? -1 : a.char.localeCompare(b.char, "el"),
 )
@@ -230,7 +233,7 @@ export function StageSymbols({
               </button>
             </div>
             <div className="grid grid-cols-7 gap-1 sm:grid-cols-9 sm:gap-1.5 xl:grid-cols-7" role="group" aria-label="Διαθέσιμα σύμβολα">
-              {SYMBOL_IDS.map((id) => {
+              {PICKER_SYMBOLS.map((id) => {
                 const chosen = symbols[active] === id
                 return (
                   <button
