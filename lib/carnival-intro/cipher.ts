@@ -6,7 +6,7 @@
  * Flow: 16 monument characters -> Manual A (position-aware) -> 16 symbols
  *       -> Manual B (fixed symbol -> letter) -> 16 letters.
  */
-import { MANUAL_A_ROWS } from "./manual-a"
+import { MANUAL_A_PAGES } from "./manual-a"
 
 /** Every character a manual knows: the 24 Greek capitals plus the dash. */
 export const CHARSET = [
@@ -59,17 +59,12 @@ export const MONUMENT_SIDES = [
 ] as const
 
 /**
- * Manual A: one page of 25 rows (character + symbol). The slot rule makes it position-aware:
- * from your character, move down `slot` rows (wrapping to the top) and take that row's symbol.
+ * Manual A, one page per position: all 25 characters, each with a different symbol.
+ * Built from the fixed printed table so nothing here marks which character is the right one.
  */
-export const MANUAL_A = MANUAL_A_ROWS
-
-/** Row reached from `char` at 1-based `slot`, or -1 for an unknown character. */
-export function manualARowFor(char: string, slot: number): number {
-  const start = MANUAL_A.findIndex((r) => r.char === char)
-  if (start < 0) return -1
-  return (((start + slot) % MANUAL_A.length) + MANUAL_A.length) % MANUAL_A.length
-}
+export const MANUAL_A: { position: number; rows: { char: string; symbol: SymbolId }[] }[] = MANUAL_A_PAGES.map(
+  (page, i) => ({ position: i + 1, rows: CHARSET.map((char, k) => ({ char, symbol: page[k] })) }),
+)
 
 /** Manual B: one fixed character per symbol, covering all 25 characters. */
 export const MANUAL_B: Record<SymbolId, string> = {
@@ -135,9 +130,9 @@ export function normalizeText(raw: string): string[] {
 
 /** Reference conversion used by the self-check script; the page never auto-converts for the player. */
 export function encodeWithManualA(code: string[]): (SymbolId | null)[] {
-  return Array.from({ length: CODE_LENGTH }, (_, i) => {
-    const row = manualARowFor(normalizeChar(code[i] ?? ""), i + 1)
-    return row < 0 ? null : MANUAL_A[row].symbol
+  return MANUAL_A.map((page, i) => {
+    const ch = normalizeChar(code[i] ?? "")
+    return page.rows.find((r) => r.char === ch)?.symbol ?? null
   })
 }
 

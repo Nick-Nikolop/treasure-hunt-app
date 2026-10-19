@@ -1,81 +1,120 @@
 "use client"
 
-import { Eraser, Plus, RotateCcw, Wand2 } from "lucide-react"
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
+import { ChevronLeft, ChevronRight, Eraser, RotateCcw, Wand2 } from "lucide-react"
 import { useState } from "react"
-import { CODE_LENGTH, encodeWithManualA, MANUAL_A, MONUMENT_SIDES, SYMBOL_IDS, SYMBOL_NAMES, type SymbolId } from "@/lib/carnival-intro/cipher"
+import {
+  CODE_LENGTH,
+  encodeWithManualA,
+  MANUAL_A,
+  MONUMENT_SIDES,
+  SYMBOL_IDS,
+  SYMBOL_NAMES,
+  type SymbolId,
+} from "@/lib/carnival-intro/cipher"
 import { cn } from "@/lib/utils"
 import { Recap } from "./recap"
 import { CipherSymbol } from "./symbols"
 import { EASE, Manuscript, NextStepNotice, Panel, StageHeading } from "./ui"
 
-const MANUAL_A_SYMBOLS = new Set<SymbolId>(MANUAL_A.map((row) => row.symbol))
-const PICKER_SYMBOLS = SYMBOL_IDS.filter((id) => MANUAL_A_SYMBOLS.has(id))
+const ORDINAL = ["1ος", "2ος", "3ος", "4ος"]
 
-const ALPHA_INDEX = MANUAL_A.map((row, i) => ({ char: row.char, row: i + 1 })).sort((a, b) =>
-  a.char === "-" ? 1 : b.char === "-" ? -1 : a.char.localeCompare(b.char, "el"),
-)
-
-function ManualA({ active }: { active: number }) {
-  const slot = active + 1
+function ManualA({ page, onPage, active }: { page: number; onPage: (p: number) => void; active: number }) {
+  const reduce = useReducedMotion()
+  const sheet = MANUAL_A[page]
+  const side = MONUMENT_SIDES[Math.floor(page / 4)]
   return (
     <Manuscript seal="Α" eyebrow="Εγχειρίδιο Α" title="Από τους χαρακτήρες στα σύμβολα">
-      <ol className="mx-auto mb-6 flex max-w-[60ch] flex-col gap-2 text-[15px] leading-relaxed text-[var(--cv-deep)]/85">
-        {[
-          "Βρες τον αριθμό του χαρακτήρα σου στη λίστα «Χαρακτήρες».",
-          "Πρόσθεσε τον αριθμό της θέσης του. Αν το άθροισμα περάσει το 25, αφαίρεσε 25.",
-          "Το σύμβολο με αυτόν τον αριθμό στη λίστα «Σύμβολα» είναι το δικό σου.",
-        ].map((text, i) => (
-          <li key={text} className="flex items-start gap-3">
-            <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-[var(--cv-deep)] font-sans text-xs font-bold text-[var(--cv-gold)]">
-              {i + 1}
-            </span>
-            <span className="text-pretty">{text}</span>
-          </li>
-        ))}
-      </ol>
-
-      <p
-        className="mx-auto mb-6 flex w-fit items-center gap-2 rounded-full border border-[var(--cv-deep)]/30 px-4 py-1.5 font-sans text-xs font-bold text-[var(--cv-deep)]"
-        aria-live="polite"
-      >
-        Θέση {slot}
-        <Plus className="size-3.5" aria-hidden="true" />
-        πρόσθεσε {slot}
+      <p className="mx-auto mb-5 max-w-[54ch] text-pretty text-center text-[15px] italic leading-relaxed text-[var(--cv-deep)]/80">
+        Κάθε θέση έχει τη δική της σελίδα με όλους τους χαρακτήρες. Το ίδιο γράμμα σε άλλη σελίδα κρύβει άλλο σύμβολο.
       </p>
 
-      <section aria-labelledby="ci-manual-a-chars" className="mb-6">
-        <h3
-          id="ci-manual-a-chars"
-          className="mb-3 border-b-2 border-double border-[var(--cv-deep)]/35 pb-2 text-center font-sans text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--cv-deep)]/70"
-        >
-          Χαρακτηρες
-        </h3>
-        <dl className="grid grid-cols-5 gap-1.5 sm:grid-cols-[repeat(13,minmax(0,1fr))]">
-          {ALPHA_INDEX.map((entry) => (
-            <div key={entry.char} className="flex flex-col items-center rounded-[3px] bg-[var(--cv-deep)]/[0.06] py-1.5">
-              <dt className="font-serif text-xl font-bold leading-none">{entry.char}</dt>
-              <dd className="mt-1 font-sans text-xs font-bold tabular-nums text-[var(--cv-deep)]/65">{entry.row}</dd>
+      <nav aria-label="Σελίδες του Εγχειριδίου Α" className="mb-5 flex flex-col gap-3">
+        <div className="grid grid-cols-4 gap-2 sm:gap-3">
+          {MONUMENT_SIDES.map((s, g) => (
+            <div key={s.code} className="flex flex-col items-center gap-1">
+              <span className="font-sans text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--cv-deep)]/55">{s.short}</span>
+              <div className="grid w-full grid-cols-4 gap-0.5">
+                {[0, 1, 2, 3].map((k) => {
+                  const i = g * 4 + k
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => onPage(i)}
+                      aria-current={i === page ? "page" : undefined}
+                      aria-label={`Σελίδα θέσης ${i + 1}`}
+                      className={cn(
+                        "relative h-8 rounded-[3px] font-serif text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--cv-deep)]",
+                        i === page
+                          ? "bg-[var(--cv-deep)] text-[var(--cv-gold)]"
+                          : "bg-[var(--cv-deep)]/[0.07] text-[var(--cv-deep)]/75 hover:bg-[var(--cv-deep)]/15",
+                      )}
+                    >
+                      {i + 1}
+                      {i === active && i !== page && (
+                        <span aria-hidden="true" className="absolute -top-0.5 right-0.5 size-1.5 rounded-full bg-[var(--cv-gold)] ring-1 ring-[var(--cv-deep)]" />
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           ))}
-        </dl>
-      </section>
+        </div>
+      </nav>
 
-      <section aria-labelledby="ci-manual-a-symbols">
-        <h3
-          id="ci-manual-a-symbols"
-          className="mb-3 border-b-2 border-double border-[var(--cv-deep)]/35 pb-2 text-center font-sans text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--cv-deep)]/70"
+      <div className="flex items-center justify-between gap-3 border-y-2 border-double border-[var(--cv-deep)]/35 py-3">
+        <button
+          type="button"
+          onClick={() => onPage(Math.max(0, page - 1))}
+          disabled={page === 0}
+          aria-label="Προηγούμενη σελίδα"
+          className="grid size-9 place-items-center rounded-full text-[var(--cv-deep)] transition-colors hover:bg-[var(--cv-deep)]/10 disabled:opacity-30"
         >
-          Συμβολα
-        </h3>
-        <ol className="grid grid-cols-5 gap-1.5 sm:grid-cols-[repeat(13,minmax(0,1fr))]">
-          {MANUAL_A.map((row, i) => (
-            <li key={row.char} className="flex flex-col items-center gap-1 rounded-[3px] border border-[var(--cv-deep)]/15 py-2">
-              <span className="font-sans text-xs font-bold tabular-nums text-[var(--cv-deep)]/65">{i + 1}</span>
-              <CipherSymbol id={row.symbol} className="size-7 sm:size-8" labelled />
-            </li>
-          ))}
-        </ol>
-      </section>
+          <ChevronLeft className="size-5" aria-hidden="true" />
+        </button>
+        <div className="text-center">
+          <p className="font-serif text-2xl font-bold sm:text-3xl" aria-live="polite">
+            Θέση {sheet.position}
+          </p>
+          <p className="font-sans text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--cv-deep)]/60">
+            {side.name} πλευρά · {ORDINAL[page % 4]} χαρακτήρας
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => onPage(Math.min(CODE_LENGTH - 1, page + 1))}
+          disabled={page === CODE_LENGTH - 1}
+          aria-label="Επόμενη σελίδα"
+          className="grid size-9 place-items-center rounded-full text-[var(--cv-deep)] transition-colors hover:bg-[var(--cv-deep)]/10 disabled:opacity-30"
+        >
+          <ChevronRight className="size-5" aria-hidden="true" />
+        </button>
+      </div>
+
+      <div className="[perspective:1400px]">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.dl
+            key={sheet.position}
+            className="grid origin-left grid-cols-3 gap-x-4 pt-2 sm:grid-cols-5 sm:gap-x-5"
+            initial={reduce ? { opacity: 0 } : { opacity: 0, rotateY: -14, x: 12 }}
+            animate={{ opacity: 1, rotateY: 0, x: 0 }}
+            exit={reduce ? { opacity: 0 } : { opacity: 0, rotateY: 10, x: -12 }}
+            transition={{ duration: 0.32, ease: EASE }}
+          >
+            {sheet.rows.map((row) => (
+              <div key={row.char} className="flex items-center justify-between gap-2 border-b border-dashed border-[var(--cv-deep)]/25 py-2.5">
+                <dt className="w-6 text-center font-serif text-2xl font-bold">{row.char}</dt>
+                <span aria-hidden="true" className="h-px min-w-2 flex-1 border-b border-dotted border-[var(--cv-deep)]/40" />
+                <dd>
+                  <CipherSymbol id={row.symbol} className="size-8" labelled />
+                </dd>
+              </div>
+            ))}
+          </motion.dl>
+        </AnimatePresence>
+      </div>
     </Manuscript>
   )
 }
@@ -93,10 +132,16 @@ export function StageSymbols({
   onEditCode: () => void
   onContinue: () => void
 }) {
-  const [active, setActive] = useState(() => Math.max(0, symbols.findIndex((s) => !s)))
+  const [active, setActiveSlot] = useState(() => Math.max(0, symbols.findIndex((s) => !s)))
+  const [page, setPage] = useState(active)
   const [confirmClear, setConfirmClear] = useState(false)
   const filled = symbols.filter(Boolean).length
   const complete = filled === CODE_LENGTH
+
+  const setActive = (i: number) => {
+    setActiveSlot(i)
+    setPage(i)
+  }
 
   const assign = (id: SymbolId | null) => {
     const next = [...symbols]
@@ -111,25 +156,24 @@ export function StageSymbols({
   return (
     <div className="flex flex-col gap-6">
       <StageHeading kicker="Βήμα 2 από 3" title="Μετάτρεψε τους χαρακτήρες σε σύμβολα">
-        Διάλεξε μια θέση, πρόσθεσε τον αριθμό του χαρακτήρα της στον αριθμό της θέσης και πάτα το σύμβολο με αυτόν τον αριθμό
-        στο Εγχειρίδιο Α.
+        Διάλεξε μια θέση και το Εγχειρίδιο Α ανοίγει στη σελίδα της. Βρες εκεί τον χαρακτήρα σου και πάτα το σύμβολο που δείχνει.
       </StageHeading>
 
       <Recap code={code} onEditCode={onEditCode} />
 
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
-        <ManualA active={active} />
+        <ManualA page={page} onPage={setPage} active={active} />
 
         <div className="flex flex-col gap-4 xl:sticky xl:top-6">
           <Panel className="flex flex-col gap-5">
             <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between gap-4">
+              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
                 <p className="font-sans text-sm font-bold text-[var(--cv-ink)]">
                   {filled} / {CODE_LENGTH} σύμβολα
                 </p>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2">
                   <p className="font-sans text-xs text-[var(--cv-muted)]">Θέση {active + 1}</p>
-                  {/* TEMP: testing shortcut, fills every slot from the typed code via the slot rule. Remove before launch. */}
+                  {/* TEMP: testing shortcut, fills every slot from the typed code. Remove before launch. */}
                   <button
                     type="button"
                     onClick={() => {
@@ -233,7 +277,7 @@ export function StageSymbols({
               </button>
             </div>
             <div className="grid grid-cols-7 gap-1 sm:grid-cols-9 sm:gap-1.5 xl:grid-cols-7" role="group" aria-label="Διαθέσιμα σύμβολα">
-              {PICKER_SYMBOLS.map((id) => {
+              {SYMBOL_IDS.map((id) => {
                 const chosen = symbols[active] === id
                 return (
                   <button
