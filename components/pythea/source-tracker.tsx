@@ -12,7 +12,6 @@ const LAST_SOURCE = "th_source_last"
 
 type NavigatorExtras = Navigator & {
   connection?: { effectiveType?: string; saveData?: boolean }
-  deviceMemory?: number
   standalone?: boolean
 }
 
@@ -87,8 +86,6 @@ export function SourceTracker() {
       reducedMotion: media("(prefers-reduced-motion: reduce)"),
       connection: nav.connection?.effectiveType ?? null,
       saveData: nav.connection?.saveData ?? null,
-      deviceMemory: nav.deviceMemory ?? null,
-      cpuCores: navigator.hardwareConcurrency ?? null,
       standalone: media("(display-mode: standalone)") || nav.standalone === true,
       localTime: localTimestamp(new Date()),
     }

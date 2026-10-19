@@ -34,8 +34,6 @@ export type SourceClientInfo = {
   reducedMotion?: unknown
   connection?: unknown
   saveData?: unknown
-  deviceMemory?: unknown
-  cpuCores?: unknown
   standalone?: unknown
   localTime?: unknown
 }
@@ -49,9 +47,6 @@ export type SourceServerInfo = {
     country: string | null
     region: string | null
     city: string | null
-    postalCode: string | null
-    latitude: number | null
-    longitude: number | null
     timezone: string | null
   }
 }
@@ -200,9 +195,6 @@ export async function recordSourceHit(c: SourceClientInfo, s: SourceServerInfo):
       country: s.geo.country,
       region: s.geo.region,
       city: s.geo.city,
-      postalCode: s.geo.postalCode,
-      latitude: s.geo.latitude,
-      longitude: s.geo.longitude,
       ipTimezone: s.geo.timezone,
       referrer,
       referrerHost: hostOf(referrer),
@@ -227,8 +219,6 @@ export async function recordSourceHit(c: SourceClientInfo, s: SourceServerInfo):
       reducedMotion: bool(c.reducedMotion),
       connection: str(c.connection, 16),
       saveData: bool(c.saveData),
-      deviceMemory: num(c.deviceMemory),
-      cpuCores: num(c.cpuCores) === null ? null : Math.round(num(c.cpuCores) as number),
       standalone: bool(c.standalone),
       localTime: str(c.localTime, 40),
       createdAt: new Date(),

@@ -493,9 +493,6 @@ export const sourceHit = pgTable(
     country: text("country"),
     region: text("region"),
     city: text("city"),
-    postalCode: text("postalCode"),
-    latitude: doublePrecision("latitude"),
-    longitude: doublePrecision("longitude"),
     ipTimezone: text("ipTimezone"),
     referrer: text("referrer"),
     referrerHost: text("referrerHost"),
@@ -521,8 +518,6 @@ export const sourceHit = pgTable(
     reducedMotion: boolean("reducedMotion"),
     connection: text("connection"),
     saveData: boolean("saveData"),
-    deviceMemory: doublePrecision("deviceMemory"),
-    cpuCores: integer("cpuCores"),
     standalone: boolean("standalone"),
     /** Visitor's local clock at arrival, e.g. "2026-10-19T21:04:11+03:00". */
     localTime: text("localTime"),
