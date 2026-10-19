@@ -10,6 +10,10 @@ import { EASE, Manuscript, NextStepNotice, Panel, StageHeading } from "./ui"
 
 const HALF = Math.ceil(MANUAL_A.length / 2)
 
+const ALPHA_INDEX = MANUAL_A.map((row, i) => ({ char: row.char, row: i + 1 })).sort((a, b) =>
+  a.char === "-" ? 1 : b.char === "-" ? -1 : a.char.localeCompare(b.char, "el"),
+)
+
 function ManualA({ active }: { active: number }) {
   const slot = active + 1
   return (
@@ -28,6 +32,23 @@ function ManualA({ active }: { active: number }) {
           κατέβα {slot} {slot === 1 ? "γραμμή" : "γραμμές"}
         </p>
       </div>
+
+      <section aria-label="Ευρετήριο: σε ποια γραμμή βρίσκεται κάθε χαρακτήρας" className="mb-4">
+        <p className="mb-2 text-center font-sans text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--cv-deep)]/55">
+          Ευρετηριο
+        </p>
+        <dl className="grid grid-cols-5 gap-1 sm:grid-cols-[repeat(13,minmax(0,1fr))]">
+          {ALPHA_INDEX.map((entry) => (
+            <div
+              key={entry.char}
+              className="flex items-baseline justify-center gap-1 rounded-[3px] bg-[var(--cv-deep)]/[0.06] py-1"
+            >
+              <dt className="font-serif text-base font-bold">{entry.char}</dt>
+              <dd className="font-sans text-[11px] font-bold tabular-nums text-[var(--cv-deep)]/60">{entry.row}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
 
       <ol
         className="grid grid-flow-col grid-cols-2 gap-x-5 border-t-2 border-double border-[var(--cv-deep)]/35 pt-2 sm:gap-x-8"
