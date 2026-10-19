@@ -1,14 +1,12 @@
 "use client"
 
-import { ArrowDown, Eraser, RotateCcw, Wand2 } from "lucide-react"
+import { Eraser, Plus, RotateCcw, Wand2 } from "lucide-react"
 import { useState } from "react"
 import { CODE_LENGTH, encodeWithManualA, MANUAL_A, MONUMENT_SIDES, SYMBOL_IDS, SYMBOL_NAMES, type SymbolId } from "@/lib/carnival-intro/cipher"
 import { cn } from "@/lib/utils"
 import { Recap } from "./recap"
 import { CipherSymbol } from "./symbols"
 import { EASE, Manuscript, NextStepNotice, Panel, StageHeading } from "./ui"
-
-const HALF = Math.ceil(MANUAL_A.length / 2)
 
 const ALPHA_INDEX = MANUAL_A.map((row, i) => ({ char: row.char, row: i + 1 })).sort((a, b) =>
   a.char === "-" ? 1 : b.char === "-" ? -1 : a.char.localeCompare(b.char, "el"),
@@ -18,52 +16,63 @@ function ManualA({ active }: { active: number }) {
   const slot = active + 1
   return (
     <Manuscript seal="Α" eyebrow="Εγχειρίδιο Α" title="Από τους χαρακτήρες στα σύμβολα">
-      <div className="mx-auto mb-5 flex max-w-[58ch] flex-col gap-3 text-center">
-        <p className="text-pretty text-[15px] italic leading-relaxed text-[var(--cv-deep)]/80">
-          Βρες τον χαρακτήρα σου και κατέβα τόσες γραμμές όσος είναι ο αριθμός της θέσης του. Το σύμβολο εκείνης της γραμμής
-          είναι το δικό σου. Αν φτάσεις στο τέλος, συνέχισε από την αρχή.
-        </p>
-        <p
-          className="mx-auto inline-flex items-center gap-2 rounded-full border border-[var(--cv-deep)]/30 px-4 py-1.5 font-sans text-xs font-bold text-[var(--cv-deep)]"
-          aria-live="polite"
-        >
-          Θέση {slot}
-          <ArrowDown className="size-3.5" aria-hidden="true" />
-          κατέβα {slot} {slot === 1 ? "γραμμή" : "γραμμές"}
-        </p>
-      </div>
+      <ol className="mx-auto mb-6 flex max-w-[60ch] flex-col gap-2 text-[15px] leading-relaxed text-[var(--cv-deep)]/85">
+        {[
+          "Βρες τον αριθμό του χαρακτήρα σου στη λίστα «Χαρακτήρες».",
+          "Πρόσθεσε τον αριθμό της θέσης του. Αν το άθροισμα περάσει το 25, αφαίρεσε 25.",
+          "Το σύμβολο με αυτόν τον αριθμό στη λίστα «Σύμβολα» είναι το δικό σου.",
+        ].map((text, i) => (
+          <li key={text} className="flex items-start gap-3">
+            <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-[var(--cv-deep)] font-sans text-xs font-bold text-[var(--cv-gold)]">
+              {i + 1}
+            </span>
+            <span className="text-pretty">{text}</span>
+          </li>
+        ))}
+      </ol>
 
-      <section aria-label="Ευρετήριο: σε ποια γραμμή βρίσκεται κάθε χαρακτήρας" className="mb-4">
-        <p className="mb-2 text-center font-sans text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--cv-deep)]/55">
-          Ευρετηριο
-        </p>
-        <dl className="grid grid-cols-5 gap-1 sm:grid-cols-[repeat(13,minmax(0,1fr))]">
+      <p
+        className="mx-auto mb-6 flex w-fit items-center gap-2 rounded-full border border-[var(--cv-deep)]/30 px-4 py-1.5 font-sans text-xs font-bold text-[var(--cv-deep)]"
+        aria-live="polite"
+      >
+        Θέση {slot}
+        <Plus className="size-3.5" aria-hidden="true" />
+        πρόσθεσε {slot}
+      </p>
+
+      <section aria-labelledby="ci-manual-a-chars" className="mb-6">
+        <h3
+          id="ci-manual-a-chars"
+          className="mb-3 border-b-2 border-double border-[var(--cv-deep)]/35 pb-2 text-center font-sans text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--cv-deep)]/70"
+        >
+          Χαρακτηρες
+        </h3>
+        <dl className="grid grid-cols-5 gap-1.5 sm:grid-cols-[repeat(13,minmax(0,1fr))]">
           {ALPHA_INDEX.map((entry) => (
-            <div
-              key={entry.char}
-              className="flex items-baseline justify-center gap-1 rounded-[3px] bg-[var(--cv-deep)]/[0.06] py-1"
-            >
-              <dt className="font-serif text-base font-bold">{entry.char}</dt>
-              <dd className="font-sans text-[11px] font-bold tabular-nums text-[var(--cv-deep)]/60">{entry.row}</dd>
+            <div key={entry.char} className="flex flex-col items-center rounded-[3px] bg-[var(--cv-deep)]/[0.06] py-1.5">
+              <dt className="font-serif text-xl font-bold leading-none">{entry.char}</dt>
+              <dd className="mt-1 font-sans text-xs font-bold tabular-nums text-[var(--cv-deep)]/65">{entry.row}</dd>
             </div>
           ))}
         </dl>
       </section>
 
-      <ol
-        className="grid grid-flow-col grid-cols-2 gap-x-5 border-t-2 border-double border-[var(--cv-deep)]/35 pt-2 sm:gap-x-8"
-        style={{ gridTemplateRows: `repeat(${HALF}, minmax(0, auto))` }}
-        aria-label="Εγχειρίδιο Α, μία σελίδα"
-      >
-        {MANUAL_A.map((row, i) => (
-          <li key={row.char} className="flex items-center gap-2 border-b border-dashed border-[var(--cv-deep)]/25 py-1.5 sm:gap-3">
-            <span className="w-5 shrink-0 text-right font-sans text-[11px] font-bold tabular-nums text-[var(--cv-deep)]/50">{i + 1}</span>
-            <span className="w-6 text-center font-serif text-xl font-bold sm:text-2xl">{row.char}</span>
-            <span aria-hidden="true" className="h-px min-w-2 flex-1 border-b border-dotted border-[var(--cv-deep)]/40" />
-            <CipherSymbol id={row.symbol} className="size-7 sm:size-8" labelled />
-          </li>
-        ))}
-      </ol>
+      <section aria-labelledby="ci-manual-a-symbols">
+        <h3
+          id="ci-manual-a-symbols"
+          className="mb-3 border-b-2 border-double border-[var(--cv-deep)]/35 pb-2 text-center font-sans text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--cv-deep)]/70"
+        >
+          Συμβολα
+        </h3>
+        <ol className="grid grid-cols-5 gap-1.5 sm:grid-cols-[repeat(13,minmax(0,1fr))]">
+          {MANUAL_A.map((row, i) => (
+            <li key={row.char} className="flex flex-col items-center gap-1 rounded-[3px] border border-[var(--cv-deep)]/15 py-2">
+              <span className="font-sans text-xs font-bold tabular-nums text-[var(--cv-deep)]/65">{i + 1}</span>
+              <CipherSymbol id={row.symbol} className="size-7 sm:size-8" labelled />
+            </li>
+          ))}
+        </ol>
+      </section>
     </Manuscript>
   )
 }
@@ -99,8 +108,8 @@ export function StageSymbols({
   return (
     <div className="flex flex-col gap-6">
       <StageHeading kicker="Βήμα 2 από 3" title="Μετάτρεψε τους χαρακτήρες σε σύμβολα">
-        Διάλεξε μια θέση, βρες τον χαρακτήρα της στο Εγχειρίδιο Α και κατέβα όσες γραμμές λέει ο αριθμός της θέσης. Πάτα το
-        σύμβολο που βρήκες.
+        Διάλεξε μια θέση, πρόσθεσε τον αριθμό του χαρακτήρα της στον αριθμό της θέσης και πάτα το σύμβολο με αυτόν τον αριθμό
+        στο Εγχειρίδιο Α.
       </StageHeading>
 
       <Recap code={code} onEditCode={onEditCode} />
