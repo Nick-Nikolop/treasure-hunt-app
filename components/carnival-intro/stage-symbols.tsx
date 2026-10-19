@@ -1,7 +1,6 @@
 "use client"
 
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
-import { ChevronLeft, ChevronRight, Eraser } from "lucide-react"
+import { ArrowDown, Eraser } from "lucide-react"
 import { useState } from "react"
 import { CODE_LENGTH, MANUAL_A, MONUMENT_SIDES, SYMBOL_IDS, SYMBOL_NAMES, type SymbolId } from "@/lib/carnival-intro/cipher"
 import { cn } from "@/lib/utils"
@@ -9,104 +8,41 @@ import { Recap } from "./recap"
 import { CipherSymbol } from "./symbols"
 import { EASE, Manuscript, NextStepNotice, Panel, StageHeading } from "./ui"
 
-const ORDINAL = ["1ος", "2ος", "3ος", "4ος"]
+const HALF = Math.ceil(MANUAL_A.length / 2)
 
-function ManualA({ page, onPage, active }: { page: number; onPage: (p: number) => void; active: number }) {
-  const reduce = useReducedMotion()
-  const sheet = MANUAL_A[page]
-  const side = MONUMENT_SIDES[Math.floor(page / 4)]
+function ManualA({ active }: { active: number }) {
+  const slot = active + 1
   return (
     <Manuscript seal="Α" eyebrow="Εγχειρίδιο Α" title="Από τους χαρακτήρες στα σύμβολα">
-      <p className="mx-auto mb-5 max-w-[54ch] text-pretty text-center text-[15px] italic leading-relaxed text-[var(--cv-deep)]/80">
-        Κάθε θέση έχει τη δική της σελίδα με όλους τους χαρακτήρες. Το ίδιο γράμμα σε άλλη σελίδα κρύβει άλλο σύμβολο.
-      </p>
-
-      <nav aria-label="Σελίδες του Εγχειριδίου Α" className="mb-5 flex flex-col gap-3">
-        <div className="grid grid-cols-4 gap-2 sm:gap-3">
-          {MONUMENT_SIDES.map((s, g) => (
-            <div key={s.code} className="flex flex-col items-center gap-1">
-              <span className="font-sans text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--cv-deep)]/55">{s.short}</span>
-              <div className="grid w-full grid-cols-4 gap-0.5">
-                {[0, 1, 2, 3].map((k) => {
-                  const i = g * 4 + k
-                  return (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => onPage(i)}
-                      aria-current={i === page ? "page" : undefined}
-                      aria-label={`Σελίδα θέσης ${i + 1}`}
-                      className={cn(
-                        "relative h-8 rounded-[3px] font-serif text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--cv-deep)]",
-                        i === page
-                          ? "bg-[var(--cv-deep)] text-[var(--cv-gold)]"
-                          : "bg-[var(--cv-deep)]/[0.07] text-[var(--cv-deep)]/75 hover:bg-[var(--cv-deep)]/15",
-                      )}
-                    >
-                      {i + 1}
-                      {i === active && i !== page && (
-                        <span aria-hidden="true" className="absolute -top-0.5 right-0.5 size-1.5 rounded-full bg-[var(--cv-gold)] ring-1 ring-[var(--cv-deep)]" />
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
-      </nav>
-
-      <div className="flex items-center justify-between gap-3 border-y-2 border-double border-[var(--cv-deep)]/35 py-3">
-        <button
-          type="button"
-          onClick={() => onPage(Math.max(0, page - 1))}
-          disabled={page === 0}
-          aria-label="Προηγούμενη σελίδα"
-          className="grid size-9 place-items-center rounded-full text-[var(--cv-deep)] transition-colors hover:bg-[var(--cv-deep)]/10 disabled:opacity-30"
+      <div className="mx-auto mb-5 flex max-w-[58ch] flex-col gap-3 text-center">
+        <p className="text-pretty text-[15px] italic leading-relaxed text-[var(--cv-deep)]/80">
+          Βρες τον χαρακτήρα σου και κατέβα τόσες γραμμές όσος είναι ο αριθμός της θέσης του. Το σύμβολο εκείνης της γραμμής
+          είναι το δικό σου. Αν φτάσεις στο τέλος, συνέχισε από την αρχή.
+        </p>
+        <p
+          className="mx-auto inline-flex items-center gap-2 rounded-full border border-[var(--cv-deep)]/30 px-4 py-1.5 font-sans text-xs font-bold text-[var(--cv-deep)]"
+          aria-live="polite"
         >
-          <ChevronLeft className="size-5" aria-hidden="true" />
-        </button>
-        <div className="text-center">
-          <p className="font-serif text-2xl font-bold sm:text-3xl" aria-live="polite">
-            Θέση {sheet.position}
-          </p>
-          <p className="font-sans text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--cv-deep)]/60">
-            {side.name} πλευρά · {ORDINAL[page % 4]} χαρακτήρας
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => onPage(Math.min(CODE_LENGTH - 1, page + 1))}
-          disabled={page === CODE_LENGTH - 1}
-          aria-label="Επόμενη σελίδα"
-          className="grid size-9 place-items-center rounded-full text-[var(--cv-deep)] transition-colors hover:bg-[var(--cv-deep)]/10 disabled:opacity-30"
-        >
-          <ChevronRight className="size-5" aria-hidden="true" />
-        </button>
+          Θέση {slot}
+          <ArrowDown className="size-3.5" aria-hidden="true" />
+          κατέβα {slot} {slot === 1 ? "γραμμή" : "γραμμές"}
+        </p>
       </div>
 
-      <div className="[perspective:1400px]">
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.dl
-            key={sheet.position}
-            className="grid origin-left grid-cols-3 gap-x-4 pt-2 sm:grid-cols-5 sm:gap-x-5"
-            initial={reduce ? { opacity: 0 } : { opacity: 0, rotateY: -14, x: 12 }}
-            animate={{ opacity: 1, rotateY: 0, x: 0 }}
-            exit={reduce ? { opacity: 0 } : { opacity: 0, rotateY: 10, x: -12 }}
-            transition={{ duration: 0.32, ease: EASE }}
-          >
-            {sheet.rows.map((row) => (
-              <div key={row.char} className="flex items-center justify-between gap-2 border-b border-dashed border-[var(--cv-deep)]/25 py-2.5">
-                <dt className="w-6 text-center font-serif text-2xl font-bold">{row.char}</dt>
-                <span aria-hidden="true" className="h-px min-w-2 flex-1 border-b border-dotted border-[var(--cv-deep)]/40" />
-                <dd>
-                  <CipherSymbol id={row.symbol} className="size-8" labelled />
-                </dd>
-              </div>
-            ))}
-          </motion.dl>
-        </AnimatePresence>
-      </div>
+      <ol
+        className="grid grid-flow-col grid-cols-2 gap-x-5 border-t-2 border-double border-[var(--cv-deep)]/35 pt-2 sm:gap-x-8"
+        style={{ gridTemplateRows: `repeat(${HALF}, minmax(0, auto))` }}
+        aria-label="Εγχειρίδιο Α, μία σελίδα"
+      >
+        {MANUAL_A.map((row, i) => (
+          <li key={row.char} className="flex items-center gap-2 border-b border-dashed border-[var(--cv-deep)]/25 py-1.5 sm:gap-3">
+            <span className="w-5 shrink-0 text-right font-sans text-[11px] font-bold tabular-nums text-[var(--cv-deep)]/50">{i + 1}</span>
+            <span className="w-6 text-center font-serif text-xl font-bold sm:text-2xl">{row.char}</span>
+            <span aria-hidden="true" className="h-px min-w-2 flex-1 border-b border-dotted border-[var(--cv-deep)]/40" />
+            <CipherSymbol id={row.symbol} className="size-7 sm:size-8" labelled />
+          </li>
+        ))}
+      </ol>
     </Manuscript>
   )
 }
@@ -124,15 +60,9 @@ export function StageSymbols({
   onEditCode: () => void
   onContinue: () => void
 }) {
-  const [active, setActiveSlot] = useState(() => Math.max(0, symbols.findIndex((s) => !s)))
-  const [page, setPage] = useState(active)
+  const [active, setActive] = useState(() => Math.max(0, symbols.findIndex((s) => !s)))
   const filled = symbols.filter(Boolean).length
   const complete = filled === CODE_LENGTH
-
-  const setActive = (i: number) => {
-    setActiveSlot(i)
-    setPage(i)
-  }
 
   const assign = (id: SymbolId | null) => {
     const next = [...symbols]
@@ -147,13 +77,14 @@ export function StageSymbols({
   return (
     <div className="flex flex-col gap-6">
       <StageHeading kicker="Βήμα 2 από 3" title="Μετάτρεψε τους χαρακτήρες σε σύμβολα">
-        Διάλεξε μια θέση και το Εγχειρίδιο Α ανοίγει στη σελίδα της. Βρες εκεί τον χαρακτήρα σου και πάτα το σύμβολο που δείχνει.
+        Διάλεξε μια θέση, βρες τον χαρακτήρα της στο Εγχειρίδιο Α και κατέβα όσες γραμμές λέει ο αριθμός της θέσης. Πάτα το
+        σύμβολο που βρήκες.
       </StageHeading>
 
       <Recap code={code} onEditCode={onEditCode} />
 
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
-        <ManualA page={page} onPage={setPage} active={active} />
+        <ManualA active={active} />
 
         <div className="flex flex-col gap-4 xl:sticky xl:top-6">
           <Panel className="flex flex-col gap-5">
@@ -217,7 +148,7 @@ export function StageSymbols({
             </div>
           </Panel>
 
-          <Panel className="sticky bottom-3 z-10 flex flex-col gap-3 border-[var(--cv-gold)]/45 bg-[var(--cv-deep)]/95 xl:static">
+          <Panel className="flex flex-col gap-3 border-[var(--cv-gold)]/45">
             <div className="flex items-center justify-between gap-3">
               <p className="font-sans text-sm font-bold text-[var(--cv-ink)]">
                 Σύμβολο για τη θέση {active + 1}

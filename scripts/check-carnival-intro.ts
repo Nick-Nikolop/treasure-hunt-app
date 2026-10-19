@@ -28,10 +28,15 @@ assert.equal(CARNIVAL_INTRO_SOLUTION, "ΑΠΑΓΩΓΗ ΤΗΣ ΙΖΑΜΠΩ")
 
 assert.equal(CHARSET.length, 25)
 assert.equal(SYMBOL_IDS.length, 25)
-for (const page of MANUAL_A) {
-  assert.deepEqual(page.rows.map((r) => r.char), [...CHARSET], `page ${page.position} lists all 25 characters`)
-  assert.equal(new Set(page.rows.map((r) => r.symbol)).size, 25, `page ${page.position} uses 25 different symbols`)
-}
+assert.equal(MANUAL_A.length, 25, "Manual A is one page of 25 rows")
+assert.deepEqual(MANUAL_A.map((r) => r.char).sort(), [...CHARSET].sort(), "every character appears exactly once")
+// Same character in different slots must give different symbols (Ι at 4/7/8, Ε at 6/10/14).
+assert.notEqual(symbols[3], symbols[6])
+assert.notEqual(symbols[6], symbols[7])
+assert.notEqual(symbols[5], symbols[9])
+// Reading the symbol next to the character (no slot rule) must not solve it.
+const naive = code.map((c) => MANUAL_A.find((r) => r.char === c)!.symbol)
+assert.ok(!matchesSolution(decodeWithManualB(naive)))
 assert.equal(new Set(Object.values(MANUAL_B)).size, 25)
 assert.deepEqual([...Object.values(MANUAL_B)].sort(), [...CHARSET].sort())
 assert.equal(MANUAL_B_ROWS.length, 25)
