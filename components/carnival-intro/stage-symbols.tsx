@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Eraser } from "lucide-react"
 import { useState } from "react"
 import { CODE_LENGTH, MANUAL_A, MONUMENT_SIDES, SYMBOL_IDS, SYMBOL_NAMES, type SymbolId } from "@/lib/carnival-intro/cipher"
 import { cn } from "@/lib/utils"
+import { Recap } from "./recap"
 import { CipherSymbol } from "./symbols"
 import { EASE, Manuscript, NextStepNotice, Panel, StageHeading } from "./ui"
 
@@ -114,11 +115,13 @@ export function StageSymbols({
   code,
   symbols,
   onSymbols,
+  onEditCode,
   onContinue,
 }: {
   code: string[]
   symbols: (SymbolId | null)[]
   onSymbols: (next: (SymbolId | null)[]) => void
+  onEditCode: () => void
   onContinue: () => void
 }) {
   const [active, setActiveSlot] = useState(() => Math.max(0, symbols.findIndex((s) => !s)))
@@ -142,10 +145,12 @@ export function StageSymbols({
   }
 
   return (
-    <div className="flex flex-col gap-8">
-      <StageHeading kicker="Βήμα 2 από 5" title="Μετάτρεψε τους χαρακτήρες σε σύμβολα">
+    <div className="flex flex-col gap-6">
+      <StageHeading kicker="Βήμα 2 από 3" title="Μετάτρεψε τους χαρακτήρες σε σύμβολα">
         Διάλεξε μια θέση και το Εγχειρίδιο Α ανοίγει στη σελίδα της. Βρες εκεί τον χαρακτήρα σου και πάτα το σύμβολο που δείχνει.
       </StageHeading>
+
+      <Recap code={code} onEditCode={onEditCode} />
 
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
         <ManualA page={page} onPage={setPage} active={active} />
@@ -257,8 +262,8 @@ export function StageSymbols({
 
       <NextStepNotice
         show={complete}
-        note="Έβαλες σύμβολο και στις 16 θέσεις. Αυτό δεν σημαίνει ότι είναι όλα σωστά: θα το μάθεις μόνο στο τελευταίο βήμα."
-        actionLabel="Δες την ακολουθία σου"
+        note="Και οι 16 θέσεις έχουν σύμβολο. Δεν έχει ελεγχθεί τίποτα ακόμα."
+        actionLabel="Άνοιξε το Εγχειρίδιο Β"
         onContinue={onContinue}
       />
     </div>

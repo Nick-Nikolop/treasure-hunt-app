@@ -8,12 +8,11 @@ import { CODE_LENGTH, SYMBOL_IDS, type SymbolId } from "@/lib/carnival-intro/cip
 import { cn } from "@/lib/utils"
 import { StageCode } from "./stage-code"
 import { StageLetters } from "./stage-letters"
-import { StageReview } from "./stage-review"
-import { SolvedReveal, StageSubmit } from "./stage-submit"
+import { SolvedReveal } from "./stage-submit"
 import { StageSymbols } from "./stage-symbols"
 import { EASE } from "./ui"
 
-type Stage = 1 | 2 | 3 | 4 | 5
+type Stage = 1 | 2 | 3
 
 interface Progress {
   stage: Stage
@@ -37,10 +36,12 @@ const PALETTE = {
 const STEPS: { stage: Stage; label: string }[] = [
   { stage: 1, label: "Κωδικός" },
   { stage: 2, label: "Εγχειρίδιο Α" },
-  { stage: 3, label: "Ακολουθία" },
-  { stage: 4, label: "Εγχειρίδιο Β" },
-  { stage: 5, label: "Μήνυμα" },
+  { stage: 3, label: "Εγχειρίδιο Β" },
 ]
+
+/** Older saves had 5 steps (review, Manual B and submit are now one step). */
+const toStage = (v: unknown): Stage | null =>
+  typeof v === "number" && v >= 1 && v <= 5 ? (Math.min(3, Math.floor(v)) as Stage) : null
 
 const empty = (): Progress => ({
   stage: 1,
@@ -62,8 +63,8 @@ function loadProgress(): Progress {
     const syms = Array.isArray(p.symbols) && p.symbols.length === CODE_LENGTH
       ? p.symbols.map((s) => (SYMBOL_IDS.includes(s as SymbolId) ? (s as SymbolId) : null))
       : base.symbols
-    const stage = [1, 2, 3, 4, 5].includes(p.stage as number) ? (p.stage as Stage) : 1
-    const reached = [1, 2, 3, 4, 5].includes(p.reached as number) ? (p.reached as Stage) : stage
+    const stage = toStage(p.stage) ?? 1
+    const reached = toStage(p.reached) ?? stage
     return {
       stage,
       reached: Math.max(stage, reached) as Stage,
@@ -83,9 +84,7 @@ function isUnlocked(p: Progress, stage: Stage): boolean {
   if (stage === 1) return true
   if (!full(p.code)) return false
   if (stage === 2) return true
-  if (!full(p.symbols)) return false
-  if (stage <= 4) return true
-  return full(p.letters)
+  return full(p.symbols)
 }
 
 function Stepper({ progress, onGo }: { progress: Progress; onGo: (s: Stage) => void }) {
@@ -98,13 +97,13 @@ function Stepper({ progress, onGo }: { progress: Progress; onGo: (s: Stage) => v
           const current = step.stage === stage
           const done = step.stage < reached && !current
           return (
-            <li key={step.stage} className="flex flex-1 items-start">
+            <li key={step.stage} className={cn("flex items-start", i < STEPS.length - 1 && "flex-1")}>
               <button
                 type="button"
                 disabled={!open}
                 onClick={() => onGo(step.stage)}
                 aria-current={current ? "step" : undefined}
-                className="group flex w-full flex-col items-center gap-2 rounded-lg py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--cv-gold)] disabled:cursor-not-allowed"
+                className="group flex w-24 shrink-0 flex-col items-center gap-2 rounded-lg py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--cv-gold)] disabled:cursor-not-allowed"
               >
                 <span
                   className={cn(
@@ -130,7 +129,7 @@ function Stepper({ progress, onGo }: { progress: Progress; onGo: (s: Stage) => v
                 <span
                   aria-hidden="true"
                   className={cn(
-                    "mt-[1.15rem] h-px w-full min-w-3 flex-1",
+                    "mt-[1.15rem] h-px min-w-3 flex-1",
                     step.stage < reached ? "bg-[var(--cv-gold)]/70" : "bg-[var(--cv-muted)]/25",
                   )}
                 />
@@ -261,24 +260,16 @@ export function CarnivalIntro() {
                     code={progress.code}
                     symbols={progress.symbols}
                     onSymbols={(symbols) => update({ symbols })}
+                    onEditCode={() => goTo(1)}
                     onContinue={() => goTo(3)}
                   />
                 )}
                 {progress.stage === 3 && (
-                  <StageReview code={progress.code} symbols={progress.symbols} onBack={() => goTo(2)} onContinue={() => goTo(4)} />
-                )}
-                {progress.stage === 4 && (
                   <StageLetters
+                    code={progress.code}
                     symbols={progress.symbols}
                     letters={progress.letters}
                     onLetters={(letters) => update({ letters })}
-                    onBackToSymbols={() => goTo(2)}
-                    onContinue={() => goTo(5)}
-                  />
-                )}
-                {progress.stage === 5 && (
-                  <StageSubmit
-                    letters={progress.letters}
                     onSolved={(solved) => {
                       update({ solved })
                       requestAnimationFrame(() =>

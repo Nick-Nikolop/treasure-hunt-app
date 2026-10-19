@@ -1,10 +1,12 @@
 /**
- * Carnival intro puzzle: every piece of cipher data lives here, so swapping in the
- * real monument data later is a one-file change (plus the answer in `solution.ts`).
+ * Carnival intro puzzle: public cipher data shown to the player (both manuals).
+ * Nothing in this file (it ships to the browser) reveals the monument code or the answer;
+ * those live only in `solution.ts` and `scripts/check-carnival-intro.ts`.
  *
  * Flow: 16 monument characters -> Manual A (position-aware) -> 16 symbols
- *       -> Manual B (fixed symbol -> letter) -> 16 letters = 3 words.
+ *       -> Manual B (fixed symbol -> letter) -> 16 letters.
  */
+import { MANUAL_A_PAGES } from "./manual-a"
 
 /** Every character a manual knows: the 24 Greek capitals plus the dash. */
 export const CHARSET = [
@@ -57,57 +59,12 @@ export const MONUMENT_SIDES = [
 ] as const
 
 /**
- * The real path through Manual A: the monument character at each position and its symbol.
- * Manual A itself lists all 25 characters on every position page (see `MANUAL_A`), so the
- * manual never gives the monument code away.
- */
-export const MANUAL_A_KEY: { position: number; char: string; symbol: SymbolId }[] = [
-  { position: 1, char: "Ν", symbol: "S01" },
-  { position: 2, char: "Σ", symbol: "S02" },
-  { position: 3, char: "Ο", symbol: "S01" },
-  { position: 4, char: "Ι", symbol: "S03" },
-  { position: 5, char: "-", symbol: "S04" },
-  { position: 6, char: "Ε", symbol: "S03" },
-  { position: 7, char: "Ι", symbol: "S05" },
-  { position: 8, char: "Ι", symbol: "S06" },
-  { position: 9, char: "Γ", symbol: "S05" },
-  { position: 10, char: "Ε", symbol: "S07" },
-  { position: 11, char: "Ω", symbol: "S08" },
-  { position: 12, char: "-", symbol: "S09" },
-  { position: 13, char: "Θ", symbol: "S01" },
-  { position: 14, char: "Ε", symbol: "S10" },
-  { position: 15, char: "Τ", symbol: "S02" },
-  { position: 16, char: "Α", symbol: "S04" },
-]
-
-/** Small deterministic PRNG so the decoy rows of Manual A are identical on every build. */
-function mulberry32(seed: number) {
-  return () => {
-    seed = (seed + 0x6d2b79f5) | 0
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed)
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
-
-/**
  * Manual A, one page per position: all 25 characters, each with a different symbol.
- * The monument character keeps its key symbol; the other 24 get the remaining symbols in a
- * fixed shuffled order, so a wrong character leads to a wrong (but plausible) symbol.
+ * Built from the fixed printed table so nothing here marks which character is the right one.
  */
-export const MANUAL_A: { position: number; rows: { char: string; symbol: SymbolId }[] }[] = MANUAL_A_KEY.map((key) => {
-  const rand = mulberry32(7919 * key.position + 104729)
-  const pool: SymbolId[] = SYMBOL_IDS.filter((s) => s !== key.symbol)
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1))
-    ;[pool[i], pool[j]] = [pool[j], pool[i]]
-  }
-  let next = 0
-  return {
-    position: key.position,
-    rows: CHARSET.map((char) => ({ char, symbol: char === key.char ? key.symbol : pool[next++] })),
-  }
-})
+export const MANUAL_A: { position: number; rows: { char: string; symbol: SymbolId }[] }[] = MANUAL_A_PAGES.map(
+  (page, i) => ({ position: i + 1, rows: CHARSET.map((char, k) => ({ char, symbol: page[k] })) }),
+)
 
 /** Manual B: one fixed character per symbol, covering all 25 characters. */
 export const MANUAL_B: Record<SymbolId, string> = {
@@ -143,9 +100,6 @@ export const MANUAL_B_ROWS: { symbol: SymbolId; char: string }[] = CHARSET.map((
   char,
   symbol: SYMBOL_IDS.find((s) => MANUAL_B[s] === char)!,
 }))
-
-/** The hidden message is three words of these lengths (16 letters in total). */
-export const WORD_LENGTHS = [7, 3, 6] as const
 
 /** Latin capitals that look identical to Greek ones, for players typing on an English keyboard. */
 const LATIN_TO_GREEK: Record<string, string> = {
@@ -184,14 +138,4 @@ export function encodeWithManualA(code: string[]): (SymbolId | null)[] {
 
 export function decodeWithManualB(symbols: (SymbolId | null)[]): string[] {
   return symbols.map((s) => (s ? MANUAL_B[s] : ""))
-}
-
-/** [start, end) index ranges of each word inside the 16 letters. */
-export function wordRanges(): [number, number][] {
-  let start = 0
-  return WORD_LENGTHS.map((len) => {
-    const range: [number, number] = [start, start + len]
-    start += len
-    return range
-  })
 }

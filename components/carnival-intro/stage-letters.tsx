@@ -1,11 +1,14 @@
 "use client"
 
-import { ArrowLeft, Eraser } from "lucide-react"
-import { Fragment } from "react"
-import { CODE_LENGTH, MANUAL_B_ROWS, WORD_LENGTHS, wordRanges, type SymbolId } from "@/lib/carnival-intro/cipher"
+import { AnimatePresence, motion } from "framer-motion"
+import { Eraser, Send } from "lucide-react"
+import { useState, useTransition } from "react"
+import { checkCarnivalAnswer } from "@/app/carnival-intro/actions"
+import { CODE_LENGTH, MANUAL_B_ROWS, MONUMENT_SIDES, type SymbolId } from "@/lib/carnival-intro/cipher"
 import { cn } from "@/lib/utils"
+import { Recap } from "./recap"
 import { CipherSymbol } from "./symbols"
-import { CHAR_INPUT, GhostButton, Manuscript, NextStepNotice, Panel, StageHeading, useCharSlots } from "./ui"
+import { CHAR_INPUT, Manuscript, Panel, PrimaryButton, StageHeading, useCharSlots } from "./ui"
 
 function ManualB() {
   return (
@@ -28,52 +31,41 @@ function ManualB() {
   )
 }
 
-/** The answer as it will read: letters (or blanks) with a gold bar between the words. */
-export function PhrasePreview({ letters, className }: { letters: string[]; className?: string }) {
-  return (
-    <p
-      className={cn("flex flex-wrap items-center justify-center gap-x-3 gap-y-2 font-serif text-xl font-bold tracking-[0.25em] text-[var(--cv-ink)]", className)}
-      aria-label={`Το μήνυμά σου: ${letters.map((l) => l || "κενό").join(" ")}`}
-    >
-      {wordRanges().map(([start, end], w) => (
-        <Fragment key={w}>
-          {w > 0 && <span aria-hidden="true" className="h-6 w-px bg-[var(--cv-gold)]" />}
-          <span aria-hidden="true" className="whitespace-nowrap">
-            {letters.slice(start, end).map((l, i) => (
-              <span key={i} className={cn(!l && "text-[var(--cv-muted)]/50")}>
-                {l || "_"}
-              </span>
-            ))}
-          </span>
-        </Fragment>
-      ))}
-    </p>
-  )
-}
-
 export function StageLetters({
+  code,
   symbols,
   letters,
   onLetters,
-  onBackToSymbols,
-  onContinue,
+  onSolved,
+  onGoTo,
 }: {
+  code: string[]
   symbols: (SymbolId | null)[]
   letters: string[]
   onLetters: (next: string[]) => void
-  onBackToSymbols: () => void
-  onContinue: () => void
+  onSolved: (phrase: string) => void
+  onGoTo: (stage: 1 | 2) => void
 }) {
   const bind = useCharSlots(letters, onLetters, (i) => `Γράμμα ${i + 1} από ${CODE_LENGTH}`)
   const filled = letters.filter(Boolean).length
   const complete = filled === CODE_LENGTH
+  const [pending, startTransition] = useTransition()
+  const [wrong, setWrong] = useState(0)
+
+  const submit = () =>
+    startTransition(async () => {
+      const result = await checkCarnivalAnswer(letters)
+      if (result.ok) onSolved(result.phrase)
+      else setWrong((n) => n + 1)
+    })
 
   return (
-    <div className="flex flex-col gap-8">
-      <StageHeading kicker="Βήμα 4 από 5" title="Διάβασε τα σύμβολα">
-        Κάτω από κάθε σύμβολο της ακολουθίας σου, γράψε το γράμμα που του αντιστοιχεί στο Εγχειρίδιο Β. Το μήνυμα έχει τρεις λέξεις:{" "}
-        {WORD_LENGTHS.join(", ").replace(/, (\d+)$/, " και $1")} γράμματα.
+    <div className="flex flex-col gap-6">
+      <StageHeading kicker="Βήμα 3 από 3" title="Διάβασε το μήνυμα">
+        Κάτω από κάθε σύμβολο γράψε το γράμμα του από το Εγχειρίδιο Β και υπέβαλε. Μόνο τότε θα μάθεις αν όλα ήταν σωστά.
       </StageHeading>
+
+      <Recap code={code} symbols={symbols} onEditCode={() => onGoTo(1)} onEditSymbols={() => onGoTo(2)} />
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         <div className="lg:sticky lg:top-6">
@@ -96,22 +88,18 @@ export function StageLetters({
             </button>
           </div>
 
-          <div className="rounded-xl border border-[var(--cv-gold)]/20 bg-[var(--cv-bg)]/50 px-3 py-4">
-            <PhrasePreview letters={letters} />
-          </div>
-
-          <div className="flex flex-col gap-6">
-            {wordRanges().map(([start, end], w) => (
-              <div key={w} role="group" aria-labelledby={`ci-word-${w}`} className="flex flex-col gap-2">
-                <p id={`ci-word-${w}`} className="font-sans text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--cv-muted)]">
-                  Λέξη {w + 1} · {end - start} γράμματα
+          <div className="grid gap-5 sm:grid-cols-2">
+            {MONUMENT_SIDES.map((side, g) => (
+              <div key={side.code} role="group" aria-labelledby={`ci-dec-${side.code}`} className="flex flex-col gap-2">
+                <p id={`ci-dec-${side.code}`} className="font-sans text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--cv-muted)]">
+                  {g + 1} · {side.short}
                 </p>
-                <div className="flex gap-1.5">
-                  {Array.from({ length: end - start }, (_, k) => {
-                    const i = start + k
+                <div className="grid grid-cols-4 gap-2">
+                  {[0, 1, 2, 3].map((k) => {
+                    const i = g * 4 + k
                     const sym = symbols[i]
                     return (
-                      <label key={i} className="flex min-w-0 max-w-14 flex-1 flex-col items-center gap-1.5">
+                      <label key={i} className="flex min-w-0 flex-col items-center gap-1.5">
                         <span className="grid h-9 place-items-center">
                           {sym && <CipherSymbol id={sym} className="size-8 text-[var(--cv-gold)]" labelled />}
                         </span>
@@ -127,21 +115,37 @@ export function StageLetters({
             ))}
           </div>
 
-          <div>
-            <GhostButton onClick={onBackToSymbols}>
-              <ArrowLeft aria-hidden="true" />
-              Πίσω στα σύμβολα
-            </GhostButton>
+          <div className="flex flex-col items-stretch gap-4 border-t border-[var(--cv-gold)]/20 pt-5 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-pretty text-sm leading-relaxed text-[var(--cv-muted)]">
+              {complete ? "Όταν είσαι σίγουρος, υπέβαλε το μήνυμα." : "Συμπλήρωσε και τα 16 γράμματα για να υποβάλεις."}
+            </p>
+            <PrimaryButton onClick={submit} disabled={!complete || pending}>
+              <Send aria-hidden="true" />
+              {pending ? "Έλεγχος..." : "Υποβολή μηνύματος"}
+            </PrimaryButton>
           </div>
+
+          <AnimatePresence mode="wait">
+            {wrong > 0 && !pending && (
+              <motion.div
+                key={wrong}
+                role="alert"
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: [0, -6, 6, -3, 0] }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.45 }}
+                className="flex flex-col gap-1 rounded-xl border border-[var(--cv-muted)]/50 bg-[var(--cv-bg)]/70 p-4"
+              >
+                <p className="font-sans text-base font-bold text-[var(--cv-ink)]">Το μήνυμα δεν είναι σωστό ακόμα</p>
+                <p className="text-pretty text-sm leading-relaxed text-[var(--cv-muted)]">
+                  Κάτι δεν ταιριάζει σε κάποιο βήμα. Μπορείς να αλλάξεις τον κωδικό ή τα σύμβολα από το «Μέχρι τώρα». Όσα έχεις γράψει
+                  μένουν όπως είναι.
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </Panel>
       </div>
-
-      <NextStepNotice
-        show={complete}
-        note="Έγραψες και τα 16 γράμματα. Αυτό δεν σημαίνει ότι το μήνυμα είναι σωστό: στο επόμενο βήμα θα το υποβάλεις και θα μάθεις."
-        actionLabel="Πήγαινε στην υποβολή"
-        onContinue={onContinue}
-      />
     </div>
   )
 }

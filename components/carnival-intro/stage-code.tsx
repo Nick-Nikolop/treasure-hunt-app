@@ -104,7 +104,7 @@ export function StageCode({
 
   return (
     <div className="flex flex-col gap-8">
-      <StageHeading kicker="Βήμα 1 από 5" title="Ο κωδικός του μνημείου">
+      <StageHeading kicker="Βήμα 1 από 3" title="Ο κωδικός του μνημείου">
         Στάσου μπροστά στο μνημείο. Οι επιγραφές στις τέσσερις πλευρές του κρύβουν 16 χαρακτήρες. Μάζεψέ τους με τη σειρά και
         γράψε τους εδώ.
       </StageHeading>
@@ -170,7 +170,7 @@ export function StageCode({
 
       <NextStepNotice
         show={complete}
-        note="Συμπλήρωσες και τους 16 χαρακτήρες. Αυτό δεν σημαίνει ότι ο κωδικός είναι σωστός: αν κάτι δεν ταιριάζει, θα το καταλάβεις μόνο στο τελευταίο βήμα."
+        note="Και οι 16 χαρακτήρες είναι συμπληρωμένοι. Δεν έχει ελεγχθεί τίποτα ακόμα."
         actionLabel="Άνοιξε το Εγχειρίδιο Α"
         onContinue={onContinue}
       />
