@@ -1,10 +1,10 @@
 "use client"
 
 import { AnimatePresence, motion } from "framer-motion"
-import { Eraser, Send } from "lucide-react"
+import { Delete, Eraser, Send } from "lucide-react"
 import { useState, useTransition } from "react"
 import { checkCarnivalAnswer } from "@/app/carnival-intro/actions"
-import { CODE_LENGTH, MANUAL_B_ROWS, MONUMENT_SIDES, type SymbolId } from "@/lib/carnival-intro/cipher"
+import { CHARSET, CODE_LENGTH, MANUAL_B_ROWS, MONUMENT_SIDES, type SymbolId } from "@/lib/carnival-intro/cipher"
 import { cn } from "@/lib/utils"
 import { Recap } from "./recap"
 import { CipherSymbol } from "./symbols"
@@ -51,12 +51,35 @@ export function StageLetters({
   const complete = filled === CODE_LENGTH
   const [pending, startTransition] = useTransition()
   const [wrong, setWrong] = useState(0)
+  const [active, setActive] = useState(() => Math.max(0, letters.findIndex((l) => !l)))
+
+  const tapLetter = (char: string) => {
+    const next = [...letters]
+    next[active] = char
+    onLetters(next)
+    const after = next.findIndex((l, i) => i > active && !l)
+    const anyEmpty = next.findIndex((l) => !l)
+    setActive(after >= 0 ? after : anyEmpty >= 0 ? anyEmpty : active)
+  }
+
+  const eraseLetter = () => {
+    const next = [...letters]
+    if (next[active]) next[active] = ""
+    else if (active > 0) {
+      next[active - 1] = ""
+      setActive(active - 1)
+    }
+    onLetters(next)
+  }
 
   const submit = () =>
     startTransition(async () => {
       const result = await checkCarnivalAnswer(letters)
       if (result.ok) onSolved(result.phrase)
-      else setWrong((n) => n + 1)
+      else {
+        setWrong((n) => n + 1)
+        setTimeout(() => document.getElementById("ci-wrong")?.scrollIntoView({ behavior: "smooth", block: "center" }), 80)
+      }
     })
 
   return (
@@ -67,19 +90,22 @@ export function StageLetters({
 
       <Recap code={code} symbols={symbols} onEditCode={() => onGoTo(1)} onEditSymbols={() => onGoTo(2)} />
 
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-        <div className="lg:sticky lg:top-6">
+      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:items-start lg:gap-6">
+        <div className="order-2 lg:sticky lg:top-6 lg:order-none">
           <ManualB />
         </div>
 
-        <Panel className="flex flex-col gap-6">
+        <Panel className="order-1 flex flex-col gap-5 sm:gap-6 lg:order-none">
           <div className="flex items-center justify-between gap-4">
             <p className="font-sans text-sm font-bold text-[var(--cv-ink)]">
               {filled} / {CODE_LENGTH} γράμματα
             </p>
             <button
               type="button"
-              onClick={() => onLetters(Array(CODE_LENGTH).fill(""))}
+              onClick={() => {
+                onLetters(Array(CODE_LENGTH).fill(""))
+                setActive(0)
+              }}
               disabled={filled === 0}
               className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-sans text-xs font-bold text-[var(--cv-muted)] transition-colors hover:text-[var(--cv-ink)] disabled:opacity-40"
             >
@@ -88,7 +114,49 @@ export function StageLetters({
             </button>
           </div>
 
-          <div className="grid gap-5 sm:grid-cols-2">
+          {/* Phones and tablets: tap a slot, then a letter on the pinned keypad (no system keyboard covering Manual B). */}
+          <div className="grid grid-cols-2 gap-x-3 gap-y-4 lg:hidden">
+            {MONUMENT_SIDES.map((side, g) => (
+              <div key={side.code} className="flex flex-col gap-1.5">
+                <p className="font-sans text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--cv-muted)]">
+                  {g + 1} · {side.short}
+                </p>
+                <div className="grid grid-cols-4 gap-1 sm:gap-1.5">
+                  {[0, 1, 2, 3].map((k) => {
+                    const i = g * 4 + k
+                    const sym = symbols[i]
+                    const isActive = i === active
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setActive(i)}
+                        aria-pressed={isActive}
+                        aria-label={`Γράμμα ${i + 1} από ${CODE_LENGTH}, ${letters[i] ? `γράμμα ${letters[i]}` : "κενό"}`}
+                        className={cn(
+                          "flex flex-col items-center gap-1 rounded-lg border px-1 py-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--cv-gold)]",
+                          isActive
+                            ? "border-[var(--cv-gold)] bg-[var(--cv-gold)]/15"
+                            : letters[i]
+                              ? "border-[var(--cv-gold)]/60 bg-[var(--cv-bg)]/60"
+                              : "border-[var(--cv-gold)]/25 bg-[var(--cv-bg)]/60",
+                        )}
+                      >
+                        <span className="grid h-6 place-items-center">
+                          {sym && <CipherSymbol id={sym} className="size-6 text-[var(--cv-gold)]" />}
+                        </span>
+                        <span className="grid h-6 place-items-center font-serif text-lg font-bold leading-none text-[var(--cv-ink)]">
+                          {letters[i] || <span className="h-px w-3 bg-[var(--cv-gold)]/40" aria-hidden="true" />}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden gap-5 sm:grid-cols-2 lg:grid">
             {MONUMENT_SIDES.map((side, g) => (
               <div key={side.code} role="group" aria-labelledby={`ci-dec-${side.code}`} className="flex flex-col gap-2">
                 <p id={`ci-dec-${side.code}`} className="font-sans text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--cv-muted)]">
@@ -129,6 +197,7 @@ export function StageLetters({
             {wrong > 0 && !pending && (
               <motion.div
                 key={wrong}
+                id="ci-wrong"
                 role="alert"
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: [0, -6, 6, -3, 0] }}
@@ -144,6 +213,60 @@ export function StageLetters({
               </motion.div>
             )}
           </AnimatePresence>
+        </Panel>
+
+        <Panel className="sticky bottom-0 z-20 order-3 flex flex-col gap-2 rounded-b-none border-b-0 border-[var(--cv-gold)]/45 bg-[var(--cv-deep)] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-12px_32px_-8px_rgba(0,0,0,0.7)] lg:hidden">
+          <div className="flex items-center justify-between gap-3">
+            <p className="flex items-center gap-2 font-sans text-sm font-bold text-[var(--cv-ink)]">
+              <span>Γράμμα {active + 1}</span>
+              {symbols[active] && (
+                <span className="grid size-7 place-items-center rounded-md bg-[var(--cv-gold)] text-[var(--cv-deep)]">
+                  <CipherSymbol id={symbols[active]!} className="size-5" />
+                </span>
+              )}
+            </p>
+            {complete ? (
+              <button
+                type="button"
+                onClick={submit}
+                disabled={pending}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[var(--cv-gold)] px-4 py-1.5 font-sans text-xs font-bold text-[var(--cv-deep)] disabled:opacity-60"
+              >
+                <Send className="size-3.5" aria-hidden="true" />
+                {pending ? "Έλεγχος..." : "Υποβολή"}
+              </button>
+            ) : (
+              <span className="font-sans text-xs font-bold text-[var(--cv-muted)]">
+                {filled} / {CODE_LENGTH}
+              </span>
+            )}
+          </div>
+          <div className="grid grid-cols-9 gap-1 sm:gap-1.5" role="group" aria-label="Γράμματα">
+            {CHARSET.map((char) => (
+              <button
+                key={char}
+                type="button"
+                onClick={() => tapLetter(char)}
+                aria-pressed={letters[active] === char}
+                className={cn(
+                  "grid h-10 place-items-center rounded-lg border font-serif text-lg font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--cv-gold)]",
+                  letters[active] === char
+                    ? "border-[var(--cv-gold)] bg-[var(--cv-gold)] text-[var(--cv-deep)]"
+                    : "border-[var(--cv-gold)]/25 text-[var(--cv-ink)] active:bg-[var(--cv-gold)]/15",
+                )}
+              >
+                {char}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={eraseLetter}
+              aria-label="Σβήσιμο γράμματος"
+              className="col-span-2 grid h-10 place-items-center rounded-lg border border-[var(--cv-gold)]/25 text-[var(--cv-muted)] active:bg-[var(--cv-gold)]/15"
+            >
+              <Delete className="size-5" aria-hidden="true" />
+            </button>
+          </div>
         </Panel>
       </div>
     </div>
