@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowDown, Eraser } from "lucide-react"
+import { ArrowDown, Eraser, RotateCcw } from "lucide-react"
 import { useState } from "react"
 import { CODE_LENGTH, MANUAL_A, MONUMENT_SIDES, SYMBOL_IDS, SYMBOL_NAMES, type SymbolId } from "@/lib/carnival-intro/cipher"
 import { cn } from "@/lib/utils"
@@ -61,6 +61,7 @@ export function StageSymbols({
   onContinue: () => void
 }) {
   const [active, setActive] = useState(() => Math.max(0, symbols.findIndex((s) => !s)))
+  const [confirmClear, setConfirmClear] = useState(false)
   const filled = symbols.filter(Boolean).length
   const complete = filled === CODE_LENGTH
 
@@ -93,7 +94,29 @@ export function StageSymbols({
                 <p className="font-sans text-sm font-bold text-[var(--cv-ink)]">
                   {filled} / {CODE_LENGTH} σύμβολα
                 </p>
-                <p className="font-sans text-xs text-[var(--cv-muted)]">Θέση {active + 1}</p>
+                <div className="flex items-center gap-3">
+                  <p className="font-sans text-xs text-[var(--cv-muted)]">Θέση {active + 1}</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!confirmClear) return setConfirmClear(true)
+                      onSymbols(Array(CODE_LENGTH).fill(null))
+                      setActive(0)
+                      setConfirmClear(false)
+                    }}
+                    onBlur={() => setConfirmClear(false)}
+                    disabled={filled === 0}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-sans text-xs font-bold transition-colors disabled:pointer-events-none disabled:opacity-40",
+                      confirmClear
+                        ? "border-[var(--cv-gold)] bg-[var(--cv-gold)] text-[var(--cv-deep)]"
+                        : "border-[var(--cv-gold)]/25 text-[var(--cv-muted)] hover:border-[var(--cv-gold)]/60 hover:text-[var(--cv-ink)]",
+                    )}
+                  >
+                    <RotateCcw className="size-3.5" aria-hidden="true" />
+                    {confirmClear ? "Σίγουρα; Πάτα ξανά" : "Καθαρισμός όλων"}
+                  </button>
+                </div>
               </div>
               <div className="h-1.5 overflow-hidden rounded-full bg-[var(--cv-bg)]">
                 <div
