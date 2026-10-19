@@ -120,10 +120,10 @@ export function normalizeChar(raw: string): string {
 
 const CHARSET_SET = new Set<string>(CHARSET)
 
-/** Splits typed or pasted text into normalized characters, keeping only the 25 manual characters. */
+/** Splits typed or pasted text into normalized characters: Greek letters and "-" only (Latin is ignored). */
 export function normalizeText(raw: string): string[] {
   return [...raw.normalize("NFC")]
-    .filter((c) => c.trim() !== "" && c !== "|")
+    .filter((c) => c.trim() !== "" && c !== "|" && !/[a-z]/i.test(c))
     .map(normalizeChar)
     .filter((c) => CHARSET_SET.has(c))
 }

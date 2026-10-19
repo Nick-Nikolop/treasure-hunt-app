@@ -85,6 +85,26 @@ function HowToCollect() {
           </li>
         ))}
       </ol>
+      {/* TEMP: testing note with the example code. Remove before launch. */}
+      <aside className="rounded-xl border border-dashed border-[var(--cv-gold)]/60 bg-[var(--cv-gold)]/[0.06] p-4">
+        <p className="font-sans text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--cv-gold)]">Σημειωση · Testing</p>
+        <p className="mt-2 text-pretty text-[15px] leading-relaxed text-[var(--cv-muted)]">
+          Ας υποθέσουμε, για λόγους testing, ότι οι χαρακτήρες που βρήκες στις πλευρές είναι:
+        </p>
+        <dl className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {[
+            ["ΝΔ", "ΝΣΟΙ"],
+            ["ΒΔ", "-ΕΙΙ"],
+            ["ΒΑ", "ΓΕΩ-"],
+            ["ΝΑ", "ΘΕΤΑ"],
+          ].map(([side, chars]) => (
+            <div key={side} className="flex items-baseline gap-2 rounded-lg bg-[var(--cv-ink)]/[0.04] px-3 py-2">
+              <dt className="font-sans text-[11px] font-bold text-[var(--cv-gold)]">{side}</dt>
+              <dd className="font-serif text-lg font-bold tracking-[0.12em] text-[var(--cv-ink)]">{chars}</dd>
+            </div>
+          ))}
+        </dl>
+      </aside>
     </Panel>
   )
 }
@@ -163,7 +183,7 @@ export function StageCode({
           </div>
 
           <p className="text-pretty text-sm leading-relaxed text-[var(--cv-muted)]">
-            Μπορείς να γράψεις με ελληνικά ή λατινικά, με ή χωρίς τόνους, ή να επικολλήσεις όλο τον κωδικό στο πρώτο κουτί.
+            Γράψε μόνο ελληνικά γράμματα και παύλες (-), με ή χωρίς τόνους, ή να επικολλήσεις όλο τον κωδικό στο πρώτο κουτί.
           </p>
         </Panel>
       </div>
