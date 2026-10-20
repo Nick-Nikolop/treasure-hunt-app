@@ -283,7 +283,7 @@ export function ExplainerSection({ locale, what }: { locale: "el" | "en"; what: 
                     <span aria-hidden="true" className="h-1 w-full overflow-hidden rounded-full bg-reel-white/15">
                       <span className="block h-full bg-brass" style={{ width: `${fill * 100}%` }} />
                     </span>
-                    <span className="flex min-w-0 items-center gap-1.5">
+                    <span className="hidden min-w-0 items-center gap-1.5 md:flex">
                       <span className="hidden font-sans text-xs font-bold text-reel-mute md:inline">
                         {String(index + 1).padStart(2, "0")}
                       </span>
@@ -304,6 +304,15 @@ export function ExplainerSection({ locale, what }: { locale: "el" | "en"; what: 
               )
             })}
           </ol>
+          <p aria-hidden="true" className="-mt-2 flex items-center gap-2 font-sans text-sm font-bold text-reel-white md:hidden">
+            <span className="text-reel-mute">
+              {String(Math.min(clock.chapter, CHAPTERS.length - 1) + 1).padStart(2, "0")}/{String(CHAPTERS.length).padStart(2, "0")}
+            </span>
+            {copy.chapters[CHAPTERS[Math.min(clock.chapter, CHAPTERS.length - 1)].id]}
+            {CHAPTERS[Math.min(clock.chapter, CHAPTERS.length - 1)].gate !== undefined && (
+              <Hand className="size-3.5 shrink-0 text-brass" />
+            )}
+          </p>
 
           <p className="flex flex-wrap items-center gap-x-2 gap-y-1 font-sans text-xs leading-relaxed text-reel-mute">
             <span>{copy.credits.label}</span>
