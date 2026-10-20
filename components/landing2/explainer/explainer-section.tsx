@@ -9,7 +9,7 @@ import { EV } from "@/lib/analytics-events"
 import { cn } from "@/lib/utils"
 import { SectionEyebrow } from "../spotlights"
 import { EXPLAINER_COPY } from "./copy"
-import { EndCard, PreloadScenes, Scene, captionFor } from "./scenes"
+import { EndCard, Scene, captionFor } from "./scenes"
 import { CHAPTERS, GATE_TIMEOUT, START_CLOCK, advance, type ChapterId, type Clock, type Solved } from "./timeline"
 
 const EASE = [0.22, 1, 0.36, 1] as const
@@ -182,16 +182,18 @@ export function ExplainerSection({ locale, what }: { locale: "el" | "en"; what: 
             aria-label={copy.region}
             className="relative aspect-[3/4] w-full overflow-hidden rounded-md bg-reel ring-1 ring-reel-white/10 sm:aspect-[4/3] md:aspect-video"
           >
-            <PreloadScenes />
-
             <AnimatePresence initial={false}>
               <motion.div
                 key={chapter.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.7 }}
-                className="absolute inset-0"
+                initial={reduce ? { opacity: 0 } : { clipPath: "circle(0% at 50% 50%)" }}
+                animate={reduce ? { opacity: 1 } : { clipPath: "circle(80% at 50% 50%)" }}
+                exit={{
+                  zIndex: 0,
+                  opacity: 0,
+                  transition: { zIndex: { duration: 0 }, opacity: { delay: reduce ? 0 : 0.75, duration: 0.1 } },
+                }}
+                transition={{ duration: reduce ? 0.5 : 0.8, ease: EASE }}
+                className="absolute inset-0 z-[1]"
               >
                 <Scene
                   id={chapter.id}
@@ -207,31 +209,22 @@ export function ExplainerSection({ locale, what }: { locale: "el" | "en"; what: 
               </motion.div>
             </AnimatePresence>
 
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-linear-to-b from-reel/70 to-transparent"
-            />
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-linear-to-t from-reel/90 to-transparent"
-            />
-
-            <span className="pointer-events-none absolute left-3 top-3 rounded-full bg-reel/60 px-3 py-1.5 font-sans text-xs font-bold uppercase tracking-[0.18em] text-reel-white/90 backdrop-blur-sm md:left-5 md:top-5">
+            <span className="pointer-events-none absolute left-3 top-3 z-[2] rounded-full bg-reel/60 px-3 py-1.5 font-sans text-xs font-bold uppercase tracking-[0.18em] text-reel-white/90 backdrop-blur-sm md:left-5 md:top-5">
               {copy.chapters[chapter.id]}
             </span>
             {atGate && (
-              <span className="pointer-events-none absolute right-3 top-3 flex animate-pulse items-center gap-1.5 rounded-full bg-brass px-3 py-1.5 font-sans text-xs font-bold text-reel md:right-5 md:top-5">
+              <span className="pointer-events-none absolute right-3 top-3 z-[2] flex animate-pulse items-center gap-1.5 rounded-full bg-brass px-3 py-1.5 font-sans text-xs font-bold text-reel md:right-5 md:top-5">
                 <Hand className="size-3.5" aria-hidden="true" />
                 {copy.youPlay}
               </span>
             )}
 
-            <div className="absolute inset-x-0 bottom-0 flex items-end gap-3 p-3 md:gap-4 md:p-5">
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] flex items-end gap-3 p-3 md:gap-4 md:p-5">
               <button
                 type="button"
                 onClick={toggle}
                 aria-label={clock.ended ? copy.replay : playing ? copy.pause : copy.play}
-                className="flex size-11 shrink-0 items-center justify-center rounded-full bg-reel-white text-reel transition hover:bg-brass focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-reel-white"
+                className="pointer-events-auto flex size-11 shrink-0 items-center justify-center rounded-full bg-reel-white text-reel shadow-lg shadow-reel/30 ring-1 ring-reel/20 transition hover:bg-brass focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-reel-white"
               >
                 <PlayIcon className={cn("size-5", PlayIcon === Play && "translate-x-px")} aria-hidden="true" />
               </button>
@@ -258,7 +251,7 @@ export function ExplainerSection({ locale, what }: { locale: "el" | "en"; what: 
               <button
                 type="button"
                 onClick={() => begin("play")}
-                className="group absolute inset-0 flex flex-col items-center justify-center gap-3 bg-reel/45"
+                className="group absolute inset-0 z-[3] flex flex-col items-center justify-center gap-3 bg-reel/45"
               >
                 <span className="flex size-20 items-center justify-center rounded-full bg-brass text-reel shadow-2xl shadow-reel transition group-hover:scale-105 md:size-24">
                   <Play className="size-8 translate-x-0.5 md:size-10" aria-hidden="true" />

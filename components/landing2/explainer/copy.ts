@@ -15,7 +15,17 @@ export type ExplainerCopy = {
   how: string
   youPlay: string
   chapters: Record<ChapterId, string>
-  mission: { captions: [string, string]; app: string; now: string; noteTitle: string; noteBody: string }
+  mission: {
+    captions: [string, string]
+    city: string
+    team: [string, string, string, string]
+    time: string
+    date: string
+    app: string
+    now: string
+    noteTitle: string
+    noteBody: string
+  }
   riddle: {
     step: string
     clue: string
@@ -28,9 +38,9 @@ export type ExplainerCopy = {
     right: string
     captions: { before: string; after: string }
   }
-  route: { captions: [string, string]; start: string; target: string }
+  route: { captions: [string, string]; start: string; target: string; harbour: string; castle: string }
   scan: { captions: { before: string; prompt: string; after: string }; button: string; noteTitle: string; noteBody: string }
-  ending: { captions: [string, string]; progress: (n: number) => string; done: string }
+  ending: { captions: [string, string] }
   end: { label: string }
 }
 
@@ -50,6 +60,10 @@ export const EXPLAINER_COPY: Record<"el" | "en", ExplainerCopy> = {
     chapters: { mission: "Η αποστολή", riddle: "Ο γρίφος", route: "Ο δρόμος", scan: "Το QR", ending: "Το τέλος" },
     mission: {
       captions: ["Μαζεύεις την παρέα σου και βγαίνετε στους δρόμους της Καλαμάτας.", "Στο κινητό σας ξεκινά μια ιστορία."],
+      city: "ΚΑΛΑΜΑΤΑ",
+      team: ["Ν", "Ε", "Μ", "Κ"],
+      time: "20:30",
+      date: "Σάββατο βράδυ",
       app: "The Hunt",
       now: "τώρα",
       noteTitle: "Η αποστολή ξεκινά",
@@ -78,6 +92,8 @@ export const EXPLAINER_COPY: Record<"el" | "en", ExplainerCopy> = {
       captions: ["Περπατάτε μαζί στους δρόμους της Καλαμάτας…", "…μέχρι το σημείο που έδειξε ο γρίφος."],
       start: "Είστε εδώ",
       target: "Κεντρική Πλατεία",
+      harbour: "Λιμάνι",
+      castle: "Κάστρο",
     },
     scan: {
       captions: {
@@ -91,8 +107,6 @@ export const EXPLAINER_COPY: Record<"el" | "en", ExplainerCopy> = {
     },
     ending: {
       captions: ["Γρίφο με γρίφο, η ιστορία σάς φέρνει μέχρι το τέλος.", "Σαν escape room, αλλά σε ολόκληρη την πόλη."],
-      progress: (n) => `Γρίφος ${n} από 10`,
-      done: "Το τέλος της ιστορίας",
     },
     end: { label: "Με λίγα λόγια" },
   },
@@ -111,6 +125,10 @@ export const EXPLAINER_COPY: Record<"el" | "en", ExplainerCopy> = {
     chapters: { mission: "The mission", riddle: "The puzzle", route: "The route", scan: "The QR code", ending: "The ending" },
     mission: {
       captions: ["You gather your friends and head out into the streets of Kalamata.", "A story begins on your phone."],
+      city: "KALAMATA",
+      team: ["N", "E", "M", "K"],
+      time: "20:30",
+      date: "Saturday night",
       app: "The Hunt",
       now: "now",
       noteTitle: "The mission begins",
@@ -139,6 +157,8 @@ export const EXPLAINER_COPY: Record<"el" | "en", ExplainerCopy> = {
       captions: ["You walk the streets of Kalamata together…", "…to the spot the puzzle pointed to."],
       start: "You are here",
       target: "Central Square",
+      harbour: "Harbour",
+      castle: "Castle",
     },
     scan: {
       captions: {
@@ -152,8 +172,6 @@ export const EXPLAINER_COPY: Record<"el" | "en", ExplainerCopy> = {
     },
     ending: {
       captions: ["Puzzle by puzzle, the story leads you to the end.", "Like an escape room, but the whole city is the room."],
-      progress: (n) => `Puzzle ${n} of 10`,
-      done: "The end of the story",
     },
     end: { label: "In short" },
   },
