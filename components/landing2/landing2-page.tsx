@@ -106,7 +106,7 @@ export function Landing2Page() {
             </button>
             <a
               href={notifyHref}
-              className="rounded-md border border-reel-red-hover bg-reel-red px-4 py-1.5 text-sm font-bold text-reel-white shadow-[inset_0_1px_0_rgb(255_255_255/0.08)] transition hover:bg-reel-red-hover md:px-5"
+              className="reel-cta rounded-md px-4 py-1.5 text-sm font-bold md:px-5"
             >
               {reel.nav.cta}
             </a>
