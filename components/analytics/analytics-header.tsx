@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils"
 const TABS = [
   { href: "/analytics", label: "Sources" },
   { href: "/analytics/people", label: "People" },
+  { href: "/oldanalytics", label: "Hunt #1 archive" },
 ] as const
 
 export function AnalyticsHeader({
@@ -21,7 +22,11 @@ export function AnalyticsHeader({
   back?: { href: string; label: string }
 }) {
   const pathname = usePathname()
-  const active = pathname.startsWith("/analytics/people") ? "/analytics/people" : "/analytics"
+  const active = pathname.startsWith("/oldanalytics")
+    ? "/oldanalytics"
+    : pathname.startsWith("/analytics/people")
+      ? "/analytics/people"
+      : "/analytics"
 
   return (
     <header className="flex flex-col gap-5">
