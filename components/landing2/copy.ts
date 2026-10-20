@@ -30,25 +30,7 @@ export const REEL_COPY = {
       share: "του επάθλου",
       podium: "Οι νικητές",
     },
-    episodes: {
-      step: "Βήμα",
-      count: "4 βήματα",
-      alts: [
-        "Η Καλαμάτα σε χαρακτικό του 1686, με το κάστρο και τα σπίτια της πόλης",
-        "Η παραλία της Καλαμάτας τη νύχτα, με φώτα που καθρεφτίζονται στη θάλασσα",
-        "Ατμομηχανή στο Σιδηροδρομικό Πάρκο της Καλαμάτας",
-        "Η είσοδος του Κάστρου της Καλαμάτας",
-      ],
-      credits: {
-        label: "Φωτογραφίες:",
-        items: [
-          "Χαρακτικό V. Coronelli, 1686, CC BY-SA 4.0",
-          "Evangelos Gkikopoulos, CC BY 3.0",
-          "McKaby, CC0",
-          "Drakopoulosdim, CC BY-SA 4.0",
-        ],
-      },
-    },
+    episodes: { step: "Βήμα", count: "4 βήματα" },
     modal: {
       close: "Κλείσιμο",
       genres: "Είδος",
@@ -96,25 +78,7 @@ export const REEL_COPY = {
       share: "of the prize",
       podium: "The winners",
     },
-    episodes: {
-      step: "Step",
-      count: "4 steps",
-      alts: [
-        "Kalamata in a 1686 engraving, with the castle and the houses of the town",
-        "The Kalamata waterfront at night, lights reflected in the sea",
-        "A steam locomotive in the Kalamata Municipal Railway Park",
-        "The entrance of Kalamata Castle",
-      ],
-      credits: {
-        label: "Photos:",
-        items: [
-          "Engraving by V. Coronelli, 1686, CC BY-SA 4.0",
-          "Evangelos Gkikopoulos, CC BY 3.0",
-          "McKaby, CC0",
-          "Drakopoulosdim, CC BY-SA 4.0",
-        ],
-      },
-    },
+    episodes: { step: "Step", count: "4 steps" },
     modal: {
       close: "Close",
       genres: "Genre",
@@ -144,17 +108,3 @@ export const HUNT_IMAGES: Record<HuntRef, string> = {
 }
 
 export const BILLBOARD = "/landing2/billboard.webp"
-
-/** Real Kalamata photos for the four steps (Wikimedia Commons), with their source pages for attribution. */
-export const STEP_PHOTOS = [
-  { src: "/landing2/how/mission.webp", source: "https://commons.wikimedia.org/wiki/File:Kalamata_1686.jpg" },
-  {
-    src: "/landing2/how/team.webp",
-    source: "https://commons.wikimedia.org/wiki/File:Very_Long_Exposure_Of_Kalamata_Port_(224478827).jpeg",
-  },
-  { src: "/landing2/how/clue.webp", source: "https://commons.wikimedia.org/wiki/File:Kalamata_Municipal_Railway_Park_56.jpg" },
-  {
-    src: "/landing2/how/finale.webp",
-    source: "https://commons.wikimedia.org/wiki/File:%CE%95%CE%99%CE%A3%CE%9F%CE%94%CE%9F%CE%A3_%CE%9A%CE%91%CE%A3%CE%A4%CE%A1%CE%9F%CE%A5_%CE%9A%CE%91%CE%9B%CE%91%CE%9C%CE%91%CE%A4%CE%91%CE%A3.jpg",
-  },
-] as const
