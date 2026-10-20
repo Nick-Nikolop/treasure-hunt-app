@@ -7,6 +7,7 @@ import { LanguageProvider } from '@/components/pythea/language-provider'
 import { LiteModeProvider } from '@/components/pythea/lite-mode-provider'
 import { PhaseProvider } from '@/components/pythea/phase-provider'
 import { AnalyticsProvider } from '@/components/pythea/analytics-provider'
+import { BehaviorTracker } from '@/components/pythea/behavior-tracker'
 import { SourceTracker } from '@/components/pythea/source-tracker'
 import { getPhaseContext, getPublicPhase } from '@/lib/phase-guard'
 import { isHeldByMaintenance } from '@/lib/site-maintenance'
@@ -193,6 +194,7 @@ export default async function RootLayout({
                 one-line change if it is ever wanted back. */}
           </LanguageProvider>
           <AnalyticsProvider />
+          <BehaviorTracker />
           <SourceTracker />
         </ThemeProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}

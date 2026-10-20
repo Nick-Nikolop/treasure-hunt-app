@@ -15,6 +15,8 @@
 //  never send (or trust) a user id from here.
 // ─────────────────────────────────────────────────────────────────────────
 
+import { COOKIE_CONSENT_COOKIE } from "@/lib/legal"
+
 const ANON_KEY = "pythea_aid"
 const SESSION_KEY = "pythea_sid"
 const ENDPOINT = "/api/track"
@@ -111,6 +113,21 @@ function getLinkSource(): string | undefined {
     return window.localStorage.getItem("th_source_first") ?? undefined
   } catch {
     return undefined
+  }
+}
+
+/**
+ * True only when the visitor accepted analytics cookies in the banner. Detailed
+ * behaviour capture (clicks, scroll depth) runs only then.
+ */
+export function hasAnalyticsConsent(): boolean {
+  if (!isBrowser()) return false
+  try {
+    const m = document.cookie.match(new RegExp(`(?:^|;\\s*)${COOKIE_CONSENT_COOKIE}=([^;]+)`))
+    const raw = m ? decodeURIComponent(m[1]) : window.localStorage.getItem(COOKIE_CONSENT_COOKIE)
+    return raw ? (JSON.parse(raw) as { decision?: string }).decision === "accepted" : false
+  } catch {
+    return false
   }
 }
 
@@ -298,8 +315,8 @@ function landingAttribution(): Record<string, string> {
       const v = q.get(key)
       if (v) out[prop] = v.slice(0, 128)
     }
-    // Short-hand ?source=first_rollover / ?ref=instagram / ?src=flyer behaves like utm_source.
-    const ref = q.get("source") ?? q.get("ref") ?? q.get("src")
+    // Short-hand ?s=<id> / ?source=first_rollover / ?ref=instagram / ?src=flyer behaves like utm_source.
+    const ref = q.get("s") ?? q.get("source") ?? q.get("ref") ?? q.get("src")
     if (ref && !out.utmSource) out.utmSource = ref.slice(0, 128)
     const click = CLICK_IDS.find((k) => q.has(k))
     if (click) out.clickId = click
