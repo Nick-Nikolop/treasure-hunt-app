@@ -161,6 +161,8 @@
   --color-reel-white: #f6f2ea;
   --color-reel-gold: #e2b04f;
   --color-reel-gold-deep: #a8751f;
+  --color-reel-carnival: #5a0a12;
+  --color-reel-carnival-deep: #3a0105;
   --color-reel-band: #1b1613;
   /* /landing3 trail palette */
   --color-hill-paper: #f1e9d6;
@@ -345,6 +347,57 @@ body {
   color: var(--color-reel);
   background: linear-gradient(180deg, #f3cf7c, var(--color-reel-gold));
   box-shadow: inset 0 1px 0 rgb(255 247 222 / 0.6), 0 0 0 1px var(--color-reel-gold-deep);
+}
+
+/* Carnival mission (Hunt #2) only: wine-red lacquer with a gold rim */
+.reel-cta-carnival {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  color: var(--color-reel-white);
+  background: linear-gradient(180deg, #8a1220 0%, var(--color-reel-carnival) 52%, var(--color-reel-carnival-deep) 100%);
+  border: 1px solid rgb(226 176 79 / 0.55);
+  box-shadow:
+    inset 0 1px 0 rgb(255 230 230 / 0.18),
+    inset 0 -2px 0 rgb(0 0 0 / 0.35),
+    0 6px 22px -8px rgb(138 18 32 / 0.8);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+}
+.reel-cta-carnival::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(105deg, transparent 30%, rgb(255 220 200 / 0.28) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform 0.7s ease;
+}
+.reel-cta-carnival:hover {
+  transform: translateY(-1px);
+  border-color: var(--color-reel-gold);
+  box-shadow:
+    inset 0 1px 0 rgb(255 230 230 / 0.22),
+    inset 0 -2px 0 rgb(0 0 0 / 0.35),
+    0 10px 30px -8px rgb(170 24 40 / 0.9);
+}
+.reel-cta-carnival:hover::after {
+  transform: translateX(120%);
+}
+.reel-cta-carnival:active {
+  transform: translateY(0);
+}
+.reel-cta-carnival:focus-visible {
+  outline: 2px solid var(--color-reel-white);
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reel-cta-carnival,
+  .reel-cta-carnival::after {
+    transition: none;
+  }
 }
 
 /* Landing2 detail popup: slim neutral bar inside the dialog */

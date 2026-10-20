@@ -180,7 +180,7 @@ function HuntDetail({ id, copy, reel, notifyHref }: { id: "#2" | "#1"; copy: Lan
   const live = id === "#2"
   const hunt = live ? missions.next : missions.past
   const action = live ? (
-    <a href={notifyHref} className="flex items-center gap-2 rounded-md border border-reel-red-hover bg-reel-red px-6 py-2.5 font-sans text-base font-bold text-reel-white shadow-[inset_0_1px_0_rgb(255_255_255/0.08)] transition hover:bg-reel-red-hover">
+    <a href={notifyHref} className="reel-cta-carnival flex items-center gap-2 rounded-md px-6 py-2.5 font-sans text-base font-bold">
       <Bell className="size-5" aria-hidden="true" />
       {reel.hunts.notify}
     </a>
@@ -203,7 +203,7 @@ function HuntDetail({ id, copy, reel, notifyHref }: { id: "#2" | "#1"; copy: Lan
               <span
                 className={cn(
                   "rounded-sm px-2 py-0.5 text-sm font-bold uppercase tracking-wider",
-                  live ? "bg-reel-red text-reel-white ring-1 ring-reel-red-hover" : "bg-reel-white/90 text-reel",
+                  live ? "bg-reel-carnival text-reel-white ring-1 ring-reel-gold/60" : "bg-reel-white/90 text-reel",
                 )}
               >
                 {hunt.status}
@@ -228,7 +228,7 @@ function HuntDetail({ id, copy, reel, notifyHref }: { id: "#2" | "#1"; copy: Lan
             <SubTitle>{missions.definesLabel}</SubTitle>
             <ul className="flex flex-wrap gap-2">
               {missions.defines.map((item) => (
-                <li key={item} className="rounded-sm border border-reel-red-hover bg-reel-red/70 px-3 py-2 font-sans text-base text-reel-white">
+                <li key={item} className="rounded-sm border border-reel-gold/30 bg-reel-carnival/70 px-3 py-2 font-sans text-base text-reel-white">
                   {item}
                 </li>
               ))}

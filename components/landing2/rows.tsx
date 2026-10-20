@@ -71,7 +71,7 @@ export function HuntsRow({
                 aria-hidden="true"
                 className={cn(
                   "pointer-events-none absolute inset-0 z-20 flex items-center justify-center opacity-0 transition-opacity duration-500 group-hover/card:opacity-100 group-focus-within/card:opacity-100",
-                  hunt.live ? "bg-reel-red/80" : "bg-reel/75",
+                  hunt.live ? "bg-reel-carnival/80" : "bg-reel/75",
                 )}
               >
                 <span
@@ -87,7 +87,7 @@ export function HuntsRow({
                 <span
                   className={cn(
                     "rounded-sm px-2 py-0.5 font-sans text-xs font-bold uppercase tracking-wider",
-                    hunt.live ? "bg-reel-red text-reel-white ring-1 ring-reel-red-hover" : "bg-reel-white/90 text-reel",
+                    hunt.live ? "bg-reel-carnival text-reel-white ring-1 ring-reel-gold/60" : "bg-reel-white/90 text-reel",
                   )}
                 >
                   {hunt.status}
@@ -101,7 +101,7 @@ export function HuntsRow({
                 {hunt.live ? (
                   <a
                     href={notifyHref}
-                    className="flex items-center gap-2 rounded-full bg-reel-white py-2 pl-3 pr-4 font-sans text-sm font-bold text-reel hover:bg-reel-white/85"
+                    className="reel-cta-carnival flex items-center gap-2 rounded-full py-2 pl-3 pr-4 font-sans text-sm font-bold"
                   >
                     <Bell className="size-4" aria-hidden="true" />
                     {reel.hunts.notify}
