@@ -89,6 +89,29 @@ export function describeEvent(e: EventLike): { text: string; detail: string | nu
     }
     case "cta.click":
       return { text: `Clicked CTA “${str(p.id) ?? "?"}”`, detail: str(p.location), tone: "normal" }
+    case "explainer.start":
+      return {
+        text: p.trigger === "replay" ? "Replayed the “What is it?” video" : "Started the “What is it?” video",
+        detail: str(p.trigger),
+        tone: "quiet",
+      }
+    case "explainer.interact": {
+      const auto = p.auto ? " (auto, no input)" : ""
+      if (p.step === "scan") return { text: `Scanned the QR in the video${auto}`, detail: null, tone: p.auto ? "quiet" : "normal" }
+      return {
+        text: `${p.correct ? "Solved" : "Missed"} the video riddle${auto}`,
+        detail: str(p.option),
+        tone: p.auto ? "quiet" : "normal",
+      }
+    }
+    case "explainer.jump":
+      return { text: `Jumped to video chapter “${str(p.chapter) ?? "?"}”`, detail: null, tone: "quiet" }
+    case "explainer.complete":
+      return {
+        text: `Finished the “What is it?” video in ${duration(e.durationMs)}`,
+        detail: `${typeof p.interactions === "number" ? p.interactions : 0} interactions`,
+        tone: "normal",
+      }
     case "landing.loaded":
       return {
         text: `Landing loaded in ${duration(e.durationMs)}`,

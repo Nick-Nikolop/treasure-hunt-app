@@ -12,7 +12,8 @@ import { HowSection } from "./episodes"
 import { Faq, Footer } from "./finale"
 import { PageLoader } from "./page-loader"
 import { HuntsRow, WhyRow } from "./rows"
-import { ClosingBanner, CodeSection, WhatSection } from "./spotlights"
+import { ExplainerSection } from "./explainer/explainer-section"
+import { ClosingBanner, CodeSection } from "./spotlights"
 
 const SPY_IDS = ["top", "hunts", "how", "faq"]
 
@@ -127,7 +128,7 @@ export function Landing2Page() {
           onMore={() => setModal("show")}
         />
         <div className="flex flex-col gap-24 py-20 md:gap-32 md:py-28">
-          <WhatSection what={copy.what} reel={reel} />
+          <ExplainerSection locale={locale} what={copy.what} />
           <HuntsRow missions={copy.missions} reel={reel} notifyHref={notifyHref} onOpen={setModal} />
         </div>
         <HowSection how={copy.how} reel={reel} />

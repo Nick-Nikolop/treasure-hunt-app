@@ -344,6 +344,24 @@ body {
     filter: drop-shadow(0 0 14px rgb(226 176 79 / 0.35));
   }
 }
+.explainer-shake {
+  animation: explainer-shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+@keyframes explainer-shake {
+  20%,
+  60% {
+    transform: translateX(-6px);
+  }
+  40%,
+  80% {
+    transform: translateX(6px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .explainer-shake {
+    animation: none;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .reel-loader-logo {
     opacity: 1;

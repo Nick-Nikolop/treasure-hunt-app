@@ -30,7 +30,6 @@ export const REEL_COPY = {
       share: "του επάθλου",
       podium: "Οι νικητές",
     },
-    what: { facts: "Με μια ματιά", demo: "Έτσι μοιάζει ένας γρίφος" },
     episodes: { step: "Βήμα", count: "4 βήματα" },
     modal: {
       close: "Κλείσιμο",
@@ -79,7 +78,6 @@ export const REEL_COPY = {
       share: "of the prize",
       podium: "The winners",
     },
-    what: { facts: "At a glance", demo: "This is what a clue looks like" },
     episodes: { step: "Step", count: "4 steps" },
     modal: {
       close: "Close",

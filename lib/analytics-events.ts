@@ -21,6 +21,11 @@ export const EV = {
   // Landing / CTA
   ctaClick: "cta.click", // props: { id, location }
   landingLoaded: "landing.loaded", // durationMs; props: { path, assets, loaded, timedOut }
+  // "Τι είναι αυτό;" interactive video on /landing2
+  explainerStart: "explainer.start", // props: { trigger: "auto" | "play" | "jump" | "replay" }
+  explainerInteract: "explainer.interact", // props: { step: "riddle" | "scan", option?, correct, auto }
+  explainerJump: "explainer.jump", // props: { chapter }
+  explainerComplete: "explainer.complete", // durationMs; props: { interactions }
   // Auth funnel (durationMs on the success events where relevant)
   authView: "auth.view", // props: { mode: "sign_in" | "sign_up" | "reset" }
   authFieldFocus: "auth.field_focus",

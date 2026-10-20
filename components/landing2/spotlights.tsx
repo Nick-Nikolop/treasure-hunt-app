@@ -1,12 +1,10 @@
 "use client"
 
 import Image from "next/image"
-import { motion, useInView, useReducedMotion } from "framer-motion"
-import { Check, ChevronRight, Eye, Hourglass, Landmark, QrCode, ShieldCheck } from "lucide-react"
-import { useEffect, useRef, useState } from "react"
+import { motion } from "framer-motion"
+import { Check, ChevronRight, Eye, Hourglass, Landmark, ShieldCheck } from "lucide-react"
 import type { LandingCopy } from "@/components/landing/copy"
-import { cn } from "@/lib/utils"
-import { BILLBOARD, type ReelCopy } from "./copy"
+import { BILLBOARD } from "./copy"
 
 const EASE = [0.22, 1, 0.36, 1] as const
 const reveal = {
@@ -22,88 +20,6 @@ export function SectionEyebrow({ children }: { children: React.ReactNode }) {
       <span aria-hidden="true" className="h-0.5 w-8 bg-brass" />
       {children}
     </p>
-  )
-}
-
-export function WhatSection({ what, reel }: { what: LandingCopy["what"]; reel: ReelCopy }) {
-  return (
-    <section id="what" aria-labelledby="what-title" className="scroll-mt-20 px-5 md:px-14">
-      <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.05fr_1fr] lg:gap-20">
-        <motion.div {...reveal} className="flex flex-col gap-6">
-          <SectionEyebrow>{what.label}</SectionEyebrow>
-          <h2 id="what-title" className="text-balance font-serif text-4xl font-black leading-[1.05] text-reel-white md:text-6xl">
-            {what.title}
-          </h2>
-          <p className="max-w-[60ch] text-pretty font-sans text-lg leading-relaxed text-reel-white/80">{what.body}</p>
-          <p className="border-l-[3px] border-brass pl-4 font-serif text-2xl italic leading-snug text-reel-white">{what.compare}</p>
-
-          <div className="flex flex-col gap-3 pt-2">
-            <p className="font-sans text-sm font-bold uppercase tracking-[0.2em] text-reel-mute">{reel.what.facts}</p>
-            <dl className="grid gap-px overflow-hidden rounded-md bg-reel-white/10 sm:grid-cols-2">
-              {what.facts.map((fact) => (
-                <div key={fact.q} className="flex flex-col gap-1 bg-reel-raised p-5">
-                  <dt className="font-sans text-sm font-bold text-reel-mute">{fact.q}</dt>
-                  <dd className="font-sans text-lg font-bold leading-snug text-reel-white">{fact.a}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        </motion.div>
-
-        <PhoneDemo what={what} label={reel.what.demo} />
-      </div>
-    </section>
-  )
-}
-
-function PhoneDemo({ what, label }: { what: LandingCopy["what"]; label: string }) {
-  const ref = useRef<HTMLDivElement>(null)
-  const inView = useInView(ref, { amount: 0.5 })
-  const reduce = useReducedMotion()
-  const [found, setFound] = useState(false)
-
-  useEffect(() => {
-    if (!inView || reduce) {
-      if (reduce) setFound(true)
-      return
-    }
-    const loop = setInterval(() => setFound((f) => !f), 2600)
-    return () => clearInterval(loop)
-  }, [inView, reduce])
-
-  return (
-    <motion.figure {...reveal} ref={ref} className="relative mx-auto flex w-full max-w-xl flex-col gap-4">
-      <div className="relative aspect-[4/5] overflow-hidden rounded-md">
-        <Image src={what.image} alt={what.alt} fill sizes="(min-width: 1024px) 40vw, 90vw" className="object-cover" />
-        <div aria-hidden="true" className="absolute inset-0 bg-linear-to-t from-reel via-reel/40 to-reel/10" />
-
-        <div className="absolute inset-x-0 bottom-0 flex justify-center p-6 md:p-10">
-          <div className="w-full max-w-[17rem] rounded-[2.2rem] border-[6px] border-reel bg-reel p-1.5 shadow-2xl shadow-reel ring-1 ring-reel-white/15">
-            <div className="flex flex-col gap-4 rounded-[1.7rem] bg-reel-raised p-5">
-              <div className="flex items-center justify-between">
-                <span className="font-sans text-xs font-bold uppercase tracking-[0.2em] text-reel-mute">{what.phone.step}</span>
-                <span aria-hidden="true" className="flex gap-1">
-                  {Array.from({ length: 5 }, (_, i) => (
-                    <span key={i} className={cn("h-1 w-3 rounded-full", i < 2 ? "bg-brass" : "bg-reel-white/20")} />
-                  ))}
-                </span>
-              </div>
-              <p className="font-serif text-lg leading-snug text-reel-white">{what.phone.clue}</p>
-              <div
-                className={cn(
-                  "flex items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-bold transition-colors duration-500",
-                  found ? "bg-brass text-reel" : "bg-reel-white text-reel",
-                )}
-              >
-                {found ? <Check className="size-4" aria-hidden="true" /> : <QrCode className="size-4" aria-hidden="true" />}
-                <span aria-live="polite">{found ? what.phone.found : what.phone.scan}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <figcaption className="text-center font-sans text-sm text-reel-mute">{label}</figcaption>
-    </motion.figure>
   )
 }
 
