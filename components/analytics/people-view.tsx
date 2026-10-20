@@ -118,12 +118,13 @@ export function PeopleView({ snapshot }: { snapshot: PeopleSnapshot }) {
         description="Every device that opened the site, and every account it became. Signed-in devices are merged per account, so a journey includes everything they did before signing up."
       />
 
-      <section aria-label="Totals" className="grid grid-cols-2 gap-5 rounded-sm border border-border bg-card/90 p-4 sm:grid-cols-5 sm:p-6">
+      <section aria-label="Totals" className="grid grid-cols-2 gap-5 rounded-sm border border-border bg-card/90 p-4 sm:grid-cols-3 sm:p-6 lg:grid-cols-6">
         <Stat label="DEVICES" value={totals.devices} strong />
         <Stat label="NEW · 7 DAYS" value={totals.newLast7} />
         <Stat label="ACTIVE TODAY" value={totals.activeToday} />
         <Stat label="ACCOUNTS SEEN" value={totals.accounts} />
         <Stat label="VISIT → SIGN-UP" value={`${totals.signedUpAfterVisit} · ${pct(totals.signedUpAfterVisit, totals.devices)}`} />
+        <Stat label="NO-CONSENT VIEWS · 7D" value={totals.anonymousViews7} />
       </section>
 
       <section aria-labelledby="conversion-title" className="flex flex-col gap-3">

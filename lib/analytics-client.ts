@@ -16,6 +16,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import { COOKIE_CONSENT_COOKIE } from "@/lib/legal"
+import { EV } from "@/lib/analytics-events"
 
 const ANON_KEY = "pythea_aid"
 const SESSION_KEY = "pythea_sid"
@@ -49,6 +50,7 @@ function uid(): string {
 }
 
 let anonCreatedThisLoad = false
+let initialLanding: Record<string, string> | null = null
 
 /** True when this page load is the device's first ever visit (its anonId was just minted). */
 export function isFirstVisitThisLoad(): boolean {
@@ -56,9 +58,13 @@ export function isFirstVisitThisLoad(): boolean {
   return anonCreatedThisLoad
 }
 
-/** Persistent anonymous id (localStorage). Stable across sessions. */
+/**
+ * Persistent anonymous id (localStorage). Stable across sessions. Only exists
+ * once the visitor accepted analytics cookies; otherwise returns "" and stores
+ * nothing, so events stay unlinkable.
+ */
 export function getAnonId(): string {
-  if (!isBrowser()) return ""
+  if (!isBrowser() || !hasAnalyticsConsent()) return ""
   try {
     let id = window.localStorage.getItem(ANON_KEY)
     if (!id) {
@@ -74,7 +80,7 @@ export function getAnonId(): string {
 
 /** Per-session id (sessionStorage). Returns the id and whether it was just created. */
 function getSession(): { id: string; isNew: boolean } {
-  if (!isBrowser()) return { id: "", isNew: false }
+  if (!isBrowser() || !hasAnalyticsConsent()) return { id: "", isNew: false }
   try {
     let id = window.sessionStorage.getItem(SESSION_KEY)
     if (!id) {
@@ -109,6 +115,7 @@ function getCampaignSource(): string | undefined {
 /** The first `?source=` this device ever arrived with (set by SourceTracker). */
 function getLinkSource(): string | undefined {
   if (!isBrowser()) return undefined
+  if (!hasAnalyticsConsent()) return currentUrlSource()
   try {
     return window.localStorage.getItem("th_source_first") ?? undefined
   } catch {
@@ -128,6 +135,53 @@ export function hasAnalyticsConsent(): boolean {
     return raw ? (JSON.parse(raw) as { decision?: string }).decision === "accepted" : false
   } catch {
     return false
+  }
+}
+
+/** The `?s=` / `?source=` id on the current URL, read without storing anything. */
+function currentUrlSource(): string | undefined {
+  try {
+    const q = new URLSearchParams(window.location.search)
+    const v = (q.get("s") ?? q.get("source") ?? q.get("utm_source") ?? q.get("ref") ?? q.get("src"))?.trim()
+    return v ? v.slice(0, 80) : undefined
+  } catch {
+    return undefined
+  }
+}
+
+const LINK_SOURCE_KEYS = ["th_source_first", "th_source_last"]
+
+/**
+ * Called by the cookie banner. "accepted" starts identified tracking right away
+ * (credited to the page this visit landed on); "rejected" wipes every analytics
+ * identifier already on the device.
+ */
+export function onConsentChange(decision: "accepted" | "rejected") {
+  if (!isBrowser()) return
+  if (decision === "accepted") {
+    const src = initialLanding?.utmSource
+    try {
+      if (src && !window.localStorage.getItem("th_source_first")) {
+        window.localStorage.setItem("th_source_first", src)
+        window.localStorage.setItem("th_source_last", src)
+      }
+    } catch {
+      // Storage blocked.
+    }
+    ensureSession(EV.sessionStart)
+    return
+  }
+  try {
+    window.localStorage.removeItem(ANON_KEY)
+    for (const k of LINK_SOURCE_KEYS) window.localStorage.removeItem(k)
+    window.sessionStorage.removeItem(SESSION_KEY)
+    for (let i = window.sessionStorage.length - 1; i >= 0; i--) {
+      const k = window.sessionStorage.key(i)
+      if (k?.startsWith("th_srchit:")) window.sessionStorage.removeItem(k)
+    }
+    document.cookie = `${ANON_KEY}=; max-age=0; path=/; samesite=lax`
+  } catch {
+    // Storage blocked: nothing was stored either.
   }
 }
 
@@ -236,8 +290,8 @@ export function track(
     device: detectDevice(),
     browser: detectBrowser(),
     os: detectOS(),
-    sessionId: getSessionId(),
-    anonId: getAnonId(),
+    sessionId: getSessionId() || undefined,
+    anonId: getAnonId() || undefined,
     props: enrichedProps,
   })
   if (queue.length >= MAX_QUEUE) flush(false)
@@ -260,6 +314,9 @@ export function trackTiming(
  */
 export function ensureSession(startEventName: string) {
   if (!isBrowser()) return
+  // Remember where this page load entered, so a later "accept" still credits it.
+  initialLanding ??= landingAttribution()
+  if (!hasAnalyticsConsent()) return
   mirrorAnonCookie()
   const { isNew } = getSession()
   if (isNew) {
@@ -269,7 +326,7 @@ export function ensureSession(startEventName: string) {
       os: detectOS(),
       viewport: `${window.innerWidth}x${window.innerHeight}`,
       language: navigator.language,
-      ...landingAttribution(),
+      ...(initialLanding ?? landingAttribution()),
     })
   }
 }

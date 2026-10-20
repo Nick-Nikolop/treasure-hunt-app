@@ -5,7 +5,7 @@ import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import { Cookie } from "lucide-react"
 import { useI18n } from "@/components/pythea/language-provider"
-import { getAnonId } from "@/lib/analytics-client"
+import { getAnonId, onConsentChange } from "@/lib/analytics-client"
 import {
   COOKIE_CONSENT_COOKIE,
   COOKIE_CONSENT_MAX_AGE,
@@ -67,6 +67,7 @@ export function CookieConsent() {
   function decide(decision: CookieDecision) {
     persistLocally(decision)
     setOpen(false)
+    onConsentChange(decision)
 
     // Fire-and-forget: persist an auditable record server-side. Failures here
     // must never block the visitor, so we ignore rejections.
@@ -74,7 +75,7 @@ export function CookieConsent() {
       const payload = JSON.stringify({
         decision,
         analytics: decision === "accepted",
-        anonId: getAnonId(),
+        anonId: getAnonId() || null,
         policyVersion: COOKIE_POLICY_VERSION,
         locale,
         path: typeof window !== "undefined" ? window.location.pathname : null,

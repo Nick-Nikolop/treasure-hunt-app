@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server"
 import { headers } from "next/headers"
 import { auth } from "@/lib/auth"
 import { recordEvents, type IncomingEvent } from "@/lib/analytics"
+import { hasAnalyticsConsentCookie, isServiceEvent } from "@/lib/consent-server"
 
 // Analytics ingestion. The client batches events and POSTs them here (via
 // fetch keepalive or navigator.sendBeacon). We resolve the signed-in user from
@@ -28,10 +29,24 @@ export async function POST(req: NextRequest) {
     userId = null
   }
 
-  const written = await recordEvents(events, {
-    userId,
-    userAgent: req.headers.get("user-agent"),
-  })
+  const userAgent = req.headers.get("user-agent")
+  if (hasAnalyticsConsentCookie(req)) {
+    const written = await recordEvents(events, { userId, userAgent })
+    return NextResponse.json({ ok: true, written })
+  }
+
+  // No analytics consent: keep anonymous counts only. Device/session ids are
+  // dropped, and only service records (account, gameplay) keep the account link.
+  const anonymous = events
+    .filter((e) => e && typeof e.name === "string")
+    .map((e) => ({ ...e, anonId: undefined, sessionId: undefined }))
+  const service = anonymous.filter((e) => isServiceEvent(e.name))
+  const other = anonymous.filter((e) => !isServiceEvent(e.name))
+  const [a, b] = await Promise.all([
+    service.length && userId ? recordEvents(service, { userId, userAgent }) : 0,
+    recordEvents(userId ? other : anonymous, { userId: null, userAgent }),
+  ])
+  const written = a + b
 
   return NextResponse.json({ ok: true, written })
 }
