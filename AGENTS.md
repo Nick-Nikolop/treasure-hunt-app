@@ -74,7 +74,48 @@ npx -y vercel --prod --yes
 
 ---
 
-## 5. Local Development Commands
+## 5. Tracking Rule (MANDATORY for every addition or change)
+
+> [!IMPORTANT]
+> **Every new feature, page, flow or change MUST tie into the tracking system.** The admin People journeys
+> (`/analytics/people`) and source analytics (`/analytics`) must always show what visitors and users actually did.
+> A feature that ships without tracking is unfinished.
+
+**How the system works**
+- Client: `lib/analytics-client.ts` → `track(name, props)` (batched to `/api/track`). Page views, page dwell time,
+  sessions and landing source (`?s=` / `utm_*`) are automatic via `components/pythea/analytics-provider.tsx`.
+- Auto-capture: `components/pythea/behavior-tracker.tsx` logs every button/link click (label + link path),
+  scroll depth and page errors. Mark elements `data-no-track` to skip, `data-track="name"` to give a clean label.
+- Source links: `components/pythea/source-tracker.tsx` → `/api/source-hit` (`source_hit` table, titles in `source_label`).
+- Event names live ONLY in `lib/analytics-events.ts` (`EV`). Readable labels for the journey view live in
+  `components/analytics/format.ts`.
+- Server reads: `lib/people.ts` (people list, journeys, source → sign-up conversion).
+
+**Checklist for every change**
+1. Any meaningful action (submit, start, finish, purchase, solve, fail, choose, share, download, open a dialog,
+   step forward/back in a flow) fires `track(EV.xxx, {...})` with useful props (ids, step, result, value).
+2. New event names are added to `EV` in `lib/analytics-events.ts` (dot-namespaced, e.g. `carnival.step`), never as
+   inline strings, and get a readable label in `components/analytics/format.ts`.
+3. Account / gameplay events that are part of the service use the `auth.` / `hunt.` / `team.` / `hint.` prefixes
+   (see `isServiceEvent` in `lib/consent-server.ts`) so they stay linked to the account.
+4. Renaming or moving a page/flow: keep old event names working or update `format.ts` + `lib/people.ts`, so
+   existing history still reads correctly. Never delete tracking without replacing it.
+5. New routes are covered automatically (root layout). If a route renders outside the root layout or bypasses
+   `<AnalyticsProvider />`, wire it in explicitly.
+6. Clickable custom elements (divs with onClick, cards) get a `role="button"` / `aria-label` or `data-track` so the
+   click shows a readable label.
+7. Verify in the journey view (`/analytics/people/...`) that the new actions appear before calling it done.
+
+**Privacy (non-negotiable, GDPR)**
+- Respect the cookie banner. Without "accepted" consent there is NO device id, NO session id, NO storage and NO IP
+  — events are only counted anonymously. This is enforced in `lib/analytics-client.ts` (`hasAnalyticsConsent`) and
+  on the server (`lib/consent-server.ts`). Never bypass it, never add a second id/fingerprint.
+- NEVER track typed field values, passwords, codes, answers, emails or free text. Track that something happened and
+  its outcome (e.g. `{ correct: false, attempt: 3 }`), not what was typed.
+
+---
+
+## 6. Local Development Commands
 
 - **Install dependencies**: `pnpm install`
 - **Run dev server**: `pnpm dev` (Runs on `http://localhost:3000`)
