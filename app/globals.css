@@ -315,6 +315,41 @@ body {
   outline-offset: 3px;
 }
 
+/* Landing2 loading screen: slow fade-in, then a gentle breathing glow */
+.reel-loader-logo {
+  opacity: 0;
+  animation:
+    reel-loader-in 0.9s cubic-bezier(0.4, 0, 0.2, 1) forwards,
+    reel-loader-breathe 2.6s ease-in-out 0.9s infinite;
+}
+@keyframes reel-loader-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes reel-loader-breathe {
+  0%,
+  100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 0 rgb(226 176 79 / 0));
+  }
+  50% {
+    opacity: 0.82;
+    filter: drop-shadow(0 0 14px rgb(226 176 79 / 0.35));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reel-loader-logo {
+    opacity: 1;
+    animation: none;
+  }
+}
+
 /* Carnival mission (Hunt #2) only: flat wine red with a thin gold rim */
 .reel-cta-carnival {
   color: var(--color-reel-white);

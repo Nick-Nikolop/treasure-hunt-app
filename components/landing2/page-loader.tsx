@@ -6,9 +6,9 @@ import { trackTiming } from "@/lib/analytics-client"
 import { EV } from "@/lib/analytics-events"
 import { cn } from "@/lib/utils"
 
-const MIN_VISIBLE_MS = 900
+const MIN_VISIBLE_MS = 1100
 const MAX_WAIT_MS = 6000
-const EXIT_MS = 500
+const EXIT_MS = 800
 // Drawn on the hero canvas, so never present as an <img> in the DOM.
 const EXTRA_ASSETS = ["/landing/logo.webp"]
 
@@ -28,7 +28,6 @@ function preload(src: string) {
 }
 
 export function PageLoader({ onDone }: { onDone: () => void }) {
-  const [progress, setProgress] = useState(0)
   const [leaving, setLeaving] = useState(false)
   const doneRef = useRef(onDone)
   doneRef.current = onDone
@@ -49,11 +48,7 @@ export function PageLoader({ onDone }: { onDone: () => void }) {
       document.fonts?.ready.then(() => undefined) ?? Promise.resolve(),
     ]
     let settled = 0
-    const tick = () => {
-      settled += 1
-      if (!cancelled) setProgress(settled / tasks.length)
-    }
-    tasks.forEach((task) => task.then(tick))
+    tasks.forEach((task) => task.then(() => (settled += 1)))
 
     let timedOut = false
     const cap = new Promise<void>((resolve) =>
@@ -67,7 +62,6 @@ export function PageLoader({ onDone }: { onDone: () => void }) {
       const elapsed = performance.now() - started
       setTimeout(() => {
         if (cancelled) return
-        setProgress(1)
         setLeaving(true)
         trackTiming(EV.landingLoaded, Math.round(performance.now() - started), {
           path: window.location.pathname,
@@ -88,37 +82,31 @@ export function PageLoader({ onDone }: { onDone: () => void }) {
     }
   }, [])
 
-  const percent = Math.round(progress * 100)
-
   return (
     <div
       role="status"
       aria-live="polite"
-      aria-label={`${percent}%`}
+      aria-label="The Hunt"
       className={cn(
-        "fixed inset-0 z-[100] flex flex-col items-center justify-center gap-6 bg-reel transition-opacity duration-500 ease-out motion-reduce:transition-none",
+        "fixed inset-0 z-[100] flex items-center justify-center bg-reel transition-opacity duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] motion-reduce:transition-none",
         leaving && "pointer-events-none opacity-0",
       )}
     >
-      <Image
-        unoptimized
-        priority
-        src="/landing/logo-sm.webp"
-        alt=""
-        width={64}
-        height={62}
-        className="h-auto w-16 animate-pulse motion-reduce:animate-none"
-      />
-      <div className="flex w-44 flex-col items-center gap-3">
-        <div className="h-px w-full overflow-hidden bg-reel-white/15">
-          <div
-            className="h-full origin-left bg-reel-gold transition-transform duration-300 ease-out motion-reduce:transition-none"
-            style={{ transform: `scaleX(${progress})` }}
-          />
-        </div>
-        <span className="font-sans text-xs font-semibold tabular-nums tracking-[0.3em] text-reel-white/60">
-          {percent}%
-        </span>
+      <div
+        className={cn(
+          "transition-[transform,opacity,filter] duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] motion-reduce:transition-none",
+          leaving && "scale-110 opacity-0 blur-[2px]",
+        )}
+      >
+        <Image
+          unoptimized
+          priority
+          src="/landing/logo-sm.webp"
+          alt=""
+          width={64}
+          height={62}
+          className="reel-loader-logo h-auto w-16"
+        />
       </div>
     </div>
   )
