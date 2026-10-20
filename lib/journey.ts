@@ -16,6 +16,7 @@ import { db } from "@/lib/db"
 import { visitor, visitorTouch } from "@/lib/db/schema"
 import { isNull, sql } from "drizzle-orm"
 import { randomUUID } from "node:crypto"
+import { ensureAnalyticsStorage } from "@/lib/analytics-storage"
 
 /** First-party cookie mirroring the analytics anonId, so server auth hooks can read it. */
 export const ANON_COOKIE = "pythea_aid"
@@ -44,6 +45,7 @@ function hostOf(referrer: string | null): string {
 
 /** Store one session's entry point and upsert the device's first-touch row. */
 export async function recordTouch(t: TouchInput): Promise<void> {
+  await ensureAnalyticsStorage().catch(() => {})
   const p = t.props ?? {}
   const referrer = str(p.landingReferrer, 512)
   // A referrer from our own site is a navigation, not a source.
@@ -120,6 +122,7 @@ export async function linkVisitor(
   userId: string,
   via: "signup" | "login" | "event",
 ): Promise<void> {
+  await ensureAnalyticsStorage().catch(() => {})
   const id = str(anonId, 64)
   if (!id || !userId) return
   const now = new Date()

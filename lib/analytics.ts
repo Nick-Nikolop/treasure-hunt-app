@@ -17,6 +17,7 @@ import { and, desc, eq, gte, sql } from "drizzle-orm"
 import { randomUUID } from "node:crypto"
 import { EV } from "@/lib/analytics-events"
 import { linkVisitor, recordTouch } from "@/lib/journey"
+import { ensureAnalyticsStorage } from "@/lib/analytics-storage"
 
 export { EV } from "@/lib/analytics-events"
 export type { EventName } from "@/lib/analytics-events"
@@ -89,6 +90,7 @@ export async function recordEvents(
   events: IncomingEvent[],
   ctx: IngestContext,
 ): Promise<number> {
+  await ensureAnalyticsStorage().catch(() => {})
   if (!Array.isArray(events) || events.length === 0) return 0
   const batch = events.slice(0, MAX_BATCH)
 
@@ -175,6 +177,7 @@ export type AnalyticsOverview = {
 
 /** Headline counters for the last `days`. */
 export async function getOverview(days = 14): Promise<AnalyticsOverview> {
+  await ensureAnalyticsStorage().catch(() => {})
   const since = sinceDate(days)
   const rows = await db
     .select({
@@ -200,6 +203,7 @@ export type DayPoint = { date: string; events: number; pageViews: number; visito
 
 /** Per-day series (oldest first) covering the last `days`. */
 export async function getTimeline(days = 14): Promise<DayPoint[]> {
+  await ensureAnalyticsStorage().catch(() => {})
   const since = sinceDate(days - 1)
   since.setHours(0, 0, 0, 0)
   const series = await db
@@ -234,6 +238,7 @@ export type LabelCount = { label: string; count: number }
 
 /** Top event names by volume in the window. */
 export async function getTopEvents(days = 14, limit = 12): Promise<LabelCount[]> {
+  await ensureAnalyticsStorage().catch(() => {})
   const rows = await db
     .select({ label: analyticsEvent.name, count: sql<number>`count(*)::int` })
     .from(analyticsEvent)
@@ -246,6 +251,7 @@ export async function getTopEvents(days = 14, limit = 12): Promise<LabelCount[]>
 
 /** Most-viewed paths in the window (page.view events only). */
 export async function getTopPages(days = 14, limit = 12): Promise<LabelCount[]> {
+  await ensureAnalyticsStorage().catch(() => {})
   const rows = await db
     .select({ label: analyticsEvent.path, count: sql<number>`count(*)::int` })
     .from(analyticsEvent)
@@ -258,6 +264,7 @@ export async function getTopPages(days = 14, limit = 12): Promise<LabelCount[]> 
 
 /** Device-class split of events in the window. */
 export async function getDeviceBreakdown(days = 14): Promise<LabelCount[]> {
+  await ensureAnalyticsStorage().catch(() => {})
   const rows = await db
     .select({ label: analyticsEvent.device, count: sql<number>`count(*)::int` })
     .from(analyticsEvent)
@@ -269,6 +276,7 @@ export async function getDeviceBreakdown(days = 14): Promise<LabelCount[]> {
 
 /** Browser split of events in the window. */
 export async function getBrowserBreakdown(days = 14): Promise<LabelCount[]> {
+  await ensureAnalyticsStorage().catch(() => {})
   const rows = await db
     .select({ label: analyticsEvent.browser, count: sql<number>`count(*)::int` })
     .from(analyticsEvent)
@@ -316,6 +324,7 @@ export type AuthFunnel = {
 
 /** The auth funnel counts + login/registration timing for the window. */
 export async function getAuthFunnel(days = 14): Promise<AuthFunnel> {
+  await ensureAnalyticsStorage().catch(() => {})
   const [
     registerSubmit,
     registerSuccess,
@@ -355,6 +364,7 @@ export async function getAuthFunnel(days = 14): Promise<AuthFunnel> {
 
 /** Scan-result outcomes split by status (props.status) in the window. */
 export async function getScanBreakdown(days = 14): Promise<LabelCount[]> {
+  await ensureAnalyticsStorage().catch(() => {})
   const rows = await db
     .select({
       label: sql<string>`coalesce(${analyticsEvent.props} ->> 'status', 'unknown')`,
@@ -380,6 +390,7 @@ export type RecentEvent = {
 
 /** The most recent raw events, for the live feed at the bottom of the tab. */
 export async function getRecentEvents(limit = 40): Promise<RecentEvent[]> {
+  await ensureAnalyticsStorage().catch(() => {})
   const rows = await db
     .select()
     .from(analyticsEvent)
@@ -466,6 +477,7 @@ export type PresenceSummary = {
  * would disagree with the list underneath it.
  */
 export async function getPresence(): Promise<PresenceSummary> {
+  await ensureAnalyticsStorage().catch(() => {})
   const latest = await db.execute(sql`
     SELECT DISTINCT ON (e."userId")
            e."userId", e."createdAt", e."path", e."device", e."browser", e."os"
@@ -568,6 +580,7 @@ export async function getActivitySeries(
   granularity: "hour" | "day" = "hour",
   points = granularity === "hour" ? 24 : 30,
 ): Promise<ActivitySeries> {
+  await ensureAnalyticsStorage().catch(() => {})
   const n = Math.max(2, Math.min(granularity === "hour" ? 72 : 180, Math.floor(points)))
 
   /**
@@ -646,6 +659,7 @@ export async function getActivitySeries(
 
 /** One call that assembles everything the Analytics dashboard tab renders. */
 export async function getAnalyticsSnapshot(days = 14): Promise<AnalyticsSnapshot> {
+  await ensureAnalyticsStorage().catch(() => {})
   const [overview, timeline, topEvents, topPages, devices, browsers, auth, scan, recent] =
     await Promise.all([
       getOverview(days),

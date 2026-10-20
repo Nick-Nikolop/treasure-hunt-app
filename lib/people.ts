@@ -12,6 +12,7 @@ import "server-only"
 import { db } from "@/lib/db"
 import { analyticsEvent, sourceHit, sourceLabel, user, visitor, visitorTouch } from "@/lib/db/schema"
 import { asc, eq, inArray, or, sql } from "drizzle-orm"
+import { ensureAnalyticsStorage } from "@/lib/analytics-storage"
 
 const PEOPLE_LIMIT = 400
 const JOURNEY_EVENT_LIMIT = 4000
@@ -114,6 +115,7 @@ function deviceLabel(d: Pick<RawPersonDevice, "deviceModel" | "device" | "os" | 
 }
 
 export async function getPeopleSnapshot(): Promise<PeopleSnapshot> {
+  await ensureAnalyticsStorage().catch(() => {})
   try {
     const [rowsRes, convRes, totalsRes] = await Promise.all([
       db.execute(sql`
@@ -316,6 +318,7 @@ export type Journey = {
 
 /** `key` is `u_<userId>` or `a_<anonId>` (as built by getPeopleSnapshot). */
 export async function getJourney(key: string): Promise<Journey | null> {
+  await ensureAnalyticsStorage().catch(() => {})
   const isUser = key.startsWith("u_")
   const id = key.slice(2)
   if (!id || (!isUser && !key.startsWith("a_"))) return null

@@ -13,6 +13,7 @@ import { and, desc, eq, gte, inArray, isNotNull, sql } from "drizzle-orm"
 import { db } from "@/lib/db"
 import { analyticsEvent, sourceHit, sourceLabel, visitor } from "@/lib/db/schema"
 import { EV } from "@/lib/analytics-events"
+import { ensureAnalyticsStorage } from "@/lib/analytics-storage"
 
 export type SourceClientInfo = {
   source?: unknown
@@ -158,6 +159,7 @@ async function seenBefore(source: string, column: "anonId" | "ipHash", value: st
 
 /** Store one source arrival. Returns false when the payload had no usable source. */
 export async function recordSourceHit(c: SourceClientInfo, s: SourceServerInfo): Promise<boolean> {
+  await ensureAnalyticsStorage().catch(() => {})
   const source = normalizeSource(c.source)
   if (!source) return false
   const ua = parseUA(s.userAgent)
@@ -313,6 +315,7 @@ function median(xs: number[]): number | null {
 
 /** Every source with its rolled-up numbers, plus the 60 latest hits. Admin only. */
 export async function listSources(): Promise<SourcesSnapshot> {
+  await ensureAnalyticsStorage().catch(() => {})
   try {
     const hits = await db.select().from(sourceHit).orderBy(desc(sourceHit.createdAt)).limit(20000)
     if (hits.length === 0) return { sources: [], recent: [] }
@@ -447,6 +450,7 @@ function emptyRow(source: string): SourceRow {
 
 /** Every source (titled or not, visited or not) with its numbers. Admin only. */
 export async function getSourceAnalytics(): Promise<AnalyticsSnapshot> {
+  await ensureAnalyticsStorage().catch(() => {})
   const [snap, labels] = await Promise.all([
     listSources(),
     db
@@ -494,6 +498,7 @@ export async function upsertSourceLabel(input: {
   note: string | null
   updatedBy: string
 }): Promise<void> {
+  await ensureAnalyticsStorage().catch(() => {})
   const now = new Date()
   await db
     .insert(sourceLabel)
@@ -505,5 +510,6 @@ export async function upsertSourceLabel(input: {
 }
 
 export async function deleteSourceLabel(source: string): Promise<void> {
+  await ensureAnalyticsStorage().catch(() => {})
   await db.delete(sourceLabel).where(eq(sourceLabel.source, source))
 }
