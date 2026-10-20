@@ -172,6 +172,53 @@ export function PeopleView({ snapshot }: { snapshot: PeopleSnapshot }) {
         )}
       </section>
 
+      <section aria-labelledby="clicks-title" className="flex flex-col gap-3">
+        <div className="flex flex-col gap-1">
+          <h2 id="clicks-title" className="font-serif text-2xl font-black text-foreground">
+            What visitors clicked
+          </h2>
+          <p className="max-w-[70ch] font-sans text-sm leading-relaxed text-muted-foreground">
+            Last 7 days, everyone included. Visitors who did not accept cookies are counted anonymously, so they show
+            here but not in the list below.
+          </p>
+        </div>
+        {snapshot.clicks.length === 0 ? (
+          <p className="rounded-sm border border-dashed border-border p-6 text-center font-sans text-sm text-muted-foreground">
+            No clicks yet.
+          </p>
+        ) : (
+          <div className="overflow-x-auto rounded-sm border border-border bg-card/90">
+            <table className="w-full font-sans text-sm">
+              <thead className="bg-muted/60 text-left text-xs text-muted-foreground">
+                <tr>
+                  <th className="px-3 py-2 font-bold">Page</th>
+                  <th className="px-3 py-2 font-bold">Clicked</th>
+                  <th className="px-3 py-2 text-right font-bold">Clicks</th>
+                  <th className="px-3 py-2 text-right font-bold">Anonymous</th>
+                  <th className="px-3 py-2 text-right font-bold">Last</th>
+                </tr>
+              </thead>
+              <tbody>
+                {snapshot.clicks.map((c) => (
+                  <tr key={`${c.path}|${c.label}|${c.href ?? ""}`} className="border-t border-border">
+                    <td className="px-3 py-2 font-mono text-xs text-muted-foreground">{c.path}</td>
+                    <td className="px-3 py-2 text-foreground">
+                      <span className="font-bold">{c.label || "—"}</span>
+                      {c.href && <span className="ml-2 font-mono text-xs text-muted-foreground">{`→ ${c.href}`}</span>}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums text-foreground">{c.clicks}</td>
+                    <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">{c.anonymous}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-right text-xs tabular-nums text-muted-foreground">
+                      {relative(c.lastAt)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
       <section aria-labelledby="people-title" className="flex flex-col gap-3">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <h2 id="people-title" className="font-serif text-2xl font-black text-foreground">
