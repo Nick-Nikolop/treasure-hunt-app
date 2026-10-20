@@ -48,6 +48,9 @@ export function AnalyticsProvider() {
           durationMs: Date.now() - enteredAt.current,
         })
         flush(true)
+      } else {
+        // Back on the tab: the hidden stretch was already reported, restart the clock.
+        enteredAt.current = Date.now()
       }
     }
     document.addEventListener("visibilitychange", onHide)

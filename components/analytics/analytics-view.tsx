@@ -1,12 +1,12 @@
 "use client"
 
 import { useMemo, useState, useTransition } from "react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Check, ChevronDown, Copy, Link2, Pencil, Plus, Search, Trash2, X } from "lucide-react"
+import { Check, ChevronDown, Copy, Link2, Pencil, Plus, Search, Trash2, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { AnalyticsSnapshot, LabeledSource, Tally } from "@/lib/source-hits"
 import { removeSourceLabel, saveSourceLabel } from "@/app/analytics/actions"
+import { AnalyticsHeader } from "@/components/analytics/analytics-header"
 
 const SITE = "https://thehunt.gr"
 
@@ -350,24 +350,15 @@ export function AnalyticsView({ snapshot }: { snapshot: AnalyticsSnapshot }) {
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-10">
-      <header className="flex flex-col gap-4">
-        <Link
-          href="/admin"
-          className="inline-flex w-fit items-center gap-1.5 font-sans text-sm text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ArrowLeft className="size-4" aria-hidden="true" />
-          Admin
-        </Link>
-        <div className="flex flex-col gap-1">
-          <p className="font-sans text-[11px] font-bold tracking-chip text-brass">THE HUNT</p>
-          <h1 className="font-serif text-4xl font-black text-foreground sm:text-5xl">Analytics</h1>
-          <p className="max-w-[60ch] font-sans text-sm leading-relaxed text-muted-foreground">
+      <AnalyticsHeader
+        description={
+          <>
             Every link with <code className="font-mono text-foreground">?s=</code> or{" "}
             <code className="font-mono text-foreground">?source=</code> is counted here on its own. Give any id a title
             so you know what it is.
-          </p>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       <section aria-label="All sources" className="grid gap-6 rounded-sm border border-border bg-card/90 p-4 sm:p-6 md:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] md:items-end">
         <div className="grid grid-cols-2 gap-5 sm:grid-cols-3">

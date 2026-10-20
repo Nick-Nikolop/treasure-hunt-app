@@ -12,6 +12,9 @@ export const EV = {
   pageView: "page.view",
   pageLeave: "page.leave", // carries durationMs (time on page)
   sessionStart: "session.start",
+  pageScroll: "page.scroll", // props: { depth: 25 | 50 | 75 | 100, path }
+  uiClick: "ui.click", // props: { label, el, href? } (auto-captured, never field values)
+  appError: "app.error", // props: { message, file? }
   langToggle: "settings.language_toggle",
   themeToggle: "settings.theme_toggle",
   liteToggle: "settings.lite_toggle",
