@@ -5,6 +5,7 @@ import { Check, Compass, RotateCcw, ScanLine } from "lucide-react"
 import { useId, type CSSProperties, type ReactNode } from "react"
 import { cn } from "@/lib/utils"
 import type { ExplainerCopy } from "./copy"
+import { MAP_BOX, MAP_CASTLE, MAP_CHURCH, MAP_ROUTE, MAP_START, MAP_STREET, MAP_TARGET } from "./kalamata-map"
 import {
   GATE_TIMEOUT,
   chapterById,
@@ -38,8 +39,11 @@ const SCENE_BG: Record<ChapterId, string> = {
   riddle: "bg-reel-raised",
   route: "bg-reel-white",
   scan: "bg-reel",
-  ending: "bg-brass",
+  ending: "bg-reel-white",
 }
+
+/** Images the later chapters need, fetched once the viewer presses play. */
+export const SCENE_IMAGES = ["/landing2/explainer/kalamata-map.svg", "/landing2/explainer/kalamata-1686.webp", "/landing/logo-sm.webp"]
 
 export function Scene({ id, ...props }: SceneProps & { id: ChapterId }) {
   return (
@@ -242,38 +246,60 @@ function Dashes({ total, done }: { total: number; done: number }) {
   )
 }
 
-/* ---------- 1. The mission: four friends converge, a phone lights up ---------- */
+/* ---------- 1. The mission: Kalamata at night, the team gathers, a phone lights up ---------- */
 
-const GRID_X = Array.from({ length: 16 }, (_, i) => -74 + i * 14)
-const GRID_Y = Array.from({ length: 13 }, (_, i) => -52 + i * 12)
-const TEAM_CENTER: Pt = [52, 50]
-const TEAM_PATHS: Pt[][] = [
-  [[-70, 44], [38, 44], [47, 45.5]],
-  [[170, 32], [66, 32], [66, 44], [57, 45.5]],
-  [[-70, 68], [38, 68], [38, 56], [47, 54.5]],
-  [[170, 56], [66, 56], [57, 54.5]],
+/** Long exposure of the Kalamata waterfront, Evangelos Gkikopoulos, CC BY 3.0 (credited under the player). */
+const NIGHT_PHOTO = "/landing2/explainer/kalamata-night.webp"
+/** Where each friend waits along the waterfront (frame %) and their seat in the huddle (cqmin from the centre). */
+const FRIENDS: { from: Pt; seat: number }[] = [
+  { from: [13, 64], seat: -10.5 },
+  { from: [36, 62], seat: -3.5 },
+  { from: [64, 62], seat: 3.5 },
+  { from: [87, 64], seat: 10.5 },
 ]
+const HUDDLE_Y = 71
 const TEAM_TONES = ["bg-brass text-reel", "bg-reel-white text-reel", "bg-reel-white text-reel", "bg-brass text-reel"]
 
 function MissionScene({ t, copy, reduce }: SceneProps) {
   const m = copy.mission
-  const fade = easeInOut(span(t, 1500, 1000))
-  const push = reduce ? 0 : easeInOut(span(t, 3500, 1500))
+  const light = reduce ? 1 : easeOut(span(t, 0, 1200))
+  const drift = reduce ? 1 : easeOut(span(t, 0, 3600))
+  const push = reduce ? 0 : easeInOut(span(t, 3400, 1600))
   const rise = reduce ? (t >= 3700 ? 1 : 0) : easeOut(span(t, 3700, 1100))
-  const ring = easeOut(span(t, 3200, 600))
   const note = easeOut(span(t, 4800, 650))
-  const walk = (i: number) => easeInOut(span(t, 1500 + i * 160, 1700))
+  const huddle = easeOut(span(t, 3000, 500))
+  const titleOut = reduce ? (t >= 3300 ? 1 : 0) : easeInOut(span(t, 3300, 800))
 
   return (
     <>
+      {/* eslint-disable-next-line @next/next/no-img-element -- moved by the video camera every frame */}
+      <img
+        src={NIGHT_PHOTO}
+        alt=""
+        aria-hidden="true"
+        decoding="async"
+        className="pointer-events-none absolute inset-0 size-full max-w-none object-cover"
+        style={{
+          objectPosition: "50% 60%",
+          opacity: light,
+          transform: `scale(${lerp(1.14, 1.03, drift) + 0.45 * push})`,
+          transformOrigin: "50% 64%",
+        }}
+      />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 flex items-center justify-center"
-        style={{ opacity: lerp(1, 0.06, fade), transform: `scale(${lerp(1, 1.35, fade) + 0.6 * push})` }}
+        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-reel/50 via-transparent to-reel/60"
+      />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-reel" style={{ opacity: 0.65 * rise }} />
+
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-[17cqh] flex justify-center"
+        style={{ opacity: 1 - titleOut, transform: `translateY(${-6 * titleOut}cqh)` }}
       >
-        <span className="whitespace-nowrap font-serif text-[min(15cqw,30cqh)] font-black leading-none tracking-tight text-reel-white">
+        <span className="whitespace-nowrap font-serif text-[min(13cqw,19cqh)] font-black leading-none tracking-tight text-reel-white">
           {Array.from(m.city).map((char, i) => {
-            const k = reduce ? 1 : easeOut(span(t, 100 + i * 85, 650))
+            const k = reduce ? 1 : easeOut(span(t, 250 + i * 85, 650))
             return (
               <span key={i} className="inline-block" style={{ opacity: k, transform: `translateY(${(1 - k) * 0.5}em)` }}>
                 {char}
@@ -283,70 +309,44 @@ function MissionScene({ t, copy, reduce }: SceneProps) {
         </span>
       </div>
 
-      <Stage focus={TEAM_CENTER} zoom={1 + 1.6 * push}>
-        <Canvas>
-          {GRID_X.map((x, i) => (
-            <Line
-              key={`x${x}`}
-              d={`M${x} -90V190`}
-              progress={reduce ? 1 : easeOut(span(t, 80 * (i % 8), 1600))}
-              width={0.35}
-              className="stroke-reel-white/10"
-            />
-          ))}
-          {GRID_Y.map((y, i) => (
-            <Line
-              key={`y${y}`}
-              d={`M-130 ${y}H230`}
-              progress={reduce ? 1 : easeOut(span(t, 120 + 80 * (i % 6), 1600))}
-              width={0.35}
-              className="stroke-reel-white/10"
-            />
-          ))}
-          {TEAM_PATHS.map((path, i) => {
-            const walked = along(path, walk(i))
-            if (walk(i) <= 0) return null
-            return (
-              <polyline
-                key={i}
-                points={poly(walked)}
-                fill="none"
-                strokeWidth={0.7}
-                strokeLinecap="round"
-                strokeDasharray="0.01 1.8"
-                className="stroke-brass/70"
-                opacity={1 - push}
-              />
-            )
-          })}
-          <circle
-            cx={TEAM_CENTER[0]}
-            cy={TEAM_CENTER[1]}
-            r={12 * (0.7 + 0.3 * ring)}
-            fill="none"
-            strokeWidth={0.5}
-            className="stroke-brass"
-            opacity={ring * (1 - push)}
-          />
-        </Canvas>
-        {TEAM_PATHS.map((path, i) => {
-          if (walk(i) <= 0) return null
-          return (
-            <Pin
-              key={i}
-              at={last(along(path, walk(i)))}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute h-[11.5cqmin] w-[31cqmin] rounded-full border-[0.5cqmin] border-brass"
+        style={{
+          left: "50%",
+          top: `${HUDDLE_Y}%`,
+          opacity: huddle * (1 - push),
+          transform: `translate(-50%, -50%) scale(${0.8 + 0.2 * huddle})`,
+        }}
+      />
+      {FRIENDS.map(({ from: [fx, fy], seat }, i) => {
+        const shown = reduce ? 1 : easeOut(span(t, 800 + i * 150, 450))
+        const k = reduce ? 1 : easeInOut(span(t, 1900 + i * 80, 1250))
+        if (shown <= 0) return null
+        return (
+          <span
+            key={i}
+            aria-hidden="true"
+            className="pointer-events-none absolute"
+            style={{
+              left: `calc(${lerp(fx, 50, k)}% + ${seat * k}cqmin)`,
+              top: `${lerp(fy, HUDDLE_Y, k)}%`,
+              opacity: shown * (1 - push),
+              transform: `translate(-50%, -50%) scale(${0.4 + 0.6 * shown})`,
+            }}
+          >
+            {k === 0 && <span className="absolute inset-0 animate-ping rounded-full bg-brass/50" />}
+            <span
               className={cn(
-                "flex size-[8cqmin] items-center justify-center rounded-full font-sans text-[3.4cqmin] font-bold shadow-lg shadow-reel ring-[0.6cqmin] ring-reel",
+                "relative flex size-[8cqmin] items-center justify-center rounded-full font-sans text-[3.4cqmin] font-bold shadow-lg shadow-reel ring-[0.6cqmin] ring-reel",
                 TEAM_TONES[i],
               )}
             >
               {m.team[i]}
-            </Pin>
-          )
-        })}
-      </Stage>
-
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-reel" style={{ opacity: 0.6 * rise }} />
+            </span>
+          </span>
+        )
+      })}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute left-1/2 top-[13cqh] w-[min(46cqh,66cqw)]"
@@ -497,138 +497,138 @@ function RiddleScene({ t, wait, solved, wrong, copy, reduce, onPick }: SceneProp
   )
 }
 
-/* ---------- 3. The route: walk a drawn city plan to the square ---------- */
+/* ---------- 3. The route: a real walk through Kalamata, on OpenStreetMap data ---------- */
 
-const ROUTE: Pt[] = [
-  [24, 91],
-  [24, 68],
-  [38, 68],
-  [38, 44],
-  [52, 44],
-  [52, 32],
-]
-const PLAZA = last(ROUTE)
-const CASTLE: Pt = [9, 9]
-const BLOCKS = Array.from({ length: 16 }, (_, i) =>
-  Array.from({ length: 11 }, (_, j) => ({ x: -72.6 + i * 14, y: -50.6 + j * 12, park: rand(i * 31 + j * 17) > 0.87 })),
-)
-  .flat()
-  .filter((block) => Math.hypot(block.x + 5.6 - CASTLE[0], block.y + 4.6 - CASTLE[1]) > 13)
-const SEA = `M-130 86 ${Array.from({ length: 36 }, (_, i) => `Q${-125 + i * 10} ${i % 2 ? 87.2 : 84.8} ${-120 + i * 10} 86`).join(" ")} V230 H-130 Z`
-const WAVES = Array.from({ length: 14 }, (_, i) => ({ x: -60 + rand(i + 40) * 220, y: 91 + rand(i + 80) * 40 }))
+const MAP_SRC = "/landing2/explainer/kalamata-map.svg"
+const [MAP_X, MAP_Y, MAP_W, MAP_H] = MAP_BOX
+/** Opening shot frames the castle, the cathedral and the start; the camera then follows the walk south. */
+const MAP_OPEN: Pt = [74, 10]
+const MAP_CLOSE: Pt = [MAP_TARGET[0] + 4, MAP_TARGET[1] - 7]
+const MAP_INK_ORIGIN = `${((MAP_START[0] - MAP_X) / MAP_W) * 100}% ${((MAP_START[1] - MAP_Y) / MAP_H) * 100}%`
+const STREET_LABEL: Pt = (() => {
+  const angle = (MAP_STREET.angle * Math.PI) / 180
+  return [MAP_STREET.at[0] - Math.sin(angle) * 3.4, MAP_STREET.at[1] + Math.cos(angle) * 3.4]
+})()
+const MAP_LABEL = "font-sans text-xs font-bold uppercase tracking-[0.18em] text-reel/60"
 
 function RouteScene({ t, copy, reduce }: SceneProps) {
-  const { duration } = chapterById("route")
-  const p = easeInOut(t / duration)
-  const draw = reduce ? 1 : easeInOut(span(t, 600, 4200))
-  const walked = along(ROUTE, draw)
+  const ink = reduce ? 1 : easeOut(span(t, 0, 1800))
+  const draw = reduce ? 1 : easeInOut(span(t, 900, 4300))
+  const walked = along(MAP_ROUTE, draw)
   const tip = last(walked)
   const arrived = draw >= 1
-  const zoom = reduce ? 1.15 : lerp(1.05, 1.45, p)
-  const focus = mix([34, 72], [50, 40], draw)
-  const drift = (t / 1000) * 1.4
+  const travel = reduce ? 0.6 : easeInOut(span(t, 600, 4900))
+  const zoom = lerp(1.05, 1.55, travel)
+  const focus = mix(MAP_OPEN, MAP_CLOSE, travel)
 
   return (
-    <Stage focus={focus} zoom={zoom}>
-      <Canvas>
-        <path d={SEA} className="fill-reel" />
-        {WAVES.map((wave, i) => (
-          <path
-            key={i}
-            d={`M${wave.x + drift} ${wave.y}q1.5 -1.2 3 0t3 0`}
-            fill="none"
-            strokeWidth={0.4}
-            strokeLinecap="round"
-            className="stroke-reel-white/30"
-          />
-        ))}
-        <rect x={21} y={84} width={6} height={11} rx={0.8} className="fill-reel-white" />
-
-        {BLOCKS.map((block) => (
-          <rect
-            key={`${block.x}:${block.y}`}
-            x={block.x}
-            y={block.y}
-            width={11.2}
-            height={9.2}
-            rx={1}
-            className={block.park ? "fill-brass/25" : "fill-reel/[0.08]"}
-          />
-        ))}
-        {[45, 135].map((angle) => {
-          const dx = Math.cos((angle * Math.PI) / 180) * 70
-          const dy = Math.sin((angle * Math.PI) / 180) * 70
-          return (
-            <path
-              key={angle}
-              d={`M${PLAZA[0] - dx} ${PLAZA[1] - dy}L${PLAZA[0] + dx} ${PLAZA[1] + dy}`}
-              strokeWidth={2.6}
-              className="stroke-reel-white"
-            />
-          )
-        })}
-        <circle cx={PLAZA[0]} cy={PLAZA[1]} r={6.5} className="fill-reel-white" />
-        <circle
-          cx={PLAZA[0]}
-          cy={PLAZA[1]}
-          r={6.5}
-          strokeWidth={arrived ? 0.8 : 0.4}
-          className={cn("transition-colors duration-500", arrived ? "fill-brass/40 stroke-brass" : "fill-transparent stroke-reel/30")}
+    <>
+      <Stage focus={focus} zoom={zoom}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- static vector plan moved by the video camera */}
+        <img
+          src={MAP_SRC}
+          alt=""
+          aria-hidden="true"
+          decoding="async"
+          className="absolute max-w-none"
+          style={{
+            left: `${MAP_X}%`,
+            top: `${MAP_Y}%`,
+            width: `${MAP_W}%`,
+            height: `${MAP_H}%`,
+            clipPath: reduce ? undefined : `circle(${lerp(3, 70, ink)}% at ${MAP_INK_ORIGIN})`,
+          }}
         />
-
-        <circle cx={CASTLE[0]} cy={CASTLE[1]} r={11} className="fill-reel/[0.07]" />
-        <path
-          d={`M${CASTLE[0] - 4} ${CASTLE[1] + 3}V${CASTLE[1] - 2}h0v-2.5h1.5v1.3h1.75v-1.3h1.5v1.3h1.75v-1.3h1.5v2.5V${CASTLE[1] + 3}Z`}
-          className="fill-reel/45"
-        />
-
-        {walked.length > 1 && (
+        <Canvas>
           <polyline
-            points={poly(walked)}
+            points={poly(MAP_ROUTE)}
             fill="none"
-            strokeWidth={1.1}
+            strokeWidth={0.6}
             strokeLinecap="round"
             strokeLinejoin="round"
-            strokeDasharray="0.01 2.2"
-            className="stroke-reel"
+            strokeDasharray="0.01 1.5"
+            className="stroke-reel/45"
+            opacity={ink}
           />
-        )}
-      </Canvas>
+          {walked.length > 1 && (
+            <>
+              <polyline
+                points={poly(walked)}
+                fill="none"
+                strokeWidth={1.9}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="stroke-reel"
+              />
+              <polyline
+                points={poly(walked)}
+                fill="none"
+                strokeWidth={0.9}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="stroke-brass"
+              />
+            </>
+          )}
+          <circle cx={MAP_START[0]} cy={MAP_START[1]} r={1.4} className="fill-reel" />
+          <circle
+            cx={MAP_TARGET[0]}
+            cy={MAP_TARGET[1]}
+            r={4.6}
+            fill="none"
+            strokeWidth={arrived ? 0.8 : 0.45}
+            strokeDasharray={arrived ? undefined : "1.2 1"}
+            className={cn("transition-colors duration-500", arrived ? "stroke-brass" : "stroke-reel/50")}
+          />
+        </Canvas>
 
-      <Pin at={[CASTLE[0], CASTLE[1] + 7]} keep={zoom} className="font-sans text-xs font-bold uppercase tracking-[0.18em] text-reel/60">
-        {copy.route.castle}
-      </Pin>
-      <Pin at={[35, 92]} keep={zoom} className="font-sans text-xs font-bold uppercase tracking-[0.18em] text-reel-white/60">
-        {copy.route.harbour}
-      </Pin>
-      <Pin
-        at={[24, 98.5]}
-        keep={zoom}
-        className="whitespace-nowrap rounded-md bg-reel-white px-2.5 py-1 font-sans text-xs font-bold text-reel shadow-lg"
-        style={{ opacity: 1 - span(t, 2800, 600) }}
-      >
-        {copy.route.start}
-      </Pin>
-
-      {arrived ? (
-        <>
-          <Pin at={PLAZA} keep={zoom} className="size-12 animate-ping rounded-full bg-brass/40" />
-          <Pin
-            at={[PLAZA[0], PLAZA[1] - 11]}
-            keep={zoom}
-            className="flex items-center gap-1.5 whitespace-nowrap rounded-md bg-reel px-2.5 py-1.5 font-sans text-xs font-bold text-reel-white shadow-lg md:text-sm"
-          >
-            <Check className="size-3.5 text-brass" />
-            {copy.route.target}
-          </Pin>
-        </>
-      ) : (
-        <Pin at={tip} keep={zoom} className="flex size-5 items-center justify-center">
-          <span className="absolute inset-0 animate-ping rounded-full bg-brass/60" />
-          <span className="relative size-4 rounded-full bg-brass shadow-lg ring-[3px] ring-reel" />
+        <Pin at={[MAP_CASTLE[0], MAP_CASTLE[1] + 5]} keep={zoom} className={MAP_LABEL}>
+          {copy.route.castle}
         </Pin>
-      )}
-    </Stage>
+        <Pin at={[MAP_CHURCH[0], MAP_CHURCH[1] + 4]} keep={zoom} className={MAP_LABEL}>
+          {copy.route.church}
+        </Pin>
+        <Pin
+          at={STREET_LABEL}
+          className="whitespace-nowrap font-sans text-xs font-bold tracking-[0.12em] text-reel/50"
+          style={{ transform: `translate(-50%, -50%) rotate(${MAP_STREET.angle}deg) scale(${1 / zoom})` }}
+        >
+          {MAP_STREET.name}
+        </Pin>
+        <Pin
+          at={[MAP_START[0], MAP_START[1] - 5]}
+          keep={zoom}
+          className="whitespace-nowrap rounded-md bg-reel px-2.5 py-1 font-sans text-xs font-bold text-reel-white shadow-lg"
+          style={{ opacity: 1 - span(t, 2600, 600) }}
+        >
+          {copy.route.start}
+        </Pin>
+
+        {arrived ? (
+          <>
+            <Pin at={MAP_TARGET} keep={zoom} className="size-12 animate-ping rounded-full bg-brass/40" />
+            <Pin
+              at={[MAP_TARGET[0], MAP_TARGET[1] + 9]}
+              keep={zoom}
+              className="flex items-center gap-1.5 whitespace-nowrap rounded-md bg-reel px-2.5 py-1.5 font-sans text-xs font-bold text-reel-white shadow-lg md:text-sm"
+            >
+              <Check className="size-3.5 text-brass" />
+              {copy.route.target}
+            </Pin>
+          </>
+        ) : (
+          draw > 0 && (
+            <Pin at={tip} keep={zoom} className="flex size-5 items-center justify-center">
+              <span className="absolute inset-0 animate-ping rounded-full bg-brass/60" />
+              <span className="relative size-4 rounded-full bg-brass shadow-lg ring-[3px] ring-reel" />
+            </Pin>
+          )
+        )}
+      </Stage>
+      <span className="pointer-events-none absolute right-3 top-3.5 font-sans text-[11px] font-medium text-reel/55 md:right-5 md:top-6">
+        © OpenStreetMap
+      </span>
+    </>
   )
 }
 
@@ -781,133 +781,175 @@ function ScanScene({ t, solved, copy, reduce, onScan }: SceneProps) {
   )
 }
 
-/* ---------- 5. The ending: ten stops light up, the chest bursts open ---------- */
+/* ---------- 5. The ending: the trail crosses Kalamata in 1686 and seals the castle gate ---------- */
 
-const NODES: Pt[] = [
-  [14, 84],
-  [26, 76],
-  [20, 63],
-  [31, 53],
-  [45, 58],
-  [56, 70],
-  [68, 62],
-  [63, 48],
-  [50, 41],
-  [58, 29],
-]
-const CHEST: Pt = [76, 24]
-const TRACK: Pt[] = [...NODES, CHEST]
-const COINS = Array.from({ length: 9 }, (_, i) => ({ vx: (rand(i + 7) - 0.5) * 34, vy: -(18 + rand(i + 21) * 14) }))
+/** "Calamata", Vincenzo Coronelli, 1686 (scan CC BY-SA 4.0, retouched and toned; credited under the player). */
+const ENGRAVING = "/landing2/explainer/kalamata-1686.webp"
+const ENGRAVING_W = 190
+const ENGRAVING_H = ENGRAVING_W / (2000 / 1614)
+const ENGRAVING_X = 50 - ENGRAVING_W / 2
+const ENGRAVING_Y = 50 - ENGRAVING_H / 2
+const onEngraving = ([u, v]: Pt): Pt => [ENGRAVING_X + u * ENGRAVING_W, ENGRAVING_Y + v * ENGRAVING_H]
+/** Ten stops along the lanes of the engraved town, then the castle gate. */
+const STOPS: Pt[] = (
+  [
+    [0.3, 0.745],
+    [0.365, 0.675],
+    [0.42, 0.585],
+    [0.47, 0.49],
+    [0.53, 0.585],
+    [0.585, 0.7],
+    [0.685, 0.655],
+    [0.745, 0.545],
+    [0.712, 0.462],
+    [0.668, 0.398],
+  ] as Pt[]
+).map(onEngraving)
+const GATE = onEngraving([0.662, 0.318])
+const SAMPLES = 12
+const FINALE: Pt = [56, 46]
+
+/** Catmull-Rom curve through `points`, `samples` points per segment, so index `i * samples` = point i. */
+function smooth(points: Pt[], samples: number): Pt[] {
+  const out: Pt[] = []
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[Math.max(0, i - 1)]
+    const p1 = points[i]
+    const p2 = points[i + 1]
+    const p3 = points[Math.min(points.length - 1, i + 2)]
+    for (let s = 0; s < samples; s++) {
+      const k = s / samples
+      const at = (j: 0 | 1) =>
+        0.5 *
+        (2 * p1[j] +
+          (p2[j] - p0[j]) * k +
+          (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * k * k +
+          (3 * p1[j] - p0[j] - 3 * p2[j] + p3[j]) * k * k * k)
+      out.push([at(0), at(1)])
+    }
+  }
+  out.push(last(points))
+  return out
+}
+const TRAIL = smooth([...STOPS, GATE], SAMPLES)
 
 function EndingScene({ t, reduce }: SceneProps) {
-  const dots = useSvgId()
-  const reached = 1 + 8 * easeInOut(span(t, 300, 3000))
-  const toChest = easeInOut(span(t, 3300, 450))
-  const frame = reduce ? 1 : easeInOut(span(t, 0, 4200))
-  const zoom = lerp(1.9, 1, frame)
-  const focus = mix(NODES[1], [46, 50], frame)
-  const pop = span(t, 3650, 320)
-  const lid = easeOut(span(t, 3700, 600)) * 38
-  const rays = easeOut(span(t, 3800, 800))
-  const coinTime = (t - 3900) / 1000
+  const glowId = useSvgId()
+  const reached = reduce ? STOPS.length - 1 : (STOPS.length - 1) * easeInOut(span(t, 250, 3050))
+  const toGate = reduce ? 1 : easeInOut(span(t, 3300, 350))
+  const progress = reached + toGate
+  const trail = upTo(TRAIL, progress * SAMPLES)
+  const head = last(trail)
+  const pull = reduce ? 1 : easeInOut(span(t, 3550, 1500))
+  const zoom = lerp(lerp(2.1, 1.65, span(t, 0, 3300)), 1, pull) + 0.05 * easeInOut(span(t, 5000, 2000))
+  const focus = mix(head, FINALE, pull)
+  const seal = reduce ? 1 : easeOut(span(t, 3700, 320))
+  const glow = reduce ? 1 : easeOut(span(t, 3600, 900))
+  const shock = (delay: number) => span(t, 3750 + delay, 900)
 
   return (
     <>
-      <svg aria-hidden="true" className="absolute inset-0 size-full">
-        <defs>
-          <pattern id={dots} width={22} height={22} patternUnits="userSpaceOnUse">
-            <circle cx={11} cy={11} r={1.2} className="fill-reel/15" />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill={`url(#${dots})`} />
-      </svg>
-
       <Stage focus={focus} zoom={zoom}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- moved by the video camera every frame */}
+        <img
+          src={ENGRAVING}
+          alt=""
+          aria-hidden="true"
+          decoding="async"
+          className="absolute max-w-none"
+          style={{
+            left: `${ENGRAVING_X}%`,
+            top: `${ENGRAVING_Y}%`,
+            width: `${ENGRAVING_W}%`,
+            height: `${ENGRAVING_H}%`,
+          }}
+        />
         <Canvas>
+          <defs>
+            <radialGradient id={glowId}>
+              <stop offset="0%" className="[stop-color:var(--color-brass)]" stopOpacity={0.85} />
+              <stop offset="100%" className="[stop-color:var(--color-brass)]" stopOpacity={0} />
+            </radialGradient>
+          </defs>
+
+          {glow > 0 && (
+            <circle
+              cx={GATE[0]}
+              cy={GATE[1]}
+              r={(10 + 16 * glow) * (1 + 0.04 * Math.sin(t / 260))}
+              fill={`url(#${glowId})`}
+              opacity={glow}
+            />
+          )}
           <polyline
-            points={poly(TRACK)}
+            points={poly(TRAIL)}
             fill="none"
-            strokeWidth={0.6}
+            strokeWidth={0.5}
             strokeLinecap="round"
-            strokeDasharray="0.01 1.6"
-            className="stroke-reel/30"
+            strokeDasharray="0.01 1.4"
+            className="stroke-reel/50"
           />
           <polyline
-            points={poly(upTo(TRACK, reached + toChest))}
+            points={poly(trail)}
             fill="none"
-            strokeWidth={1.2}
+            strokeWidth={1.7}
             strokeLinecap="round"
             strokeLinejoin="round"
             className="stroke-reel"
           />
+          <polyline
+            points={poly(trail)}
+            fill="none"
+            strokeWidth={0.8}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="stroke-brass"
+          />
 
-          <g transform={`translate(${CHEST[0]} ${CHEST[1]}) scale(${1.35 * (1 + 0.14 * Math.sin(pop * Math.PI))})`}>
-            <circle r={9 + 16 * rays} className="fill-reel-white/30" opacity={rays} />
-            <g transform={`rotate(${t / 40})`} opacity={rays * 0.7}>
-              {Array.from({ length: 12 }, (_, i) => {
-                const angle = (i / 12) * Math.PI * 2
-                return (
-                  <line
-                    key={i}
-                    x1={Math.cos(angle) * 11}
-                    y1={Math.sin(angle) * 11}
-                    x2={Math.cos(angle) * (11 + 22 * rays)}
-                    y2={Math.sin(angle) * (11 + 22 * rays)}
-                    strokeWidth={1.3}
-                    strokeLinecap="round"
-                    className="stroke-reel-white"
-                  />
-                )
-              })}
-            </g>
-            <rect x={-8} y={-1} width={16} height={10} rx={1.2} className="fill-reel" />
-            <rect x={-8} y={3.2} width={16} height={1.3} className="fill-brass/60" />
-            <rect x={-1.4} y={1.6} width={2.8} height={3.6} rx={0.6} className="fill-brass" />
-            <g transform={`rotate(${-lid} -8 -1)`}>
-              <path d="M-8 -1V-4Q-8 -7.5 0 -7.5Q8 -7.5 8 -4V-1Z" className="fill-reel" />
-              <rect x={-8} y={-2.6} width={16} height={1.2} className="fill-brass/60" />
-            </g>
-            {coinTime > 0 &&
-              COINS.map((coin, i) => {
-                const s = coinTime - i * 0.05
-                if (s <= 0) return null
-                return (
-                  <circle
-                    key={i}
-                    cx={coin.vx * s}
-                    cy={-3 + coin.vy * s + 26 * s * s}
-                    r={1.4}
-                    strokeWidth={0.35}
-                    className="fill-reel-white stroke-reel"
-                    opacity={1 - clamp01((s - 1) / 0.6)}
-                  />
-                )
-              })}
-          </g>
-
-          {NODES.map(([x, y], i) => {
-            const isReached = reached >= i - 1e-6
-            const bump = isReached ? Math.sin(clamp01((reached - i) * 3) * Math.PI) : 0
+          {STOPS.map(([x, y], i) => {
+            const stamp = reduce ? 1 : easeOut(clamp01((progress - i) * 3.5 + 0.3))
+            if (progress < i) return null
             return (
-              <g key={i} transform={`translate(${x} ${y}) scale(${1 + 0.3 * bump})`}>
-                <circle
-                  r={3.3}
-                  strokeWidth={0.5}
-                  className={isReached ? "fill-reel stroke-reel" : "fill-brass stroke-reel/40"}
-                />
-                <text
-                  dy="0.36em"
-                  textAnchor="middle"
-                  fontSize={2.9}
-                  className={cn("font-sans font-bold", isReached ? "fill-brass" : "fill-reel/50")}
-                >
-                  {i + 1}
-                </text>
+              <g key={i} transform={`translate(${x} ${y})`}>
+                <circle r={3 + 6 * stamp} fill="none" strokeWidth={0.4} className="stroke-reel" opacity={0.5 * (1 - stamp)} />
+                <g transform={`scale(${1 + 0.9 * (1 - stamp)})`} opacity={stamp}>
+                  <circle r={3} strokeWidth={0.45} className="fill-reel stroke-brass" />
+                  <text dy="0.36em" textAnchor="middle" fontSize={2.7} className="fill-brass font-sans font-bold">
+                    {i + 1}
+                  </text>
+                </g>
               </g>
             )
           })}
+
+          {[0, 220].map((delay) => {
+            const k = shock(delay)
+            if (k <= 0 || k >= 1) return null
+            return (
+              <circle
+                key={delay}
+                cx={GATE[0]}
+                cy={GATE[1]}
+                r={5.2 + 30 * easeOut(k)}
+                fill="none"
+                strokeWidth={0.7 * (1 - k)}
+                className="stroke-brass"
+              />
+            )
+          })}
+          {seal > 0 && (
+            <g transform={`translate(${GATE[0]} ${GATE[1]}) scale(${lerp(1.5, 1, seal)})`} opacity={clamp01(seal * 2.5)}>
+              <circle r={5.2} strokeWidth={0.5} className="fill-reel stroke-brass" />
+              <circle r={4.4} fill="none" strokeWidth={0.18} className="stroke-brass/60" />
+              <image href="/landing/logo-sm.webp" x={-3.3} y={-3.2} width={6.6} height={6.4} />
+            </g>
+          )}
         </Canvas>
       </Stage>
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_50%,var(--color-reel)_135%)]"
+      />
     </>
   )
 }

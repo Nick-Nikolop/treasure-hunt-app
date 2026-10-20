@@ -38,11 +38,19 @@ export type ExplainerCopy = {
     right: string
     captions: { before: string; after: string }
   }
-  route: { captions: [string, string]; start: string; target: string; harbour: string; castle: string }
+  route: { captions: [string, string]; start: string; target: string; church: string; castle: string }
   scan: { captions: { before: string; prompt: string; after: string }; button: string; noteTitle: string; noteBody: string }
   ending: { captions: [string, string] }
   end: { label: string }
+  credits: { label: string; photo: string; map: string; engraving: string }
 }
+
+/** Sources of the real Kalamata imagery used in the video (licences require visible credit). */
+export const EXPLAINER_CREDIT_LINKS = {
+  photo: "https://commons.wikimedia.org/wiki/File:Very_Long_Exposure_Of_Kalamata_Port_(224478827).jpeg",
+  map: "https://www.openstreetmap.org/copyright",
+  engraving: "https://commons.wikimedia.org/wiki/File:Kalamata_1686.jpg",
+} as const
 
 export const EXPLAINER_COPY: Record<"el" | "en", ExplainerCopy> = {
   el: {
@@ -92,7 +100,7 @@ export const EXPLAINER_COPY: Record<"el" | "en", ExplainerCopy> = {
       captions: ["Περπατάτε μαζί στους δρόμους της Καλαμάτας…", "…μέχρι το σημείο που έδειξε ο γρίφος."],
       start: "Είστε εδώ",
       target: "Κεντρική Πλατεία",
-      harbour: "Λιμάνι",
+      church: "Υπαπαντή",
       castle: "Κάστρο",
     },
     scan: {
@@ -109,6 +117,12 @@ export const EXPLAINER_COPY: Record<"el" | "en", ExplainerCopy> = {
       captions: ["Γρίφο με γρίφο, η ιστορία σάς φέρνει μέχρι το τέλος.", "Σαν escape room, αλλά σε ολόκληρη την πόλη."],
     },
     end: { label: "Με λίγα λόγια" },
+    credits: {
+      label: "Εικόνες (με προσαρμογή):",
+      photo: "Λιμάνι Καλαμάτας, φωτ. Evangelos Gkikopoulos, CC BY 3.0",
+      map: "Χάρτης © OpenStreetMap contributors, ODbL",
+      engraving: "Καλαμάτα, χαρακτικό V. Coronelli, 1686, CC BY-SA 4.0",
+    },
   },
   en: {
     eyebrow: "See it in action",
@@ -157,7 +171,7 @@ export const EXPLAINER_COPY: Record<"el" | "en", ExplainerCopy> = {
       captions: ["You walk the streets of Kalamata together…", "…to the spot the puzzle pointed to."],
       start: "You are here",
       target: "Central Square",
-      harbour: "Harbour",
+      church: "Ypapanti",
       castle: "Castle",
     },
     scan: {
@@ -174,5 +188,11 @@ export const EXPLAINER_COPY: Record<"el" | "en", ExplainerCopy> = {
       captions: ["Puzzle by puzzle, the story leads you to the end.", "Like an escape room, but the whole city is the room."],
     },
     end: { label: "In short" },
+    credits: {
+      label: "Images (adapted):",
+      photo: "Kalamata port, photo by Evangelos Gkikopoulos, CC BY 3.0",
+      map: "Map © OpenStreetMap contributors, ODbL",
+      engraving: "Kalamata, engraving by V. Coronelli, 1686, CC BY-SA 4.0",
+    },
   },
 }

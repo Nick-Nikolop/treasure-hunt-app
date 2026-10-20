@@ -3,13 +3,14 @@
 import { AnimatePresence, motion, useInView, useReducedMotion } from "framer-motion"
 import { Hand, Pause, Play, RotateCcw } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
+import { preload } from "react-dom"
 import type { LandingCopy } from "@/components/landing/copy"
 import { track, trackTiming } from "@/lib/analytics-client"
 import { EV } from "@/lib/analytics-events"
 import { cn } from "@/lib/utils"
 import { SectionEyebrow } from "../spotlights"
-import { EXPLAINER_COPY } from "./copy"
-import { EndCard, Scene, captionFor } from "./scenes"
+import { EXPLAINER_COPY, EXPLAINER_CREDIT_LINKS } from "./copy"
+import { EndCard, SCENE_IMAGES, Scene, captionFor } from "./scenes"
 import { CHAPTERS, GATE_TIMEOUT, START_CLOCK, advance, type ChapterId, type Clock, type Solved } from "./timeline"
 
 const EASE = [0.22, 1, 0.36, 1] as const
@@ -139,6 +140,8 @@ export function ExplainerSection({ locale, what }: { locale: "el" | "en"; what: 
     track(EV.ctaClick, { id: "explainer-how", location: "explainer" })
     document.getElementById("how")?.scrollIntoView({ behavior: reduce ? "auto" : "smooth" })
   }
+
+  if (started) for (const src of SCENE_IMAGES) preload(src, { as: "image" })
 
   const caption = captionFor(chapter.id, clock.t, solved, copy)
   const atGate = chapter.gate !== undefined && !solved[chapter.id] && clock.t >= chapter.gate - 150
@@ -301,6 +304,28 @@ export function ExplainerSection({ locale, what }: { locale: "el" | "en"; what: 
               )
             })}
           </ol>
+
+          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 font-sans text-xs leading-relaxed text-reel-mute">
+            <span>{copy.credits.label}</span>
+            {(["photo", "map", "engraving"] as const).map((key, i) => (
+              <span key={key} className="flex items-center gap-2">
+                {i > 0 && (
+                  <span aria-hidden="true" className="hidden sm:inline">
+                    ·
+                  </span>
+                )}
+                <a
+                  href={EXPLAINER_CREDIT_LINKS[key]}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-track={`explainer-credit-${key}`}
+                  className="underline decoration-reel-white/25 underline-offset-2 transition-colors hover:text-reel-white"
+                >
+                  {copy.credits[key]}
+                </a>
+              </span>
+            ))}
+          </p>
         </div>
       </div>
     </section>
