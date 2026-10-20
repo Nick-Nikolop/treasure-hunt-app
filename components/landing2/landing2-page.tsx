@@ -69,10 +69,12 @@ export function Landing2Page() {
           scrolled ? "bg-reel" : "bg-linear-to-b from-reel/80 to-transparent",
         )}
       >
-        <nav aria-label={reel.nav.label} className="flex h-16 items-center gap-6 px-5 md:h-[4.5rem] md:gap-10 md:px-14">
-          <a href="#top" className="flex shrink-0 items-center gap-2.5">
-            <Image unoptimized src="/landing/logo-sm.webp" alt="" width={34} height={33} className="h-auto w-8 md:w-9" priority />
-            <span className="font-serif text-xl font-black tracking-[0.12em] text-brass md:text-2xl">THE HUNT</span>
+        <nav aria-label={reel.nav.label} className="flex h-14 items-center gap-3 px-4 md:h-[4.5rem] md:gap-10 md:px-14">
+          <a href="#top" aria-label="The Hunt" className="flex min-w-0 items-center gap-2 md:gap-2.5">
+            <Image unoptimized src="/landing/logo-sm.webp" alt="" width={34} height={33} className="h-auto w-7 shrink-0 md:w-9" priority />
+            <span className="truncate font-serif text-base font-black tracking-[0.1em] text-brass max-[339px]:hidden md:text-2xl md:tracking-[0.12em]">
+              THE HUNT
+            </span>
           </a>
           <ul className="hidden items-center gap-5 text-base lg:flex">
             {navLinks.map((link) => {
@@ -100,18 +102,18 @@ export function Landing2Page() {
               )
             })}
           </ul>
-          <div className="ml-auto flex items-center gap-3 md:gap-4">
+          <div className="ml-auto flex shrink-0 items-center gap-2 md:gap-4">
             <button
               type="button"
               onClick={toggle}
               aria-label={copy.langLabel}
-              className="rounded-md border border-reel-white/25 px-2.5 py-1.5 text-sm font-bold tracking-wider text-reel-white/85 transition hover:border-reel-white/60 hover:text-reel-white"
+              className="rounded-md border border-reel-white/25 px-2 py-1.5 text-xs md:px-2.5 md:text-sm font-bold tracking-wider text-reel-white/85 transition hover:border-reel-white/60 hover:text-reel-white"
             >
               {copy.lang}
             </button>
             <a
               href={notifyHref}
-              className="reel-cta rounded-md px-4 py-1.5 text-sm font-bold md:px-5"
+              className="reel-cta whitespace-nowrap rounded-md px-3 py-1.5 text-[13px] font-bold md:px-5 md:text-sm"
             >
               {reel.nav.cta}
             </a>

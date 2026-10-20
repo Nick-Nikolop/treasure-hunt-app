@@ -18,6 +18,8 @@ export type BeamPath = {
   reachY: number
   mobileX?: number
   mobileReachX?: number
+  mobileY?: number
+  mobileReachY?: number
   speed?: number
   /** Set false to keep the beam on its own sweep and ignore the mouse. */
   followPointer?: boolean
@@ -43,6 +45,8 @@ export function useBeam(ref: RefObject<HTMLElement | null>, path: BeamPath) {
     reachY,
     mobileX,
     mobileReachX,
+    mobileY,
+    mobileReachY,
     speed = 1,
     followPointer = false,
     stickToMouse = false,
@@ -86,7 +90,9 @@ export function useBeam(ref: RefObject<HTMLElement | null>, path: BeamPath) {
       const cx = mobile ? (mobileX ?? x) : x
       const rx = mobile ? (mobileReachX ?? reachX) : reachX
       let tx = width * (cx + rx * Math.sin(t * 0.4))
-      let ty = height * (y + reachY * Math.sin(t * 0.8))
+      const cy = mobile ? (mobileY ?? y) : y
+      const ry = mobile ? (mobileReachY ?? reachY) : reachY
+      let ty = height * (cy + ry * Math.sin(t * 0.8))
       const following = pointer !== null && ((stickToMouse && pointer.mouse) || now - pointer.at < POINTER_HOLD_MS)
       if (pointer && following) {
         tx = pointer.x
@@ -113,7 +119,7 @@ export function useBeam(ref: RefObject<HTMLElement | null>, path: BeamPath) {
       window.removeEventListener("pointermove", onMove)
       document.documentElement.removeEventListener("pointerleave", onLeave)
     }
-  }, [ref, reduceMotion, x, y, reachX, reachY, mobileX, mobileReachX, speed, followPointer, stickToMouse, followTouch])
+  }, [ref, reduceMotion, x, y, reachX, reachY, mobileX, mobileReachX, mobileY, mobileReachY, speed, followPointer, stickToMouse, followTouch])
 }
 
 export function beamMask(inner = "9rem", outer = "19rem") {

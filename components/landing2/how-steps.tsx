@@ -63,13 +63,13 @@ export function HowSteps({ how }: { how: LandingCopy["how"] }) {
         </div>
       </div>
 
-      <ol className="flex flex-col gap-6 md:gap-0">
+      <ol className="flex flex-col gap-12 md:gap-0">
         {how.steps.map((step, index) => {
           const isActive = index === active
           return (
             <motion.li
               key={step.title}
-              className="flex flex-col gap-5 md:min-h-[min(72vh,560px)] md:justify-center"
+              className="flex flex-col gap-4 md:min-h-[min(72vh,560px)] md:justify-center"
               onViewportEnter={() => {
                 setActive(index)
                 markSeen(index, true)
@@ -79,7 +79,7 @@ export function HowSteps({ how }: { how: LandingCopy["how"] }) {
             >
               <div
                 className={cn(
-                  "relative h-80 overflow-hidden rounded-3xl border border-reel-white/10 bg-reel md:hidden",
+                  "relative order-last h-72 overflow-hidden rounded-3xl border border-reel-white/10 bg-reel md:hidden",
                   STAGE_GRID,
                 )}
               >
@@ -87,7 +87,7 @@ export function HowSteps({ how }: { how: LandingCopy["how"] }) {
               </div>
               <div
                 className={cn(
-                  "flex flex-col gap-3 transition-opacity duration-500",
+                  "flex flex-col gap-2 transition-opacity duration-500 md:gap-3",
                   isActive ? "md:opacity-100" : "md:opacity-30",
                 )}
               >
@@ -97,8 +97,8 @@ export function HowSteps({ how }: { how: LandingCopy["how"] }) {
                   </span>
                   <span aria-hidden="true" className="h-px w-10 bg-brass/60" />
                 </span>
-                <h3 className="text-balance font-serif text-3xl font-black text-reel-white md:text-4xl">{step.title}</h3>
-                <p className="max-w-md text-pretty font-sans text-base leading-relaxed text-reel-mute md:text-lg">
+                <h3 className="text-balance font-serif text-[1.75rem] font-black leading-tight text-reel-white md:text-4xl">{step.title}</h3>
+                <p className="max-w-md text-pretty font-sans text-[15px] leading-relaxed md:text-base text-reel-mute md:text-lg">
                   {step.body}
                 </p>
               </div>
