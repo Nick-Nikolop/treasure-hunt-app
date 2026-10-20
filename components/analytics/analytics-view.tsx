@@ -59,9 +59,13 @@ function CopyButton({ text, label, className }: { text: string; label?: string; 
 
 function Bars({ values, labels, tall }: { values: number[]; labels: string[]; tall?: boolean }) {
   const max = Math.max(1, ...values)
+  const empty = values.every((v) => v === 0)
   return (
     <div className="flex flex-col gap-1.5">
-      <div className={cn("flex items-end gap-1", tall ? "h-24" : "h-12")} role="img" aria-label={`Visits per day, last ${values.length} days`}>
+      {empty && (
+        <p className="font-sans text-xs text-muted-foreground">No visits in the last {values.length} days.</p>
+      )}
+      <div className={cn("flex items-end gap-1", empty ? "h-1" : tall ? "h-24" : "h-12")} role="img" aria-label={`Visits per day, last ${values.length} days`}>
         {values.map((v, i) => (
           <div key={i} className="flex h-full flex-1 flex-col justify-end" title={`${labels[i]}: ${v}`}>
             <div
@@ -83,7 +87,7 @@ function Stat({ label, value, strong }: { label: string; value: string | number;
   return (
     <div className="flex flex-col gap-0.5">
       <span className="font-sans text-[11px] font-bold tracking-chip text-muted-foreground">{label}</span>
-      <span className={cn("font-serif font-black tabular-nums", strong ? "text-3xl text-brass" : "text-xl text-foreground")}>
+      <span className={cn("font-sans font-bold leading-none tabular-nums", strong ? "text-3xl text-brass" : "text-xl text-foreground")}>
         {value}
       </span>
     </div>
