@@ -9,6 +9,7 @@ import { db } from "@/lib/db"
 import { cookieConsent } from "@/lib/db/schema"
 import { randomUUID } from "node:crypto"
 import type { CookieDecision } from "@/lib/legal"
+import { ensureAnalyticsStorage } from "@/lib/analytics-storage"
 
 export type IncomingConsent = {
   decision: CookieDecision
@@ -38,6 +39,7 @@ export async function recordCookieConsent(
   input: IncomingConsent,
   ctx: ConsentContext = {},
 ): Promise<boolean> {
+  await ensureAnalyticsStorage().catch(() => {})
   if (!isDecision(input.decision)) return false
 
   try {

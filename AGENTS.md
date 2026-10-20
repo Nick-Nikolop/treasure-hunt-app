@@ -105,6 +105,10 @@ npx -y vercel --prod --yes
 6. Clickable custom elements (divs with onClick, cards) get a `role="button"` / `aria-label` or `data-track` so the
    click shows a readable label.
 7. Verify in the journey view (`/analytics/people/...`) that the new actions appear before calling it done.
+8. **Production has its own database** (the v0/dev DB is a separate copy). New analytics tables or columns MUST be
+   added to `lib/analytics-storage.ts` (idempotent `CREATE TABLE / ADD COLUMN / CREATE INDEX IF NOT EXISTS`, run
+   by `ensureAnalyticsStorage()` at the top of every analytics read/write). Never rely on a table created only in
+   the dev DB, or production tracking silently fails.
 
 **Privacy (non-negotiable, GDPR)**
 - Respect the cookie banner. Without "accepted" consent there is NO device id, NO session id, NO storage and NO IP
