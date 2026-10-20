@@ -20,6 +20,7 @@ export const EV = {
   liteToggle: "settings.lite_toggle",
   // Landing / CTA
   ctaClick: "cta.click", // props: { id, location }
+  landingLoaded: "landing.loaded", // durationMs; props: { path, assets, loaded, timedOut }
   // Auth funnel (durationMs on the success events where relevant)
   authView: "auth.view", // props: { mode: "sign_in" | "sign_up" | "reset" }
   authFieldFocus: "auth.field_focus",

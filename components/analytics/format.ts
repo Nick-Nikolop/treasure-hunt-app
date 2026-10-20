@@ -89,6 +89,12 @@ export function describeEvent(e: EventLike): { text: string; detail: string | nu
     }
     case "cta.click":
       return { text: `Clicked CTA “${str(p.id) ?? "?"}”`, detail: str(p.location), tone: "normal" }
+    case "landing.loaded":
+      return {
+        text: `Landing loaded in ${duration(e.durationMs)}`,
+        detail: `${str(p.path) ?? e.path ?? ""}${p.timedOut ? " · timed out" : ""}`,
+        tone: "quiet",
+      }
     case "auth.view":
       return { text: `Opened ${p.mode === "sign_up" ? "sign-up" : p.mode === "reset" ? "password reset" : "sign-in"}`, detail: null, tone: "normal" }
     case "auth.register.error":

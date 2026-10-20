@@ -10,6 +10,7 @@ import { REEL_COPY, type ModalId } from "./copy"
 import { DetailModal } from "./detail-modal"
 import { HowSection } from "./episodes"
 import { Faq, Footer } from "./finale"
+import { PageLoader } from "./page-loader"
 import { HuntsRow, WhyRow } from "./rows"
 import { ClosingBanner, CodeSection, WhatSection } from "./spotlights"
 
@@ -20,6 +21,8 @@ export function Landing2Page() {
   const copy = LANDING_COPY[locale]
   const reel = REEL_COPY[locale]
   const ready = true
+  const [loading, setLoading] = useState(true)
+  const finishLoading = useCallback(() => setLoading(false), [])
   const [scrolled, setScrolled] = useState(false)
   const [active, setActive] = useState<string>("top")
   const [modal, setModal] = useState<ModalId | null>(null)
@@ -56,7 +59,8 @@ export function Landing2Page() {
   ]
 
   return (
-    <div className="min-h-svh overflow-x-clip bg-reel font-sans text-reel-white">
+    <div data-landing2-root className="min-h-svh overflow-x-clip bg-reel font-sans text-reel-white">
+      {loading && <PageLoader onDone={finishLoading} />}
 
       <header
         className={cn(
