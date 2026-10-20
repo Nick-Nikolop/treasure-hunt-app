@@ -530,6 +530,18 @@ export const sourceHit = pgTable(
   }),
 )
 
+/** Human title for a source id, e.g. "likjldgfskj4fw3a" → "First Carnival Rollover". */
+export const sourceLabel = pgTable("source_label", {
+  source: text("source").primaryKey(),
+  title: text("title").notNull(),
+  /** Page the link points to, used to build the copyable URL. */
+  path: text("path").notNull().default("/carnival"),
+  note: text("note"),
+  updatedBy: text("updatedBy"),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+})
+
 // Cookie/consent decisions. One row per decision a visitor makes in the cookie
 // banner, so we keep an auditable GDPR record of who consented to what and when.
 //

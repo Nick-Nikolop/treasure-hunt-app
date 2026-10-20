@@ -81,7 +81,7 @@ function SourceCard({ row }: { row: SourceRow }) {
 /** Counts for every `?source=` link: who arrived, from where, on what, and whether they signed up. */
 export function AdminSourcesPanel({ snapshot }: { snapshot: SourcesSnapshot }) {
   const [copied, setCopied] = useState(false)
-  const example = "/carnival?source=first_rollover"
+  const example = "/carnival?s=likjldgfskj4fw3a"
 
   return (
     <section aria-labelledby="sources-title" className="flex flex-col gap-4">
@@ -94,6 +94,12 @@ export function AdminSourcesPanel({ snapshot }: { snapshot: SourcesSnapshot }) {
           Add <code className="font-mono text-foreground">?source=anything</code> to any link on the site and every
           arrival is counted here automatically. No setup per source.
         </p>
+        <a
+          href="/analytics"
+          className="mt-1 inline-flex w-fit items-center gap-2 rounded-sm bg-primary px-3 py-1.5 font-sans text-xs font-bold text-primary-foreground transition-opacity hover:opacity-90"
+        >
+          Open analytics (titles + links)
+        </a>
         <button
           type="button"
           onClick={() => {
