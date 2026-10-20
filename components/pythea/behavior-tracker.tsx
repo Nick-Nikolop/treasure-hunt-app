@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react"
 import { usePathname } from "next/navigation"
-import { hasAnalyticsConsent, track } from "@/lib/analytics-client"
+import { track } from "@/lib/analytics-client"
 import { EV } from "@/lib/analytics-events"
 
 // Mounted once in the root layout next to AnalyticsProvider. Auto-captures what
@@ -11,8 +11,10 @@ import { EV } from "@/lib/analytics-events"
 //                  links, where it goes (path only, never the query string)
 //   - page.scroll  25 / 50 / 75 / 100 % depth milestones, once per page view
 //   - app.error    front-end crashes (no personal data)
-// Clicks and scroll only run after the visitor accepted analytics cookies.
-// Nothing typed into inputs is ever read. Add `data-no-track` to any element to
+// Without analytics consent clicks and scroll are still counted, but fully
+// anonymously: track() sends no device/session id and the server strips any
+// identifier, so they only feed aggregate totals. With consent they also join
+// the visitor's journey. Nothing typed into inputs is ever read. Add `data-no-track` to any element to
 // exclude it and its children, or `data-track="name"` to give it a stable label.
 
 const CLICKABLE = 'a,button,[role="button"],[role="tab"],[role="menuitem"],[role="option"],[data-track],summary'
@@ -43,7 +45,6 @@ export function BehaviorTracker() {
   useEffect(() => {
     let last = { label: "", at: 0 }
     const onClick = (e: MouseEvent) => {
-      if (!hasAnalyticsConsent()) return
       const target = e.target instanceof Element ? e.target : null
       if (!target || target.closest("[data-no-track]")) return
       const el = target.closest(CLICKABLE)
@@ -64,7 +65,6 @@ export function BehaviorTracker() {
     let frame = 0
     const measure = () => {
       frame = 0
-      if (!hasAnalyticsConsent()) return
       const doc = document.documentElement
       const scrollable = doc.scrollHeight - window.innerHeight
       if (scrollable < 120) return

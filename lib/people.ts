@@ -66,9 +66,23 @@ export type PersonRow = {
 
 export type SourceConversion = { label: string; id: string | null; devices: number; accounts: number }
 
+/** What was clicked in the last 7 days, by everyone (consented or not). Admins excluded. */
+export type ClickRow = {
+  path: string
+  label: string
+  href: string | null
+  clicks: number
+  /** Clicks from visitors without analytics consent (no id, counted only). */
+  anonymous: number
+  /** Distinct consented devices that clicked it. */
+  devices: number
+  lastAt: string
+}
+
 export type PeopleSnapshot = {
   people: PersonRow[]
   conversion: SourceConversion[]
+  clicks: ClickRow[]
   totals: {
     devices: number
     newLast7: number
@@ -117,7 +131,7 @@ function deviceLabel(d: Pick<RawPersonDevice, "deviceModel" | "device" | "os" | 
 export async function getPeopleSnapshot(): Promise<PeopleSnapshot> {
   await ensureAnalyticsStorage().catch(() => {})
   try {
-    const [rowsRes, convRes, totalsRes] = await Promise.all([
+    const [rowsRes, convRes, totalsRes, clicksRes] = await Promise.all([
       db.execute(sql`
         with v as (
           select * from visitor order by "lastSeenAt" desc limit ${PEOPLE_LIMIT}
@@ -179,6 +193,25 @@ export async function getPeopleSnapshot(): Promise<PeopleSnapshot> {
             where name = 'page.view' and "anonId" is null and "userId" is null
               and "createdAt" > now() - interval '7 days') as "anonymousViews7"
         from visitor
+      `),
+      db.execute(sql`
+        select coalesce(e.path, '/') as path,
+          coalesce(e.props->>'label', '') as label,
+          e.props->>'href' as href,
+          count(*)::int as clicks,
+          (count(*) filter (where e."anonId" is null))::int as anonymous,
+          count(distinct e."anonId")::int as devices,
+          max(e."createdAt") as "lastAt"
+        from analytics_event e
+        left join "user" u on u.id = e."userId"
+        where e.name = 'ui.click'
+          and e."createdAt" > now() - interval '7 days'
+          and coalesce(u.role, '') <> 'superadmin'
+          and coalesce(e.path, '') not like '/admin%'
+          and coalesce(e.path, '') not like '/analytics%'
+        group by 1, 2, 3
+        order by clicks desc
+        limit 60
       `),
     ])
 
@@ -251,6 +284,10 @@ export async function getPeopleSnapshot(): Promise<PeopleSnapshot> {
     return {
       people: [...people.values()],
       conversion: [...merged.values()].sort((a, b) => b.devices - a.devices),
+      clicks: (clicksRes.rows as unknown as (Omit<ClickRow, "lastAt"> & { lastAt: Date })[]).map((r) => ({
+        ...r,
+        lastAt: iso(r.lastAt)!,
+      })),
       totals: {
         devices: t.devices ?? 0,
         newLast7: t.newLast7 ?? 0,
@@ -262,7 +299,7 @@ export async function getPeopleSnapshot(): Promise<PeopleSnapshot> {
     }
   } catch (err) {
     console.log("[v0] people snapshot failed:", (err as Error)?.message)
-    return { people: [], conversion: [], totals: { devices: 0, newLast7: 0, accounts: 0, signedUpAfterVisit: 0, activeToday: 0, anonymousViews7: 0 } }
+    return { people: [], conversion: [], clicks: [], totals: { devices: 0, newLast7: 0, accounts: 0, signedUpAfterVisit: 0, activeToday: 0, anonymousViews7: 0 } }
   }
 }
 
