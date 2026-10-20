@@ -4,7 +4,7 @@ import { useEffect } from "react"
 import { usePathname } from "next/navigation"
 import { getAnonId, getSessionId, isFirstVisitThisLoad } from "@/lib/analytics-client"
 
-const SOURCE_KEYS = ["source", "utm_source", "ref", "src"] as const
+const SOURCE_KEYS = ["source", "s", "utm_source", "ref", "src"] as const
 // Query keys that can carry secrets (reset links, invites, auth callbacks) are never stored.
 const SECRET_KEY = /token|code|secret|password|key|auth|session|otp|signature|sig/i
 const FIRST_SOURCE = "th_source_first"
@@ -25,7 +25,7 @@ function localTimestamp(d: Date): string {
 
 /**
  * Mounted once in the root layout. Whenever any page opens with `?source=<name>`
- * (or utm_source / ref / src), sends one hit with the browser's details to
+ * or `?s=<id>` (or utm_source / ref / src), sends one hit with the browser's details to
  * /api/source-hit — once per tab session per source + page, so reloads don't
  * inflate the count. Also remembers the device's first and latest source.
  */

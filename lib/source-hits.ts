@@ -11,7 +11,7 @@
 import { createHash, randomUUID } from "node:crypto"
 import { and, desc, eq, gte, inArray, isNotNull, sql } from "drizzle-orm"
 import { db } from "@/lib/db"
-import { analyticsEvent, sourceHit, visitor } from "@/lib/db/schema"
+import { analyticsEvent, sourceHit, sourceLabel, visitor } from "@/lib/db/schema"
 import { EV } from "@/lib/analytics-events"
 
 export type SourceClientInfo = {
@@ -257,6 +257,8 @@ export type SourceRow = {
   apps: Tally[]
   cities: Tally[]
   bots: number
+  /** Visits per day for the last 14 days, oldest first (local server day). */
+  daily: number[]
 }
 
 export type SourceHitRow = {
@@ -287,6 +289,19 @@ function tally(values: (string | null)[], top = 5): Tally[] {
     .sort((a, b) => b[1] - a[1])
     .slice(0, top)
     .map(([label, count]) => ({ label, count }))
+}
+
+export const DAILY_DAYS = 14
+
+function dailySeries(dates: Date[], startOfToday: Date): number[] {
+  const out = Array<number>(DAILY_DAYS).fill(0)
+  const day = 24 * 60 * 60 * 1000
+  for (const d of dates) {
+    const ago = Math.ceil((startOfToday.getTime() - d.getTime()) / day)
+    const idx = d >= startOfToday ? DAILY_DAYS - 1 : DAILY_DAYS - 1 - ago
+    if (idx >= 0 && idx < DAILY_DAYS) out[idx]++
+  }
+  return out
 }
 
 function median(xs: number[]): number | null {
@@ -366,6 +381,7 @@ export async function listSources(): Promise<SourcesSnapshot> {
         apps: tally(real.map((h) => h.inApp ?? (h.referrerHost === "direct" ? "Direct / QR" : h.referrerHost))),
         cities: tally(real.map((h) => (h.city ? `${decodeURIComponent(h.city)}${h.country ? `, ${h.country}` : ""}` : h.country))),
         bots: all.length - real.length,
+        daily: dailySeries(real.map((h) => h.createdAt), startOfToday),
       }
     })
     sources.sort((a, b) => b.visits - a.visits)
@@ -391,4 +407,103 @@ export async function listSources(): Promise<SourcesSnapshot> {
     console.log("[v0] list sources failed:", (err as Error)?.message)
     return { sources: [], recent: [] }
   }
+}
+
+// ── Titles + the /analytics page ───────────────────────────────────────────
+
+export type LabeledSource = SourceRow & {
+  title: string | null
+  path: string
+  note: string | null
+}
+
+export type AnalyticsSnapshot = {
+  sources: LabeledSource[]
+  recent: (SourceHitRow & { title: string | null })[]
+  totals: { visits: number; uniqueDevices: number; signedUp: number; today: number; last7: number; daily: number[] }
+}
+
+function emptyRow(source: string): SourceRow {
+  return {
+    source,
+    visits: 0,
+    uniqueDevices: 0,
+    uniqueNetworks: 0,
+    newVisitors: 0,
+    signedUp: 0,
+    today: 0,
+    last7: 0,
+    medianSeconds: null,
+    firstAt: null,
+    lastAt: null,
+    paths: [],
+    devices: [],
+    apps: [],
+    cities: [],
+    bots: 0,
+    daily: Array<number>(DAILY_DAYS).fill(0),
+  }
+}
+
+/** Every source (titled or not, visited or not) with its numbers. Admin only. */
+export async function getSourceAnalytics(): Promise<AnalyticsSnapshot> {
+  const [snap, labels] = await Promise.all([
+    listSources(),
+    db
+      .select()
+      .from(sourceLabel)
+      .catch((err: Error) => {
+        console.log("[v0] source labels failed:", err?.message)
+        return [] as (typeof sourceLabel.$inferSelect)[]
+      }),
+  ])
+  const byId = new Map(labels.map((l) => [l.source, l]))
+
+  const rows: LabeledSource[] = snap.sources.map((r) => {
+    const l = byId.get(r.source)
+    return { ...r, title: l?.title ?? null, path: l?.path ?? r.paths[0]?.label ?? "/carnival", note: l?.note ?? null }
+  })
+  const seen = new Set(rows.map((r) => r.source))
+  for (const l of labels) {
+    if (!seen.has(l.source)) rows.push({ ...emptyRow(l.source), title: l.title, path: l.path, note: l.note })
+  }
+  // Titled sources first, then by traffic.
+  rows.sort((a, b) => Number(!!b.title) - Number(!!a.title) || b.visits - a.visits)
+
+  const daily = Array<number>(DAILY_DAYS).fill(0)
+  for (const r of rows) r.daily.forEach((n, i) => (daily[i] += n))
+
+  return {
+    sources: rows,
+    recent: snap.recent.map((h) => ({ ...h, title: byId.get(h.source)?.title ?? null })),
+    totals: {
+      visits: rows.reduce((s, r) => s + r.visits, 0),
+      uniqueDevices: rows.reduce((s, r) => s + r.uniqueDevices, 0),
+      signedUp: rows.reduce((s, r) => s + r.signedUp, 0),
+      today: rows.reduce((s, r) => s + r.today, 0),
+      last7: rows.reduce((s, r) => s + r.last7, 0),
+      daily,
+    },
+  }
+}
+
+export async function upsertSourceLabel(input: {
+  source: string
+  title: string
+  path: string
+  note: string | null
+  updatedBy: string
+}): Promise<void> {
+  const now = new Date()
+  await db
+    .insert(sourceLabel)
+    .values({ ...input, createdAt: now, updatedAt: now })
+    .onConflictDoUpdate({
+      target: sourceLabel.source,
+      set: { title: input.title, path: input.path, note: input.note, updatedBy: input.updatedBy, updatedAt: now },
+    })
+}
+
+export async function deleteSourceLabel(source: string): Promise<void> {
+  await db.delete(sourceLabel).where(eq(sourceLabel.source, source))
 }
