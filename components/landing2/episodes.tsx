@@ -1,5 +1,6 @@
 import type { LandingCopy } from "@/components/landing/copy";
 import type { ReelCopy } from "./copy";
+import { HowSteps } from "./how-steps";
 
 export function EpisodeList({
   how,
@@ -65,7 +66,7 @@ export function HowSection({
             {how.title}
           </h2>
         </div>
-        <EpisodeList how={how} />
+        <HowSteps how={how} />
         <p className="text-pretty border-l-[3px] border-reel-white/40 pl-4 font-serif text-xl italic leading-snug text-reel-white/90 md:text-2xl">
           {how.note}
         </p>
