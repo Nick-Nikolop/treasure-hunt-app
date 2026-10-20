@@ -8,6 +8,7 @@ import { LiteModeProvider } from '@/components/pythea/lite-mode-provider'
 import { PhaseProvider } from '@/components/pythea/phase-provider'
 import { AnalyticsProvider } from '@/components/pythea/analytics-provider'
 import { BehaviorTracker } from '@/components/pythea/behavior-tracker'
+import { CookieConsent } from '@/components/pythea/cookie-consent'
 import { SourceTracker } from '@/components/pythea/source-tracker'
 import { getPhaseContext, getPublicPhase } from '@/lib/phase-guard'
 import { isHeldByMaintenance } from '@/lib/site-maintenance'
@@ -191,7 +192,10 @@ export default async function RootLayout({
                 announcement modal and the floating contact widget were all
                 unmounted here: nothing may appear over the page uninvited.
                 The components themselves are untouched, so re-mounting one is a
-                one-line change if it is ever wanted back. */}
+                one-line change if it is ever wanted back.
+                Exception: the cookie banner is back, because identified
+                analytics only run after the visitor accepts it. */}
+            <CookieConsent />
           </LanguageProvider>
           <AnalyticsProvider />
           <BehaviorTracker />

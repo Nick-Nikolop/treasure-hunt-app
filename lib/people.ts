@@ -68,7 +68,15 @@ export type SourceConversion = { label: string; id: string | null; devices: numb
 export type PeopleSnapshot = {
   people: PersonRow[]
   conversion: SourceConversion[]
-  totals: { devices: number; newLast7: number; accounts: number; signedUpAfterVisit: number; activeToday: number }
+  totals: {
+    devices: number
+    newLast7: number
+    accounts: number
+    signedUpAfterVisit: number
+    activeToday: number
+    /** Page views from visitors without analytics consent (counted, never linked). */
+    anonymousViews7: number
+  }
 }
 
 type RawPersonDevice = {
@@ -164,7 +172,10 @@ export async function getPeopleSnapshot(): Promise<PeopleSnapshot> {
           (count(*) filter (where "firstSeenAt" > now() - interval '7 days'))::int as "newLast7",
           count(distinct "userId")::int as accounts,
           (count(distinct "userId") filter (where "linkedVia" = 'signup'))::int as "signedUpAfterVisit",
-          (count(*) filter (where "lastSeenAt" >= date_trunc('day', now())))::int as "activeToday"
+          (count(*) filter (where "lastSeenAt" >= date_trunc('day', now())))::int as "activeToday",
+          (select count(*)::int from analytics_event
+            where name = 'page.view' and "anonId" is null and "userId" is null
+              and "createdAt" > now() - interval '7 days') as "anonymousViews7"
         from visitor
       `),
     ])
@@ -244,11 +255,12 @@ export async function getPeopleSnapshot(): Promise<PeopleSnapshot> {
         accounts: t.accounts ?? 0,
         signedUpAfterVisit: t.signedUpAfterVisit ?? 0,
         activeToday: t.activeToday ?? 0,
+        anonymousViews7: t.anonymousViews7 ?? 0,
       },
     }
   } catch (err) {
     console.log("[v0] people snapshot failed:", (err as Error)?.message)
-    return { people: [], conversion: [], totals: { devices: 0, newLast7: 0, accounts: 0, signedUpAfterVisit: 0, activeToday: 0 } }
+    return { people: [], conversion: [], totals: { devices: 0, newLast7: 0, accounts: 0, signedUpAfterVisit: 0, activeToday: 0, anonymousViews7: 0 } }
   }
 }
 

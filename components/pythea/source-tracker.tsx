@@ -2,7 +2,7 @@
 
 import { useEffect } from "react"
 import { usePathname } from "next/navigation"
-import { getAnonId, getSessionId, isFirstVisitThisLoad } from "@/lib/analytics-client"
+import { getAnonId, getSessionId, hasAnalyticsConsent, isFirstVisitThisLoad } from "@/lib/analytics-client"
 
 const SOURCE_KEYS = ["source", "s", "utm_source", "ref", "src"] as const
 // Query keys that can carry secrets (reset links, invites, auth callbacks) are never stored.
@@ -44,6 +44,22 @@ export function SourceTracker() {
     const source = params.get(sourceKey)!.trim().slice(0, 80)
 
     const dedupeKey = `th_srchit:${source.toLowerCase()}:${window.location.pathname}`
+    const consent = hasAnalyticsConsent()
+    if (sentThisLoad.has(dedupeKey)) return
+    sentThisLoad.add(dedupeKey)
+
+    const query: Record<string, string> = {}
+    params.forEach((value, key) => {
+      if (key !== sourceKey && !SECRET_KEY.test(key)) query[key] = value
+    })
+
+    // Without analytics consent: count the arrival only, store nothing on the
+    // device and send nothing that could single the visitor out.
+    if (!consent) {
+      sendHit({ source, sourceKey, path: window.location.pathname, query, referrer: document.referrer || null })
+      return
+    }
+
     try {
       if (window.sessionStorage.getItem(dedupeKey)) return
       window.sessionStorage.setItem(dedupeKey, "1")
@@ -58,11 +74,6 @@ export function SourceTracker() {
     } catch {
       // Storage blocked.
     }
-
-    const query: Record<string, string> = {}
-    params.forEach((value, key) => {
-      if (key !== sourceKey && !SECRET_KEY.test(key)) query[key] = value
-    })
 
     const nav = navigator as NavigatorExtras
     const media = (q: string) => window.matchMedia?.(q).matches ?? false
@@ -90,19 +101,25 @@ export function SourceTracker() {
       localTime: localTimestamp(new Date()),
     }
 
-    const body = JSON.stringify(payload)
-    try {
-      if (navigator.sendBeacon?.("/api/source-hit", new Blob([body], { type: "application/json" }))) return
-    } catch {
-      // Fall through to fetch.
-    }
-    void fetch("/api/source-hit", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body,
-      keepalive: true,
-    }).catch(() => {})
+    sendHit(payload)
   }, [pathname])
 
   return null
+}
+
+const sentThisLoad = new Set<string>()
+
+function sendHit(payload: Record<string, unknown>) {
+  const body = JSON.stringify(payload)
+  try {
+    if (navigator.sendBeacon?.("/api/source-hit", new Blob([body], { type: "application/json" }))) return
+  } catch {
+    // Fall through to fetch.
+  }
+  void fetch("/api/source-hit", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body,
+    keepalive: true,
+  }).catch(() => {})
 }
