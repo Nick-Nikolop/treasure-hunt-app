@@ -42,7 +42,10 @@ export function HuntsRow({
         {hunts.map((hunt) => (
           <li
             key={hunt.ref}
-            className="group/card relative isolate flex flex-col overflow-hidden rounded-md bg-reel-raised shadow-2xl shadow-reel transition-transform duration-300 [backface-visibility:hidden] [transform:translateZ(0)] md:hover:z-10 md:hover:[transform:translateZ(0)_scale(1.025)]"
+            className={cn(
+              "group/card relative isolate flex flex-col overflow-hidden rounded-md shadow-2xl shadow-reel transition-transform duration-300 [backface-visibility:hidden] [transform:translateZ(0)] md:hover:z-10 md:hover:[transform:translateZ(0)_scale(1.025)]",
+              hunt.live ? "bg-reel-carnival-ink ring-1 ring-reel-gold/15" : "bg-reel-raised",
+            )}
           >
             <button
               type="button"
@@ -60,7 +63,15 @@ export function HuntsRow({
                   "object-center",
                 )}
               />
-              <div aria-hidden="true" className="absolute inset-x-0 top-0 -bottom-px bg-linear-to-t from-reel-raised from-2% via-reel-raised/40 to-transparent" />
+              <div
+                aria-hidden="true"
+                className={cn(
+                  "absolute inset-x-0 top-0 -bottom-px bg-linear-to-t from-2% to-transparent",
+                  hunt.live
+                    ? "from-reel-carnival-ink via-reel-carnival-ink/45"
+                    : "from-reel-raised via-reel-raised/40",
+                )}
+              />
               <span className="absolute left-3 top-3 z-10 flex items-center gap-2 rounded-full bg-reel/80 py-1 pl-1.5 pr-3.5 shadow-lg shadow-reel/60 ring-1 ring-reel-white/15 backdrop-blur-sm">
                 <Image unoptimized src="/landing/logo-sm.webp" alt="" width={24} height={23} className="h-auto w-6" />
                 <span className="font-sans text-xs font-bold uppercase tracking-[0.3em] text-reel-white">
@@ -71,7 +82,7 @@ export function HuntsRow({
                 aria-hidden="true"
                 className={cn(
                   "pointer-events-none absolute inset-0 z-20 flex items-center justify-center opacity-0 transition-opacity duration-500 group-hover/card:opacity-100 group-focus-within/card:opacity-100",
-                  hunt.live ? "bg-reel-carnival/80" : "bg-reel/75",
+                  hunt.live ? "bg-reel-carnival-ink/80" : "bg-reel/75",
                 )}
               >
                 <span
@@ -96,7 +107,12 @@ export function HuntsRow({
               </span>
             </button>
 
-            <div className="relative z-10 -mt-px flex flex-col gap-3 bg-reel-raised p-4 md:p-5">
+            <div
+              className={cn(
+                "relative z-10 -mt-px flex flex-col gap-3 p-4 md:p-5",
+                hunt.live ? "bg-reel-carnival-ink" : "bg-reel-raised",
+              )}
+            >
               <div className="flex items-center gap-2">
                 {hunt.live ? (
                   <a
