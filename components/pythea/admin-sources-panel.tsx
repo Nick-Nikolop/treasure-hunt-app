@@ -100,6 +100,12 @@ export function AdminSourcesPanel({ snapshot }: { snapshot: SourcesSnapshot }) {
         >
           Open analytics (titles + links)
         </a>
+        <a
+          href="/oldanalytics"
+          className="inline-flex w-fit items-center gap-2 rounded-sm border border-border px-3 py-1.5 font-sans text-xs font-bold text-foreground transition-colors hover:border-brass"
+        >
+          Hunt #1 archive (all old analytics)
+        </a>
         <button
           type="button"
           onClick={() => {
