@@ -10,7 +10,7 @@ import { REEL_COPY, type ModalId } from "./copy"
 import { DetailModal } from "./detail-modal"
 import { HowSection } from "./episodes"
 import { Faq, Footer } from "./finale"
-import { HuntsRow, TopThree, WhyRow } from "./rows"
+import { HuntsRow, WhyRow } from "./rows"
 import { ClosingBanner, CodeSection, WhatSection } from "./spotlights"
 
 const SPY_IDS = ["top", "hunts", "how", "faq"]
@@ -126,7 +126,6 @@ export function Landing2Page() {
           <WhatSection what={copy.what} reel={reel} />
           <HuntsRow missions={copy.missions} reel={reel} notifyHref={notifyHref} onOpen={setModal} />
         </div>
-        <TopThree missions={copy.missions} reel={reel} />
         <HowSection how={copy.how} reel={reel} />
         <div className="flex flex-col gap-24 py-20 md:gap-32 md:py-28">
           <WhyRow why={copy.why} reel={reel} />
