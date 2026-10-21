@@ -1,12 +1,13 @@
 "use client"
 
 import { AnimatePresence, motion, useAnimationControls, useReducedMotion } from "framer-motion"
-import { KeyRound, Loader2, LockKeyhole, LockKeyholeOpen, X } from "lucide-react"
+import { KeyRound, Loader2, LockKeyhole, X } from "lucide-react"
 import { useState, useTransition, type FormEvent, type KeyboardEvent } from "react"
 import { checkCarnivalKey } from "@/app/carnival-intro/actions"
 import { EV } from "@/lib/analytics-events"
 import { track } from "@/lib/analytics-client"
 import { cn } from "@/lib/utils"
+import { KeyReveal } from "./key-reveal"
 import { EASE } from "./palette"
 
 export interface KeyState {
@@ -50,45 +51,7 @@ export function KeyCheck({ state, onChange }: { state: KeyState; onChange: (next
     if (e.key === "Enter" && (e.nativeEvent.isComposing || e.keyCode === 229)) e.preventDefault()
   }
 
-  if (state.solved) {
-    return (
-      <motion.div
-        role="status"
-        initial={{ opacity: 0, scale: 0.94 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.9, ease: EASE }}
-        className="relative flex flex-col items-center gap-5 overflow-hidden rounded-[2rem] border border-[var(--ci-gold)]/40 bg-[var(--ci-wine)] px-6 py-14 text-center sm:px-12"
-      >
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0"
-          style={{ background: "radial-gradient(ellipse 60% 70% at 50% 0%, rgba(224,176,74,0.35), transparent 70%)" }}
-        />
-        <motion.span
-          className="relative grid size-20 place-items-center rounded-full bg-[var(--ci-gold)] text-[var(--ci-night)] shadow-[0_0_60px_-5px_var(--ci-gold)]"
-          initial={{ rotate: -25, scale: 0.6 }}
-          animate={{ rotate: 0, scale: 1 }}
-          transition={{ duration: 1, delay: 0.2, ease: EASE }}
-        >
-          <LockKeyholeOpen className="size-9" aria-hidden="true" />
-        </motion.span>
-        <h3 className="relative text-balance font-serif text-4xl font-bold text-[var(--ci-cream)] sm:text-5xl">Αυτό είναι το κλειδί</h3>
-        {state.value && (
-          <p className="relative font-serif text-2xl font-bold tracking-[0.3em] text-[var(--ci-gold)] sm:text-3xl" data-no-track>
-            {state.value.toLocaleUpperCase("el-GR")}
-          </p>
-        )}
-        <figure className="relative flex max-w-[44ch] flex-col items-center gap-3 border-t border-[var(--ci-gold)]/25 pt-6">
-          <blockquote className="text-balance font-serif text-xl italic leading-relaxed text-[var(--ci-cream)] sm:text-2xl">
-            «Ένας σωστός νοικοκύρης κλειδώνει πάντα την πόρτα του δύο φορές. Ακόμα κι αν έχει ένα μόνο κλειδί.»
-          </blockquote>
-        </figure>
-        <p className="relative max-w-[46ch] text-pretty font-sans text-[15px] leading-relaxed text-[var(--ci-cream)]/70">
-          Η αποκρυπτογράφηση είναι δική σου υπόθεση. Όταν διαβάσεις το μήνυμα, γράψ&apos; το παρακάτω.
-        </p>
-      </motion.div>
-    )
-  }
+  if (state.solved) return <KeyReveal value={state.value} />
 
   return (
     <div className="flex flex-col gap-6">

@@ -26,7 +26,7 @@ const clamp = (v: number, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, v))
 const INK_GLOW =
   "0 0 1px #ffffff, 0 0 4px rgba(170,240,255,0.95), 0 0 10px rgba(90,200,255,0.8), 0 0 22px rgba(60,140,255,0.7), 0 0 40px rgba(60,120,255,0.35)"
 
-const BEAM_MASK =
+export const BEAM_MASK =
   "radial-gradient(circle var(--r) at var(--x) var(--y), #000 0%, rgba(0,0,0,0.96) 36%, rgba(0,0,0,0.6) 66%, rgba(0,0,0,0.2) 86%, transparent 100%)"
 
 function UvCompass() {
@@ -44,7 +44,7 @@ function UvCompass() {
   )
 }
 
-function UvInk() {
+export function UvInk() {
   return (
     <div className="absolute inset-0 mix-blend-screen">
       {UV_MARKS.map((m) => (
@@ -190,7 +190,9 @@ export function PosterViewer({
     document.documentElement.style.overflow = "hidden"
     const root = rootRef.current
     let fullscreen = false
-    if (root?.requestFullscreen && !document.fullscreenElement) {
+    // Desktop already has the whole window as an overlay; only phones/tablets go browser-fullscreen.
+    const wantsFullscreen = window.matchMedia("(pointer: coarse)").matches
+    if (wantsFullscreen && root?.requestFullscreen && !document.fullscreenElement) {
       root
         .requestFullscreen({ navigationUI: "hide" })
         .then(() => {
@@ -198,7 +200,7 @@ export function PosterViewer({
         })
         .catch(() => {})
     }
-    track(EV.carnivalPosterOpen, { fullscreen: Boolean(root?.requestFullscreen) })
+    track(EV.carnivalPosterOpen, { fullscreen: wantsFullscreen && Boolean(root?.requestFullscreen) })
     return () => {
       document.documentElement.style.overflow = ""
       if (fullscreen && document.fullscreenElement) document.exitFullscreen().catch(() => {})
@@ -478,11 +480,14 @@ export function PosterViewer({
             onClick={onClose}
             data-track="carnival-poster-close"
             data-viewer-ui
-            className="pointer-events-auto relative z-10 inline-flex h-11 cursor-pointer items-center gap-2 rounded-full border border-[var(--ci-cream)]/15 bg-[var(--ci-night)]/70 px-4 font-sans text-sm font-bold text-[var(--ci-cream)] backdrop-blur transition hover:border-[var(--ci-cream)]/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ci-gold)]"
+            aria-label="Κλείσιμο αφίσας"
+            className="group/close pointer-events-auto relative z-10 inline-flex h-12 cursor-pointer items-center gap-3 rounded-full bg-[var(--ci-cream)] pl-4 pr-2 font-sans text-sm font-bold text-[var(--ci-night)] shadow-[0_10px_40px_-8px_rgba(0,0,0,0.8)] transition hover:bg-[var(--ci-gold)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ci-gold)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--ci-night)] sm:h-14 sm:pl-5 sm:pr-2.5 sm:text-base"
           >
-            <X className="size-4" aria-hidden="true" />
-            <span className="hidden sm:inline">Κλείσιμο</span>
-            <span className="sr-only sm:hidden">Κλείσιμο</span>
+            <X className="size-5" aria-hidden="true" />
+            <span>Κλείσιμο</span>
+            <kbd className="hidden h-8 items-center rounded-full bg-[var(--ci-night)]/10 px-3 font-sans text-xs font-bold uppercase tracking-widest text-[var(--ci-night)]/70 sm:inline-flex">
+              Esc
+            </kbd>
           </button>
         </div>
       </div>

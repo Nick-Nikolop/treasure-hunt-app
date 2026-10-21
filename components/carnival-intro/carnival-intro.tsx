@@ -213,10 +213,18 @@ export function CarnivalIntro() {
               <h1 id="ci-title" className="max-w-[13ch] text-balance font-sans text-5xl font-black uppercase leading-[0.95] tracking-tight text-[var(--ci-cream)] sm:text-7xl">
                 Κάποια μυστικά πρέπει να τα <span className="text-[var(--ci-gold)]">κυνηγήσεις</span>
               </h1>
-              <p className="max-w-[46ch] text-pretty font-sans text-base leading-relaxed text-[var(--ci-cream)]/75 sm:text-lg">
-                Η αφίσα του Καρναβαλιού κουβαλάει ένα μήνυμα που δεν διαβάζεται. Ό,τι χρειάζεσαι για να το ανοίξεις υπάρχει
-                ήδη εκεί έξω. Κανείς δεν θα σου πει πού.
+            <div className="flex max-w-[48ch] flex-col gap-4 font-sans text-base leading-relaxed text-[var(--ci-cream)]/75 sm:text-lg">
+              <p className="text-pretty">
+                Η αφίσα του Καρναβαλιού κρύβει κάτι που το μάτι δεν βλέπει. Στο κανονικό φως είναι απλώς μια αφίσα.
               </p>
+              <p className="flex items-start gap-3 text-pretty rounded-2xl border border-[var(--ci-uv)]/40 bg-[var(--ci-uv)]/10 px-4 py-3 text-[var(--ci-cream)]">
+                <span aria-hidden="true" className="mt-2 size-2.5 shrink-0 rounded-full bg-[var(--ci-uv)] shadow-[0_0_14px_2px_var(--ci-uv)]" />
+                <span>
+                  Άνοιξέ την, άναψε το <strong className="font-bold text-[#c9b8ff]">UV φως</strong> και πέρνα το πάνω της.
+                </span>
+              </p>
+              <p className="text-pretty">Ό,τι άλλο χρειάζεσαι υπάρχει ήδη εκεί έξω. Κανείς δεν θα σου πει πού.</p>
+            </div>
               <div className="flex flex-wrap items-center gap-3">
                 <button
                   type="button"
@@ -224,9 +232,9 @@ export function CarnivalIntro() {
                   data-track="carnival-poster-open-cta"
                   className="inline-flex h-14 items-center gap-2.5 rounded-full bg-[var(--ci-gold)] px-7 font-sans text-sm font-bold uppercase tracking-[0.16em] text-[var(--ci-night)] shadow-[0_20px_50px_-15px_rgba(224,176,74,0.6)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ci-cream)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--ci-night)]"
                 >
-                  <Maximize2 className="size-4" aria-hidden="true" />
-                  Άνοιξε την αφίσα
-                </button>
+                <Maximize2 className="size-4" aria-hidden="true" />
+                Άνοιξε την αφίσα με UV
+              </button>
                 <a
                   href="#ci-lock"
                   className="inline-flex h-14 items-center gap-2.5 rounded-full border border-[var(--ci-cream)]/20 px-7 font-sans text-sm font-bold uppercase tracking-[0.16em] text-[var(--ci-cream)] transition hover:border-[var(--ci-cream)]/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ci-gold)]"
