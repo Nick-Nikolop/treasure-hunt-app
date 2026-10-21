@@ -217,10 +217,13 @@ export function CarnivalIntro() {
               <p className="text-pretty">
                 Η αφίσα του Καρναβαλιού κρύβει κάτι που το μάτι δεν βλέπει. Στο κανονικό φως είναι απλώς μια αφίσα.
               </p>
-              <p className="text-pretty text-[var(--ci-cream)]">
-                Άνοιξέ την, άναψε το <strong className="font-bold text-[#b9a4ff]">UV φως</strong> και πέρνα το πάνω της.
+              <p className="flex items-start gap-3 text-pretty rounded-2xl border border-[var(--ci-gold)]/35 bg-[var(--ci-wine)]/60 px-4 py-3 text-[var(--ci-cream)]">
+                <span aria-hidden="true" className="mt-2 size-2.5 shrink-0 rounded-full bg-[var(--ci-gold)] shadow-[0_0_14px_2px_var(--ci-gold)]" />
+                <span>
+                  Άνοιξέ την, άναψε το <strong className="font-bold text-[#b9a4ff]">UV φως</strong> και πέρνα το πάνω της.
+                </span>
               </p>
-              <p className="text-pretty">Ό,τι άλλο χρειάζεσαι υπάρχει ήδη εκεί έξω. Κανείς δεν θα σου πει πο��.</p>
+              <p className="text-pretty">Ό,τι άλλο χρειάζεσαι υπάρχει ήδη εκεί έξω. Κανείς δεν θα σου πει πού.</p>
             </div>
               <div className="flex flex-wrap items-center gap-3">
                 <button
