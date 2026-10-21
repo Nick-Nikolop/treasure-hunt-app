@@ -1,6 +1,6 @@
 "use client"
 
-import { AnimatePresence, motion } from "framer-motion"
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
 import { KeyRound, Maximize2, NotebookPen, RotateCcw } from "lucide-react"
 import Image from "next/image"
 import { useEffect, useRef, useState, type ReactNode } from "react"
@@ -91,6 +91,21 @@ function Section({ id, kicker, title, lead, children }: { id: string; kicker: st
       </header>
       {children}
     </motion.section>
+  )
+}
+
+/** Holds its content hidden until the cinematic opening ends, then rises in on a shared stagger. */
+function Reveal({ ready, order, className, children, y = 22 }: { ready: boolean; order: number; className?: string; children: ReactNode; y?: number }) {
+  const reduce = useReducedMotion()
+  return (
+    <motion.div
+      className={className}
+      initial={false}
+      animate={ready ? { opacity: 1, y: 0, filter: "blur(0px)" } : { opacity: 0, y: reduce ? 0 : y, filter: reduce ? "blur(0px)" : "blur(6px)" }}
+      transition={{ duration: reduce ? 0.2 : 0.9, delay: ready && !reduce ? 0.12 + order * 0.11 : 0, ease: EASE }}
+    >
+      {children}
+    </motion.div>
   )
 }
 
@@ -219,6 +234,7 @@ export function CarnivalIntro() {
       <AnimatePresence>{opening && <CinematicOpening onDone={() => setOpening(false)} />}</AnimatePresence>
 
       <div className="relative" inert={opening || viewer}>
+        <Reveal ready={!opening} order={0} y={-10}>
         <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-5 py-5 sm:px-8">
           <div className="flex items-center gap-3" aria-label="The Hunt × Καλαματιανό Καρναβάλι">
             <Image src="/carnival/logo.webp" alt="The Hunt" width={96} height={96} priority className="size-11 object-contain sm:size-12" />
@@ -236,6 +252,7 @@ export function CarnivalIntro() {
             Σημειωματάριο
           </button>
         </header>
+        </Reveal>
 
         <main className="mx-auto flex w-full max-w-6xl flex-col gap-20 px-5 pb-16 sm:gap-36 sm:px-8 sm:pb-24">
           <section
@@ -243,31 +260,29 @@ export function CarnivalIntro() {
             className="grid items-center gap-8 pt-2 sm:gap-12 sm:pt-6 lg:min-h-[calc(100svh-6rem)] lg:grid-cols-[1.1fr_1fr] lg:grid-rows-[auto_auto] lg:gap-x-10 lg:gap-y-7 lg:pt-0"
           >
             <div className="flex flex-col items-center gap-4 text-center lg:items-start lg:self-end lg:text-left">
-              <motion.p
+              <Reveal ready={!opening} order={1}>
+              <p
                 className="font-sans text-[11px] font-bold uppercase tracking-[0.32em] text-[var(--ci-gold)] sm:text-xs sm:tracking-[0.4em]"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 1, ease: EASE }}
               >
                 Καλαματιανό Καρναβάλι · The Hunt
-              </motion.p>
-              <motion.h1
+              </p>
+              </Reveal>
+              <Reveal ready={!opening} order={2} y={30}>
+              <h1
                 id="ci-title"
                 className="max-w-[16ch] text-balance font-sans text-[2rem] lg:max-w-[13ch] font-black uppercase leading-[1] tracking-tight text-[var(--ci-cream)] sm:text-5xl lg:text-7xl lg:leading-[0.95]"
-                initial={{ opacity: 0, y: 18 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1, delay: 0.1, ease: EASE }}
               >
                 Κάποια μυστικά πρέπει να τα <span className="text-[var(--ci-gold)]">κυνηγήσεις</span>
-              </motion.h1>
+              </h1>
+              </Reveal>
             </div>
 
-            <div className="flex justify-center lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:justify-end lg:pr-10">
+            <Reveal ready={!opening} order={3} y={40} className="flex justify-center lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:justify-end lg:pr-10">
               <PosterStand onOpen={openPoster} />
-            </div>
+            </Reveal>
 
             <div className="flex flex-col items-stretch gap-7 lg:items-start lg:self-start">
-            <div className="mx-auto flex max-w-[48ch] flex-col gap-4 text-center font-sans text-[15px] leading-relaxed text-[var(--ci-cream)]/75 sm:text-base lg:mx-0 lg:text-lg lg:text-left">
+            <Reveal ready={!opening} order={4} className="mx-auto flex max-w-[48ch] flex-col gap-4 text-center font-sans text-[15px] leading-relaxed text-[var(--ci-cream)]/75 sm:text-base lg:mx-0 lg:text-lg lg:text-left">
               <p className="text-pretty">
                 Η αφίσα του Καρναβαλιού κρύβει κάτι που το μάτι δεν βλέπει. Στο κανονικό φως είναι απλώς μια αφίσα.
               </p>
@@ -278,7 +293,8 @@ export function CarnivalIntro() {
                 </span>
               </p>
               <p className="text-pretty">Ό,τι άλλο χρειάζεσαι υπάρχει ήδη εκεί έξω. Κανείς δεν θα σου πει πού.</p>
-            </div>
+            </Reveal>
+              <Reveal ready={!opening} order={5}>
               <div ref={ctaRef} className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                 <button
                   type="button"
@@ -301,6 +317,7 @@ export function CarnivalIntro() {
                   Έχω κλειδί
                 </a>
               </div>
+              </Reveal>
             </div>
           </section>
 

@@ -193,23 +193,10 @@ export function PosterViewer({
     setTouch(window.matchMedia("(pointer: coarse)").matches)
     openedAt.current = performance.now()
     document.documentElement.style.overflow = "hidden"
-    const root = rootRef.current
-    let fullscreen = false
-    // Desktop already has the whole window as an overlay; only phones/tablets go browser-fullscreen.
-    const wantsFullscreen = window.matchMedia("(pointer: coarse)").matches
-    if (wantsFullscreen && root?.requestFullscreen && !document.fullscreenElement) {
-      root
-        .requestFullscreen({ navigationUI: "hide" })
-        .then(() => {
-          fullscreen = true
-        })
-        .catch(() => {})
-    }
-    track(EV.carnivalPosterOpen, { fullscreen: wantsFullscreen && Boolean(root?.requestFullscreen) })
+    track(EV.carnivalPosterOpen, { fullscreen: false })
     track(EV.carnivalUv, { on: true, auto: true })
     return () => {
       document.documentElement.style.overflow = ""
-      if (fullscreen && document.fullscreenElement) document.exitFullscreen().catch(() => {})
       track(
         EV.carnivalPosterClose,
         { uv: uvUsed.current, zoomed: maxZoom.current > 1.2 },
@@ -411,7 +398,8 @@ export function PosterViewer({
 
       <div
         ref={stageRef}
-        className="relative min-h-0 flex-1 touch-none select-none"
+        className="relative min-h-0 flex-1 touch-none select-none [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none]"
+        onContextMenu={(e) => e.preventDefault()}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -518,7 +506,7 @@ export function PosterViewer({
             <motion.aside
               data-viewer-ui
               aria-label="Συμβουλή"
-              className="pointer-events-auto absolute bottom-4 left-4 right-4 z-10 flex max-w-sm items-start gap-3 rounded-2xl border border-[var(--ci-gold)]/35 bg-[var(--ci-night)]/90 p-4 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.9)] backdrop-blur sm:right-auto"
+              className="pointer-events-auto absolute bottom-4 left-4 right-4 z-10 flex max-w-sm items-start gap-3 rounded-2xl border border-[var(--ci-gold)]/35 bg-[var(--ci-night)] p-4 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.9)] [transform:translateZ(0)] sm:right-auto"
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0, transition: { delay: reduce ? 0 : 1.4, duration: 0.5, ease: EASE } }}
               exit={{ opacity: 0, y: 8, transition: { duration: 0.2 } }}
@@ -559,8 +547,8 @@ export function PosterViewer({
         </div>
       </div>
 
-      <div className="relative flex justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
-        <div className="flex items-center gap-1 rounded-full border border-[var(--ci-cream)]/12 bg-[var(--ci-night)]/85 p-1.5 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.9)] backdrop-blur">
+      <div className="relative z-10 flex justify-center bg-[var(--ci-night)] px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 [transform:translateZ(0)]">
+        <div className="flex items-center gap-1 rounded-full border border-[var(--ci-cream)]/12 bg-[var(--ci-night)] p-1.5 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.9)]">
           <ToolButton label="Σμίκρυνση" onClick={() => setZoom(zoom.current / 1.5)} disabled={zoomUi <= Z_MIN + 0.01}>
             <Minus className="size-5" aria-hidden="true" />
           </ToolButton>
@@ -590,6 +578,7 @@ export function PosterViewer({
             type="button"
             onClick={toggleUv}
             aria-pressed={uv}
+            aria-label={uv ? "UV φως: ανοιχτό. Πάτα για να το σβήσεις" : "UV φως: κλειστό. Πάτα για να το ανάψεις"}
             data-track={uv ? "carnival-uv-off" : "carnival-uv-on"}
             className={cn(
               "relative inline-flex h-12 shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3.5 font-sans text-sm font-bold transition sm:gap-2.5 sm:px-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ci-gold)]",
@@ -602,7 +591,8 @@ export function PosterViewer({
               <span aria-hidden="true" className="absolute -inset-1 animate-pulse rounded-full ring-2 ring-[var(--ci-gold)]/60" />
             )}
             {uv ? <FlashlightOff className="relative size-5" aria-hidden="true" /> : <Flashlight className="relative size-5" aria-hidden="true" />}
-            <span className="relative">{uv ? "Σβήσε το UV" : "Άναψε το UV"}</span>
+            <span className="relative tracking-wide sm:hidden">{uv ? "UV ON" : "UV OFF"}</span>
+            <span className="relative hidden sm:inline">{uv ? "Σβήσε το UV" : "Άναψε το UV"}</span>
           </button>
 
           <span aria-hidden="true" className="mx-1 h-7 w-px bg-[var(--ci-cream)]/12" />
