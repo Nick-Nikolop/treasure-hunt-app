@@ -1,7 +1,7 @@
 "use client"
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
-import { Flashlight, FlashlightOff, Minus, NotebookPen, Plus, X } from "lucide-react"
+import { Flashlight, FlashlightOff, Lightbulb, Minus, NotebookPen, Plus, Scan, X } from "lucide-react"
 import Image from "next/image"
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react"
 import { createPortal } from "react-dom"
@@ -16,7 +16,7 @@ export const POSTER_SRC = "/carnival/poster.webp"
 const ASPECT = 0.4
 const PAD = 28
 const Z_MIN = 1
-const Z_MAX = 4
+const Z_MAX = 8
 const TOUCH_LIFT = 84
 const COMPASS_INDEX = UV_MARKS.length
 
@@ -140,6 +140,8 @@ export function PosterViewer({
   const pinch = useRef<{ d: number; z: number } | null>(null)
   /** Where the torch points, in stage pixels. The beam sits exactly here; only the camera pan is smoothed. */
   const aim = useRef<{ x: number; y: number } | null>(null)
+  const miniRef = useRef<HTMLSpanElement>(null)
+  const [tipOpen, setTipOpen] = useState(true)
   const reported = useRef(new Set(found))
   const onFoundRef = useRef(onFound)
   onFoundRef.current = onFound
@@ -279,6 +281,15 @@ export function PosterViewer({
     stage.style.setProperty("--sx", `${left + bx}px`)
     stage.style.setProperty("--sy", `${top + by}px`)
     stage.style.setProperty("--r", `${r}px`)
+    const mini = miniRef.current
+    if (mini) {
+      const vw = Math.min(1, sw / W)
+      const vh = Math.min(1, sh / H)
+      mini.style.left = `${clamp(-left / W, 0, 1 - vw) * 100}%`
+      mini.style.top = `${clamp(-top / H, 0, 1 - vh) * 100}%`
+      mini.style.width = `${vw * 100}%`
+      mini.style.height = `${vh * 100}%`
+    }
     if (!uvRef.current) return
     const lit = (mx: number, my: number) => Math.hypot(mx * W - bx, my * H - by) < r * 0.5
     UV_MARKS.forEach((m, i) => {
@@ -355,6 +366,12 @@ export function PosterViewer({
     focusFromScreen(e.clientX, e.clientY, true)
   }
 
+  const onDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest("button, a, [data-viewer-ui]")) return
+    setZoom(zoom.current > 1.6 ? Z_MIN : 3)
+    focusFromScreen(e.clientX, e.clientY, false)
+  }
+
   const onPointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
     pointers.current.delete(e.pointerId)
     if (pointers.current.size < 2) pinch.current = null
@@ -364,11 +381,11 @@ export function PosterViewer({
 
   const hint = uv
     ? touch
-      ? "Σύρε το δάχτυλο για να κινήσεις τον φακό"
-      : "Κίνησε τον φακό πάνω στην αφίσα"
+      ? "Σύρε το δάχτυλο για να κινήσεις τον φακό, τσίμπησε για ζουμ"
+      : "Κίνησε τον φακό πάνω στην αφίσα, ροδέλα για ζουμ"
     : touch
-      ? "Τσίμπησε για ζουμ, σύρε για να κινηθείς"
-      : "Ροδέλα για ζουμ, κίνησε το ποντίκι για να κινηθείς"
+      ? "Τσίμπησε για ζουμ, σύρε για να κινηθείς, διπλό πάτημα για κοντινό"
+      : "Ροδέλα για ζουμ, κίνησε το ποντίκι για να κινηθείς, διπλό κλικ για κοντινό"
 
   return createPortal(
     <motion.div
@@ -399,6 +416,7 @@ export function PosterViewer({
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
+        onDoubleClick={onDoubleClick}
       >
         <div
           aria-hidden="true"
@@ -422,7 +440,7 @@ export function PosterViewer({
             alt=""
             fill
             priority
-            sizes="1200px"
+            unoptimized
             draggable={false}
             className="pointer-events-none object-cover transition-[filter] duration-700"
             style={{ filter: uv ? "brightness(0.09) saturate(0.25)" : "none" }}
@@ -444,7 +462,7 @@ export function PosterViewer({
                   src={POSTER_SRC}
                   alt=""
                   fill
-                  sizes="1200px"
+                  unoptimized
                   draggable={false}
                   className="object-cover"
                   style={{ filter: "brightness(0.6) saturate(0.2) contrast(1.25)" }}
@@ -494,6 +512,51 @@ export function PosterViewer({
             </kbd>
           </button>
         </div>
+
+        <AnimatePresence>
+          {tipOpen && (
+            <motion.aside
+              data-viewer-ui
+              aria-label="Συμβουλή"
+              className="pointer-events-auto absolute bottom-4 left-4 right-4 z-10 flex max-w-sm items-start gap-3 rounded-2xl border border-[var(--ci-gold)]/35 bg-[var(--ci-night)]/90 p-4 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.9)] backdrop-blur sm:right-auto"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0, transition: { delay: reduce ? 0 : 1.4, duration: 0.5, ease: EASE } }}
+              exit={{ opacity: 0, y: 8, transition: { duration: 0.2 } }}
+            >
+              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[var(--ci-gold)]/15 text-[var(--ci-gold)]">
+                <Lightbulb className="size-5" aria-hidden="true" />
+              </span>
+              <div className="flex min-w-0 flex-col gap-1">
+                <p className="font-sans text-[11px] font-bold uppercase tracking-[0.3em] text-[var(--ci-gold)]">Συμβουλή</p>
+                <p className="text-pretty font-sans text-sm leading-relaxed text-[var(--ci-cream)]/85">
+                  Ίσως δεν χρειάζεται να αποκαλυφθούν όλα από το <span className="font-bold text-[#b9a4ff]">UV φως</span>. Σβήσε το, κάνε ζουμ και
+                  κοίτα την αφίσα από κοντά.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setTipOpen(false)}
+                aria-label="Κλείσιμο συμβουλής"
+                className="-mr-1 -mt-1 grid size-8 shrink-0 place-items-center rounded-full text-[var(--ci-cream)]/60 transition hover:bg-[var(--ci-cream)]/10 hover:text-[var(--ci-cream)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ci-gold)]"
+              >
+                <X className="size-4" aria-hidden="true" />
+              </button>
+            </motion.aside>
+          )}
+        </AnimatePresence>
+
+        <div
+          data-viewer-ui
+          aria-hidden="true"
+          className={cn(
+            "pointer-events-none absolute right-4 z-10 aspect-[2/5] w-14 overflow-hidden rounded-md border border-[var(--ci-cream)]/20 bg-[var(--ci-night)] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.9)] transition-all duration-300 sm:w-16",
+            tipOpen ? "bottom-36 sm:bottom-4" : "bottom-4",
+            zoomUi > 1.3 ? "opacity-100" : "translate-y-2 opacity-0",
+          )}
+        >
+          <Image src={POSTER_SRC} alt="" fill sizes="64px" className="object-cover opacity-60" />
+          <span ref={miniRef} className="absolute rounded-[2px] border-2 border-[var(--ci-gold)] shadow-[0_0_0_999px_rgba(14,4,10,0.45)]" />
+        </div>
       </div>
 
       <div className="relative flex justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
@@ -501,11 +564,24 @@ export function PosterViewer({
           <ToolButton label="Σμίκρυνση" onClick={() => setZoom(zoom.current / 1.5)} disabled={zoomUi <= Z_MIN + 0.01}>
             <Minus className="size-5" aria-hidden="true" />
           </ToolButton>
-          <span className="w-11 text-center font-sans text-xs font-bold tabular-nums text-[var(--ci-cream)]/60" aria-live="polite">
+          <input
+            type="range"
+            min={Z_MIN}
+            max={Z_MAX}
+            step={0.1}
+            value={zoomUi}
+            onChange={(e) => setZoom(Number(e.target.value))}
+            aria-label="Επίπεδο ζουμ"
+            className="hidden h-1 w-28 cursor-pointer accent-[var(--ci-gold)] sm:block"
+          />
+          <span className="w-9 text-center font-sans text-xs font-bold tabular-nums sm:w-11 text-[var(--ci-cream)]/60" aria-live="polite">
             {zoomUi.toFixed(1)}×
           </span>
           <ToolButton label="Μεγέθυνση" onClick={() => setZoom(zoom.current * 1.5)} disabled={zoomUi >= Z_MAX - 0.01}>
             <Plus className="size-5" aria-hidden="true" />
+          </ToolButton>
+          <ToolButton label="Ολόκληρη η αφίσα" onClick={() => setZoom(Z_MIN)} disabled={zoomUi <= Z_MIN + 0.01}>
+            <Scan className="size-5" aria-hidden="true" />
           </ToolButton>
 
           <span aria-hidden="true" className="mx-1 h-7 w-px bg-[var(--ci-cream)]/12" />
@@ -516,7 +592,7 @@ export function PosterViewer({
             aria-pressed={uv}
             data-track={uv ? "carnival-uv-off" : "carnival-uv-on"}
             className={cn(
-              "relative inline-flex h-12 items-center gap-2.5 rounded-full px-5 font-sans text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ci-gold)]",
+              "relative inline-flex h-12 shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3.5 font-sans text-sm font-bold transition sm:gap-2.5 sm:px-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ci-gold)]",
               uv
                 ? "bg-[var(--ci-uv)] text-[var(--ci-cream)] shadow-[0_0_30px_-2px_var(--ci-uv)]"
                 : "bg-[var(--ci-gold)] text-[var(--ci-night)] hover:brightness-110",
@@ -526,7 +602,7 @@ export function PosterViewer({
               <span aria-hidden="true" className="absolute -inset-1 animate-pulse rounded-full ring-2 ring-[var(--ci-gold)]/60" />
             )}
             {uv ? <FlashlightOff className="relative size-5" aria-hidden="true" /> : <Flashlight className="relative size-5" aria-hidden="true" />}
-            <span className="relative">{uv ? "Σβήσε το UV" : "UV φακός"}</span>
+            <span className="relative">{uv ? "Σβήσε το UV" : "Άναψε το UV"}</span>
           </button>
 
           <span aria-hidden="true" className="mx-1 h-7 w-px bg-[var(--ci-cream)]/12" />
