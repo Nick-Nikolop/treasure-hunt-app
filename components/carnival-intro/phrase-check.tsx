@@ -57,8 +57,9 @@ export function PhraseCheck({
       const attempt = state.attempts + 1
       track(EV.carnivalPhraseCheck, { result: verdict, attempt, filled })
       if (verdict === "correct") {
-        setNotice(null)
-        onChange({ attempts: attempt, solved: true, text: phrase })
+      setNotice(null)
+      ;(document.activeElement as HTMLElement | null)?.blur()
+      onChange({ attempts: attempt, solved: true, text: phrase })
         return
       }
       if (verdict === "locked") {
