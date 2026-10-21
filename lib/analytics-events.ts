@@ -34,7 +34,8 @@ export const EV = {
   carnivalPosterClose: "carnival.poster_close", // durationMs; props: { uv, zoomed }
   carnivalNotesOpen: "carnival.notes_open", // props: { where: "poster" | "page" }
   carnivalWorksheet: "carnival.worksheet", // props: { filled, total } (never the letters)
-  carnivalKeyCheck: "carnival.key_check", // props: { result: "correct" | "wrong" | "unset", attempt }
+  carnivalKeyCheck: "carnival.key_check", // props: { result: "correct" | "close" | "wrong" | "unset", attempt }
+  carnivalPhraseCheck: "carnival.phrase_check", // props: { result: "correct" | "wrong" | "locked" | "unset", attempt, filled }
   carnivalReset: "carnival.reset",
   // Auth funnel (durationMs on the success events where relevant)
   authView: "auth.view", // props: { mode: "sign_in" | "sign_up" | "reset" }

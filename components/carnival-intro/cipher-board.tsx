@@ -17,7 +17,18 @@ function toLetter(raw: string): string {
 }
 
 /** A cryptogram worksheet: each cipher letter gets a box for the player's own guess. Stays on this device. */
-export function CipherBoard({ guesses, onGuesses }: { guesses: string[]; onGuesses: (next: string[]) => void }) {
+export function CipherBoard({
+  guesses,
+  onGuesses,
+  locked = false,
+  done = false,
+}: {
+  guesses: string[]
+  onGuesses: (next: string[]) => void
+  /** Before the key is found the message is shown, but nothing can be written under it. */
+  locked?: boolean
+  done?: boolean
+}) {
   const inputs = useRef<(HTMLInputElement | null)[]>([])
   const reported = useRef(false)
 
@@ -85,7 +96,9 @@ export function CipherBoard({ guesses, onGuesses }: { guesses: string[]; onGuess
                   >
                     {ch}
                   </span>
+                  {locked ? null : (
                   <input
+                    readOnly={done}
                     ref={(el) => {
                       inputs.current[i] = el
                     }}
@@ -106,8 +119,9 @@ export function CipherBoard({ guesses, onGuesses }: { guesses: string[]; onGuess
                     spellCheck={false}
                     maxLength={2}
                     aria-label={`Γράμμα ${i + 1} από ${CIPHER_LETTERS}, κρυπτογραφημένο ${ch}`}
-                    className="h-12 w-10 rounded-lg border-b-2 border-[var(--ci-cream)]/25 bg-[var(--ci-cream)]/5 text-center font-serif text-2xl font-bold uppercase text-[var(--ci-cream)] caret-[var(--ci-gold)] outline-none transition focus:border-[var(--ci-gold)] focus:bg-[var(--ci-cream)]/10 sm:h-14 sm:w-12"
+                    className="h-12 w-10 rounded-lg border-b-2 border-[var(--ci-cream)]/25 bg-[var(--ci-cream)]/5 text-center font-serif text-2xl font-bold uppercase text-[var(--ci-cream)] caret-[var(--ci-gold)] outline-none transition focus:border-[var(--ci-gold)] focus:bg-[var(--ci-cream)]/10 sm:h-14 sm:w-12 read-only:border-[var(--ci-gold)] read-only:text-[var(--ci-gold)]"
                   />
+                  )}
                 </motion.div>
               )
             })}
@@ -115,6 +129,7 @@ export function CipherBoard({ guesses, onGuesses }: { guesses: string[]; onGuess
         ))}
       </div>
 
+      {!locked && !done && (
       <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 font-sans text-sm text-[var(--ci-cream)]/55">
         <span className="tabular-nums">
           {filled}/{CIPHER_LETTERS} συμπληρωμένα
@@ -130,6 +145,7 @@ export function CipherBoard({ guesses, onGuesses }: { guesses: string[]; onGuess
           </button>
         )}
       </div>
+      )}
     </div>
   )
 }

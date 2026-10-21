@@ -6,7 +6,6 @@ import { useState, useTransition, type FormEvent, type KeyboardEvent } from "rea
 import { checkCarnivalKey } from "@/app/carnival-intro/actions"
 import { EV } from "@/lib/analytics-events"
 import { track } from "@/lib/analytics-client"
-import { CIPHERTEXT } from "@/lib/carnival-intro/poster"
 import { cn } from "@/lib/utils"
 import { EASE } from "./palette"
 
@@ -14,12 +13,14 @@ export interface KeyState {
   attempts: number
   tried: string[]
   solved: boolean
+  /** The key the player found, kept so the phrase check can prove the lock was opened. */
+  value?: string
 }
 
 export function KeyCheck({ state, onChange }: { state: KeyState; onChange: (next: KeyState) => void }) {
   const reduce = useReducedMotion()
   const [value, setValue] = useState("")
-  const [notice, setNotice] = useState<"wrong" | "unset" | null>(null)
+  const [notice, setNotice] = useState<"wrong" | "close" | "unset" | null>(null)
   const [pending, startTransition] = useTransition()
   const shake = useAnimationControls()
 
@@ -33,11 +34,11 @@ export function KeyCheck({ state, onChange }: { state: KeyState; onChange: (next
       track(EV.carnivalKeyCheck, { result, attempt })
       if (result === "correct") {
         setNotice(null)
-        onChange({ attempts: attempt, tried: state.tried, solved: true })
+        onChange({ attempts: attempt, tried: state.tried, solved: true, value: key })
         return
       }
       setNotice(result)
-      if (result === "wrong") {
+      if (result === "wrong" || result === "close") {
         const label = key.toLocaleUpperCase("el-GR")
         onChange({ attempts: attempt, tried: [label, ...state.tried.filter((t) => t !== label)].slice(0, 8), solved: false })
         if (!reduce) shake.start({ x: [0, -12, 10, -7, 4, 0], transition: { duration: 0.45 } })
@@ -71,12 +72,19 @@ export function KeyCheck({ state, onChange }: { state: KeyState; onChange: (next
         >
           <LockKeyholeOpen className="size-9" aria-hidden="true" />
         </motion.span>
-        <h3 className="relative text-balance font-serif text-4xl font-bold text-[var(--ci-cream)] sm:text-5xl">Η κλειδαριά άνοιξε</h3>
-        <p className="relative max-w-[46ch] text-pretty font-sans text-base leading-relaxed text-[var(--ci-cream)]/80">
-          Το κλειδί σου είναι σωστό. Το μήνυμα είναι πλέον δικό σου να το διαβάσεις. Κράτα το για τον εαυτό σου.
-        </p>
-        <p className="relative font-serif text-xl tracking-[0.22em] text-[var(--ci-gold)] sm:text-2xl" aria-label={`Μήνυμα: ${CIPHERTEXT}`}>
-          {CIPHERTEXT}
+        <h3 className="relative text-balance font-serif text-4xl font-bold text-[var(--ci-cream)] sm:text-5xl">Αυτό είναι το κλειδί</h3>
+        {state.value && (
+          <p className="relative font-serif text-2xl font-bold tracking-[0.3em] text-[var(--ci-gold)] sm:text-3xl" data-no-track>
+            {state.value.toLocaleUpperCase("el-GR")}
+          </p>
+        )}
+        <figure className="relative flex max-w-[44ch] flex-col items-center gap-3 border-t border-[var(--ci-gold)]/25 pt-6">
+          <blockquote className="text-balance font-serif text-xl italic leading-relaxed text-[var(--ci-cream)] sm:text-2xl">
+            «Ένας σωστός νοικοκύρης κλειδώνει πάντα την πόρτα του δύο φορές. Ακόμα κι αν έχει ένα μόνο κλειδί.»
+          </blockquote>
+        </figure>
+        <p className="relative max-w-[46ch] text-pretty font-sans text-[15px] leading-relaxed text-[var(--ci-cream)]/70">
+          Η αποκρυπτογράφηση είναι δική σου υπόθεση. Όταν διαβάσεις το μήνυμα, γράψ&apos; το παρακάτω.
         </p>
       </motion.div>
     )
@@ -133,6 +141,11 @@ export function KeyCheck({ state, onChange }: { state: KeyState; onChange: (next
             {notice === "wrong" && (
               <motion.p key="wrong" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-[var(--ci-cream)]/85">
                 Δεν ταιριάζει. Η κλειδαριά μένει κλειστή.
+              </motion.p>
+            )}
+            {notice === "close" && (
+              <motion.p key="close" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="font-bold text-[var(--ci-gold)]">
+                Πολύ κοντά. Έχεις όλα τα σωστά γράμματα, αλλά με αυτή τη σειρά δεν σχηματίζουν ακόμα το κλειδί.
               </motion.p>
             )}
             {notice === "unset" && (

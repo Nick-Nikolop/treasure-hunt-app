@@ -17,11 +17,27 @@ export function normalizeKey(value: string): string {
 }
 
 const digest = (s: string) => createHash("sha256").update(s).digest()
+const same = (a: string, b: string) => timingSafeEqual(digest(a), digest(b))
+const sorted = (s: string) => [...s].sort().join("")
 
-export type KeyVerdict = "correct" | "wrong" | "unset"
+/** "close" = every letter of the key is there, but not in the right order. */
+export type KeyVerdict = "correct" | "close" | "wrong" | "unset"
 
 export function verifyKey(input: string): KeyVerdict {
-  const secret = process.env.CARNIVAL_INTRO_KEY
-  if (!secret || !normalizeKey(secret)) return "unset"
-  return timingSafeEqual(digest(normalizeKey(input)), digest(normalizeKey(secret))) ? "correct" : "wrong"
+  const secret = normalizeKey(process.env.CARNIVAL_INTRO_KEY ?? "")
+  if (!secret) return "unset"
+  const guess = normalizeKey(input)
+  if (same(guess, secret)) return "correct"
+  return same(sorted(guess), sorted(secret)) ? "close" : "wrong"
+}
+
+/** "locked" = the phrase was sent without a valid key (someone skipping the lock). */
+export type PhraseVerdict = "correct" | "wrong" | "locked" | "unset"
+
+export function verifyPhrase(key: string, phrase: string): { verdict: PhraseVerdict; phrase?: string } {
+  const secret = (process.env.CARNIVAL_INTRO_PHRASE ?? "").trim()
+  if (!secret || !normalizeKey(secret)) return { verdict: "unset" }
+  if (verifyKey(key) !== "correct") return { verdict: "locked" }
+  if (!same(normalizeKey(phrase), normalizeKey(secret))) return { verdict: "wrong" }
+  return { verdict: "correct", phrase: secret.toLocaleUpperCase("el-GR") }
 }

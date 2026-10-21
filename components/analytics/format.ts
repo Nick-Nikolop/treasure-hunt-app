@@ -136,7 +136,18 @@ export function describeEvent(e: EventLike): { text: string; detail: string | nu
       return { text: "Filled in the cipher worksheet", detail: `${String(p.filled ?? "?")}/${String(p.total ?? "?")}`, tone: "normal" }
     case "carnival.key_check":
       return {
-        text: p.result === "correct" ? "Found the carnival decryption key" : "Tried a wrong carnival key",
+        text:
+          p.result === "correct"
+            ? "Found the carnival decryption key"
+            : p.result === "close"
+              ? "Had the right key letters in the wrong order"
+              : "Tried a wrong carnival key",
+        detail: `attempt ${String(p.attempt ?? "?")}`,
+        tone: p.result === "correct" ? "key" : "normal",
+      }
+    case "carnival.phrase_check":
+      return {
+        text: p.result === "correct" ? "Decrypted the final carnival phrase" : "Tried a wrong final phrase",
         detail: `attempt ${String(p.attempt ?? "?")}`,
         tone: p.result === "correct" ? "key" : "normal",
       }

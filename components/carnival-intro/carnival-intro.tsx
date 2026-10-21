@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion"
 import { KeyRound, Maximize2, NotebookPen, RotateCcw } from "lucide-react"
 import Image from "next/image"
-import { useEffect, useState, type ReactNode } from "react"
+import { useEffect, useRef, useState, type ReactNode } from "react"
 import { EV } from "@/lib/analytics-events"
 import { track } from "@/lib/analytics-client"
 import { CIPHER_LETTERS, UV_TOTAL } from "@/lib/carnival-intro/poster"
@@ -13,19 +13,27 @@ import { KeyCheck, type KeyState } from "./key-check"
 import { Notebook, NOTES_MAX } from "./notebook"
 import { EASE, PALETTE } from "./palette"
 import { PosterStand } from "./poster-stand"
+import { PhraseCheck, type PhraseState } from "./phrase-check"
 import { PosterViewer } from "./poster-viewer"
 
-const STORAGE_KEY = "thehunt:carnival-intro:v3"
+const STORAGE_KEY = "thehunt:carnival-intro:v4"
 
 interface Saved {
   found: number[]
   key: KeyState
   notes: string
   guesses: string[]
+  phrase: PhraseState
 }
 
 const blankGuesses = () => Array.from({ length: CIPHER_LETTERS }, () => "")
-const EMPTY: Saved = { found: [], key: { attempts: 0, tried: [], solved: false }, notes: "", guesses: blankGuesses() }
+const EMPTY: Saved = {
+  found: [],
+  key: { attempts: 0, tried: [], solved: false },
+  notes: "",
+  guesses: blankGuesses(),
+  phrase: { attempts: 0, solved: false },
+}
 
 function load(): Saved {
   try {
@@ -34,15 +42,23 @@ function load(): Saved {
     const found = Array.isArray(p.found) ? p.found.filter((n): n is number => Number.isInteger(n) && n >= 0 && n < UV_TOTAL) : []
     const k = p.key
     const g = Array.isArray(p.guesses) ? p.guesses : []
+    const keyValue = typeof k?.value === "string" ? k.value.slice(0, 64) : ""
+    const ph = p.phrase
     return {
       found: [...new Set(found)],
       key: {
         attempts: typeof k?.attempts === "number" ? k.attempts : 0,
         tried: Array.isArray(k?.tried) ? k.tried.filter((t): t is string => typeof t === "string").slice(0, 8) : [],
-        solved: k?.solved === true,
+        solved: k?.solved === true && !!keyValue,
+        value: keyValue || undefined,
       },
       notes: typeof p.notes === "string" ? p.notes.slice(0, NOTES_MAX) : "",
       guesses: Array.from({ length: CIPHER_LETTERS }, (_, i) => (typeof g[i] === "string" ? g[i].slice(0, 1) : "")),
+      phrase: {
+        attempts: typeof ph?.attempts === "number" ? ph.attempts : 0,
+        solved: ph?.solved === true && k?.solved === true && !!keyValue,
+        text: typeof ph?.text === "string" ? ph.text.slice(0, 120) : undefined,
+      },
     }
   } catch {
     return { ...EMPTY, guesses: blankGuesses() }
@@ -95,6 +111,16 @@ export function CarnivalIntro() {
   const [saved, setSaved] = useState<Saved | null>(null)
   const [viewer, setViewer] = useState(false)
   const [notesOpen, setNotesOpen] = useState(false)
+  const keySolved = saved?.key.solved === true
+  const wasSolved = useRef<boolean | null>(null)
+
+  useEffect(() => {
+    if (!saved) return
+    if (wasSolved.current === false && keySolved) {
+      window.setTimeout(() => document.getElementById("ci-decrypt")?.scrollIntoView({ behavior: "smooth", block: "start" }), 1400)
+    }
+    wasSolved.current = keySolved
+  }, [saved, keySolved])
 
   useEffect(() => {
     setSaved(load())
@@ -131,7 +157,7 @@ export function CarnivalIntro() {
   }
 
   const reset = () => {
-    if (!window.confirm("Θέλεις να σβήσεις σημειώσεις, γράμματα και κλειδιά και να ξεκινήσεις από την αρχή;")) return
+    if (!window.confirm("Θέλεις να σβήσεις σημειώσεις, γράμματα, κλειδί και μήνυμα και να ξεκινήσεις από την αρχή;")) return
     track(EV.carnivalReset)
     setSaved({ ...EMPTY, guesses: blankGuesses() })
   }
@@ -220,13 +246,9 @@ export function CarnivalIntro() {
             id="ci-message"
             kicker="Το μήνυμα"
             title="Ένα μήνυμα χωρίς νόημα. Ακόμα."
-            lead={<p>Γράψε κάτω από κάθε γράμμα αυτό που πιστεύεις ότι κρύβει. Ό,τι γράφεις μένει μόνο σε αυτή τη συσκευή.</p>}
+            lead={<p>Αυτό είναι όλο κι όλο. Χωρίς το κλειδί δεν λέει τίποτα.</p>}
           >
-            {saved ? (
-              <CipherBoard guesses={saved.guesses} onGuesses={(guesses) => setSaved((s) => (s ? { ...s, guesses } : s))} />
-            ) : (
-              <div className="h-40" aria-hidden="true" />
-            )}
+            <CipherBoard guesses={[]} onGuesses={() => {}} locked />
           </Section>
 
           <Divider />
@@ -241,6 +263,40 @@ export function CarnivalIntro() {
               {saved && <KeyCheck state={saved.key} onChange={(key) => setSaved((s) => (s ? { ...s, key } : s))} />}
             </div>
           </Section>
+
+          {saved && keySolved && saved.key.value && (
+            <>
+              <Divider />
+              <Section
+                id="ci-decrypt"
+                kicker="Η αποκρυπτογράφηση"
+                title={saved.phrase.solved ? "Το διάβασες." : "Τι λέει τελικά;"}
+                lead={
+                  saved.phrase.solved ? (
+                    <p>Αυτό ήταν το μήνυμα της αφίσας.</p>
+                  ) : (
+                    <p>Γράψε κάτω από κάθε γράμμα αυτό που βρήκες. Ό,τι γράφεις μένει μόνο σε αυτή τη συσκευή.</p>
+                  )
+                }
+              >
+                <CipherBoard
+                  guesses={saved.guesses}
+                  done={saved.phrase.solved}
+                  onGuesses={(guesses) => setSaved((s) => (s ? { ...s, guesses } : s))}
+                />
+                <PhraseCheck
+                  guesses={saved.guesses}
+                  keyValue={saved.key.value}
+                  state={saved.phrase}
+                  onChange={(phrase) => setSaved((s) => (s ? { ...s, phrase } : s))}
+                  onLocked={() => {
+                    setSaved((s) => (s ? { ...s, key: { ...s.key, solved: false, value: undefined } } : s))
+                    document.getElementById("ci-lock")?.scrollIntoView({ behavior: "smooth", block: "center" })
+                  }}
+                />
+              </Section>
+            </>
+          )}
         </main>
 
         <footer className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-4 border-t border-[var(--ci-cream)]/10 px-5 py-8 sm:flex-row sm:px-8">
