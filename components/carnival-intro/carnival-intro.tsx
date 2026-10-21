@@ -220,7 +220,7 @@ export function CarnivalIntro() {
               <p className="text-pretty text-[var(--ci-cream)]">
                 Άνοιξέ την, άναψε το <strong className="font-bold text-[#b9a4ff]">UV φως</strong> και πέρνα το πάνω της.
               </p>
-              <p className="text-pretty">Ό,τι άλλο χρειάζεσαι υπάρχει ήδη εκεί έξω. Κανείς δεν θα σου πει πού.</p>
+              <p className="text-pretty">Ό,τι άλλο χρειάζεσαι υπάρχει ήδη εκεί έξω. Κανείς δεν θα σου πει πο��.</p>
             </div>
               <div className="flex flex-wrap items-center gap-3">
                 <button
@@ -250,7 +250,7 @@ export function CarnivalIntro() {
           <Section
             id="ci-message"
             kicker="Το μήνυμα"
-            title="Ένα μήνυμα χωρίς νόημα. Ακόμα."
+            title="Ένα μήνυμα χωρίς νόημα... προς το παρόν."
             lead={<p>Αυτό είναι όλο κι όλο. Χωρίς το κλειδί δεν λέει τίποτα.</p>}
           >
             <CipherBoard guesses={[]} onGuesses={() => {}} locked />
