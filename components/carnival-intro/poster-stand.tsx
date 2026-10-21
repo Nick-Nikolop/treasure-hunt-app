@@ -78,16 +78,34 @@ export function PosterStand({ onOpen }: { onOpen: () => void }) {
             className="object-cover"
           />
 
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(circle calc(var(--r) * 2.6) at var(--x) var(--y), transparent 0%, transparent 34%, rgba(14,4,10,0.38) 62%, rgba(14,4,10,0.58) 100%)",
+            }}
+          />
+
           <span aria-hidden="true" className="pointer-events-none absolute inset-0" style={{ WebkitMaskImage: BEAM_MASK, maskImage: BEAM_MASK }}>
             <span
               className="absolute inset-0 mix-blend-screen"
               style={{
                 background:
-                  "radial-gradient(circle var(--r) at var(--x) var(--y), rgba(150,110,255,0.55) 0%, rgba(120,70,245,0.3) 60%, rgba(160,120,255,0.45) 82%, transparent 94%)",
+                  "radial-gradient(circle var(--r) at var(--x) var(--y), rgba(200,180,255,0.42) 0%, rgba(140,95,255,0.3) 38%, rgba(110,60,240,0.22) 72%, rgba(170,130,255,0.5) 86%, transparent 95%)",
               }}
             />
             <UvInk />
           </span>
+
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 mix-blend-screen"
+            style={{
+              background:
+                "radial-gradient(circle calc(var(--r) * 1.9) at var(--x) var(--y), rgba(139,92,255,0.22) 0%, rgba(139,92,255,0.1) 50%, transparent 100%)",
+            }}
+          />
 
           <span className="absolute inset-x-0 bottom-0 flex items-end justify-center bg-gradient-to-t from-[var(--ci-night)]/70 to-transparent px-4 pb-6 pt-16">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--ci-cream)]/20 bg-[var(--ci-night)]/80 px-3 py-1.5 font-sans text-xs font-bold text-[var(--ci-cream)] backdrop-blur transition group-hover:border-[var(--ci-cream)]/40">
