@@ -1,122 +1,94 @@
 "use client"
 
-import { motion, useReducedMotion } from "framer-motion"
+import { motion, useMotionTemplate, useMotionValue, useReducedMotion, useSpring, useTransform } from "framer-motion"
 import { Maximize2 } from "lucide-react"
 import Image from "next/image"
-import { useEffect, useRef, type CSSProperties } from "react"
+import type { PointerEvent as ReactPointerEvent } from "react"
 import { EASE } from "./palette"
-import { BEAM_MASK, POSTER_SRC, UvInk } from "./poster-viewer"
+import { POSTER_SRC } from "./poster-viewer"
 
-/**
- * A torch that drifts over the preview by itself (layered sines, so the path never visibly repeats).
- * It only teases that the poster reacts to UV; the player can't steer it here.
- */
-function useWanderingBeam(ref: React.RefObject<HTMLSpanElement | null>, still: boolean) {
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const place = (x: number, y: number, r: number) => {
-      el.style.setProperty("--x", `${x * 100}%`)
-      el.style.setProperty("--y", `${y * 100}%`)
-      el.style.setProperty("--r", `${r}px`)
-    }
-    if (still) {
-      place(0.5, 0.42, el.clientWidth * 0.3)
-      return
-    }
-    const seed = Math.random() * 1000
-    let raf = 0
-    const tick = (now: number) => {
-      const t = now / 1000 + seed
-      const x = 0.5 + 0.3 * Math.sin(t * 0.37) + 0.12 * Math.sin(t * 0.91 + 1.3)
-      const y = 0.5 + 0.34 * Math.sin(t * 0.23 + 2.1) + 0.1 * Math.sin(t * 0.71 + 0.4)
-      const flicker = 1 + 0.03 * Math.sin(t * 17) * Math.sin(t * 5.3)
-      place(Math.min(0.92, Math.max(0.08, x)), Math.min(0.94, Math.max(0.06, y)), el.clientWidth * 0.27 * flicker)
-      raf = requestAnimationFrame(tick)
-    }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
-  }, [ref, still])
-}
+const SPRING = { stiffness: 140, damping: 18, mass: 0.6 }
 
-/** The rollup as a physical object under a spotlight. Clicking it opens the full-screen viewer. */
+/** The rollup as a framed print that tilts towards the pointer. Clicking it opens the full-screen viewer. */
 export function PosterStand({ onOpen }: { onOpen: () => void }) {
   const reduce = useReducedMotion() ?? false
-  const posterRef = useRef<HTMLSpanElement>(null)
-  useWanderingBeam(posterRef, reduce)
+  const px = useMotionValue(0.5)
+  const py = useMotionValue(0.5)
+  const sx = useSpring(px, SPRING)
+  const sy = useSpring(py, SPRING)
+  const rotateY = useTransform(sx, [0, 1], [-9, 9])
+  const rotateX = useTransform(sy, [0, 1], [7, -7])
+  const glareX = useTransform(sx, [0, 1], ["15%", "85%"])
+  const glareY = useTransform(sy, [0, 1], ["10%", "90%"])
+  const glare = useMotionTemplate`radial-gradient(circle at ${glareX} ${glareY}, rgba(255,236,190,0.22) 0%, rgba(255,236,190,0.06) 30%, transparent 60%)`
+
+  const onMove = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    if (reduce || e.pointerType === "touch") return
+    const r = e.currentTarget.getBoundingClientRect()
+    px.set((e.clientX - r.left) / r.width)
+    py.set((e.clientY - r.top) / r.height)
+  }
+  const onLeave = () => {
+    px.set(0.5)
+    py.set(0.5)
+  }
 
   return (
     <motion.div
-      className="relative flex flex-col items-center"
+      className="relative flex flex-col items-center [perspective:1200px]"
       initial={{ opacity: 0, y: 40 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 1.2, delay: 0.2, ease: EASE }}
     >
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 top-1/2 h-[80%] w-[160%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--ci-gold)]/10 blur-3xl"
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[85%] w-[170%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--ci-gold)]/10 blur-3xl"
       />
 
-      <button
-        type="button"
-        onClick={onOpen}
-        aria-label="Άνοιξε την αφίσα και φώτισέ τη με UV φως"
-        data-track="carnival-poster-open"
-        className="group relative flex flex-col items-center rounded-xl border border-[var(--ci-gold)]/30 bg-[var(--ci-night)] p-2 shadow-[0_40px_90px_-30px_rgba(0,0,0,0.95)] outline-none transition duration-500 ease-out hover:-translate-y-1 hover:border-[var(--ci-gold)]/60 focus-visible:ring-2 focus-visible:ring-[var(--ci-gold)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--ci-night)]"
+      <motion.div
+        animate={reduce ? undefined : { y: [0, -8, 0] }}
+        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
       >
-        <span
-          ref={posterRef}
-          className="relative block aspect-[2/5] h-[min(66svh,640px)] overflow-hidden rounded-lg"
-          style={{ containerType: "inline-size", "--x": "50%", "--y": "42%", "--r": "70px" } as CSSProperties}
+        <motion.button
+          type="button"
+          onClick={onOpen}
+          onPointerMove={onMove}
+          onPointerLeave={onLeave}
+          aria-label="Άνοιξε την αφίσα για να την εξετάσεις από κοντά"
+          data-track="carnival-poster-open"
+          style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
+          className="group relative block rounded-xl border border-[var(--ci-gold)]/35 bg-[var(--ci-night)] p-2 shadow-[0_50px_100px_-30px_rgba(0,0,0,0.95),0_0_0_1px_rgba(0,0,0,0.4)] outline-none transition-[border-color] duration-500 hover:border-[var(--ci-gold)]/70 focus-visible:ring-2 focus-visible:ring-[var(--ci-gold)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--ci-night)]"
         >
-          <Image
-            src={POSTER_SRC}
-            alt=""
-            fill
-            priority
-            sizes="(min-width: 1024px) 260px, 60vw"
-            className="object-cover"
-          />
-
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0"
-            style={{
-              background:
-                "radial-gradient(circle calc(var(--r) * 2.6) at var(--x) var(--y), transparent 0%, transparent 34%, rgba(14,4,10,0.38) 62%, rgba(14,4,10,0.58) 100%)",
-            }}
-          />
-
-          <span aria-hidden="true" className="pointer-events-none absolute inset-0" style={{ WebkitMaskImage: BEAM_MASK, maskImage: BEAM_MASK }}>
-            <span
-              className="absolute inset-0 mix-blend-screen"
-              style={{
-                background:
-                  "radial-gradient(circle var(--r) at var(--x) var(--y), rgba(200,180,255,0.42) 0%, rgba(140,95,255,0.3) 38%, rgba(110,60,240,0.22) 72%, rgba(170,130,255,0.5) 86%, transparent 95%)",
-              }}
+          <span className="relative block aspect-[2/5] h-[min(66svh,640px)] overflow-hidden rounded-lg">
+            <Image
+              src={POSTER_SRC}
+              alt=""
+              fill
+              priority
+              sizes="(min-width: 1024px) 260px, 60vw"
+              className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
             />
-            <UvInk />
-          </span>
 
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 mix-blend-screen"
-            style={{
-              background:
-                "radial-gradient(circle calc(var(--r) * 1.9) at var(--x) var(--y), rgba(139,92,255,0.22) 0%, rgba(139,92,255,0.1) 50%, transparent 100%)",
-            }}
-          />
+            <motion.span aria-hidden="true" className="pointer-events-none absolute inset-0 mix-blend-screen" style={{ background: glare }} />
 
-          <span className="absolute inset-x-0 bottom-0 flex items-end justify-center bg-gradient-to-t from-[var(--ci-night)]/70 to-transparent px-4 pb-6 pt-16">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--ci-cream)]/20 bg-[var(--ci-night)]/80 px-3 py-1.5 font-sans text-xs font-bold text-[var(--ci-cream)] backdrop-blur transition group-hover:border-[var(--ci-cream)]/40">
-              <Maximize2 className="size-3" aria-hidden="true" />
-              <span>
-                Φώτισέ τη με <span className="text-[#b9a4ff]">UV</span>
+            {!reduce && (
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-y-0 -left-full w-1/2 -skew-x-12 bg-gradient-to-r from-transparent via-[var(--ci-cream)]/15 to-transparent motion-safe:animate-[poster-sheen_6s_ease-in-out_infinite]"
+              />
+            )}
+
+            <span className="absolute inset-x-0 bottom-0 flex items-end justify-center bg-gradient-to-t from-[var(--ci-night)]/70 to-transparent px-4 pb-6 pt-16">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--ci-gold)]/40 bg-[var(--ci-night)]/85 px-3 py-1.5 font-sans text-xs font-bold text-[var(--ci-cream)] backdrop-blur transition group-hover:border-[var(--ci-gold)] group-hover:text-[var(--ci-gold)]">
+                <Maximize2 className="size-3" aria-hidden="true" />
+                Εξέτασέ την από κοντά
               </span>
             </span>
           </span>
-        </span>
-      </button>
+        </motion.button>
+      </motion.div>
+
+      <span aria-hidden="true" className="mt-6 h-5 w-[70%] rounded-[50%] bg-black/50 blur-xl" />
     </motion.div>
   )
 }
