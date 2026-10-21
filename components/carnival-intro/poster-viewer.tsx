@@ -318,6 +318,8 @@ export function PosterViewer({
   }, [notesOpen]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    // Capturing on the stage would retarget the click away from overlaid controls (the close button).
+    if ((e.target as HTMLElement).closest("button, a, [data-viewer-ui]")) return
     e.currentTarget.setPointerCapture(e.pointerId)
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
     if (pointers.current.size === 2) {
@@ -475,7 +477,8 @@ export function PosterViewer({
             type="button"
             onClick={onClose}
             data-track="carnival-poster-close"
-            className="pointer-events-auto inline-flex h-11 items-center gap-2 rounded-full border border-[var(--ci-cream)]/15 bg-[var(--ci-night)]/70 px-4 font-sans text-sm font-bold text-[var(--ci-cream)] backdrop-blur transition hover:border-[var(--ci-cream)]/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ci-gold)]"
+            data-viewer-ui
+            className="pointer-events-auto relative z-10 inline-flex h-11 cursor-pointer items-center gap-2 rounded-full border border-[var(--ci-cream)]/15 bg-[var(--ci-night)]/70 px-4 font-sans text-sm font-bold text-[var(--ci-cream)] backdrop-blur transition hover:border-[var(--ci-cream)]/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ci-gold)]"
           >
             <X className="size-4" aria-hidden="true" />
             <span className="hidden sm:inline">Κλείσιμο</span>
