@@ -63,7 +63,7 @@ export function CinematicOpening({ onDone }: { onDone: () => void }) {
 
       <div className="relative flex w-full max-w-3xl flex-col items-center gap-8 text-center sm:gap-10">
         <motion.p
-          className="font-sans text-[11px] font-bold uppercase tracking-[0.5em] text-[var(--ci-gold-soft)] sm:text-xs"
+          className="font-sans text-[11px] font-bold uppercase tracking-[0.5em] text-[var(--ci-gold)] sm:text-xs"
           initial={{ opacity: 0, letterSpacing: "1.1em" }}
           animate={{ opacity: 1, letterSpacing: "0.5em" }}
           transition={{ duration: d(1.6), delay: d(0.3), ease: EASE }}
@@ -89,7 +89,7 @@ export function CinematicOpening({ onDone }: { onDone: () => void }) {
 
           <motion.span
             aria-hidden="true"
-            className="font-serif text-3xl font-light text-[var(--ci-gold-soft)] sm:text-5xl"
+            className="font-serif text-3xl font-light text-[var(--ci-gold)] sm:text-5xl"
             initial={{ opacity: 0, scale: 0.4, rotate: -90 }}
             animate={{ opacity: 1, scale: 1, rotate: 0 }}
             transition={{ duration: d(1), delay: d(1.6), ease: EASE }}
@@ -115,7 +115,7 @@ export function CinematicOpening({ onDone }: { onDone: () => void }) {
 
         <motion.div
           aria-hidden="true"
-          className="h-px w-48 bg-gradient-to-r from-transparent via-[var(--ci-gold-soft)] to-transparent"
+          className="h-px w-48 bg-gradient-to-r from-transparent via-[var(--ci-gold)] to-transparent"
           initial={{ scaleX: 0 }}
           animate={{ scaleX: 1 }}
           transition={{ duration: d(1.2), delay: d(2.3), ease: EASE }}
@@ -142,15 +142,14 @@ export function CinematicOpening({ onDone }: { onDone: () => void }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: d(1.2), delay: d(4), ease: EASE }}
         >
-          Το Καλαματιανό Καρναβάλι και το The Hunt κρύβουν ένα μήνυμα στην πόλη. Μια αφίσα, ένα μνημείο κι ένα κλειδί που
-          πρέπει να βρεις μόνος σου.
+          Το Καλαματιανό Καρναβάλι και το The Hunt έκρυψαν ένα μήνυμα. Το κλειδί δεν θα σου το δώσει κανείς.
         </motion.p>
 
         <motion.button
           type="button"
           onClick={() => finish("skipped")}
           data-track="carnival-intro-start"
-          className="rounded-full bg-[var(--ci-gold-soft)] px-8 py-3 font-sans text-sm font-bold uppercase tracking-[0.2em] text-[var(--ci-night)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ci-cream)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--ci-night)]"
+          className="rounded-full bg-[var(--ci-gold)] px-8 py-3 font-sans text-sm font-bold uppercase tracking-[0.2em] text-[var(--ci-night)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ci-cream)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--ci-night)]"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: d(0.8), delay: d(5), ease: EASE }}
@@ -171,7 +170,7 @@ export function CinematicOpening({ onDone }: { onDone: () => void }) {
       {!reduce && (
         <motion.div
           aria-hidden="true"
-          className="absolute inset-x-0 bottom-0 h-0.5 origin-left bg-[var(--ci-gold-soft)]/60"
+          className="absolute inset-x-0 bottom-0 h-0.5 origin-left bg-[var(--ci-gold)]/60"
           initial={{ scaleX: 0 }}
           animate={{ scaleX: 1 }}
           transition={{ duration: 8.6, ease: "linear" }}

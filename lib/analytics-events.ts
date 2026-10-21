@@ -29,9 +29,11 @@ export const EV = {
   // /carnival-intro poster puzzle (never the typed key, only outcomes)
   carnivalOpening: "carnival.opening", // durationMs; props: { action: "finished" | "skipped" }
   carnivalUv: "carnival.uv_toggle", // props: { on }
-  carnivalMarks: "carnival.marks_found", // props: { found, total }
-  carnivalMapOpen: "carnival.map_open",
-  carnivalCoordsCopy: "carnival.coords_copy",
+  carnivalMarks: "carnival.marks_found", // props: { mark, total } (once per mark per poster view)
+  carnivalPosterOpen: "carnival.poster_open", // props: { fullscreen }
+  carnivalPosterClose: "carnival.poster_close", // durationMs; props: { uv, zoomed }
+  carnivalNotesOpen: "carnival.notes_open", // props: { where: "poster" | "page" }
+  carnivalWorksheet: "carnival.worksheet", // props: { filled, total } (never the letters)
   carnivalKeyCheck: "carnival.key_check", // props: { result: "correct" | "wrong" | "unset", attempt }
   carnivalReset: "carnival.reset",
   // Auth funnel (durationMs on the success events where relevant)

@@ -121,15 +121,19 @@ export function describeEvent(e: EventLike): { text: string; detail: string | nu
     case "carnival.uv_toggle":
       return { text: p.on ? "Turned on the UV light on the poster" : "Turned off the UV light", detail: null, tone: "normal" }
     case "carnival.marks_found":
+      return { text: "Lit a hidden UV mark on the poster", detail: p.found != null ? `${String(p.found)}/${String(p.total ?? "?")}` : `mark ${String(p.mark ?? "?")}`, tone: "key" }
+    case "carnival.poster_open":
+      return { text: "Opened the carnival poster full screen", detail: null, tone: "normal" }
+    case "carnival.poster_close":
       return {
-        text: p.found === p.total ? "Found every UV mark on the poster" : `Found ${String(p.found)} UV marks`,
-        detail: `${String(p.found ?? "?")}/${String(p.total ?? "?")}`,
-        tone: p.found === p.total ? "key" : "normal",
+        text: p.uv ? "Closed the poster after using the UV torch" : "Closed the poster",
+        detail: e.durationMs ? duration(e.durationMs) : null,
+        tone: "quiet",
       }
-    case "carnival.map_open":
-      return { text: "Opened the monument on the map", detail: null, tone: "normal" }
-    case "carnival.coords_copy":
-      return { text: "Copied the monument coordinates", detail: null, tone: "quiet" }
+    case "carnival.notes_open":
+      return { text: "Opened the carnival notebook", detail: p.where === "poster" ? "on the poster" : null, tone: "quiet" }
+    case "carnival.worksheet":
+      return { text: "Filled in the cipher worksheet", detail: `${String(p.filled ?? "?")}/${String(p.total ?? "?")}`, tone: "normal" }
     case "carnival.key_check":
       return {
         text: p.result === "correct" ? "Found the carnival decryption key" : "Tried a wrong carnival key",

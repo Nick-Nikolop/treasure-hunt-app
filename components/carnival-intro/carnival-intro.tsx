@@ -1,88 +1,100 @@
 "use client"
 
 import { AnimatePresence, motion } from "framer-motion"
-import { RotateCcw } from "lucide-react"
+import { KeyRound, Maximize2, NotebookPen, RotateCcw } from "lucide-react"
 import Image from "next/image"
 import { useEffect, useState, type ReactNode } from "react"
 import { EV } from "@/lib/analytics-events"
 import { track } from "@/lib/analytics-client"
-import { UV_TOTAL } from "@/lib/carnival-intro/poster"
+import { CIPHER_LETTERS, UV_TOTAL } from "@/lib/carnival-intro/poster"
+import { CipherBoard } from "./cipher-board"
 import { CinematicOpening } from "./cinematic-opening"
-import { Ciphertext, KeyCheck, type KeyState } from "./key-check"
-import { MonumentGuide } from "./monument-guide"
+import { KeyCheck, type KeyState } from "./key-check"
+import { Notebook, NOTES_MAX } from "./notebook"
 import { EASE, PALETTE } from "./palette"
-import { UvPoster } from "./uv-poster"
+import { PosterStand } from "./poster-stand"
+import { PosterViewer } from "./poster-viewer"
 
-const STORAGE_KEY = "thehunt:carnival-intro:v2"
+const STORAGE_KEY = "thehunt:carnival-intro:v3"
 
 interface Saved {
   found: number[]
   key: KeyState
+  notes: string
+  guesses: string[]
 }
 
-const EMPTY: Saved = { found: [], key: { attempts: 0, tried: [], solved: false } }
+const blankGuesses = () => Array.from({ length: CIPHER_LETTERS }, () => "")
+const EMPTY: Saved = { found: [], key: { attempts: 0, tried: [], solved: false }, notes: "", guesses: blankGuesses() }
 
 function load(): Saved {
   try {
     const p = JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "null") as Partial<Saved> | null
-    if (!p) return EMPTY
+    if (!p) return { ...EMPTY, guesses: blankGuesses() }
     const found = Array.isArray(p.found) ? p.found.filter((n): n is number => Number.isInteger(n) && n >= 0 && n < UV_TOTAL) : []
     const k = p.key
+    const g = Array.isArray(p.guesses) ? p.guesses : []
     return {
       found: [...new Set(found)],
       key: {
         attempts: typeof k?.attempts === "number" ? k.attempts : 0,
-        tried: Array.isArray(k?.tried) ? k.tried.filter((t): t is string => typeof t === "string").slice(0, 6) : [],
+        tried: Array.isArray(k?.tried) ? k.tried.filter((t): t is string => typeof t === "string").slice(0, 8) : [],
         solved: k?.solved === true,
       },
+      notes: typeof p.notes === "string" ? p.notes.slice(0, NOTES_MAX) : "",
+      guesses: Array.from({ length: CIPHER_LETTERS }, (_, i) => (typeof g[i] === "string" ? g[i].slice(0, 1) : "")),
     }
   } catch {
-    return EMPTY
+    return { ...EMPTY, guesses: blankGuesses() }
   }
 }
 
-function Chapter({
-  n,
-  kicker,
-  title,
-  intro,
-  side = false,
-  children,
-}: {
-  n: number
-  kicker: string
-  title: string
-  intro: ReactNode
-  side?: boolean
-  children: ReactNode
-}) {
+function Section({ id, kicker, title, lead, children }: { id: string; kicker: string; title: string; lead: ReactNode; children: ReactNode }) {
   return (
     <motion.section
-      aria-labelledby={`ci-ch-${n}`}
-      className={side ? "flex flex-col gap-8 lg:grid lg:grid-cols-[auto_1fr] lg:items-center lg:gap-16" : "flex flex-col gap-8"}
-      initial={{ opacity: 0, y: 24 }}
+      id={id}
+      aria-labelledby={`${id}-title`}
+      className="flex scroll-mt-24 flex-col items-center gap-10 text-center"
+      initial={{ opacity: 0, y: 28 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-80px" }}
-      transition={{ duration: 0.8, ease: EASE }}
+      transition={{ duration: 0.9, ease: EASE }}
     >
-      <header className={side ? "flex max-w-[64ch] flex-col gap-3 lg:order-2" : "flex max-w-[64ch] flex-col gap-3"}>
-        <p className="flex items-center gap-3 font-sans text-xs font-bold uppercase tracking-[0.3em] text-[var(--ci-gold)]">
-          <span className="grid size-7 place-items-center rounded-full border border-[var(--ci-gold)]/50 tracking-normal">{n}</span>
+      <header className="flex max-w-[60ch] flex-col items-center gap-4">
+        <p className="flex items-center gap-3 font-sans text-xs font-bold uppercase tracking-[0.4em] text-[var(--ci-gold)]">
+          <span aria-hidden="true" className="h-px w-8 bg-[var(--ci-gold)]/60" />
           {kicker}
+          <span aria-hidden="true" className="h-px w-8 bg-[var(--ci-gold)]/60" />
         </p>
-        <h2 id={`ci-ch-${n}`} className="text-balance font-serif text-3xl font-bold leading-tight text-[var(--ci-ink)] sm:text-4xl">
+        <h2 id={`${id}-title`} className="text-balance font-serif text-4xl font-bold leading-tight text-[var(--ci-cream)] sm:text-5xl">
           {title}
         </h2>
-        <div className="text-pretty font-sans text-[15px] leading-relaxed text-[var(--ci-ink)]/75 sm:text-base">{intro}</div>
+        <div className="text-pretty font-sans text-base leading-relaxed text-[var(--ci-cream)]/70">{lead}</div>
       </header>
       {children}
     </motion.section>
   )
 }
 
+function Divider() {
+  return (
+    <div aria-hidden="true" className="flex items-center justify-center gap-4 text-[var(--ci-gold)]/50">
+      <span className="h-px w-24 bg-gradient-to-r from-transparent to-[var(--ci-gold)]/50 sm:w-40" />
+      <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.4">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 3v3M12 18v3M3 12h3M18 12h3" />
+        <path d="m12 7 2 5-2 5-2-5z" fill="currentColor" stroke="none" />
+      </svg>
+      <span className="h-px w-24 bg-gradient-to-l from-transparent to-[var(--ci-gold)]/50 sm:w-40" />
+    </div>
+  )
+}
+
 export function CarnivalIntro() {
   const [opening, setOpening] = useState(true)
   const [saved, setSaved] = useState<Saved | null>(null)
+  const [viewer, setViewer] = useState(false)
+  const [notesOpen, setNotesOpen] = useState(false)
 
   useEffect(() => {
     setSaved(load())
@@ -98,103 +110,159 @@ export function CarnivalIntro() {
   }, [saved])
 
   useEffect(() => {
+    if (viewer) return
     document.documentElement.style.overflow = opening ? "hidden" : ""
     return () => {
       document.documentElement.style.overflow = ""
     }
-  }, [opening])
+  }, [opening, viewer])
 
   const onFound = (index: number) => {
-    if (!saved || saved.found.includes(index)) return
-    track(EV.carnivalMarks, { found: saved.found.length + 1, total: UV_TOTAL })
-    setSaved((s) => (s && !s.found.includes(index) ? { ...s, found: [...s.found, index] } : s))
+    setSaved((s) => {
+      if (!s || s.found.includes(index)) return s
+      return { ...s, found: [...s.found, index] }
+    })
+    track(EV.carnivalMarks, { mark: index, total: UV_TOTAL })
+  }
+
+  const openNotes = () => {
+    setNotesOpen(true)
+    track(EV.carnivalNotesOpen, { where: "page" })
   }
 
   const reset = () => {
-    if (!window.confirm("Θέλεις να σβήσεις την πρόοδό σου και να ξεκινήσεις από την αρχή;")) return
+    if (!window.confirm("Θέλεις να σβήσεις σημειώσεις, γράμματα και κλειδιά και να ξεκινήσεις από την αρχή;")) return
     track(EV.carnivalReset)
-    setSaved(EMPTY)
+    setSaved({ ...EMPTY, guesses: blankGuesses() })
   }
 
+  const setNotes = (notes: string) => setSaved((s) => (s ? { ...s, notes } : s))
+
   return (
-    <div style={PALETTE} className="min-h-svh bg-[var(--ci-cream)] font-sans text-[var(--ci-ink)] selection:bg-[var(--ci-wine)] selection:text-[var(--ci-cream)]">
+    <div
+      style={PALETTE}
+      className="relative min-h-svh overflow-x-clip bg-[var(--ci-night)] font-sans text-[var(--ci-cream)] selection:bg-[var(--ci-gold)] selection:text-[var(--ci-night)]"
+    >
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[120svh]"
+        style={{
+          background:
+            "radial-gradient(ellipse 55% 60% at 72% 38%, rgba(107,16,36,0.85) 0%, rgba(107,16,36,0.25) 45%, transparent 75%), repeating-radial-gradient(circle at 72% 40%, transparent 0, transparent 119px, rgba(224,176,74,0.05) 120px, transparent 121px)",
+        }}
+      />
+
       <AnimatePresence>{opening && <CinematicOpening onDone={() => setOpening(false)} />}</AnimatePresence>
 
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-20 px-5 pb-24 pt-10 sm:gap-28 sm:px-8 sm:pt-14" inert={opening}>
-        <header className="flex flex-col items-center gap-6 text-center">
-          <div className="flex items-center gap-4" aria-label="The Hunt × Καλαματιανό Καρναβάλι">
-            <Image src="/carnival/logo.webp" alt="The Hunt" width={96} height={96} priority className="size-16 object-contain sm:size-20" />
-            <span aria-hidden="true" className="font-serif text-2xl text-[var(--ci-gold)]">
+      <div className="relative" inert={opening || viewer}>
+        <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-5 py-5 sm:px-8">
+          <div className="flex items-center gap-3" aria-label="The Hunt × Καλαματιανό Καρναβάλι">
+            <Image src="/carnival/logo.webp" alt="The Hunt" width={96} height={96} priority className="size-11 object-contain sm:size-12" />
+            <span aria-hidden="true" className="font-serif text-lg text-[var(--ci-gold)]/70">
               ×
             </span>
-            <Image src="/carnival/kalamata-carnival.webp" alt="Καλαματιανό Καρναβάλι" width={96} height={90} className="h-auto w-16 object-contain sm:w-20" />
+            <Image src="/carnival/kalamata-carnival.webp" alt="Καλαματιανό Καρναβάλι" width={96} height={90} className="h-auto w-11 object-contain sm:w-12" />
           </div>
-          <h1 className="max-w-[18ch] text-balance font-sans text-4xl font-black uppercase leading-[1.02] tracking-tight text-[var(--ci-wine)] sm:text-6xl">
-            Κάποια μυστικά πρέπει να τα κυνηγήσεις
-          </h1>
-          <div className="flex flex-col items-center gap-2">
-            <p className="font-sans text-xs font-bold uppercase tracking-[0.3em] text-[var(--ci-ink)]/55">Κρυπτογραφημένο μήνυμα</p>
-            <Ciphertext className="font-serif text-2xl tracking-[0.18em] text-[var(--ci-gold)] sm:text-3xl" />
-          </div>
+          <button
+            type="button"
+            onClick={openNotes}
+            className="inline-flex h-11 items-center gap-2 rounded-full border border-[var(--ci-cream)]/15 px-4 font-sans text-sm font-bold text-[var(--ci-cream)]/85 transition hover:border-[var(--ci-gold)]/60 hover:text-[var(--ci-cream)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ci-gold)]"
+          >
+            <NotebookPen className="size-4 text-[var(--ci-gold)]" aria-hidden="true" />
+            Σημειωματάριο
+          </button>
         </header>
 
-        <Chapter
-          n={1}
-          side
-          kicker="Η αφίσα"
-          title="Φώτισέ την με UV"
-          intro={
-            <p>
-              Η αφίσα του Καρναβαλιού κρύβει σημάδια γραμμένα με αόρατο μελάνι. Άναψε το UV φως και ψάξε σε όλη την επιφάνεια: θα βρεις
-              μικρούς κωδικούς κι ένα σύμβολο που δείχνει κατεύθυνση. Σημείωσέ τα, θα τα χρειαστείς στο μνημείο.
-            </p>
-          }
-        >
-          {saved ? (
-            <UvPoster found={saved.found} onFound={onFound} />
-          ) : (
-            <div className="grid h-[min(80svh,860px)] place-items-center" role="status" aria-label="Φόρτωση">
-              <span className="size-8 animate-spin rounded-full border-2 border-[var(--ci-wine)]/20 border-t-[var(--ci-wine)]" />
+        <main className="mx-auto flex w-full max-w-6xl flex-col gap-28 px-5 pb-24 sm:gap-36 sm:px-8">
+          <section aria-labelledby="ci-title" className="grid items-center gap-14 pt-6 lg:min-h-[calc(100svh-6rem)] lg:grid-cols-[1.1fr_1fr] lg:gap-10 lg:pt-0">
+            <div className="flex flex-col items-start gap-7">
+              <motion.p
+                className="font-sans text-xs font-bold uppercase tracking-[0.4em] text-[var(--ci-gold)]"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 1, ease: EASE }}
+              >
+                Καλαματιανό Καρναβάλι · The Hunt
+              </motion.p>
+              <h1 id="ci-title" className="max-w-[13ch] text-balance font-sans text-5xl font-black uppercase leading-[0.95] tracking-tight text-[var(--ci-cream)] sm:text-7xl">
+                Κάποια μυστικά πρέπει να τα <span className="text-[var(--ci-gold)]">κυνηγήσεις</span>
+              </h1>
+              <p className="max-w-[46ch] text-pretty font-sans text-base leading-relaxed text-[var(--ci-cream)]/75 sm:text-lg">
+                Η αφίσα του Καρναβαλιού κουβαλάει ένα μήνυμα που δεν διαβάζεται. Ό,τι χρειάζεσαι για να το ανοίξεις υπάρχει
+                ήδη εκεί έξω. Κανείς δεν θα σου πει πού.
+              </p>
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setViewer(true)}
+                  data-track="carnival-poster-open-cta"
+                  className="inline-flex h-14 items-center gap-2.5 rounded-full bg-[var(--ci-gold)] px-7 font-sans text-sm font-bold uppercase tracking-[0.16em] text-[var(--ci-night)] shadow-[0_20px_50px_-15px_rgba(224,176,74,0.6)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ci-cream)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--ci-night)]"
+                >
+                  <Maximize2 className="size-4" aria-hidden="true" />
+                  Άνοιξε την αφίσα
+                </button>
+                <a
+                  href="#ci-lock"
+                  className="inline-flex h-14 items-center gap-2.5 rounded-full border border-[var(--ci-cream)]/20 px-7 font-sans text-sm font-bold uppercase tracking-[0.16em] text-[var(--ci-cream)] transition hover:border-[var(--ci-cream)]/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ci-gold)]"
+                >
+                  <KeyRound className="size-4 text-[var(--ci-gold)]" aria-hidden="true" />
+                  Έχω κλειδί
+                </a>
+              </div>
             </div>
-          )}
-        </Chapter>
 
-        <Chapter
-          n={2}
-          kicker="Το μνημείο"
-          title="Διάβασε την ανατολική πλευρά"
-          intro={
-            <p>
-              Οι συντεταγμένες της αφίσας οδηγούν στο Μνημείο του Φωτός, στην κεντρική πλατεία της Καλαμάτας. Εκεί κάθε κωδικός από την
-              αφίσα γίνεται ένα γράμμα.
-            </p>
-          }
-        >
-          <MonumentGuide />
-        </Chapter>
+            <div className="flex justify-center lg:justify-end lg:pr-10">
+              <PosterStand onOpen={() => setViewer(true)} />
+            </div>
+          </section>
 
-        <Chapter
-          n={3}
-          kicker="Το κλειδί"
-          title="Έλεγξε το κλειδί σου"
-          intro={<p>Βάλε τα γράμματα στη σειρά και γράψε το κλειδί. Μπορείς να δοκιμάσεις όσα κλειδιά θέλεις, ένα τη φορά.</p>}
-        >
-          <div className="max-w-2xl">
-            {saved && <KeyCheck state={saved.key} onChange={(key) => setSaved((s) => (s ? { ...s, key } : s))} />}
-          </div>
-        </Chapter>
+          <Section
+            id="ci-message"
+            kicker="Το μήνυμα"
+            title="Ένα μήνυμα χωρίς νόημα. Ακόμα."
+            lead={<p>Γράψε κάτω από κάθε γράμμα αυτό που πιστεύεις ότι κρύβει. Ό,τι γράφεις μένει μόνο σε αυτή τη συσκευή.</p>}
+          >
+            {saved ? (
+              <CipherBoard guesses={saved.guesses} onGuesses={(guesses) => setSaved((s) => (s ? { ...s, guesses } : s))} />
+            ) : (
+              <div className="h-40" aria-hidden="true" />
+            )}
+          </Section>
 
-        <div className="flex justify-center">
+          <Divider />
+
+          <Section
+            id="ci-lock"
+            kicker="Η κλειδαριά"
+            title="Βρήκες το κλειδί;"
+            lead={<p>Γράψε το και δες αν ταιριάζει. Μπορείς να δοκιμάσεις όσες φορές θέλεις.</p>}
+          >
+            <div className="w-full max-w-2xl">
+              {saved && <KeyCheck state={saved.key} onChange={(key) => setSaved((s) => (s ? { ...s, key } : s))} />}
+            </div>
+          </Section>
+        </main>
+
+        <footer className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-4 border-t border-[var(--ci-cream)]/10 px-5 py-8 sm:flex-row sm:px-8">
+          <p className="font-sans text-sm text-[var(--ci-cream)]/45">The Hunt × Καλαματιανό Καρναβάλι</p>
           <button
             type="button"
             onClick={reset}
-            className="inline-flex items-center gap-2 font-sans text-xs font-bold text-[var(--ci-ink)]/50 transition hover:text-[var(--ci-ink)]"
+            className="inline-flex items-center gap-2 font-sans text-sm font-bold text-[var(--ci-cream)]/45 transition hover:text-[var(--ci-cream)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ci-gold)]"
           >
             <RotateCcw className="size-3.5" aria-hidden="true" />
-            Μηδενισμός προόδου
+            Ξεκίνα από την αρχή
           </button>
-        </div>
-      </main>
+        </footer>
+      </div>
+
+      <AnimatePresence>
+        {viewer && saved && (
+          <PosterViewer found={saved.found} onFound={onFound} notes={saved.notes} onNotes={setNotes} onClose={() => setViewer(false)} />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>{notesOpen && saved && !viewer && <Notebook value={saved.notes} onChange={setNotes} onClose={() => setNotesOpen(false)} />}</AnimatePresence>
     </div>
   )
 }
