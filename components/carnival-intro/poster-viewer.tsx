@@ -141,6 +141,7 @@ export function PosterViewer({
   /** Where the torch points, in stage pixels. The beam sits exactly here; only the camera pan is smoothed. */
   const aim = useRef<{ x: number; y: number } | null>(null)
   const miniRef = useRef<HTMLSpanElement>(null)
+  const miniShown = useRef(false)
   const [tipOpen, setTipOpen] = useState(true)
   const reported = useRef(new Set(found))
   const onFoundRef = useRef(onFound)
@@ -366,6 +367,11 @@ export function PosterViewer({
 
   if (typeof document === "undefined") return null
 
+  // Separate show/hide thresholds so a pinch hovering near one value doesn't make the minimap blink.
+  if (zoomUi > 1.3) miniShown.current = true
+  else if (zoomUi < 1.15) miniShown.current = false
+  const showMini = miniShown.current
+
   const hint = uv
     ? touch
       ? "Σύρε το δάχτυλο για να κινήσεις τον φακό, τσίμπησε για ζουμ"
@@ -381,7 +387,7 @@ export function PosterViewer({
       aria-modal="true"
       aria-label="Η αφίσα σε πλήρη οθόνη"
       style={{ ...PALETTE, colorScheme: "dark" } as CSSProperties}
-      className="fixed inset-0 z-[70] flex flex-col overflow-hidden bg-[var(--ci-night)] font-sans text-[var(--ci-cream)]"
+      className="fixed inset-x-0 top-0 z-[70] flex h-[100dvh] flex-col overflow-hidden overscroll-none bg-[var(--ci-night)] font-sans text-[var(--ci-cream)]"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -398,7 +404,7 @@ export function PosterViewer({
 
       <div
         ref={stageRef}
-        className="relative min-h-0 flex-1 touch-none select-none [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none]"
+        className="relative min-h-0 flex-1 touch-none select-none overflow-hidden [contain:paint] [-webkit-tap-highlight-color:transparent] [-webkit-touch-callout:none]"
         onContextMenu={(e) => e.preventDefault()}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
@@ -539,7 +545,7 @@ export function PosterViewer({
           className={cn(
             "pointer-events-none absolute right-4 z-10 aspect-[2/5] w-14 overflow-hidden rounded-md border border-[var(--ci-cream)]/20 bg-[var(--ci-night)] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.9)] transition-all duration-300 sm:w-16",
             tipOpen ? "bottom-36 sm:bottom-4" : "bottom-4",
-            zoomUi > 1.3 ? "opacity-100" : "translate-y-2 opacity-0",
+            showMini ? "opacity-100" : "translate-y-2 opacity-0",
           )}
         >
           <Image src={POSTER_SRC} alt="" fill sizes="64px" className="object-cover opacity-60" />
