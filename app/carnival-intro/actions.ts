@@ -1,14 +1,12 @@
 "use server"
 
-import { CODE_LENGTH } from "@/lib/carnival-intro/cipher"
-import { CARNIVAL_INTRO_SOLUTION, matchesSolution } from "@/lib/carnival-intro/solution"
+import { verifyKey, type KeyVerdict } from "@/lib/carnival-intro/key"
 import { isHeldByMaintenance } from "@/lib/site-maintenance"
 
-export type AnswerResult = { ok: true; phrase: string } | { ok: false }
-
-export async function checkCarnivalAnswer(letters: unknown): Promise<AnswerResult> {
-  if (await isHeldByMaintenance()) return { ok: false }
-  if (!Array.isArray(letters) || letters.length !== CODE_LENGTH) return { ok: false }
-  if (!letters.every((l) => typeof l === "string" && l.length <= 4)) return { ok: false }
-  return matchesSolution(letters as string[]) ? { ok: true, phrase: CARNIVAL_INTRO_SOLUTION } : { ok: false }
+export async function checkCarnivalKey(input: unknown): Promise<KeyVerdict> {
+  if (await isHeldByMaintenance()) return "unset"
+  if (typeof input !== "string" || !input.trim() || input.length > 64) return "wrong"
+  // A short pause keeps scripted guessing slow without bothering a person.
+  await new Promise((r) => setTimeout(r, 450))
+  return verifyKey(input)
 }

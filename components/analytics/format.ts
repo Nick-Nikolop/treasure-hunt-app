@@ -112,6 +112,32 @@ export function describeEvent(e: EventLike): { text: string; detail: string | nu
         detail: `${typeof p.interactions === "number" ? p.interactions : 0} interactions`,
         tone: "normal",
       }
+    case "carnival.opening":
+      return {
+        text: p.action === "skipped" ? "Skipped the carnival intro" : "Watched the carnival intro",
+        detail: e.durationMs ? duration(e.durationMs) : null,
+        tone: "quiet",
+      }
+    case "carnival.uv_toggle":
+      return { text: p.on ? "Turned on the UV light on the poster" : "Turned off the UV light", detail: null, tone: "normal" }
+    case "carnival.marks_found":
+      return {
+        text: p.found === p.total ? "Found every UV mark on the poster" : `Found ${String(p.found)} UV marks`,
+        detail: `${String(p.found ?? "?")}/${String(p.total ?? "?")}`,
+        tone: p.found === p.total ? "key" : "normal",
+      }
+    case "carnival.map_open":
+      return { text: "Opened the monument on the map", detail: null, tone: "normal" }
+    case "carnival.coords_copy":
+      return { text: "Copied the monument coordinates", detail: null, tone: "quiet" }
+    case "carnival.key_check":
+      return {
+        text: p.result === "correct" ? "Found the carnival decryption key" : "Tried a wrong carnival key",
+        detail: `attempt ${String(p.attempt ?? "?")}`,
+        tone: p.result === "correct" ? "key" : "normal",
+      }
+    case "carnival.reset":
+      return { text: "Reset the carnival puzzle", detail: null, tone: "quiet" }
     case "landing.loaded":
       return {
         text: `Landing loaded in ${duration(e.durationMs)}`,

@@ -26,6 +26,14 @@ export const EV = {
   explainerInteract: "explainer.interact", // props: { step: "riddle" | "scan", option?, correct, auto }
   explainerJump: "explainer.jump", // props: { chapter }
   explainerComplete: "explainer.complete", // durationMs; props: { interactions }
+  // /carnival-intro poster puzzle (never the typed key, only outcomes)
+  carnivalOpening: "carnival.opening", // durationMs; props: { action: "finished" | "skipped" }
+  carnivalUv: "carnival.uv_toggle", // props: { on }
+  carnivalMarks: "carnival.marks_found", // props: { found, total }
+  carnivalMapOpen: "carnival.map_open",
+  carnivalCoordsCopy: "carnival.coords_copy",
+  carnivalKeyCheck: "carnival.key_check", // props: { result: "correct" | "wrong" | "unset", attempt }
+  carnivalReset: "carnival.reset",
   // Auth funnel (durationMs on the success events where relevant)
   authView: "auth.view", // props: { mode: "sign_in" | "sign_up" | "reset" }
   authFieldFocus: "auth.field_focus",
