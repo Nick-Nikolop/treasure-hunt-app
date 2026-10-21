@@ -102,9 +102,11 @@ export function PosterStand({ onOpen }: { onOpen: () => void }) {
           />
 
           <span className="absolute inset-x-0 bottom-0 flex items-end justify-center bg-gradient-to-t from-[var(--ci-night)]/70 to-transparent px-4 pb-6 pt-16">
-            <span className="inline-flex items-center gap-2 rounded-full bg-[var(--ci-uv)] px-5 py-2.5 font-sans text-sm font-bold text-[var(--ci-cream)] shadow-[0_0_34px_-4px_var(--ci-uv)] transition group-hover:brightness-125">
-              <Maximize2 className="size-4" aria-hidden="true" />
-              Φώτισέ τη με UV
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--ci-cream)]/20 bg-[var(--ci-night)]/80 px-3 py-1.5 font-sans text-xs font-bold text-[var(--ci-cream)] backdrop-blur transition group-hover:border-[var(--ci-cream)]/40">
+              <Maximize2 className="size-3" aria-hidden="true" />
+              <span>
+                Φώτισέ τη με <span className="text-[#b9a4ff]">UV</span>
+              </span>
             </span>
           </span>
         </span>

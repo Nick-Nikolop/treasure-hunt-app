@@ -394,7 +394,7 @@ export function PosterViewer({
 
       <div
         ref={stageRef}
-        className={cn("relative min-h-0 flex-1 touch-none select-none", uv ? "cursor-none" : "cursor-crosshair")}
+        className="relative min-h-0 flex-1 touch-none select-none"
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -462,15 +462,6 @@ export function PosterViewer({
             )}
           </AnimatePresence>
         </div>
-
-        {uv && (
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute left-[var(--sx)] top-[var(--sy)] grid size-10 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-[#d9ccff]/80 shadow-[0_0_18px_2px_rgba(139,92,255,0.7)]"
-          >
-            <span className="size-1.5 rounded-full bg-[#efe8ff]" />
-          </span>
-        )}
 
         <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-4 bg-gradient-to-b from-[var(--ci-night)] via-[var(--ci-night)]/60 to-transparent px-4 pb-10 pt-4 sm:px-6 sm:pt-5">
           <div className="flex flex-col gap-1">
