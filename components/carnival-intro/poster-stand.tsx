@@ -83,24 +83,14 @@ export function PosterStand({ onOpen }: { onOpen: () => void }) {
             priority
             sizes="(min-width: 1024px) 260px, 60vw"
             className="object-cover"
-            style={{ filter: "brightness(0.42) saturate(0.6)" }}
           />
 
           <span aria-hidden="true" className="pointer-events-none absolute inset-0" style={{ WebkitMaskImage: BEAM_MASK, maskImage: BEAM_MASK }}>
-            <Image
-              src={POSTER_SRC}
-              alt=""
-              fill
-              sizes="(min-width: 1024px) 260px, 60vw"
-              className="object-cover"
-              style={{ filter: "brightness(0.6) saturate(0.2) contrast(1.25)" }}
-            />
-            <span className="absolute inset-0 bg-[#4b1fd6] mix-blend-color" />
             <span
               className="absolute inset-0 mix-blend-screen"
               style={{
                 background:
-                  "radial-gradient(circle var(--r) at var(--x) var(--y), rgba(150,110,255,0.5) 0%, rgba(110,60,240,0.22) 55%, rgba(150,110,255,0.34) 80%, transparent 92%)",
+                  "radial-gradient(circle var(--r) at var(--x) var(--y), rgba(150,110,255,0.55) 0%, rgba(120,70,245,0.3) 60%, rgba(160,120,255,0.45) 82%, transparent 94%)",
               }}
             />
             <UvInk />
@@ -111,7 +101,7 @@ export function PosterStand({ onOpen }: { onOpen: () => void }) {
             className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.3),transparent_12%,transparent_88%,rgba(0,0,0,0.3))]"
           />
 
-          <span className="absolute inset-x-0 bottom-0 flex items-end justify-center bg-gradient-to-t from-[var(--ci-night)]/95 via-[var(--ci-night)]/50 to-transparent px-4 pb-6 pt-24">
+          <span className="absolute inset-x-0 bottom-0 flex items-end justify-center bg-gradient-to-t from-[var(--ci-night)]/70 to-transparent px-4 pb-6 pt-16">
             <span className="inline-flex items-center gap-2 rounded-full bg-[var(--ci-uv)] px-5 py-2.5 font-sans text-sm font-bold text-[var(--ci-cream)] shadow-[0_0_34px_-4px_var(--ci-uv)] transition group-hover:brightness-125">
               <Maximize2 className="size-4" aria-hidden="true" />
               Φώτισέ τη με UV
