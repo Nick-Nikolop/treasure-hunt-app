@@ -138,14 +138,16 @@ export function PosterViewer({
   const zoomCur = useRef(Z_MIN)
   const pointers = useRef(new Map<number, { x: number; y: number }>())
   const pinch = useRef<{ d: number; z: number } | null>(null)
+  /** Where the torch points, in stage pixels. The beam sits exactly here; only the camera pan is smoothed. */
+  const aim = useRef<{ x: number; y: number } | null>(null)
   const reported = useRef(new Set(found))
   const onFoundRef = useRef(onFound)
   onFoundRef.current = onFound
 
-  const [uv, setUv] = useState(false)
-  const uvRef = useRef(false)
+  const [uv, setUv] = useState(true)
+  const uvRef = useRef(true)
   uvRef.current = uv
-  const uvUsed = useRef(false)
+  const uvUsed = useRef(true)
   const maxZoom = useRef(Z_MIN)
   const [zoomUi, setZoomUi] = useState(Z_MIN)
   const [notesOpen, setNotesOpen] = useState(false)
@@ -172,6 +174,7 @@ export function PosterViewer({
     const { sw, sh, W, H } = layout(zoom.current)
     const x = clientX - rect.left
     const y = clientY - rect.top - (isTouch && uvRef.current ? TOUCH_LIFT : 0)
+    aim.current = { x, y }
     const inv = (pos: number, view: number, len: number) =>
       len <= view - PAD * 2 ? (pos - (view - len) / 2) / len : (pos - PAD) / (view - PAD * 2)
     target.current = { x: clamp(inv(x, sw, W)), y: clamp(inv(y, sh, H)) }
@@ -201,6 +204,7 @@ export function PosterViewer({
         .catch(() => {})
     }
     track(EV.carnivalPosterOpen, { fullscreen: wantsFullscreen && Boolean(root?.requestFullscreen) })
+    track(EV.carnivalUv, { on: true, auto: true })
     return () => {
       document.documentElement.style.overflow = ""
       if (fullscreen && document.fullscreenElement) document.exitFullscreen().catch(() => {})
@@ -229,6 +233,11 @@ export function PosterViewer({
       focusFromScreen(e.clientX, e.clientY, false)
     }
     stage.addEventListener("wheel", onWheel, { passive: false })
+    const onMouseMove = (e: PointerEvent) => {
+      if (e.pointerType !== "mouse" && e.pointerType !== "pen") return
+      focusFromScreen(e.clientX, e.clientY, false)
+    }
+    window.addEventListener("pointermove", onMouseMove, { passive: true })
 
     let raf = 0
     const tick = () => {
@@ -244,6 +253,7 @@ export function PosterViewer({
       cancelAnimationFrame(raf)
       ro.disconnect()
       stage.removeEventListener("wheel", onWheel)
+      window.removeEventListener("pointermove", onMouseMove)
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -260,8 +270,9 @@ export function PosterViewer({
     el.style.height = `${H}px`
     el.style.transform = `translate3d(${left}px, ${top}px, 0)`
     const r = clamp(Math.min(sw, sh) * 0.17, 74, 190)
-    const bx = p.x * W
-    const by = p.y * H
+    const a = aim.current
+    const bx = a ? a.x - left : p.x * W
+    const by = a ? a.y - top : p.y * H
     el.style.setProperty("--x", `${bx}px`)
     el.style.setProperty("--y", `${by}px`)
     el.style.setProperty("--r", `${r}px`)
@@ -340,8 +351,8 @@ export function PosterViewer({
       focusFromScreen((a.x + b.x) / 2, (a.y + b.y) / 2, false)
       return
     }
-    if (e.pointerType === "touch" && !pointers.current.has(e.pointerId)) return
-    focusFromScreen(e.clientX, e.clientY, e.pointerType === "touch")
+    if (e.pointerType !== "touch" || !pointers.current.has(e.pointerId)) return
+    focusFromScreen(e.clientX, e.clientY, true)
   }
 
   const onPointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -455,8 +466,10 @@ export function PosterViewer({
         {uv && (
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute left-[var(--sx)] top-[var(--sy)] size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#d9ccff] opacity-70 blur-[1px]"
-          />
+            className="pointer-events-none absolute left-[var(--sx)] top-[var(--sy)] grid size-10 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-[#d9ccff]/80 shadow-[0_0_18px_2px_rgba(139,92,255,0.7)]"
+          >
+            <span className="size-1.5 rounded-full bg-[#efe8ff]" />
+          </span>
         )}
 
         <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-4 bg-gradient-to-b from-[var(--ci-night)] via-[var(--ci-night)]/60 to-transparent px-4 pb-10 pt-4 sm:px-6 sm:pt-5">
