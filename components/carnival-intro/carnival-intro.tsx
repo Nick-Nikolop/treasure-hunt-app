@@ -84,10 +84,10 @@ function Section({ id, kicker, title, lead, children }: { id: string; kicker: st
           {kicker}
           <span aria-hidden="true" className="h-px w-8 bg-[var(--ci-gold)]/60" />
         </p>
-        <h2 id={`${id}-title`} className="text-balance font-serif text-[2rem] font-bold leading-[1.15] text-[var(--ci-cream)] sm:text-5xl">
+        <h2 id={`${id}-title`} className="text-balance font-serif text-[1.625rem] font-bold leading-[1.2] text-[var(--ci-cream)] sm:text-4xl lg:text-5xl">
           {title}
         </h2>
-        <div className="text-pretty font-sans text-base leading-relaxed text-[var(--ci-cream)]/70">{lead}</div>
+        <div className="text-pretty font-sans text-[15px] leading-relaxed text-[var(--ci-cream)]/70 sm:text-base">{lead}</div>
       </header>
       {children}
     </motion.section>
@@ -253,7 +253,7 @@ export function CarnivalIntro() {
               </motion.p>
               <motion.h1
                 id="ci-title"
-                className="max-w-[13ch] text-balance font-sans text-[2.6rem] font-black uppercase leading-[0.95] tracking-tight text-[var(--ci-cream)] sm:text-7xl"
+                className="max-w-[16ch] text-balance font-sans text-[2rem] lg:max-w-[13ch] font-black uppercase leading-[1] tracking-tight text-[var(--ci-cream)] sm:text-5xl lg:text-7xl lg:leading-[0.95]"
                 initial={{ opacity: 0, y: 18 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 1, delay: 0.1, ease: EASE }}
@@ -267,7 +267,7 @@ export function CarnivalIntro() {
             </div>
 
             <div className="flex flex-col items-stretch gap-7 lg:items-start lg:self-start">
-            <div className="mx-auto flex max-w-[48ch] flex-col gap-4 text-center font-sans text-base leading-relaxed text-[var(--ci-cream)]/75 sm:text-lg lg:mx-0 lg:text-left">
+            <div className="mx-auto flex max-w-[48ch] flex-col gap-4 text-center font-sans text-[15px] leading-relaxed text-[var(--ci-cream)]/75 sm:text-base lg:mx-0 lg:text-lg lg:text-left">
               <p className="text-pretty">
                 Η αφίσα του Καρναβαλιού κρύβει κάτι που το μάτι δεν βλέπει. Στο κανονικό φως είναι απλώς μια αφίσα.
               </p>

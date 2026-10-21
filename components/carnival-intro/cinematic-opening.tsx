@@ -89,7 +89,7 @@ export function CinematicOpening({ onDone }: { onDone: () => void }) {
 
           <motion.span
             aria-hidden="true"
-            className="font-serif text-3xl font-light text-[var(--ci-gold)] sm:text-5xl"
+            className="font-serif text-2xl font-light text-[var(--ci-gold)] sm:text-4xl lg:text-5xl"
             initial={{ opacity: 0, scale: 0.4, rotate: -90 }}
             animate={{ opacity: 1, scale: 1, rotate: 0 }}
             transition={{ duration: d(1), delay: d(1.6), ease: EASE }}
@@ -121,7 +121,7 @@ export function CinematicOpening({ onDone }: { onDone: () => void }) {
           transition={{ duration: d(1.2), delay: d(2.3), ease: EASE }}
         />
 
-        <h1 className="flex max-w-[16ch] flex-wrap justify-center gap-x-[0.28em] font-sans text-4xl font-black uppercase leading-[1.02] tracking-tight sm:text-6xl">
+        <h1 className="flex max-w-[16ch] flex-wrap justify-center gap-x-[0.28em] font-sans text-[1.875rem] font-black uppercase leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
           {TITLE.map((word, i) => (
             <span key={word} className="overflow-hidden pb-1">
               <motion.span
@@ -137,7 +137,7 @@ export function CinematicOpening({ onDone }: { onDone: () => void }) {
         </h1>
 
         <motion.p
-          className="max-w-[44ch] text-pretty font-serif text-lg italic leading-relaxed text-[var(--ci-cream)]/80 sm:text-xl"
+          className="max-w-[44ch] text-pretty font-serif text-base italic leading-relaxed text-[var(--ci-cream)]/80 sm:text-lg lg:text-xl"
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: d(1.2), delay: d(4), ease: EASE }}

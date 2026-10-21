@@ -48,7 +48,7 @@ export function KeyReveal({ value }: { value?: string }) {
 
         <div className="flex flex-col items-center gap-3">
           <p className="font-sans text-xs font-bold uppercase tracking-[0.4em] text-[var(--ci-gold)]">Η κλειδαριά άνοιξε</p>
-          <h3 className="text-balance font-serif text-3xl font-bold text-[var(--ci-cream)] sm:text-4xl">Αυτό είναι το κλειδί</h3>
+          <h3 className="text-balance font-serif text-[1.625rem] font-bold leading-[1.2] text-[var(--ci-cream)] sm:text-4xl">Αυτό είναι το κλειδί</h3>
         </div>
 
         {letters.length > 0 && (
@@ -78,7 +78,7 @@ export function KeyReveal({ value }: { value?: string }) {
           <span aria-hidden="true" className="absolute right-4 top-4 size-1.5 rounded-full bg-[var(--ci-gold)]/50" />
           <span aria-hidden="true" className="absolute bottom-4 left-4 size-1.5 rounded-full bg-[var(--ci-gold)]/50" />
           <span aria-hidden="true" className="absolute bottom-4 right-4 size-1.5 rounded-full bg-[var(--ci-gold)]/50" />
-          <blockquote className="text-balance font-serif text-2xl italic leading-snug text-[var(--ci-cream)] sm:text-3xl">
+          <blockquote className="text-balance font-serif text-xl italic leading-snug text-[var(--ci-cream)] sm:text-3xl">
             Ένας σωστός νοικοκύρης κλειδώνει πάντα την πόρτα του{" "}
             <span className="not-italic font-bold text-[var(--ci-gold)]">δύο φορές</span>. Ακόμα κι αν έχει ένα μόνο κλειδί.
           </blockquote>

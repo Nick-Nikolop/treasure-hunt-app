@@ -130,7 +130,7 @@ export function PhraseReveal({ text }: { text: string }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, delay: settled, ease: EASE }}
         >
-          <p className="max-w-[40ch] text-balance font-serif text-2xl italic leading-snug text-[var(--ci-cream)] sm:text-3xl">
+          <p className="max-w-[40ch] text-balance font-serif text-xl italic leading-snug text-[var(--ci-cream)] sm:text-3xl">
             Κράτησέ το για τον εαυτό σου.
           </p>
           <p className="max-w-[46ch] text-pretty font-sans text-[15px] leading-relaxed text-[var(--ci-cream)]/60 sm:text-base">
