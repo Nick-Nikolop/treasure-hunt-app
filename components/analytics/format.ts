@@ -153,6 +153,12 @@ export function describeEvent(e: EventLike): { text: string; detail: string | nu
       }
     case "carnival.reset":
       return { text: "Reset the carnival puzzle", detail: null, tone: "quiet" }
+    case "carnival.tip":
+      return {
+        text: p.action === "open" ? "Re-opened the poster tip" : "Closed the poster tip",
+        detail: p.uv ? "UV on" : "UV off",
+        tone: "quiet",
+      }
     case "carnival.dock":
       return {
         text:

@@ -143,6 +143,7 @@ export function PosterViewer({
   const miniRef = useRef<HTMLSpanElement>(null)
   const miniShown = useRef(false)
   const [tipOpen, setTipOpen] = useState(true)
+  const tipReopened = useRef(false)
   const reported = useRef(new Set(found))
   const onFoundRef = useRef(onFound)
   onFoundRef.current = onFound
@@ -491,6 +492,31 @@ export function PosterViewer({
               </motion.p>
             </AnimatePresence>
           </div>
+          <div className="flex shrink-0 items-center gap-2">
+          <AnimatePresence>
+            {!tipOpen && (
+              <motion.button
+                key="tip"
+                type="button"
+                onClick={() => {
+                  tipReopened.current = true
+                  setTipOpen(true)
+                  track(EV.carnivalTip, { action: "open", uv })
+                }}
+                data-track="carnival-tip-open"
+                data-viewer-ui
+                aria-label="Δες ξανά τη συμβουλή"
+                className="pointer-events-auto relative z-10 inline-flex size-12 cursor-pointer items-center justify-center gap-2 rounded-full border border-[var(--ci-gold)]/45 bg-[var(--ci-night)] font-sans text-sm font-bold text-[var(--ci-gold)] shadow-[0_10px_40px_-8px_rgba(0,0,0,0.8)] transition hover:bg-[var(--ci-gold)]/15 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ci-gold)] sm:h-14 sm:w-auto sm:px-5"
+                initial={{ opacity: 0, scale: 0.6 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.6 }}
+                transition={{ duration: reduce ? 0.15 : 0.35, ease: EASE }}
+              >
+                <Lightbulb className="size-5" aria-hidden="true" />
+                <span className="hidden sm:inline">Συμβουλή</span>
+              </motion.button>
+            )}
+          </AnimatePresence>
           <button
             type="button"
             onClick={onClose}
@@ -505,6 +531,7 @@ export function PosterViewer({
               Esc
             </kbd>
           </button>
+          </div>
         </div>
 
         <AnimatePresence>
@@ -514,7 +541,7 @@ export function PosterViewer({
               aria-label="Συμβουλή"
               className="pointer-events-auto absolute bottom-4 left-4 right-4 z-10 flex max-w-sm items-start gap-3 rounded-2xl border border-[var(--ci-gold)]/35 bg-[var(--ci-night)] p-4 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.9)] [transform:translateZ(0)] sm:right-auto"
               initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0, transition: { delay: reduce ? 0 : 1.4, duration: 0.5, ease: EASE } }}
+              animate={{ opacity: 1, y: 0, transition: { delay: reduce || tipReopened.current ? 0 : 1.4, duration: 0.5, ease: EASE } }}
               exit={{ opacity: 0, y: 8, transition: { duration: 0.2 } }}
             >
               <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[var(--ci-gold)]/15 text-[var(--ci-gold)]">
@@ -529,7 +556,11 @@ export function PosterViewer({
               </div>
               <button
                 type="button"
-                onClick={() => setTipOpen(false)}
+                onClick={() => {
+                  setTipOpen(false)
+                  track(EV.carnivalTip, { action: "close", uv })
+                }}
+                data-track="carnival-tip-close"
                 aria-label="Κλείσιμο συμβουλής"
                 className="-mr-1 -mt-1 grid size-8 shrink-0 place-items-center rounded-full text-[var(--ci-cream)]/60 transition hover:bg-[var(--ci-cream)]/10 hover:text-[var(--ci-cream)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ci-gold)]"
               >
