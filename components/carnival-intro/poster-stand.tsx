@@ -54,12 +54,7 @@ export function PosterStand({ onOpen }: { onOpen: () => void }) {
     >
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -top-[18%] left-1/2 h-[125%] w-[260%] -translate-x-1/2"
-        style={{
-          background: "radial-gradient(ellipse 34% 62% at 50% 8%, rgba(139,92,255,0.16) 0%, rgba(139,92,255,0.06) 45%, transparent 78%)",
-          clipPath: "polygon(43% 0, 57% 0, 86% 100%, 14% 100%)",
-          filter: "blur(10px)",
-        }}
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[80%] w-[160%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--ci-gold)]/10 blur-3xl"
       />
 
       <button
@@ -67,13 +62,11 @@ export function PosterStand({ onOpen }: { onOpen: () => void }) {
         onClick={onOpen}
         aria-label="Άνοιξε την αφίσα και φώτισέ τη με UV φως"
         data-track="carnival-poster-open"
-        className="group relative flex flex-col items-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--ci-gold)] focus-visible:ring-offset-8 focus-visible:ring-offset-[var(--ci-night)]"
+        className="group relative flex flex-col items-center rounded-xl border border-[var(--ci-gold)]/30 bg-[var(--ci-night)] p-2 shadow-[0_40px_90px_-30px_rgba(0,0,0,0.95)] outline-none transition duration-500 ease-out hover:-translate-y-1 hover:border-[var(--ci-gold)]/60 focus-visible:ring-2 focus-visible:ring-[var(--ci-gold)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--ci-night)]"
       >
-        <span aria-hidden="true" className="relative z-10 h-2.5 w-[calc(100%+14px)] rounded-full bg-gradient-to-b from-[var(--ci-cream)]/80 via-[var(--ci-cream)]/35 to-[var(--ci-cream)]/15" />
-
         <span
           ref={posterRef}
-          className="relative block aspect-[2/5] h-[min(66svh,640px)] overflow-hidden shadow-[0_40px_90px_-25px_rgba(0,0,0,0.95)] transition-transform duration-700 ease-out group-hover:-translate-y-1"
+          className="relative block aspect-[2/5] h-[min(66svh,640px)] overflow-hidden rounded-lg"
           style={{ containerType: "inline-size", "--x": "50%", "--y": "42%", "--r": "70px" } as CSSProperties}
         >
           <Image
@@ -96,11 +89,6 @@ export function PosterStand({ onOpen }: { onOpen: () => void }) {
             <UvInk />
           </span>
 
-          <span
-            aria-hidden="true"
-            className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.3),transparent_12%,transparent_88%,rgba(0,0,0,0.3))]"
-          />
-
           <span className="absolute inset-x-0 bottom-0 flex items-end justify-center bg-gradient-to-t from-[var(--ci-night)]/70 to-transparent px-4 pb-6 pt-16">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--ci-cream)]/20 bg-[var(--ci-night)]/80 px-3 py-1.5 font-sans text-xs font-bold text-[var(--ci-cream)] backdrop-blur transition group-hover:border-[var(--ci-cream)]/40">
               <Maximize2 className="size-3" aria-hidden="true" />
@@ -110,17 +98,7 @@ export function PosterStand({ onOpen }: { onOpen: () => void }) {
             </span>
           </span>
         </span>
-
-        <span aria-hidden="true" className="relative z-10 flex h-7 w-[calc(100%+30px)] items-center justify-center rounded-md border border-[var(--ci-cream)]/15 bg-gradient-to-b from-[var(--ci-cream)]/30 via-[var(--ci-wine)]/60 to-[var(--ci-night)]">
-          <span className="h-px w-1/3 bg-[var(--ci-gold)]/50" />
-        </span>
-        <span aria-hidden="true" className="flex w-[calc(100%+60px)] justify-between">
-          <span className="h-1.5 w-12 rounded-b-md bg-[var(--ci-cream)]/20" />
-          <span className="h-1.5 w-12 rounded-b-md bg-[var(--ci-cream)]/20" />
-        </span>
       </button>
-
-      <span aria-hidden="true" className="mt-1 h-6 w-[180%] rounded-[50%] bg-black/60 blur-xl" />
     </motion.div>
   )
 }
