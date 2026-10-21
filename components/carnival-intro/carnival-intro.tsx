@@ -287,11 +287,9 @@ export function CarnivalIntro() {
                   )
                 }
               >
-                <CipherBoard
-                  guesses={saved.guesses}
-                  done={saved.phrase.solved}
-                  onGuesses={(guesses) => setSaved((s) => (s ? { ...s, guesses } : s))}
-                />
+                {!saved.phrase.solved && (
+                  <CipherBoard guesses={saved.guesses} onGuesses={(guesses) => setSaved((s) => (s ? { ...s, guesses } : s))} />
+                )}
                 <PhraseCheck
                   guesses={saved.guesses}
                   keyValue={saved.key.value}
