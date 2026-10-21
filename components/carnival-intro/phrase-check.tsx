@@ -7,6 +7,7 @@ import { checkCarnivalPhrase } from "@/app/carnival-intro/actions"
 import { EV } from "@/lib/analytics-events"
 import { track } from "@/lib/analytics-client"
 import { CIPHER_LETTERS, CIPHERTEXT } from "@/lib/carnival-intro/poster"
+import { buzz } from "./haptics"
 import { PhraseReveal } from "./phrase-reveal"
 
 export interface PhraseState {
@@ -57,6 +58,7 @@ export function PhraseCheck({
       const attempt = state.attempts + 1
       track(EV.carnivalPhraseCheck, { result: verdict, attempt, filled })
       if (verdict === "correct") {
+      buzz("success")
       setNotice(null)
       ;(document.activeElement as HTMLElement | null)?.blur()
       onChange({ attempts: attempt, solved: true, text: phrase })
@@ -68,6 +70,7 @@ export function PhraseCheck({
       }
       onChange({ ...state, attempts: attempt })
       setNotice(verdict)
+      if (verdict === "wrong") buzz("wrong")
       if (verdict === "wrong" && !reduce) shake.start({ x: [0, -12, 10, -7, 4, 0], transition: { duration: 0.45 } })
     })
   }
@@ -76,14 +79,14 @@ export function PhraseCheck({
 
 
   return (
-    <div className="flex flex-col items-center gap-4">
+    <div className="flex w-full max-w-sm flex-col items-stretch gap-4 sm:w-auto sm:items-center">
       <motion.button
         type="button"
         animate={shake}
         onClick={submit}
         disabled={!complete || pending}
         data-track="carnival-phrase-check"
-        className="inline-flex h-14 items-center justify-center gap-2.5 rounded-full bg-[var(--ci-gold)] px-9 font-sans text-sm font-bold uppercase tracking-[0.16em] text-[var(--ci-night)] shadow-[0_20px_50px_-15px_rgba(224,176,74,0.6)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ci-cream)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--ci-night)]"
+        className="inline-flex h-14 items-center active:scale-[0.98] justify-center gap-2.5 rounded-full bg-[var(--ci-gold)] px-9 font-sans text-sm font-bold uppercase tracking-[0.16em] text-[var(--ci-night)] shadow-[0_20px_50px_-15px_rgba(224,176,74,0.6)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ci-cream)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--ci-night)]"
       >
         {pending ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <ScrollText className="size-4" aria-hidden="true" />}
         Διάβασε το μήνυμα

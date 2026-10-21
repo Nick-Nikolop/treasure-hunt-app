@@ -7,6 +7,7 @@ import { checkCarnivalKey } from "@/app/carnival-intro/actions"
 import { EV } from "@/lib/analytics-events"
 import { track } from "@/lib/analytics-client"
 import { cn } from "@/lib/utils"
+import { buzz } from "./haptics"
 import { KeyReveal } from "./key-reveal"
 import { EASE } from "./palette"
 
@@ -34,12 +35,15 @@ export function KeyCheck({ state, onChange }: { state: KeyState; onChange: (next
       const attempt = state.attempts + 1
       track(EV.carnivalKeyCheck, { result, attempt })
       if (result === "correct") {
+        buzz("success")
+        ;(document.activeElement as HTMLElement | null)?.blur()
         setNotice(null)
         onChange({ attempts: attempt, tried: state.tried, solved: true, value: key })
         return
       }
       setNotice(result)
       if (result === "wrong" || result === "close") {
+        buzz("wrong")
         const label = key.toLocaleUpperCase("el-GR")
         onChange({ attempts: attempt, tried: [label, ...state.tried.filter((t) => t !== label)].slice(0, 8), solved: false })
         if (!reduce) shake.start({ x: [0, -12, 10, -7, 4, 0], transition: { duration: 0.45 } })

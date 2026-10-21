@@ -75,7 +75,7 @@ export function CipherBoard({
 
   return (
     <div className="flex flex-col gap-8" data-no-track>
-      <div className="flex flex-wrap justify-center gap-x-8 gap-y-8 sm:gap-x-12">
+      <div className="flex flex-wrap justify-center gap-x-6 gap-y-6 sm:gap-x-12 sm:gap-y-8">
         {WORDS.map((word, w) => (
           <div key={`${word}-${w}`} className="flex gap-1.5 sm:gap-2">
             {[...word].map((ch) => {

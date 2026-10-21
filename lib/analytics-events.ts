@@ -37,6 +37,7 @@ export const EV = {
   carnivalKeyCheck: "carnival.key_check", // props: { result: "correct" | "close" | "wrong" | "unset", attempt }
   carnivalPhraseCheck: "carnival.phrase_check", // props: { result: "correct" | "wrong" | "locked" | "unset", attempt, filled }
   carnivalReset: "carnival.reset",
+  carnivalDock: "carnival.dock", // mobile action bar; props: { action: "poster" | "key" | "decrypt" | "notes", step }
   // Auth funnel (durationMs on the success events where relevant)
   authView: "auth.view", // props: { mode: "sign_in" | "sign_up" | "reset" }
   authFieldFocus: "auth.field_focus",

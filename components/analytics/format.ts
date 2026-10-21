@@ -153,6 +153,19 @@ export function describeEvent(e: EventLike): { text: string; detail: string | nu
       }
     case "carnival.reset":
       return { text: "Reset the carnival puzzle", detail: null, tone: "quiet" }
+    case "carnival.dock":
+      return {
+        text:
+          p.action === "poster"
+            ? "Opened the poster from the mobile bar"
+            : p.action === "notes"
+              ? "Opened the notebook from the mobile bar"
+              : p.action === "decrypt"
+                ? "Jumped to the decryption from the mobile bar"
+                : "Jumped to the key lock from the mobile bar",
+        detail: `step ${String(p.step ?? "?")}`,
+        tone: "quiet",
+      }
     case "landing.loaded":
       return {
         text: `Landing loaded in ${duration(e.durationMs)}`,

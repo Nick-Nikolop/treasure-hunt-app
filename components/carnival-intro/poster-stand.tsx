@@ -54,12 +54,13 @@ export function PosterStand({ onOpen }: { onOpen: () => void }) {
           onClick={onOpen}
           onPointerMove={onMove}
           onPointerLeave={onLeave}
+          whileTap={reduce ? undefined : { scale: 0.97 }}
           aria-label="Άνοιξε την αφίσα για να την εξετάσεις από κοντά"
           data-track="carnival-poster-open"
           style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
           className="group relative block rounded-xl border border-[var(--ci-gold)]/35 bg-[var(--ci-night)] p-2 shadow-[0_50px_100px_-30px_rgba(0,0,0,0.95),0_0_0_1px_rgba(0,0,0,0.4)] outline-none transition-[border-color] duration-500 hover:border-[var(--ci-gold)]/70 focus-visible:ring-2 focus-visible:ring-[var(--ci-gold)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--ci-night)]"
         >
-          <span className="relative block aspect-[2/5] h-[min(66svh,640px)] overflow-hidden rounded-lg">
+          <span className="relative block aspect-[2/5] h-[min(58svh,500px)] overflow-hidden rounded-lg lg:h-[min(66svh,640px)]">
             <Image
               src={POSTER_SRC}
               alt=""

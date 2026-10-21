@@ -9,7 +9,9 @@ import { track } from "@/lib/analytics-client"
 import { CIPHER_LETTERS, UV_TOTAL } from "@/lib/carnival-intro/poster"
 import { CipherBoard } from "./cipher-board"
 import { CinematicOpening } from "./cinematic-opening"
+import { buzz } from "./haptics"
 import { KeyCheck, type KeyState } from "./key-check"
+import { MobileDock, type DockStep } from "./mobile-dock"
 import { Notebook, NOTES_MAX } from "./notebook"
 import { EASE, PALETTE } from "./palette"
 import { PosterStand } from "./poster-stand"
@@ -70,7 +72,7 @@ function Section({ id, kicker, title, lead, children }: { id: string; kicker: st
     <motion.section
       id={id}
       aria-labelledby={`${id}-title`}
-      className="flex scroll-mt-24 flex-col items-center gap-10 text-center"
+      className="flex scroll-mt-20 flex-col items-center gap-8 text-center sm:gap-10"
       initial={{ opacity: 0, y: 28 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-80px" }}
@@ -82,7 +84,7 @@ function Section({ id, kicker, title, lead, children }: { id: string; kicker: st
           {kicker}
           <span aria-hidden="true" className="h-px w-8 bg-[var(--ci-gold)]/60" />
         </p>
-        <h2 id={`${id}-title`} className="text-balance font-serif text-4xl font-bold leading-tight text-[var(--ci-cream)] sm:text-5xl">
+        <h2 id={`${id}-title`} className="text-balance font-serif text-[2rem] font-bold leading-[1.15] text-[var(--ci-cream)] sm:text-5xl">
           {title}
         </h2>
         <div className="text-pretty font-sans text-base leading-relaxed text-[var(--ci-cream)]/70">{lead}</div>
@@ -111,6 +113,9 @@ export function CarnivalIntro() {
   const [saved, setSaved] = useState<Saved | null>(null)
   const [viewer, setViewer] = useState(false)
   const [notesOpen, setNotesOpen] = useState(false)
+  const [posterSeen, setPosterSeen] = useState(false)
+  const [pastHero, setPastHero] = useState(false)
+  const ctaRef = useRef<HTMLDivElement>(null)
   const keySolved = saved?.key.solved === true
   const wasSolved = useRef<boolean | null>(null)
 
@@ -143,11 +148,44 @@ export function CarnivalIntro() {
     }
   }, [opening, viewer])
 
+  useEffect(() => {
+    const el = ctaRef.current
+    if (!el || !saved) return
+    const io = new IntersectionObserver(([entry]) => setPastHero(!entry.isIntersecting && entry.boundingClientRect.top < 0), {
+      threshold: 0,
+    })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [saved])
+
+  const step: DockStep = !saved
+    ? 1
+    : saved.phrase.solved
+      ? 4
+      : keySolved
+        ? 3
+        : saved.found.length > 0 || posterSeen
+          ? 2
+          : 1
+
+  const openPoster = () => {
+    setPosterSeen(true)
+    setViewer(true)
+  }
+
+  const goToKey = () => {
+    document.getElementById("ci-lock")?.scrollIntoView({ behavior: "smooth", block: "center" })
+    window.setTimeout(() => document.getElementById("ci-key")?.focus({ preventScroll: true }), 700)
+  }
+
+  const goToDecrypt = () => document.getElementById("ci-decrypt")?.scrollIntoView({ behavior: "smooth", block: "start" })
+
   const onFound = (index: number) => {
     setSaved((s) => {
       if (!s || s.found.includes(index)) return s
       return { ...s, found: [...s.found, index] }
     })
+    buzz("found")
     track(EV.carnivalMarks, { mark: index, total: UV_TOTAL })
   }
 
@@ -199,25 +237,41 @@ export function CarnivalIntro() {
           </button>
         </header>
 
-        <main className="mx-auto flex w-full max-w-6xl flex-col gap-28 px-5 pb-24 sm:gap-36 sm:px-8">
-          <section aria-labelledby="ci-title" className="grid items-center gap-14 pt-6 lg:min-h-[calc(100svh-6rem)] lg:grid-cols-[1.1fr_1fr] lg:gap-10 lg:pt-0">
-            <div className="flex flex-col items-start gap-7">
+        <main className="mx-auto flex w-full max-w-6xl flex-col gap-20 px-5 pb-16 sm:gap-36 sm:px-8 sm:pb-24">
+          <section
+            aria-labelledby="ci-title"
+            className="grid items-center gap-8 pt-2 sm:gap-12 sm:pt-6 lg:min-h-[calc(100svh-6rem)] lg:grid-cols-[1.1fr_1fr] lg:grid-rows-[auto_auto] lg:gap-x-10 lg:gap-y-7 lg:pt-0"
+          >
+            <div className="flex flex-col items-center gap-4 text-center lg:items-start lg:self-end lg:text-left">
               <motion.p
-                className="font-sans text-xs font-bold uppercase tracking-[0.4em] text-[var(--ci-gold)]"
+                className="font-sans text-[11px] font-bold uppercase tracking-[0.32em] text-[var(--ci-gold)] sm:text-xs sm:tracking-[0.4em]"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 1, ease: EASE }}
               >
                 Καλαματιανό Καρναβάλι · The Hunt
               </motion.p>
-              <h1 id="ci-title" className="max-w-[13ch] text-balance font-sans text-5xl font-black uppercase leading-[0.95] tracking-tight text-[var(--ci-cream)] sm:text-7xl">
+              <motion.h1
+                id="ci-title"
+                className="max-w-[13ch] text-balance font-sans text-[2.6rem] font-black uppercase leading-[0.95] tracking-tight text-[var(--ci-cream)] sm:text-7xl"
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1, delay: 0.1, ease: EASE }}
+              >
                 Κάποια μυστικά πρέπει να τα <span className="text-[var(--ci-gold)]">κυνηγήσεις</span>
-              </h1>
-            <div className="flex max-w-[48ch] flex-col gap-4 font-sans text-base leading-relaxed text-[var(--ci-cream)]/75 sm:text-lg">
+              </motion.h1>
+            </div>
+
+            <div className="flex justify-center lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:justify-end lg:pr-10">
+              <PosterStand onOpen={openPoster} />
+            </div>
+
+            <div className="flex flex-col items-stretch gap-7 lg:items-start lg:self-start">
+            <div className="mx-auto flex max-w-[48ch] flex-col gap-4 text-center font-sans text-base leading-relaxed text-[var(--ci-cream)]/75 sm:text-lg lg:mx-0 lg:text-left">
               <p className="text-pretty">
                 Η αφίσα του Καρναβαλιού κρύβει κάτι που το μάτι δεν βλέπει. Στο κανονικό φως είναι απλώς μια αφίσα.
               </p>
-              <p className="flex items-start gap-3 text-pretty rounded-2xl border border-[var(--ci-gold)]/35 bg-[var(--ci-wine)]/60 px-4 py-3 text-[var(--ci-cream)]">
+              <p className="flex items-start gap-3 text-pretty rounded-2xl text-left border border-[var(--ci-gold)]/35 bg-[var(--ci-wine)]/60 px-4 py-3 text-[var(--ci-cream)]">
                 <span aria-hidden="true" className="mt-2 size-2.5 shrink-0 rounded-full bg-[var(--ci-gold)] shadow-[0_0_14px_2px_var(--ci-gold)]" />
                 <span>
                   Άνοιξέ την, άναψε το <strong className="font-bold text-[#b9a4ff]">UV φως</strong> και πέρνα το πάνω της.
@@ -225,28 +279,28 @@ export function CarnivalIntro() {
               </p>
               <p className="text-pretty">Ό,τι άλλο χρειάζεσαι υπάρχει ήδη εκεί έξω. Κανείς δεν θα σου πει πού.</p>
             </div>
-              <div className="flex flex-wrap items-center gap-3">
+              <div ref={ctaRef} className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                 <button
                   type="button"
-                  onClick={() => setViewer(true)}
+                  onClick={openPoster}
                   data-track="carnival-poster-open-cta"
-                  className="inline-flex h-14 items-center gap-2.5 rounded-full bg-[var(--ci-gold)] px-7 font-sans text-sm font-bold uppercase tracking-[0.16em] text-[var(--ci-night)] shadow-[0_20px_50px_-15px_rgba(224,176,74,0.6)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ci-cream)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--ci-night)]"
+                  className="inline-flex h-14 items-center justify-center gap-2.5 rounded-full active:scale-[0.98] bg-[var(--ci-gold)] px-7 font-sans text-sm font-bold uppercase tracking-[0.16em] text-[var(--ci-night)] shadow-[0_20px_50px_-15px_rgba(224,176,74,0.6)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ci-cream)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--ci-night)]"
                 >
                 <Maximize2 className="size-4" aria-hidden="true" />
                 Άνοιξε την αφίσα με UV
               </button>
                 <a
                   href="#ci-lock"
-                  className="inline-flex h-14 items-center gap-2.5 rounded-full border border-[var(--ci-cream)]/20 px-7 font-sans text-sm font-bold uppercase tracking-[0.16em] text-[var(--ci-cream)] transition hover:border-[var(--ci-cream)]/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ci-gold)]"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    goToKey()
+                  }}
+                  className="inline-flex h-14 items-center justify-center gap-2.5 rounded-full active:scale-[0.98] border border-[var(--ci-cream)]/20 px-7 font-sans text-sm font-bold uppercase tracking-[0.16em] text-[var(--ci-cream)] transition hover:border-[var(--ci-cream)]/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ci-gold)]"
                 >
                   <KeyRound className="size-4 text-[var(--ci-gold)]" aria-hidden="true" />
                   Έχω κλειδί
                 </a>
               </div>
-            </div>
-
-            <div className="flex justify-center lg:justify-end lg:pr-10">
-              <PosterStand onOpen={() => setViewer(true)} />
             </div>
           </section>
 
@@ -305,7 +359,7 @@ export function CarnivalIntro() {
           )}
         </main>
 
-        <footer className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-4 border-t border-[var(--ci-cream)]/10 px-5 py-8 sm:flex-row sm:px-8">
+        <footer className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-4 border-t border-[var(--ci-cream)]/10 px-5 pb-32 pt-8 sm:flex-row sm:px-8 lg:pb-8">
           <p className="font-sans text-sm text-[var(--ci-cream)]/45">The Hunt × Καλαματιανό Καρναβάλι</p>
           <button
             type="button"
@@ -323,6 +377,27 @@ export function CarnivalIntro() {
           <PosterViewer found={saved.found} onFound={onFound} notes={saved.notes} onNotes={setNotes} onClose={() => setViewer(false)} />
         )}
       </AnimatePresence>
+
+      <MobileDock
+        visible={pastHero && !opening && !viewer && !notesOpen && !!saved}
+        step={step}
+        onPoster={() => {
+          track(EV.carnivalDock, { action: "poster", step })
+          openPoster()
+        }}
+        onKey={() => {
+          track(EV.carnivalDock, { action: "key", step })
+          goToKey()
+        }}
+        onDecrypt={() => {
+          track(EV.carnivalDock, { action: "decrypt", step })
+          goToDecrypt()
+        }}
+        onNotes={() => {
+          track(EV.carnivalDock, { action: "notes", step })
+          setNotesOpen(true)
+        }}
+      />
 
       <AnimatePresence>{notesOpen && saved && !viewer && <Notebook value={saved.notes} onChange={setNotes} onClose={() => setNotesOpen(false)} />}</AnimatePresence>
     </div>
