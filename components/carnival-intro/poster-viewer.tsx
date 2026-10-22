@@ -17,7 +17,6 @@ const ASPECT = 0.4
 const PAD = 28
 const Z_MIN = 1
 const Z_MAX = 8
-const TOUCH_LIFT = 84
 const COMPASS_INDEX = UV_MARKS.length
 
 const clamp = (v: number, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, v))
@@ -26,8 +25,8 @@ const clamp = (v: number, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, v))
 const INK_GLOW =
   "0 0 1px #ffffff, 0 0 4px rgba(170,240,255,0.95), 0 0 10px rgba(90,200,255,0.8), 0 0 22px rgba(60,140,255,0.7), 0 0 40px rgba(60,120,255,0.35)"
 
-export const BEAM_MASK =
-  "radial-gradient(circle var(--r) at var(--x) var(--y), #000 0%, rgba(0,0,0,0.96) 36%, rgba(0,0,0,0.6) 66%, rgba(0,0,0,0.2) 86%, transparent 100%)"
+/** One static filter on the single poster image: cheap on phones (no masks, blend layers or per-frame repaints). */
+const UV_FILTER = "grayscale(1) brightness(0.42) contrast(1.3) sepia(1) hue-rotate(215deg) saturate(3.2)"
 
 function UvCompass() {
   return (
@@ -44,9 +43,9 @@ function UvCompass() {
   )
 }
 
-export function UvInk() {
+function UvInk() {
   return (
-    <div className="absolute inset-0 mix-blend-screen">
+    <div className="absolute inset-0">
       {UV_MARKS.map((m) => (
         <span
           key={m.code}
@@ -138,8 +137,6 @@ export function PosterViewer({
   const zoomCur = useRef(Z_MIN)
   const pointers = useRef(new Map<number, { x: number; y: number }>())
   const pinch = useRef<{ d: number; z: number } | null>(null)
-  /** Where the torch points, in stage pixels. The beam sits exactly here; only the camera pan is smoothed. */
-  const aim = useRef<{ x: number; y: number } | null>(null)
   const miniRef = useRef<HTMLSpanElement>(null)
   const miniShown = useRef(false)
   const [tipOpen, setTipOpen] = useState(true)
@@ -171,14 +168,13 @@ export function PosterViewer({
 
   const offset = (view: number, len: number, p: number) => (len <= view - PAD * 2 ? (view - len) / 2 : PAD + (view - PAD * 2 - len) * p)
 
-  const focusFromScreen = (clientX: number, clientY: number, isTouch: boolean) => {
+  const focusFromScreen = (clientX: number, clientY: number) => {
     const stage = stageRef.current
     if (!stage) return
     const rect = stage.getBoundingClientRect()
     const { sw, sh, W, H } = layout(zoom.current)
     const x = clientX - rect.left
-    const y = clientY - rect.top - (isTouch && uvRef.current ? TOUCH_LIFT : 0)
-    aim.current = { x, y }
+    const y = clientY - rect.top
     const inv = (pos: number, view: number, len: number) =>
       len <= view - PAD * 2 ? (pos - (view - len) / 2) / len : (pos - PAD) / (view - PAD * 2)
     target.current = { x: clamp(inv(x, sw, W)), y: clamp(inv(y, sh, H)) }
@@ -221,12 +217,12 @@ export function PosterViewer({
     const onWheel = (e: WheelEvent) => {
       e.preventDefault()
       setZoom(zoom.current * Math.exp(-e.deltaY * 0.0018))
-      focusFromScreen(e.clientX, e.clientY, false)
+      focusFromScreen(e.clientX, e.clientY)
     }
     stage.addEventListener("wheel", onWheel, { passive: false })
     const onMouseMove = (e: PointerEvent) => {
       if (e.pointerType !== "mouse" && e.pointerType !== "pen") return
-      focusFromScreen(e.clientX, e.clientY, false)
+      focusFromScreen(e.clientX, e.clientY)
     }
     window.addEventListener("pointermove", onMouseMove, { passive: true })
 
@@ -248,28 +244,23 @@ export function PosterViewer({
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const last = useRef({ W: 0, H: 0, left: NaN, top: NaN })
+
   const paint = () => {
     const el = posterRef.current
-    const stage = stageRef.current
-    if (!el || !stage) return
+    if (!el) return
     const { sw, sh, W, H } = layout(zoomCur.current)
     if (W <= 0 || H <= 0) return
     const p = cur.current
     const left = offset(sw, W, p.x)
     const top = offset(sh, H, p.y)
+    const prev = last.current
+    // Skip style writes when the camera is at rest, so an idle poster costs nothing per frame.
+    if (Math.abs(prev.W - W) < 0.1 && Math.abs(prev.H - H) < 0.1 && Math.abs(prev.left - left) < 0.1 && Math.abs(prev.top - top) < 0.1) return
+    last.current = { W, H, left, top }
     el.style.width = `${W}px`
     el.style.height = `${H}px`
     el.style.transform = `translate3d(${left}px, ${top}px, 0)`
-    const r = clamp(Math.min(sw, sh) * 0.17, 74, 190)
-    const a = aim.current
-    const bx = a ? a.x - left : p.x * W
-    const by = a ? a.y - top : p.y * H
-    el.style.setProperty("--x", `${bx}px`)
-    el.style.setProperty("--y", `${by}px`)
-    el.style.setProperty("--r", `${r}px`)
-    stage.style.setProperty("--sx", `${left + bx}px`)
-    stage.style.setProperty("--sy", `${top + by}px`)
-    stage.style.setProperty("--r", `${r}px`)
     const mini = miniRef.current
     if (mini) {
       const vw = Math.min(1, sw / W)
@@ -279,19 +270,17 @@ export function PosterViewer({
       mini.style.width = `${vw * 100}%`
       mini.style.height = `${vh * 100}%`
     }
-    if (!uvRef.current) return
-    const lit = (mx: number, my: number) => Math.hypot(mx * W - bx, my * H - by) < r * 0.5
-    UV_MARKS.forEach((m, i) => {
-      if (!reported.current.has(i) && lit(m.x, m.y)) {
-        reported.current.add(i)
-        onFoundRef.current(i)
-      }
-    })
-    if (!reported.current.has(COMPASS_INDEX) && lit(UV_COMPASS.x, UV_COMPASS.y)) {
-      reported.current.add(COMPASS_INDEX)
-      onFoundRef.current(COMPASS_INDEX)
-    }
   }
+
+  // The UV light now covers the whole poster, so switching it on reveals every mark at once.
+  useEffect(() => {
+    if (!uv) return
+    for (let i = 0; i <= COMPASS_INDEX; i++) {
+      if (reported.current.has(i)) continue
+      reported.current.add(i)
+      onFoundRef.current(i)
+    }
+  }, [uv])
 
   const toggleUv = () => {
     const next = !uvRef.current
@@ -340,7 +329,7 @@ export function PosterViewer({
       pinch.current = { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, z: zoom.current }
       return
     }
-    focusFromScreen(e.clientX, e.clientY, e.pointerType === "touch")
+    focusFromScreen(e.clientX, e.clientY)
   }
 
   const onPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -348,17 +337,17 @@ export function PosterViewer({
     if (pinch.current && pointers.current.size >= 2) {
       const [a, b] = [...pointers.current.values()]
       setZoom(pinch.current.z * (Math.hypot(a.x - b.x, a.y - b.y) / pinch.current.d))
-      focusFromScreen((a.x + b.x) / 2, (a.y + b.y) / 2, false)
+      focusFromScreen((a.x + b.x) / 2, (a.y + b.y) / 2)
       return
     }
     if (e.pointerType !== "touch" || !pointers.current.has(e.pointerId)) return
-    focusFromScreen(e.clientX, e.clientY, true)
+    focusFromScreen(e.clientX, e.clientY)
   }
 
   const onDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).closest("button, a, [data-viewer-ui]")) return
     setZoom(zoom.current > 1.6 ? Z_MIN : 3)
-    focusFromScreen(e.clientX, e.clientY, false)
+    focusFromScreen(e.clientX, e.clientY)
   }
 
   const onPointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -373,13 +362,9 @@ export function PosterViewer({
   else if (zoomUi < 1.15) miniShown.current = false
   const showMini = miniShown.current
 
-  const hint = uv
-    ? touch
-      ? "Σύρε το δάχτυλο για να κινήσεις τον φακό, τσίμπησε για ζουμ"
-      : "Κίνησε τον φακό πάνω στην αφίσα, ροδέλα για ζουμ"
-    : touch
-      ? "Τσίμπησε για ζουμ, σύρε για να κινηθείς, διπλό πάτημα για κοντινό"
-      : "Ροδέλα για ζουμ, κίνησε το ποντίκι για να κινηθείς, διπλό κλικ για κοντινό"
+  const hint = touch
+    ? "Τσίμπησε για ζουμ, σύρε για να κινηθείς, διπλό πάτημα για κοντινό"
+    : "Ροδέλα για ζουμ, κίνησε το ποντίκι για να κινηθείς, διπλό κλικ για κοντινό"
 
   return createPortal(
     <motion.div
@@ -418,8 +403,7 @@ export function PosterViewer({
           className="pointer-events-none absolute inset-0 transition-opacity duration-500"
           style={{
             opacity: uv ? 1 : 0,
-            background:
-              "radial-gradient(circle calc(var(--r) * 2.6) at var(--sx) var(--sy), rgba(139,92,255,0.2) 0%, rgba(139,92,255,0.06) 45%, transparent 72%)",
+            background: "radial-gradient(ellipse 60% 70% at 50% 45%, rgba(139,92,255,0.18) 0%, rgba(139,92,255,0.05) 50%, transparent 78%)",
           }}
         />
 
@@ -437,39 +421,21 @@ export function PosterViewer({
             priority
             unoptimized
             draggable={false}
-            className="pointer-events-none object-cover transition-[filter] duration-700"
-            style={{ filter: uv ? "brightness(0.09) saturate(0.25)" : "none" }}
+            className="pointer-events-none object-cover"
+            style={{ filter: uv ? UV_FILTER : "none" }}
           />
 
           <AnimatePresence>
             {uv && (
               <motion.div
-                key="beam"
+                key="uv-ink"
                 aria-hidden="true"
                 className="pointer-events-none absolute inset-0"
-                style={{ WebkitMaskImage: BEAM_MASK, maskImage: BEAM_MASK }}
                 initial={{ opacity: 0 }}
-                animate={reduce ? { opacity: 1 } : { opacity: [0, 1, 0.35, 1, 0.85, 1] }}
+                animate={reduce ? { opacity: 1 } : { opacity: [0, 1, 0.4, 1, 0.85, 1] }}
                 exit={{ opacity: 0, transition: { duration: 0.2 } }}
                 transition={reduce ? { duration: 0.2 } : { duration: 0.55, times: [0, 0.2, 0.35, 0.55, 0.75, 1] }}
               >
-                <Image
-                  src={POSTER_SRC}
-                  alt=""
-                  fill
-                  unoptimized
-                  draggable={false}
-                  className="object-cover"
-                  style={{ filter: "brightness(0.6) saturate(0.2) contrast(1.25)" }}
-                />
-                <div className="absolute inset-0 bg-[#4b1fd6] mix-blend-color" />
-                <div
-                  className="absolute inset-0 mix-blend-screen"
-                  style={{
-                    background:
-                      "radial-gradient(circle var(--r) at var(--x) var(--y), rgba(150,110,255,0.45) 0%, rgba(110,60,240,0.22) 55%, rgba(150,110,255,0.32) 80%, transparent 92%)",
-                  }}
-                />
                 <UvInk />
               </motion.div>
             )}
