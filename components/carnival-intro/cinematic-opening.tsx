@@ -90,7 +90,7 @@ export function CinematicOpening({ onDone }: { onDone: () => void }) {
 
       <motion.div
         aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 top-[40%] size-[34rem] -translate-x-1/2 -translate-y-1/2 rounded-full sm:size-[46rem]"
+        className="pointer-events-none absolute left-1/2 top-[40%] size-[34rem] -translate-x-1/2 -translate-y-1/2 rounded-full [will-change:transform,opacity] sm:size-[46rem]"
         style={{ background: "radial-gradient(circle, rgba(224,176,74,0.24) 0%, transparent 62%)" }}
         initial={{ opacity: 0, scale: 0.5 }}
         animate={reduce ? { opacity: 0.7, scale: 1 } : { opacity: [0, 1, 0.65, 0.85], scale: [0.5, 1.08, 1, 1.03] }}
@@ -105,8 +105,8 @@ export function CinematicOpening({ onDone }: { onDone: () => void }) {
       >
         <motion.p
           className="font-sans text-[11px] font-bold uppercase tracking-[0.5em] text-[var(--ci-gold)] sm:text-xs"
-          initial={{ opacity: 0, letterSpacing: "1.1em" }}
-          animate={{ opacity: 1, letterSpacing: "0.5em" }}
+          initial={{ opacity: 0, y: 8, scale: 1.12 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: d(1.6), delay: d(1), ease: EASE }}
         >
           Συνεργασία
@@ -114,8 +114,9 @@ export function CinematicOpening({ onDone }: { onDone: () => void }) {
 
         <div className="flex items-center gap-5 sm:gap-10">
           <motion.div
-            initial={{ opacity: 0, x: -56, rotate: -8, filter: "blur(14px)" }}
-            animate={{ opacity: 1, x: 0, rotate: 0, filter: "blur(0px)" }}
+            className="[will-change:transform,opacity]"
+            initial={{ opacity: 0, x: -56, rotate: -8, scale: 0.9 }}
+            animate={{ opacity: 1, x: 0, rotate: 0, scale: 1 }}
             transition={{ duration: d(1.4), delay: d(1.3), ease: EASE }}
           >
             <Image
@@ -131,8 +132,9 @@ export function CinematicOpening({ onDone }: { onDone: () => void }) {
           <Spark delay={d(2.15)} reduce={!!reduce} />
 
           <motion.div
-            initial={{ opacity: 0, x: 56, rotate: 8, filter: "blur(14px)" }}
-            animate={{ opacity: 1, x: 0, rotate: 0, filter: "blur(0px)" }}
+            className="[will-change:transform,opacity]"
+            initial={{ opacity: 0, x: 56, rotate: 8, scale: 0.9 }}
+            animate={{ opacity: 1, x: 0, rotate: 0, scale: 1 }}
             transition={{ duration: d(1.4), delay: d(1.5), ease: EASE }}
           >
             <Image
@@ -245,24 +247,24 @@ export function CinematicOpening({ onDone }: { onDone: () => void }) {
 
 /** Two velvet drapes start closed over the stage and draw back to the edges, where they stay as a frame. */
 function Curtains() {
+  // CSS keyframes (globals.css) instead of framer-motion: the compositor runs them, so the drapes keep
+  // sliding even while the page is still loading. Each drape is its own layer, so no velvet repaints.
   return (
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-20">
-      <motion.div
-        className="absolute inset-y-0 left-0 w-[51%] border-r-2 border-[var(--ci-gold)]/50 shadow-[12px_0_40px_rgba(0,0,0,0.7)]"
+      <div
+        className="ci-drape-left absolute inset-y-0 left-0 w-[51%] border-r-2 border-[var(--ci-gold)]/50 [backface-visibility:hidden] [will-change:transform]"
         style={VELVET}
-        initial={{ x: "0%" }}
-        animate={{ x: "-93%" }}
-        transition={{ duration: 1.9, delay: 0.35, ease: CURTAIN_EASE }}
-      />
-      <motion.div
-        className="absolute inset-y-0 right-0 w-[51%] border-l-2 border-[var(--ci-gold)]/50 shadow-[-12px_0_40px_rgba(0,0,0,0.7)]"
+      >
+        <span className="absolute inset-y-0 -right-6 w-6 bg-gradient-to-r from-black/60 to-transparent" />
+      </div>
+      <div
+        className="ci-drape-right absolute inset-y-0 right-0 w-[51%] border-l-2 border-[var(--ci-gold)]/50 [backface-visibility:hidden] [will-change:transform]"
         style={VELVET}
-        initial={{ x: "0%" }}
-        animate={{ x: "93%" }}
-        transition={{ duration: 1.9, delay: 0.35, ease: CURTAIN_EASE }}
-      />
-      <motion.div
-        className="absolute inset-x-0 top-0 h-7 border-b-2 border-[var(--ci-gold)]/60 sm:h-10"
+      >
+        <span className="absolute inset-y-0 -left-6 w-6 bg-gradient-to-l from-black/60 to-transparent" />
+      </div>
+      <div
+        className="ci-valance absolute inset-x-0 top-0 h-7 border-b-2 border-[var(--ci-gold)]/60 [will-change:transform] sm:h-10"
         style={{
           ...VELVET,
           maskImage: "radial-gradient(circle at 50% 0, #000 70%, transparent 71%)",
@@ -270,9 +272,6 @@ function Curtains() {
           maskSize: "48px 100%",
           WebkitMaskSize: "48px 100%",
         }}
-        initial={{ y: "-100%" }}
-        animate={{ y: "0%" }}
-        transition={{ duration: 1.1, delay: 0.15, ease: EASE }}
       />
     </div>
   )
@@ -291,7 +290,7 @@ function Spark({ delay, reduce }: { delay: number; reduce: boolean }) {
             transition={{ duration: 1.1, delay: delay + 0.15, ease: "easeOut" }}
           />
           <motion.span
-            className="absolute size-16 rounded-full bg-[var(--ci-gold)] blur-xl"
+            className="absolute size-24 rounded-full bg-[radial-gradient(circle,var(--ci-gold)_0%,transparent_65%)]"
             initial={{ opacity: 0, scale: 0.3 }}
             animate={{ opacity: [0, 0.8, 0], scale: [0.3, 1.2, 1.5] }}
             transition={{ duration: 0.9, delay: delay + 0.1, ease: "easeOut" }}
@@ -327,7 +326,7 @@ function Confetti() {
       {CONFETTI.map((c, i) => (
         <motion.span
           key={i}
-          className="absolute top-0 block"
+          className={`absolute top-0 block [will-change:transform,opacity] ${i % 2 ? "max-sm:hidden" : ""}`}
           style={{
             left: `${c.left}%`,
             width: c.size,
@@ -361,18 +360,25 @@ function Decode({ text, delay, duration, reduce }: { text: string; delay: number
         i < resolved || !/\p{L}/u.test(ch) ? ch : GLYPHS[Math.floor(Math.random() * GLYPHS.length)],
       ).join("")
 
+    // The line is hidden until just before `delay`, so don't re-render every 55ms during the curtain scene.
     setShown(scramble(0))
-    const begin = performance.now() + delay * 1000
-    const id = window.setInterval(() => {
-      const t = (performance.now() - begin) / (duration * 1000)
-      if (t >= 1) {
-        setShown(text)
-        window.clearInterval(id)
-        return
-      }
-      setShown(scramble(Math.max(0, Math.floor(t * text.length))))
-    }, 55)
-    return () => window.clearInterval(id)
+    let id = 0
+    const start = window.setTimeout(() => {
+      const begin = performance.now()
+      id = window.setInterval(() => {
+        const t = (performance.now() - begin) / (duration * 1000)
+        if (t >= 1) {
+          setShown(text)
+          window.clearInterval(id)
+          return
+        }
+        setShown(scramble(Math.floor(t * text.length)))
+      }, 55)
+    }, delay * 1000)
+    return () => {
+      window.clearTimeout(start)
+      window.clearInterval(id)
+    }
   }, [text, delay, duration, reduce])
 
   return (

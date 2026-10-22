@@ -756,3 +756,21 @@ body {
   0%, 55% { transform: translateX(0) skewX(-12deg); }
   100% { transform: translateX(400%) skewX(-12deg); }
 }
+
+/* Carnival opening curtains: pure CSS transform animations run on the compositor,
+   so they stay smooth on phones while the page is still hydrating. */
+@keyframes ci-drape-left {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-93%, 0, 0); }
+}
+@keyframes ci-drape-right {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(93%, 0, 0); }
+}
+@keyframes ci-valance-drop {
+  from { transform: translate3d(0, -100%, 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+.ci-drape-left { animation: ci-drape-left 1.9s cubic-bezier(0.65, 0, 0.35, 1) 0.35s both; }
+.ci-drape-right { animation: ci-drape-right 1.9s cubic-bezier(0.65, 0, 0.35, 1) 0.35s both; }
+.ci-valance { animation: ci-valance-drop 1.1s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both; }
