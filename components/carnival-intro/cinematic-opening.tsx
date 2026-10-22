@@ -109,7 +109,7 @@ export function CinematicOpening({ onDone }: { onDone: () => void }) {
           animate={{ opacity: 1, letterSpacing: "0.5em" }}
           transition={{ duration: d(1.6), delay: d(1), ease: EASE }}
         >
-          Σε συνεργασία με
+          Συνεργασία
         </motion.p>
 
         <div className="flex items-center gap-5 sm:gap-10">
