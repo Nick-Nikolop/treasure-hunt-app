@@ -270,7 +270,7 @@ export function CarnivalIntro() {
               <Reveal ready={!opening} order={2} y={30}>
               <h1
                 id="ci-title"
-                className="max-w-[16ch] text-balance font-sans text-[2rem] lg:max-w-[13ch] font-black uppercase leading-[1] tracking-tight text-[var(--ci-cream)] sm:text-5xl lg:text-7xl lg:leading-[0.95]"
+                className="max-w-[16ch] text-balance font-sans text-[2rem] font-black uppercase leading-[1] tracking-tight text-[var(--ci-cream)] sm:text-5xl lg:text-[clamp(2.75rem,4.6vw,3.75rem)] lg:leading-[0.95]"
               >
                 Κάποια μυστικά πρέπει να τα <span className="text-[var(--ci-gold)]">κυνηγήσεις</span>
               </h1>
