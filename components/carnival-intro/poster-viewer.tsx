@@ -139,16 +139,17 @@ export function PosterViewer({
   const pinch = useRef<{ d: number; z: number } | null>(null)
   const miniRef = useRef<HTMLSpanElement>(null)
   const miniShown = useRef(false)
-  const [tipOpen, setTipOpen] = useState(true)
+  const [tipOpen, setTipOpen] = useState(false)
   const tipReopened = useRef(false)
   const reported = useRef(new Set(found))
   const onFoundRef = useRef(onFound)
   onFoundRef.current = onFound
 
-  const [uv, setUv] = useState(true)
-  const uvRef = useRef(true)
+  const [uv, setUv] = useState(false)
+  const uvRef = useRef(false)
   uvRef.current = uv
-  const uvUsed = useRef(true)
+  const uvUsed = useRef(false)
+  const [uvSeen, setUvSeen] = useState(false)
   const maxZoom = useRef(Z_MIN)
   const [zoomUi, setZoomUi] = useState(Z_MIN)
   const [notesOpen, setNotesOpen] = useState(false)
@@ -192,7 +193,6 @@ export function PosterViewer({
     openedAt.current = performance.now()
     document.documentElement.style.overflow = "hidden"
     track(EV.carnivalPosterOpen, { fullscreen: false })
-    track(EV.carnivalUv, { on: true, auto: true })
     return () => {
       document.documentElement.style.overflow = ""
       track(
@@ -284,9 +284,15 @@ export function PosterViewer({
 
   const toggleUv = () => {
     const next = !uvRef.current
+    const first = next && !uvUsed.current
     setUv(next)
     if (next) uvUsed.current = true
-    track(EV.carnivalUv, { on: next })
+    // The tip ("you may not need UV for everything") only makes sense once they've seen the UV view.
+    if (first) {
+      setUvSeen(true)
+      setTipOpen(true)
+    }
+    track(EV.carnivalUv, { on: next, first })
   }
 
   const openNotes = () => {
@@ -362,9 +368,11 @@ export function PosterViewer({
   else if (zoomUi < 1.15) miniShown.current = false
   const showMini = miniShown.current
 
-  const hint = touch
-    ? "Τσίμπησε για ζουμ, σύρε για να κινηθείς, διπλό πάτημα για κοντινό"
-    : "Ροδέλα για ζουμ, κίνησε το ποντίκι για να κινηθείς, διπλό κλικ για κοντινό"
+  const hint = !uvSeen
+    ? "Κάτι είναι γραμμένο με αόρατο μελάνι. Άναψε το UV φως από κάτω."
+    : touch
+      ? "Τσίμπησε για ζουμ, σύρε για να κινηθείς, διπλό πάτημα για κοντινό"
+      : "Ροδέλα για ζουμ, κίνησε το ποντίκι για να κινηθείς, διπλό κλικ για κοντινό"
 
   return createPortal(
     <motion.div
@@ -460,7 +468,7 @@ export function PosterViewer({
           </div>
           <div className="flex shrink-0 items-center gap-2">
           <AnimatePresence>
-            {!tipOpen && (
+            {!tipOpen && uvSeen && (
               <motion.button
                 key="tip"
                 type="button"
@@ -590,9 +598,33 @@ export function PosterViewer({
                 : "bg-[var(--ci-gold)] text-[var(--ci-night)] hover:brightness-110",
             )}
           >
-            {!uv && !uvUsed.current && !reduce && (
-              <span aria-hidden="true" className="absolute -inset-1 animate-pulse rounded-full ring-2 ring-[var(--ci-gold)]/60" />
+            {!uvSeen && !reduce && (
+              <span aria-hidden="true" className="absolute -inset-1.5 animate-ping rounded-full ring-2 ring-[var(--ci-gold)]/70 [animation-duration:1.8s]" />
             )}
+            <AnimatePresence>
+              {!uvSeen && (
+                <motion.span
+                  key="uv-cta"
+                  aria-hidden="true"
+                  className="pointer-events-none absolute bottom-full left-1/2 mb-4 flex -translate-x-1/2 flex-col items-center"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0, transition: { delay: reduce ? 0 : 0.9, duration: 0.5, ease: EASE } }}
+                  exit={{ opacity: 0, y: 6, transition: { duration: 0.2 } }}
+                >
+                  <motion.span
+                    className="flex flex-col items-center"
+                    animate={reduce ? undefined : { y: [0, -6, 0] }}
+                    transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut", delay: 1.4 }}
+                  >
+                    <span className="flex items-center gap-2 whitespace-nowrap rounded-full bg-[var(--ci-uv)] px-4 py-2.5 font-sans text-sm font-bold text-[var(--ci-cream)] shadow-[0_0_36px_-4px_var(--ci-uv)]">
+                      <Flashlight className="size-4" aria-hidden="true" />
+                      Άναψε το UV φως
+                    </span>
+                    <span className="-mt-1.5 size-3 rotate-45 bg-[var(--ci-uv)]" />
+                  </motion.span>
+                </motion.span>
+              )}
+            </AnimatePresence>
             {uv ? <FlashlightOff className="relative size-5" aria-hidden="true" /> : <Flashlight className="relative size-5" aria-hidden="true" />}
             <span className="relative tracking-wide sm:hidden">{uv ? "UV ON" : "UV OFF"}</span>
             <span className="relative hidden sm:inline">{uv ? "Σβήσε το UV" : "Άναψε το UV"}</span>
