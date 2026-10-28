@@ -64,13 +64,15 @@ export function CodeSection({ who, code }: { who: LandingCopy["who"]; code: Land
                   key={rule.title}
                   {...reveal}
                   transition={{ ...reveal.transition, delay: index * 0.08 }}
-                  className="group/rule flex flex-col gap-4 rounded-md bg-reel-raised p-6 transition duration-300 hover:bg-reel-white/10 md:p-7"
+                  className="group/rule flex items-start gap-4 rounded-md bg-reel-raised p-4 transition duration-300 hover:bg-reel-white/10 sm:flex-col sm:p-6 md:p-7"
                 >
-                  <span className="flex size-12 items-center justify-center rounded-full bg-reel text-brass ring-1 ring-reel-white/10 transition group-hover/rule:ring-brass/60">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-reel text-brass ring-1 ring-reel-white/10 transition group-hover/rule:ring-brass/60 sm:size-12">
                     <Icon className="size-5" aria-hidden="true" />
                   </span>
-                  <h3 className="font-serif text-2xl font-bold text-reel-white">{rule.title}</h3>
-                  <p className="text-pretty font-sans text-base leading-relaxed text-reel-white/75">{rule.body}</p>
+                  <div className="flex flex-col gap-1 sm:gap-3">
+                    <h3 className="font-serif text-xl font-bold text-reel-white sm:text-2xl">{rule.title}</h3>
+                    <p className="text-pretty font-sans text-[15px] leading-relaxed text-reel-white/75 sm:text-base">{rule.body}</p>
+                  </div>
                 </motion.li>
               )
             })}
