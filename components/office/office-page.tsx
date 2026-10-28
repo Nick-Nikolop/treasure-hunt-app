@@ -21,7 +21,8 @@ import { PhonePickup } from "./phone/phone-pickup"
 import { DeskMap } from "./map/desk-map"
 import { MapPickup } from "./map/map-pickup"
 import { DrawerPeek, DrawerPickup } from "./records/drawer-pickup"
-import { drawerPeek } from "./transit"
+import { ContactPickup, DeskEnvelope } from "./contact/contact-pickup"
+import { contactPeek, drawerPeek } from "./transit"
 import { DESK, DESKTOP, RECORDS, WALL, pct, type Scene } from "./scenes"
 import { toSearch, useOfficeNav, type OfficeState, type OfficeView, type RecordsTab } from "./use-office-nav"
 import { ArchivedCaseDossier, CurrentCaseDossier } from "./views/case-dossier"
@@ -238,6 +239,7 @@ function DesktopRoom({ copy, onToggleLocale, open, board, atBoard, reduce }: Roo
         <DeskPhone />
         <DeskMap copy={copy} />
         <DrawerPeek />
+        <DeskEnvelope />
         {/* soft edges so a letterboxed room melts into the page */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 shadow-[inset_0_0_80px_30px_#0b0a09]" />
         <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 w-[34%] bg-linear-to-r from-[#0b0a09]/80 via-[#0b0a09]/45 to-transparent" />
@@ -311,7 +313,7 @@ function DesktopRoom({ copy, onToggleLocale, open, board, atBoard, reduce }: Roo
             teaser={copy.objects[spot.id].teaser}
             teaserInTag
             onOpen={(el) => open(spot.id, el)}
-            onHover={spot.id === "records" ? drawerPeek.set : undefined}
+            onHover={spot.id === "records" ? drawerPeek.set : spot.id === "contact" ? contactPeek.set : undefined}
           />
         ))}
         </div>
@@ -637,6 +639,8 @@ function ViewHost({ view, state, copy, base, origin, instant, reduce, contactHre
         </FocusShell>
       )
     case "contact":
+      // Desktop: the sealed envelope is lifted out of the letter tray and opened. Smaller screens keep the close-up view.
+      if (desktop) return <ContactPickup copy={copy} reduce={reduce} href={contactHref} onClose={back} />
       return (
         <FocusShell {...common} title={copy.contact.title} back={toOffice} backdrop={DESK.src}>
           <ContactView copy={copy} reduce={reduce} href={contactHref} />

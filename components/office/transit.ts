@@ -72,6 +72,11 @@ export function createHeldFlag() {
 /** The cursor is over the records cabinet: its top drawer is pulled out a little in the room. */
 export const drawerPeek = createHeldFlag()
 
+/** The cursor is over the letter tray: the envelope rises a little out of it. */
+export const contactPeek = createHeldFlag()
+/** The envelope is out of the tray (in the pickup): the room shows the empty tray. */
+export const envelopeInHand = createHeldFlag()
+
 export const caseInHand = createHeldFlag()
 export const mapInHand = createHeldFlag()
 

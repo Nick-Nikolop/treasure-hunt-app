@@ -95,14 +95,17 @@ function quatFromBasis(x: V3, y: V3, z: V3): Quat {
   return q.map((v) => v / l) as Quat
 }
 
-/** Rest pose of the packet in photo px: lying flat on the desk plane the phone was solved against. */
-const REST = (() => {
+/**
+ * A flat object lying on the desk plane the phone was solved against: `screen` = photo px under its
+ * centre, `yaw` = its turn on the desk, `raise` = how far above the desk surface it lies (photo px).
+ */
+export function deskPose(screen: [number, number], yaw: number, raise = 0) {
   const camera: V3 = [PHOTO.cx, PHOTO.cy, PHOTO.d]
   let n = rotate(REST_QUAT, [0, 0, 1])
   if (dot(n, sub(camera, REST_POS)) < 0) n = [-n[0], -n[1], -n[2]]
-  const onDesk = sub(REST_POS, [n[0] * PHONE_WORLD_H * PHONE_THICKNESS, n[1] * PHONE_WORLD_H * PHONE_THICKNESS, n[2] * PHONE_WORLD_H * PHONE_THICKNESS])
-  const screen: V3 = [REST_SCREEN[0], REST_SCREEN[1], 0]
-  const ray = sub(screen, camera)
+  const below = PHONE_WORLD_H * PHONE_THICKNESS - raise
+  const onDesk = sub(REST_POS, [n[0] * below, n[1] * below, n[2] * below])
+  const ray = sub([screen[0], screen[1], 0], camera)
   const s = dot(n, sub(onDesk, camera)) / dot(n, ray)
   const pos: V3 = [camera[0] + ray[0] * s, camera[1] + ray[1] * s, camera[2] + ray[2] * s]
   let r = norm(sub([1, 0, 0], [n[0] * n[0], n[0] * n[1], n[0] * n[2]]))
@@ -111,12 +114,15 @@ const REST = (() => {
     r = [-r[0], -r[1], -r[2]]
     y = [-y[0], -y[1], -y[2]]
   }
-  const c = Math.cos(REST_YAW)
-  const sn = Math.sin(REST_YAW)
+  const c = Math.cos(yaw)
+  const sn = Math.sin(yaw)
   const r2: V3 = [r[0] * c + y[0] * sn, r[1] * c + y[1] * sn, r[2] * c + y[2] * sn]
   const y2: V3 = [y[0] * c - r[0] * sn, y[1] * c - r[1] * sn, y[2] * c - r[2] * sn]
   return { pos, quat: quatFromBasis(r2, y2, n), normal: n }
-})()
+}
+
+/** Rest pose of the packet in photo px: lying flat on the desk. */
+const REST = deskPose(REST_SCREEN, REST_YAW)
 
 /* ---------- hinges ---------- */
 
@@ -130,7 +136,7 @@ const rotY = (a: number): M4 => {
 }
 /** rotation about a hinge line lifted `h` off the sheet, so folded layers stack instead of z-fighting */
 const hinge = (rot: M4, h: number) => matMul(translate(0, 0, h), matMul(rot, translate(0, 0, -h)))
-const apply = (m: M4, p: V3): V3 => {
+export const apply = (m: M4, p: V3): V3 => {
   const w = m[12] * p[0] + m[13] * p[1] + m[14] * p[2] + m[15]
   return [0, 1, 2].map((r) => (m[r * 4] * p[0] + m[r * 4 + 1] * p[1] + m[r * 4 + 2] * p[2] + m[r * 4 + 3]) / w) as V3
 }
@@ -221,7 +227,7 @@ export function mapFrame(t: number, input: MapFrameInput): MapFrame {
   return { faces, shadow: css(matMul(cameraMatrix(cx, cy, d), shadowWorld)), lift: t === 0 ? 0 : Math.min(1, t / 0.12) }
 }
 
-function rotationOf(q: Quat): M4 {
+export function rotationOf(q: Quat): M4 {
   const x = rotate(q, [1, 0, 0])
   const y = rotate(q, [0, 1, 0])
   const z = rotate(q, [0, 0, 1])

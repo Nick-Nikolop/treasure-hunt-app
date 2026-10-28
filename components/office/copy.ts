@@ -122,7 +122,7 @@ export const OFFICE_COPY = {
         { q: "Τι χρειάζεσαι;", a: "Ένα κινητό. Τίποτα άλλο." },
       ],
       note: "Η διαδρομή και το σημείο εκκίνησης της επόμενης αποστολής ανακοινώνονται μαζί με την αποστολή.",
-      mapAlt: "Χάρτης δρόμων του κέντρου της Καλαμάτας",
+      mapAlt: "Χάρτης δρόμων του κέντ��ου της Καλαμάτας",
       engravingAlt: "Παλιό χαρακτικό της Καλαμάτας του 1686",
       engravingCaption: "Καλαμάτα, 1686",
       credits: ["Χάρτης © OpenStreetMap contributors, ODbL", "Χαρακτικό V. Coronelli, 1686, CC BY-SA 4.0"],
@@ -157,6 +157,8 @@ export const OFFICE_COPY = {
       copied: "Αντιγράφηκε",
       instagram: "Ακολούθησε στο Instagram",
       seal: "Σφραγισμένος φάκελος",
+      letterhead: "The Hunt · Γραφείο ερευνών",
+      putBack: "Βάλε το γράμμα πίσω",
     },
     footer: {
       label: "Όλο το περιεχόμενο",
@@ -318,6 +320,8 @@ export const OFFICE_COPY = {
       copied: "Copied",
       instagram: "Follow on Instagram",
       seal: "Sealed envelope",
+      letterhead: "The Hunt · Investigations office",
+      putBack: "Put the letter back",
     },
     footer: {
       label: "All content",
