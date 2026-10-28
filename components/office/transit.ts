@@ -23,18 +23,20 @@ export function useTransit({ draw, reduce, inMs, outMs }: { draw: (t: number) =>
     drawRef.current(value)
   }
 
-  const run = (to: 0 | 1, done?: () => void) => {
+  /** `to` may also be a resting point in between (e.g. the records drawer open, no file taken yet). */
+  const run = (to: number, done?: () => void) => {
     cancelAnimationFrame(raf.current)
     const from = t.current
+    const forward = to >= from
     // `window.__officeSlow = 10` slows every object transition down for frame-by-frame review
     const slow = typeof window !== "undefined" ? Number((window as { __officeSlow?: number }).__officeSlow) || 1 : 1
-    const ms = (to === 1 ? inMs : outMs) * Math.abs(to - from) * slow
+    const ms = (forward ? inMs : outMs) * Math.abs(to - from) * slow
     if (reduce || ms < 1) {
       set(to)
       done?.()
       return
     }
-    const ease = to === 1 ? handEase.lift : handEase.place
+    const ease = forward ? handEase.lift : handEase.place
     const start = performance.now()
     const tick = (now: number) => {
       const p = Math.min(1, (now - start) / ms)
@@ -62,9 +64,13 @@ export function createHeldFlag() {
       held = next
       listeners.forEach((l) => l())
     },
+    get: () => held,
     useValue: () => useSyncExternalStore(subscribe, () => held, () => false),
   }
 }
+
+/** The cursor is over the records cabinet: its top drawer is pulled out a little in the room. */
+export const drawerPeek = createHeldFlag()
 
 export const caseInHand = createHeldFlag()
 export const mapInHand = createHeldFlag()

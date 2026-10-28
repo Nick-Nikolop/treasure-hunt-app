@@ -20,7 +20,8 @@ import { DeskPhone } from "./phone/desk-phone"
 import { PhonePickup } from "./phone/phone-pickup"
 import { DeskMap } from "./map/desk-map"
 import { MapPickup } from "./map/map-pickup"
-import { DrawerPickup } from "./records/drawer-pickup"
+import { DrawerPeek, DrawerPickup } from "./records/drawer-pickup"
+import { drawerPeek } from "./transit"
 import { DESK, DESKTOP, RECORDS, WALL, pct, type Scene } from "./scenes"
 import { toSearch, useOfficeNav, type OfficeState, type OfficeView, type RecordsTab } from "./use-office-nav"
 import { ArchivedCaseDossier, CurrentCaseDossier } from "./views/case-dossier"
@@ -236,6 +237,7 @@ function DesktopRoom({ copy, onToggleLocale, open, board, atBoard, reduce }: Roo
         <SceneFrame scene={DESKTOP} label="" className="absolute inset-0" sizes={atBoard ? "260vw" : "100vw"} />
         <DeskPhone />
         <DeskMap copy={copy} />
+        <DrawerPeek />
         {/* soft edges so a letterboxed room melts into the page */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 shadow-[inset_0_0_80px_30px_#0b0a09]" />
         <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 w-[34%] bg-linear-to-r from-[#0b0a09]/80 via-[#0b0a09]/45 to-transparent" />
@@ -309,6 +311,7 @@ function DesktopRoom({ copy, onToggleLocale, open, board, atBoard, reduce }: Roo
             teaser={copy.objects[spot.id].teaser}
             teaserInTag
             onOpen={(el) => open(spot.id, el)}
+            onHover={spot.id === "records" ? drawerPeek.set : undefined}
           />
         ))}
         </div>
@@ -620,7 +623,7 @@ function ViewHost({ view, state, copy, base, origin, instant, reduce, contactHre
     case "records": {
       const onTab = (tab: RecordsTab) => go({ view: "records", archive: state.archive, tab }, "replace")
       // Desktop: the top drawer slides out and the file is taken from it. Smaller screens keep the close-up view.
-      if (desktop) return <DrawerPickup copy={copy} faq={base.faq} code={base.code} tab={state.tab} onTab={onTab} reduce={reduce} onClose={back} />
+      if (desktop) return <DrawerPickup copy={copy} faq={base.faq} code={base.code} onTab={onTab} reduce={reduce} onClose={back} />
       return (
         <FocusShell {...common} title={copy.records.title} back={toOffice} backdrop={RECORDS.src}>
           <RecordsView copy={copy} faq={base.faq} code={base.code} tab={state.tab} onTab={onTab} />
