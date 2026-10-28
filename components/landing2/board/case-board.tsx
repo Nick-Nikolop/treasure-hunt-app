@@ -3,16 +3,16 @@
 import Image from "next/image"
 import { motion, useInView, useReducedMotion } from "framer-motion"
 import { MousePointerClick } from "lucide-react"
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
 import type { LandingCopy } from "@/components/landing/copy"
 import { cn } from "@/lib/utils"
 import { HUNT_IMAGES, type HuntRef, type ReelCopy } from "../copy"
 import { RowTitle } from "../row"
-import { ArchiveDrawer } from "./archive"
+import { BoardArchive } from "./archive"
 import { SHAPE, TALL, WIDE, buildCases, pinOf, type BoardCase, type BoardLayout, type Spot } from "./cases"
 import { Dossier, Stamp } from "./dossier"
+import { EASE, drop, fs, place } from "./paper"
 
-const EASE = [0.22, 1, 0.36, 1] as const
 const WIDE_QUERY = "(min-width: 1024px)"
 
 function useWide() {
@@ -25,19 +25,6 @@ function useWide() {
     () => window.matchMedia(WIDE_QUERY).matches,
     () => true,
   )
-}
-
-/** Text sizes are in board units so every paper keeps its proportions at any size. */
-const fs = (n: number): CSSProperties => ({ fontSize: `calc(${n} * var(--u))` })
-
-function place(spot: Spot, shape: number): CSSProperties {
-  return {
-    left: `${spot.x}%`,
-    top: `${spot.y}%`,
-    width: `${spot.w}%`,
-    aspectRatio: `1 / ${shape}`,
-    transform: "translate(-50%, -50%)",
-  }
 }
 
 type Props = {
@@ -62,6 +49,7 @@ export function CaseBoard({ missions, reel, notifyHref, onOpen }: Props) {
 
   const [zoomed, setZoomed] = useState(false)
   const [open, setOpen] = useState<BoardCase | null>(null)
+  const [archiveOpen, setArchiveOpen] = useState(false)
   const zoomRef = useRef(false)
   zoomRef.current = zoomed
 
@@ -89,6 +77,12 @@ export function CaseBoard({ missions, reel, notifyHref, onOpen }: Props) {
   const pan = (c: number) => Math.min(c * (f.s - 1), Math.max(-(100 - c) * (f.s - 1), 50 - c))
   const camera = zoomed && !reduce ? { x: `${pan(f.x)}%`, y: `${pan(f.y)}%`, scale: f.s } : { x: "0%", y: "0%", scale: 1 }
 
+  const edge = layout.archive.edge
+  const shade = [
+    `linear-gradient(${wide ? "to right" : "to bottom"}, transparent ${edge - 4}%, rgb(10 6 3 / 0.28) ${edge + 2}%)`,
+    "radial-gradient(ellipse 90% 90% at 50% 50%, transparent 45%, rgb(10 6 3 / 0.5) 85%, rgb(10 6 3 / 0.75) 100%)",
+  ].join(", ")
+
   return (
     <section id="hunts" aria-labelledby="hunts-title" className="flex scroll-mt-20 flex-col gap-4">
       <RowTitle
@@ -103,7 +97,7 @@ export function CaseBoard({ missions, reel, notifyHref, onOpen }: Props) {
         {reel.rows.hunts}
       </RowTitle>
 
-      <div className="mx-auto flex w-full max-w-[34rem] flex-col gap-4 px-3 md:px-0 lg:grid lg:max-w-none lg:grid-cols-[minmax(0,1fr)_minmax(17rem,21rem)] lg:gap-6 lg:px-14">
+      <div className="mx-auto w-full max-w-[34rem] px-3 md:px-0 lg:max-w-none lg:px-14">
         <div
           ref={stageRef}
           className="@container relative w-full overflow-hidden rounded-md bg-reel-band shadow-[0_30px_80px_-30px_rgb(0_0_0/0.95)] ring-1 ring-reel-white/10"
@@ -121,15 +115,24 @@ export function CaseBoard({ missions, reel, notifyHref, onOpen }: Props) {
             <TitleCard spot={layout.title} label={board.current} lit={lit} reduce={!!reduce} />
             <CaseCluster item={current} layout={layout} board={board} lit={lit} reduce={!!reduce} onPick={pickCurrent} />
             <Pins layout={layout} item={current} lit={lit} reduce={!!reduce} />
+            <BoardArchive
+              cases={solved}
+              spots={layout.archive}
+              board={board}
+              lit={lit}
+              reduce={!!reduce}
+              open={archiveOpen}
+              onToggle={setArchiveOpen}
+              onPick={setOpen}
+            />
           </motion.div>
 
-          {/* One fixed desk lamp over the case: a static gradient, it never moves. */}
+          {/* Static lighting, it never moves: a warm lamp pool over the current case, the archive side sits a shade darker. */}
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0" style={{ background: shade }} />
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0"
-            style={{
-              background: `radial-gradient(ellipse ${wide ? "70% 85%" : "95% 75%"} at ${f.x}% ${f.y - 6}%, transparent 0%, rgb(10 6 3 / 0.18) 45%, rgb(10 6 3 / 0.62) 80%, rgb(10 6 3 / 0.82) 100%)`,
-            }}
+            className="pointer-events-none absolute inset-0 mix-blend-screen"
+            style={{ background: `radial-gradient(ellipse ${wide ? "38% 60%" : "70% 34%"} at ${f.x}% ${f.y}%, rgb(255 190 110 / 0.13), transparent 70%)` }}
           />
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 shadow-[inset_0_0_50px_8px_rgb(0_0_0/0.7)]" />
           <motion.div
@@ -140,21 +143,11 @@ export function CaseBoard({ missions, reel, notifyHref, onOpen }: Props) {
             transition={{ duration: reduce ? 0 : 1.1, times: [0, 0.12, 0.2, 0.42, 0.55, 1], ease: "easeOut" }}
           />
         </div>
-
-        <ArchiveDrawer cases={solved} board={board} lit={lit} onPick={setOpen} />
       </div>
 
       <Dossier open={open} board={board} reel={reel} notifyHref={notifyHref} onClose={close} onClosed={closed} onMore={more} />
     </section>
   )
-}
-
-function drop(spot: Spot, lit: boolean, reduce: boolean, delay: number) {
-  return {
-    initial: reduce ? { opacity: 0, rotate: spot.r } : { opacity: 0, scale: 1.14, rotate: spot.r + 7, y: "-6%" },
-    animate: lit ? { opacity: 1, scale: 1, rotate: spot.r, y: "0%" } : undefined,
-    transition: { duration: reduce ? 0.3 : 0.6, delay: reduce ? 0 : delay, ease: EASE },
-  }
 }
 
 function TitleCard({ spot, label, lit, reduce }: { spot: Spot; label: string; lit: boolean; reduce: boolean }) {

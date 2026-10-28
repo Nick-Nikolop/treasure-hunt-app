@@ -798,25 +798,7 @@ body {
 .board-pin-red { background-image: url("/landing2/board/pin-red.webp"); }
 .board-pin-brass { background-image: url("/landing2/board/pin-brass.webp"); }
 
-/* Landing2 archive: a dark steel filing-cabinet drawer with brass hardware. */
-.board-cabinet {
-  background-color: rgb(38 36 33);
-  background-image:
-    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.018) 0 1px, transparent 1px 3px),
-    linear-gradient(180deg, rgb(58 55 50) 0%, rgb(36 34 31) 45%, rgb(26 25 23) 100%);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.08),
-    inset 0 -2px 0 rgb(0 0 0 / 0.5),
-    0 30px 80px -30px rgb(0 0 0 / 0.95);
-}
-.board-recess {
-  background: linear-gradient(180deg, rgb(10 9 8) 0%, rgb(22 20 18) 100%);
-  box-shadow: inset 0 10px 18px -6px rgb(0 0 0 / 0.9), inset 0 -1px 0 rgb(255 255 255 / 0.06);
-}
-.board-brass {
-  background: linear-gradient(160deg, rgb(240 206 128) 0%, rgb(176 132 58) 40%, rgb(122 86 34) 70%, rgb(204 164 90) 100%);
-  box-shadow: 0 1px 0 rgb(255 240 200 / 0.4) inset, 0 2px 6px rgb(0 0 0 / 0.6);
-}
+
 
 /* Carnival opening curtains: pure CSS transform animations run on the compositor,
    so they stay smooth on phones while the page is still hydrating. */
