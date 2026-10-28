@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
 import { pct, type Hotspot } from "./scenes"
 
 /** objects whose teaser would cover something below the tag, so it opens upwards instead */
-const TEASER_ABOVE = new Set<string>(["how", "records", "trailer"])
+const TEASER_ABOVE = new Set<string>(["how", "records", "trailer", "map"])
 
 type Props = {
   spot: Hotspot
