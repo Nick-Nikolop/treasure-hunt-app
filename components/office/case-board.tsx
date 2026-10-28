@@ -180,21 +180,21 @@ export function CaseSheetFace({ copy, cta = true }: { copy: OfficeCopy; cta?: bo
   const b = copy.board
   return (
     <>
-      <span className="flex min-h-0 flex-1 gap-[5%]">
-        <span className="board-paper relative aspect-[4/5] h-full max-w-[46%] shrink-0 -rotate-2 p-[3.5%] pb-[12%] shadow-[0_1px_1px_rgb(0_0_0/0.35),0_8px_14px_-6px_rgb(0_0_0/0.6)]">
+      <span className="flex min-h-0 flex-1 flex-col gap-[6%]">
+        <span className="board-paper relative min-h-0 w-full flex-[1.35] -rotate-1 p-[2.5%] pb-[5%] shadow-[0_1px_1px_rgb(0_0_0/0.35),0_8px_14px_-6px_rgb(0_0_0/0.6)]">
           <span className="relative block size-full overflow-hidden bg-reel">
-            <Image src="/landing2/mission-carnival.webp" alt="" fill sizes="(min-width: 1280px) 420px, 200px" className="object-cover" />
+            <Image src="/landing2/mission-carnival.webp" alt="" fill sizes="(min-width: 1280px) 520px, 260px" className="object-cover" />
             <span aria-hidden="true" className="board-gloss absolute inset-0" />
           </span>
-        </span>
-        <span className="flex min-w-0 flex-1 flex-col gap-[6%] pt-[2%]">
-          <span className="font-sans font-bold uppercase tracking-[0.22em] text-reel/65" style={fs(3.9)}>
-            {b.caseNo}
-          </span>
-          <span className="office-stamp w-fit -rotate-6 rounded-[2px] border-2 px-[0.45em] py-[0.15em] font-sans font-extrabold uppercase leading-none tracking-[0.14em]" style={fs(4.6)}>
+          <span
+            className="office-stamp absolute bottom-[12%] right-[6%] z-[1] w-fit rotate-[-7deg] rounded-[2px] border-2 px-[0.45em] py-[0.15em] font-sans font-extrabold uppercase leading-none tracking-[0.14em]"
+            style={{ ...fs(4.4), background: "rgb(246 242 234 / 0.94)", mixBlendMode: "normal", boxShadow: "0 1px 3px rgb(0 0 0 / 0.35)" }}
+          >
             {b.soon}
           </span>
-          <span className="mt-auto text-pretty font-serif font-bold leading-[1.15]" style={fs(5.6)}>
+        </span>
+        <span className="flex min-h-0 flex-1 items-center">
+          <span className="text-pretty font-serif font-bold leading-[1.15]" style={fs(6.2)}>
             {b.caseLine}
           </span>
         </span>
