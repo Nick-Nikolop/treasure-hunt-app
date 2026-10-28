@@ -143,14 +143,22 @@ const SectionLabel = ({ id, children }: { id: string; children: ReactNode }) => 
   </h4>
 )
 
-/** The closed Case 001 file: what it was, how it unfolded, what was left behind and who took the prize. */
+/** The closed Case 001 file inside a folder, for the close-up view on smaller screens. */
 export function ArchivedCaseDossier({ copy, reduce }: { copy: OfficeCopy; reduce: boolean }) {
+  return (
+    <Folder tab={copy.case1.tab} stamp={copy.case1.stamp} done reduce={reduce}>
+      <ArchivedCaseBody copy={copy} reduce={reduce} />
+    </Folder>
+  )
+}
+
+/** The closed Case 001 file: what it was, how it unfolded, what was left behind and who took the prize. */
+export function ArchivedCaseBody({ copy, reduce }: { copy: OfficeCopy; reduce: boolean }) {
   const c = copy.case1
   const reveal = (i: number) =>
     reduce ? {} : { initial: { opacity: 0, y: 10 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, margin: "-40px" }, transition: { duration: 0.35, delay: i * 0.06, ease: EASE } }
 
   return (
-    <Folder tab={c.tab} stamp={c.stamp} done reduce={reduce}>
       <div className="flex flex-col gap-10">
         <div className="flex flex-col gap-6 md:flex-row md:gap-9">
           <Print src="/landing2/mission-pythea.webp" alt={c.photoAlt} sepia className="w-full max-w-64 -rotate-2 self-center md:w-72 md:max-w-none md:self-start" />
@@ -229,6 +237,5 @@ export function ArchivedCaseDossier({ copy, reduce }: { copy: OfficeCopy; reduce
           </Link>
         </section>
       </div>
-    </Folder>
   )
 }
