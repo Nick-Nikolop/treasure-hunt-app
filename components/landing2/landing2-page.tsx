@@ -11,7 +11,8 @@ import { DetailModal } from "./detail-modal"
 import { HowSection } from "./episodes"
 import { Faq, Footer } from "./finale"
 import { PageLoader } from "./page-loader"
-import { HuntsRow, WhyRow } from "./rows"
+import { WhyRow } from "./rows"
+import { CaseBoard } from "./board/case-board"
 import { ExplainerSection } from "./explainer/explainer-section"
 import { ClosingBanner, CodeSection } from "./spotlights"
 
@@ -131,7 +132,7 @@ export function Landing2Page() {
         />
         <div className="flex flex-col gap-24 py-20 md:gap-32 md:py-28">
           <ExplainerSection locale={locale} what={copy.what} />
-          <HuntsRow missions={copy.missions} reel={reel} notifyHref={notifyHref} onOpen={setModal} />
+          <CaseBoard missions={copy.missions} reel={reel} notifyHref={notifyHref} onOpen={setModal} />
         </div>
         <HowSection how={copy.how} reel={reel} />
         <div className="flex flex-col gap-24 py-20 md:gap-32 md:py-28">
