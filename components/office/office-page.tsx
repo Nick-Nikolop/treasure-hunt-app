@@ -22,7 +22,7 @@ import { DeskMap } from "./map/desk-map"
 import { MapPickup } from "./map/map-pickup"
 import { DrawerPeek, DrawerPickup } from "./records/drawer-pickup"
 import { ContactPickup, DeskEnvelope } from "./contact/contact-pickup"
-import { contactPeek, drawerPeek } from "./transit"
+import { contactPeek, drawerPeek, mapPeek, phonePeek } from "./transit"
 import { DESK, DESKTOP, RECORDS, WALL, pct, type Scene } from "./scenes"
 import { toSearch, useOfficeNav, type OfficeState, type OfficeView, type RecordsTab } from "./use-office-nav"
 import { ArchivedCaseDossier, CurrentCaseDossier } from "./views/case-dossier"
@@ -30,6 +30,14 @@ import { ContactView } from "./views/contact-view"
 import { HowView } from "./views/how-view"
 import { MapView } from "./views/map-view"
 import { RecordsView } from "./views/records-view"
+
+/** Hotspots whose object reacts in the room while hovered. */
+const HOVER_PEEK: Partial<Record<string, (on: boolean) => void>> = {
+  records: drawerPeek.set,
+  contact: contactPeek.set,
+  how: phonePeek.set,
+  map: mapPeek.set,
+}
 
 const TrailerView = dynamic(() => import("./views/trailer-view").then((m) => m.TrailerView), { ssr: false })
 
@@ -313,7 +321,7 @@ function DesktopRoom({ copy, onToggleLocale, open, board, atBoard, reduce }: Roo
             teaser={copy.objects[spot.id].teaser}
             teaserInTag
             onOpen={(el) => open(spot.id, el)}
-            onHover={spot.id === "records" ? drawerPeek.set : spot.id === "contact" ? contactPeek.set : undefined}
+            onHover={HOVER_PEEK[spot.id]}
           />
         ))}
         </div>

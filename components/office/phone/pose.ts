@@ -37,6 +37,8 @@ export type PhoneFrameInput = {
   hold?: { x: number; y: number }
   /** number of body layers behind the face (gives the phone its thickness) */
   layers: number
+  /** 0→1 hover "about to be picked up" pose at t = 0 (may overshoot slightly with the spring) */
+  peek?: number
 }
 
 export type PhoneFrame = {
@@ -86,6 +88,13 @@ export function phoneFrame(t: number, input: PhoneFrameInput): PhoneFrame {
     pos = [cx + ((sc[0] - cx) * dist) / d, cy + ((sc[1] - cy) * dist) / d, d - dist]
     q = slerp(REST_QUAT, IDENTITY, turn)
   }
+  const peek = t === 0 ? (input.peek ?? 0) : 0
+  if (peek !== 0) {
+    // fingertips slide under the bottom edge: it rises off the desk, the top stays nearer, a hair of twist
+    const up = deskNormal[1] < 0 ? 1 : -1
+    pos = add(p0, mul(deskNormal, up * worldH * 0.07 * peek))
+    q = qmul(REST_QUAT, qmul(axisQuat([1, 0, 0], -0.17 * peek * up), axisQuat([0, 0, 1], 0.05 * peek)))
+  }
 
   const camera = cameraMatrix(cx, cy, d)
   const model = (quat: Quat, at: V3, z: number, grow = 1) =>
@@ -101,7 +110,7 @@ export function phoneFrame(t: number, input: PhoneFrameInput): PhoneFrame {
   // The contact shadow stays on the desk: it is drawn at the rest pose just under the phone's back.
   const shadow = css(model(REST_QUAT, add(p0, mul(deskNormal, -thickness * scale * 1.05)), 0, 1.05))
 
-  const lift = t === 0 ? 0 : clamp01(t / 0.22)
+  const lift = t === 0 ? clamp01(peek) * 0.28 : clamp01(t / 0.22)
   // screen px per element px at the rest pose: CSS filters run in local units, so blur must be divided by it
   const restScale = (scale * d) / (d - p0[2])
   return { face: css(model(q, pos, 0)), body, shadow, lift, turn, restScale, k }
@@ -183,6 +192,21 @@ export function rotationRows([x, y, z, w]: Quat) {
     [2 * (x * y + z * w), 1 - 2 * (x * x + z * z), 2 * (y * z - x * w)],
     [2 * (x * z - y * w), 2 * (y * z + x * w), 1 - 2 * (x * x + y * y)],
   ]
+}
+
+/** Hamilton product a·b ([x, y, z, w]); with b a local rotation, it turns about the object's own axes. */
+export function qmul([ax, ay, az, aw]: Quat, [bx, by, bz, bw]: Quat): Quat {
+  return [
+    aw * bx + ax * bw + ay * bz - az * by,
+    aw * by - ax * bz + ay * bw + az * bx,
+    aw * bz + ax * by - ay * bx + az * bw,
+    aw * bw - ax * bx - ay * by - az * bz,
+  ]
+}
+
+export function axisQuat(axis: V3, angle: number): Quat {
+  const s = Math.sin(angle / 2)
+  return [axis[0] * s, axis[1] * s, axis[2] * s, Math.cos(angle / 2)]
 }
 
 export function rotate(q: Quat, v: V3): V3 {

@@ -77,6 +77,51 @@ export const contactPeek = createHeldFlag()
 /** The envelope is out of the tray (in the pickup): the room shows the empty tray. */
 export const envelopeInHand = createHeldFlag()
 
+/** The cursor is over the desk phone / folded map: it lifts as if a hand were about to take it. */
+export const phonePeek = createHeldFlag()
+export const mapPeek = createHeldFlag()
+
+/**
+ * Drives a 0→1 hover pose with a slightly underdamped spring, so the object settles with a soft bounce
+ * and reverses smoothly mid-motion. Reduced motion snaps straight to the target.
+ */
+export function usePeekSpring(on: boolean, draw: (v: number) => void) {
+  const drawRef = useRef(draw)
+  drawRef.current = draw
+  const state = useRef({ x: 0, v: 0, raf: 0, last: 0 })
+
+  useEffect(() => {
+    const s = state.current
+    const target = on ? 1 : 0
+    cancelAnimationFrame(s.raf)
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      s.x = target
+      s.v = 0
+      drawRef.current(target)
+      return
+    }
+    const stiffness = on ? 210 : 150
+    const damping = 2 * Math.sqrt(stiffness) * (on ? 0.55 : 0.8)
+    s.last = performance.now()
+    const tick = (now: number) => {
+      const dt = Math.min(0.032, (now - s.last) / 1000)
+      s.last = now
+      s.v += (stiffness * (target - s.x) - damping * s.v) * dt
+      s.x += s.v * dt
+      if (Math.abs(target - s.x) < 0.001 && Math.abs(s.v) < 0.01) {
+        s.x = target
+        s.v = 0
+        drawRef.current(target)
+        return
+      }
+      drawRef.current(s.x)
+      s.raf = requestAnimationFrame(tick)
+    }
+    s.raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(s.raf)
+  }, [on])
+}
+
 export const caseInHand = createHeldFlag()
 export const mapInHand = createHeldFlag()
 

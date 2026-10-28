@@ -2,7 +2,7 @@
 
 import { useLayoutEffect, useRef } from "react"
 import type { OfficeCopy } from "../copy"
-import { mapInHand } from "../transit"
+import { mapInHand, mapPeek, usePeekSpring } from "../transit"
 import { MapSheet, type MapSheetHandle } from "./map-sheet"
 import { MAP_ASPECT, mapFrame } from "./pose"
 
@@ -13,15 +13,25 @@ export function DeskMap({ copy }: { copy: OfficeCopy }) {
   const sheet = useRef<MapSheetHandle>(null)
   const box = useRef<HTMLDivElement>(null)
   const held = mapInHand.useValue()
+  const hovered = mapPeek.useValue()
+  const peek = useRef(0)
+
+  const draw = (v = peek.current) => {
+    peek.current = v
+    const stage = box.current
+    if (!stage) return
+    sheet.current?.apply(mapFrame(0, { stage: { left: 0, top: 0, width: stage.clientWidth }, q: REST_Q, peek: v }))
+  }
+  usePeekSpring(hovered && !held, draw)
 
   useLayoutEffect(() => {
     const stage = box.current
     if (!stage) return
-    const draw = () => sheet.current?.apply(mapFrame(0, { stage: { left: 0, top: 0, width: stage.clientWidth }, q: REST_Q }))
     draw()
-    const ro = new ResizeObserver(draw)
+    const ro = new ResizeObserver(() => draw())
     ro.observe(stage)
     return () => ro.disconnect()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- draw reads refs only
   }, [])
 
   return (

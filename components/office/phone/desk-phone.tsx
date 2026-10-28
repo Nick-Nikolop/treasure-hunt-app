@@ -3,6 +3,7 @@
 import { useLayoutEffect, useRef, useSyncExternalStore } from "react"
 import { PHONE_ASPECT, phoneFrame } from "./pose"
 import { BODY_LAYERS, PhoneRig, type PhoneRigHandle } from "./phone-rig"
+import { phonePeek, usePeekSpring } from "../transit"
 
 /* While the phone is in the visitor's hand the desk copy must not exist: one physical object. */
 let inHand = false
@@ -26,17 +27,27 @@ export function DeskPhone() {
   const rig = useRef<PhoneRigHandle>(null)
   const box = useRef<HTMLDivElement>(null)
   const held = usePhoneInHand()
+  const hovered = phonePeek.useValue()
+  const peek = useRef(0)
+
+  const draw = (v = peek.current) => {
+    peek.current = v
+    const stage = box.current
+    if (!stage) return
+    rig.current?.apply(
+      phoneFrame(0, { stage: { left: 0, top: 0, width: stage.clientWidth }, el: { w: REST_W, h: REST_H }, layers: BODY_LAYERS, peek: v }),
+    )
+  }
+  usePeekSpring(hovered && !held, draw)
 
   useLayoutEffect(() => {
     const stage = box.current
     if (!stage) return
-    const draw = () => {
-      rig.current?.apply(phoneFrame(0, { stage: { left: 0, top: 0, width: stage.clientWidth }, el: { w: REST_W, h: REST_H }, layers: BODY_LAYERS }))
-    }
     draw()
-    const ro = new ResizeObserver(draw)
+    const ro = new ResizeObserver(() => draw())
     ro.observe(stage)
     return () => ro.disconnect()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- draw reads refs only
   }, [])
 
   return (
