@@ -876,3 +876,8 @@ body {
 .ci-drape-left { animation: ci-drape-left 1.9s cubic-bezier(0.65, 0, 0.35, 1) 0.35s both; }
 .ci-drape-right { animation: ci-drape-right 1.9s cubic-bezier(0.65, 0, 0.35, 1) 0.35s both; }
 .ci-valance { animation: ci-valance-drop 1.1s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both; }
+
+/* office: chrome that appears once an inspection has arrived */
+.office-fade-in { animation: office-fade-in 260ms ease-out 180ms both; }
+@keyframes office-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .office-fade-in { animation: none; } }

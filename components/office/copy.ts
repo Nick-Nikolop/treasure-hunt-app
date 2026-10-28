@@ -1,4 +1,4 @@
-export type ObjectId = "case" | "archive" | "how" | "map" | "records" | "trailer" | "contact"
+export type ObjectId = "case" | "archive" | "how" | "map" | "records" | "trailer" | "contact" | "board"
 
 type ObjectCopy = { label: string; teaser: string }
 
@@ -35,6 +35,7 @@ export const OFFICE_COPY = {
       records: { label: "Οδηγίες & Απαντήσεις", teaser: "Όσα χρειάζεται να ξέρεις πριν ξεκινήσεις." },
       trailer: { label: "Δες το τρέιλερ", teaser: "Μια πρώτη ματιά στον κόσμο του The Hunt." },
       contact: { label: "Επικοινωνία", teaser: "Γράψε μας για την επόμενη αποστολή." },
+      board: { label: "Πίνακας υποθέσεων", teaser: "Πλησίασε για να δεις όλο τον πίνακα." },
     } satisfies Record<ObjectId, ObjectCopy>,
     scenes: {
       board: { title: "Πίνακας υποθέσεων", body: "Η επόμενη αποστολή και οι υποθέσεις που έκλεισαν." },
@@ -56,6 +57,8 @@ export const OFFICE_COPY = {
     shell: {
       backOffice: "Πίσω στο γραφείο",
       backArchive: "Πίσω στο αρχείο",
+      backBoard: "Πίσω στον πίνακα",
+      pinBack: "Κάρφωσέ το ξανά",
       office: "Γραφείο",
       archive: "Αρχείο",
     },
@@ -187,6 +190,7 @@ export const OFFICE_COPY = {
       records: { label: "Rules & Answers", teaser: "Everything you need to know before heading out." },
       trailer: { label: "Watch the trailer", teaser: "A first glimpse into the world of The Hunt." },
       contact: { label: "Contact", teaser: "Write to us about the next mission." },
+      board: { label: "Case board", teaser: "Step closer to examine the whole board." },
     } satisfies Record<ObjectId, ObjectCopy>,
     scenes: {
       board: { title: "Case board", body: "The next mission and the cases already solved." },
@@ -208,6 +212,8 @@ export const OFFICE_COPY = {
     shell: {
       backOffice: "Back to office",
       backArchive: "Back to archive",
+      backBoard: "Back to the board",
+      pinBack: "Pin it back",
       office: "Office",
       archive: "Archive",
     },
