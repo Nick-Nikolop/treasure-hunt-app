@@ -180,17 +180,19 @@ export function PhonePickup({ copy, how, reduce, onClose, onCase }: Props) {
       className="fixed inset-0 z-50 font-sans text-reel-white outline-none"
       style={{ ["--dim" as string]: 0, ["--screen" as string]: 0, ["--panel" as string]: 0 }}
     >
-      {/* the office stays visible, just darker: no blur, no curtain */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-0"
-        style={{
-          opacity: "var(--dim)",
-          // lighter around the hand so the office still reads, deep where the copy sits
-          background:
-            "linear-gradient(90deg, rgb(8 6 4 / 0) 30%, rgb(8 6 4 / 0.55) 52%, rgb(8 6 4 / 0.72) 100%), radial-gradient(ellipse 55% 80% at 33% 52%, rgb(10 7 4 / 0.42), rgb(8 6 4 / 0.78) 100%)",
-        }}
-      />
+  {/* depth of field: the eye focuses on the phone at arm's length, so the room behind goes soft and darker
+      (the office still reads as a place, but its labels and hero copy no longer compete with the text) */}
+  <div
+  aria-hidden="true"
+  className="absolute inset-0"
+  style={{
+  opacity: "var(--dim)",
+  backdropFilter: "blur(14px) saturate(0.85)",
+  WebkitBackdropFilter: "blur(14px) saturate(0.85)",
+  background:
+  "linear-gradient(90deg, rgb(8 6 4 / 0) 28%, rgb(8 6 4 / 0.5) 50%, rgb(8 6 4 / 0.7) 100%), radial-gradient(ellipse 55% 80% at 33% 52%, rgb(10 7 4 / 0.38), rgb(8 6 4 / 0.72) 100%)",
+  }}
+  />
 
       <PhoneRig
         ref={rig}
