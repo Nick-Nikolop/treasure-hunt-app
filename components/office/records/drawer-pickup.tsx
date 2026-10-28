@@ -25,7 +25,7 @@ const FILES: { tab?: RecordsTab; tabX: number }[] = [
   { tabX: 0.6 },
   { tab: "code", tabX: 0.12 },
   { tabX: 0.44 },
-  { tabX: 0.72 },
+  { tabX: 0.69 },
   { tabX: 0.2 },
 ]
 const TABS: RecordsTab[] = ["faq", "code"]
@@ -145,7 +145,7 @@ export function DrawerPickup({ copy, faq, code, tab, onTab, reduce, onClose }: P
     if (groupRef.current)
       groupRef.current.style.transform = `translate3d(${s[0]}px, ${s[1]}px, 0) rotateX(${tilt}deg) scale3d(${scale}, ${scale}, ${scale}) translate3d(${-p[0]}px, ${-p[1]}px, ${-p[2]}px)`
     if (drawerRef.current) drawerRef.current.style.transform = `translate3d(0, 0, ${zf}px)`
-    if (liftRef.current) liftRef.current.style.transform = `translate3d(${g.file.x}px, ${g.file.y - liftBy}px, ${zSel - zf}px)`
+    if (liftRef.current) liftRef.current.style.transform = `translate3d(${g.file.x}px, ${g.file.y - g.file.tab - liftBy}px, ${zSel - zf}px)`
 
     const inHands = t >= P.face[1]
     // the cabinet patch only matters while part of the drawer is still inside; the room blurs once it is out
@@ -158,7 +158,7 @@ export function DrawerPickup({ copy, faq, code, tab, onTab, reduce, onClose }: P
     const fileDrop = page * (g.vh / 2 + 24 - g.file.h / 2)
     if (flatRef.current) {
       flatRef.current.style.visibility = inHands ? "visible" : "hidden"
-      flatRef.current.style.transform = `translate(-50%, calc(-50% + ${fileDrop.toFixed(1)}px))`
+      flatRef.current.style.transform = `translate(-50%, calc(-50% + ${(fileDrop - g.file.tab / 2).toFixed(1)}px))`
     }
     if (coverRef.current) coverRef.current.style.transform = `rotateX(${(-168 * cover).toFixed(2)}deg)`
     if (pageRef.current) {
@@ -172,7 +172,6 @@ export function DrawerPickup({ copy, faq, code, tab, onTab, reduce, onClose }: P
     }
   }
 
-  ;(globalThis as { __drawerDraw?: (t: number) => void }).__drawerDraw = draw
   const transit = useTransit({ draw, reduce, inMs: OPEN_MS, outMs: CLOSE_MS })
 
   useLayoutEffect(() => {
@@ -348,7 +347,7 @@ export function DrawerPickup({ copy, faq, code, tab, onTab, reduce, onClose }: P
                 <div
                   key={i}
                   className="drawer-face"
-                  style={{ width: g.file.w, height: g.file.h, transform: `translate3d(${g.file.x}px, ${g.file.y}px, ${-g.D * (0.14 + 0.1 * i)}px)` }}
+                  style={{ width: g.file.w, height: g.file.h + g.file.tab, transform: `translate3d(${g.file.x}px, ${g.file.y - g.file.tab}px, ${-g.D * (0.14 + 0.1 * i)}px)` }}
                 >
                   <HangingFile label={labelFor(f)} tabX={f.tabX} tabH={g.file.tab} shade={0.12 + i * 0.05} />
                 </div>
@@ -357,7 +356,7 @@ export function DrawerPickup({ copy, faq, code, tab, onTab, reduce, onClose }: P
             <div
               ref={liftRef}
               className="absolute left-0 top-0 origin-top-left"
-              style={{ width: g.file.w, height: g.file.h }}
+              style={{ width: g.file.w, height: g.file.h + g.file.tab }}
             >
               <HangingFile label={r.tabs[pulled]} tabX={FILES.find((f) => f.tab === pulled)!.tabX} tabH={g.file.tab} shade={0} />
             </div>
@@ -377,13 +376,13 @@ export function DrawerPickup({ copy, faq, code, tab, onTab, reduce, onClose }: P
       </div>
 
       {/* 2D: the same file in the hands, opened; the page slides out of it */}
-      <div ref={flatRef} className="absolute left-1/2 top-1/2" style={{ width: g.file.w, height: g.file.h, visibility: "hidden", perspective: "1600px" }}>
+      <div ref={flatRef} className="absolute left-1/2 top-1/2" style={{ width: g.file.w, height: g.file.h + g.file.tab, visibility: "hidden", perspective: "1600px" }}>
         <div className="absolute inset-0">
           <HangingFile label={r.tabs[pulled]} tabX={FILES.find((f) => f.tab === pulled)!.tabX} tabH={g.file.tab} shade={0} back />
         </div>
-        <div ref={coverRef} className="absolute inset-x-0 bottom-0 top-[6%] origin-bottom" style={{ transformStyle: "preserve-3d" }}>
-          <div className="hanging-file absolute inset-0 rounded-sm [backface-visibility:hidden]" />
-          <div className="hanging-file-deep absolute inset-0 rounded-sm [backface-visibility:hidden] [transform:rotateX(180deg)]" />
+        <div ref={coverRef} className="absolute inset-x-0 bottom-0 origin-bottom" style={{ top: g.file.tab + g.file.h * 0.05, transformStyle: "preserve-3d" }}>
+          <div className="board-manila absolute inset-0 rounded-sm [backface-visibility:hidden]" />
+          <div className="board-manila-deep absolute inset-0 rounded-sm [backface-visibility:hidden] [transform:rotateX(180deg)]" />
         </div>
       </div>
 
@@ -451,33 +450,34 @@ export function DrawerPickup({ copy, faq, code, tab, onTab, reduce, onClose }: P
 function HangingFile({ label, tabX, tabH, shade, back = false }: { label: string; tabX: number; tabH: number; shade: number; back?: boolean }) {
   return (
     <div className="relative size-full">
-      {[0, 1].map((side) => (
-        <div
-          key={side}
-          className="absolute top-0 h-[1.8%] w-[4.5%] rounded-full"
-          style={{ [side ? "right" : "left"]: "-3.6%", background: "linear-gradient(#cfc3ad, #6f6455)" }}
-        />
-      ))}
       <div
-        className="hanging-tab absolute bottom-full flex items-center justify-center rounded-t-[4px] px-[3%]"
-        style={{ left: `${tabX * 100}%`, height: tabH, width: "24%" }}
+        className="board-manila absolute top-0 flex items-center justify-center rounded-t-[4px] px-[3%] shadow-[0_-1px_2px_rgb(0_0_0/0.35)]"
+        style={{ left: `${tabX * 100}%`, height: tabH, width: "27%" }}
       >
         <span
           className="board-paper flex h-[70%] w-full items-center justify-center truncate rounded-[2px] px-2 font-sans font-bold leading-none text-reel"
-          style={{ fontSize: tabH * 0.4 }}
+          style={{ fontSize: tabH * 0.38 }}
         >
           {label}
         </span>
       </div>
-      <div className="hanging-file-deep absolute inset-0 rounded-sm" />
-      {!back && (
-        <>
-          <div className="board-paper absolute left-[7%] right-[9%] top-[-1.5%] h-1/2 rounded-[1px] shadow-[0_1px_2px_rgb(0_0_0/0.35)]" />
-          <div className="board-manila absolute left-[3%] right-[14%] top-[1%] h-1/2 rounded-[1px] shadow-[0_1px_2px_rgb(0_0_0/0.35)]" />
-          <div className="hanging-file absolute inset-x-0 bottom-0 top-[6%] rounded-sm shadow-[0_-1px_2px_rgb(0_0_0/0.35)]" />
-        </>
-      )}
-      <div className="pointer-events-none absolute inset-0 rounded-sm" style={{ background: `rgb(20 12 6 / ${shade})` }} />
+      <div className="absolute inset-x-0 bottom-0" style={{ top: tabH }}>
+        {[0, 1].map((side) => (
+          <div
+            key={side}
+            className="absolute top-0 h-[1.8%] w-[4.5%] rounded-full"
+            style={{ [side ? "right" : "left"]: "-3.6%", background: "linear-gradient(#cfc3ad, #6f6455)" }}
+          />
+        ))}
+        <div className="board-manila-deep absolute inset-0 rounded-sm" />
+        {!back && (
+          <>
+            <div className="board-paper absolute left-[7%] right-[9%] top-[-1.5%] h-1/2 rounded-[1px] shadow-[0_1px_2px_rgb(0_0_0/0.35)]" />
+            <div className="board-manila absolute inset-x-0 bottom-0 top-[5%] rounded-sm shadow-[0_-1px_2px_rgb(0_0_0/0.35)]" />
+          </>
+        )}
+        <div className="pointer-events-none absolute inset-0 rounded-sm" style={{ background: `rgb(20 12 6 / ${shade})` }} />
+      </div>
     </div>
   )
 }
