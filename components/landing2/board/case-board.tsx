@@ -155,7 +155,7 @@ function TitleCard({ spot, label, lit, reduce }: { spot: Spot; label: string; li
     <div className="absolute" style={place(spot, SHAPE.title)}>
       <motion.div
         {...drop(spot, lit, reduce, 0.7)}
-        className="board-paper flex size-full flex-col items-center justify-center gap-[4%] px-[6%] pt-[9%] text-center shadow-[0_1px_1px_rgb(0_0_0/0.45),0_12px_22px_-8px_rgb(0_0_0/0.85)]"
+        className="board-paper board-static flex size-full flex-col items-center justify-center gap-[4%] px-[6%] pt-[9%] text-center shadow-[0_1px_1px_rgb(0_0_0/0.45),0_12px_22px_-8px_rgb(0_0_0/0.85)]"
       >
         <span className="font-sans font-bold uppercase tracking-[0.3em] text-reel/55" style={fs(1.05)}>
           The Hunt · Kalamata
@@ -193,7 +193,7 @@ function CaseCluster({
           <motion.div
             {...drop(spots.notes[i], lit, reduce, delay + 0.25 + i * 0.12)}
             className={cn(
-              "flex size-full items-center justify-center px-[9%] pt-[12%] text-center shadow-[0_1px_1px_rgb(0_0_0/0.4),0_9px_14px_-6px_rgb(0_0_0/0.8)]",
+                  "board-static flex size-full items-center justify-center px-[9%] pt-[12%] text-center shadow-[0_1px_1px_rgb(0_0_0/0.4),0_9px_14px_-6px_rgb(0_0_0/0.8)]",
               note === board.unknown ? "board-manila" : "board-card",
             )}
           >

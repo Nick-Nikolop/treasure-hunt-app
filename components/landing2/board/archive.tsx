@@ -55,7 +55,7 @@ export function BoardArchive({ cases, spots, board, lit, reduce, open, onToggle,
       <div className="absolute" style={place(spots.label, SHAPE.title)}>
         <motion.div
           {...drop(spots.label, lit, reduce, 1.1)}
-          className="board-card relative flex size-full flex-col items-center justify-center gap-[3%] px-[6%] pt-[8%] text-center shadow-[0_1px_1px_rgb(0_0_0/0.45),0_12px_22px_-8px_rgb(0_0_0/0.85)]"
+          className="board-card board-static relative flex size-full flex-col items-center justify-center gap-[3%] px-[6%] pt-[8%] text-center shadow-[0_1px_1px_rgb(0_0_0/0.45),0_12px_22px_-8px_rgb(0_0_0/0.85)]"
         >
           <Pin gold />
           <span className="font-sans font-bold uppercase tracking-[0.35em] text-board-string" style={fs(1)}>
