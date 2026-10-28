@@ -5,7 +5,7 @@ import Link from "next/link"
 import dynamic from "next/dynamic"
 import { AnimatePresence, useReducedMotion } from "framer-motion"
 import { FileText, Mail, Smartphone } from "lucide-react"
-import { useCallback, useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react"
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type MouseEvent, type ReactNode } from "react"
 import { preload } from "react-dom"
 import { useI18n } from "@/components/pythea/language-provider"
 import { LANDING_CONTACT, LANDING_COPY } from "@/components/landing/copy"
@@ -14,6 +14,8 @@ import { CaseBoard } from "./case-board"
 import { OFFICE_COPY, type OfficeCopy } from "./copy"
 import { FocusShell } from "./focus-shell"
 import { RoomHotspot } from "./hotspot"
+import { DeskPhone } from "./phone/desk-phone"
+import { PhonePickup } from "./phone/phone-pickup"
 import { DESK, DESKTOP, RECORDS, WALL, pct, type Scene } from "./scenes"
 import { toSearch, useOfficeNav, type OfficeState, type OfficeView } from "./use-office-nav"
 import { ArchivedCaseDossier, CurrentCaseDossier } from "./views/case-dossier"
@@ -33,7 +35,7 @@ export function OfficePage() {
   const reduce = !!useReducedMotion()
   const { state, go, back, home } = useOfficeNav()
 
-  preload(DESKTOP.src, { as: "image", media: "(min-width: 1280px)", fetchPriority: "high" })
+  preload(DESKTOP.src, { as: "image", imageSrcSet: sceneSrcSet(DESKTOP), imageSizes: "100vw", media: "(min-width: 1280px)", fetchPriority: "high" })
   preload(WALL.src, { as: "image", media: "(max-width: 1279px)", fetchPriority: "high" })
 
   const contactHref = `mailto:${LANDING_CONTACT.email}?subject=${encodeURIComponent(copy.contact.subject)}`
@@ -167,11 +169,27 @@ function ViewLink({
   )
 }
 
+const sceneSrcSet = (scene: Scene) =>
+  scene.srcLarge ? `${scene.src} ${scene.width}w, ${scene.srcLarge.src} ${scene.srcLarge.width}w` : undefined
+
 /** The room photo is atmosphere only (every object on it is a labelled control), so it is hidden from assistive tech. */
 function SceneFrame({ scene, children, className }: { scene: Scene; label?: string; children?: ReactNode; className?: string }) {
   return (
     <div className={cn("relative w-full bg-[#0b0a09]", className)} style={{ aspectRatio: `${scene.width} / ${scene.height}` }}>
-      <div aria-hidden="true" className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${scene.src})` }} />
+      {scene.srcLarge ? (
+        // eslint-disable-next-line @next/next/no-img-element -- responsive srcset matches the preload exactly
+        <img
+          aria-hidden="true"
+          alt=""
+          src={scene.src}
+          srcSet={sceneSrcSet(scene)}
+          sizes="100vw"
+          fetchPriority="high"
+          className="absolute inset-0 size-full object-cover"
+        />
+      ) : (
+        <div aria-hidden="true" className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${scene.src})` }} />
+      )}
       {children}
     </div>
   )
@@ -184,10 +202,12 @@ function DesktopRoom({ copy, onToggleLocale, open, board }: RoomProps) {
   return (
     <section aria-labelledby="office-title-desktop" className="hidden bg-[#0b0a09] xl:block">
       <div
+        data-office-stage
         className="@container/stage relative mx-auto"
         style={{ aspectRatio: `${DESKTOP.width} / ${DESKTOP.height}`, width: `min(100%, calc(100svh * ${DESKTOP.width / DESKTOP.height}))` }}
       >
         <SceneFrame scene={DESKTOP} label="" className="absolute inset-0" />
+        <DeskPhone />
         {/* soft edges so a letterboxed room melts into the page */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 shadow-[inset_0_0_80px_30px_#0b0a09]" />
         <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 w-[34%] bg-linear-to-r from-[#0b0a09]/80 via-[#0b0a09]/45 to-transparent" />
@@ -458,6 +478,19 @@ function BottomNav({ copy, open }: { copy: OfficeCopy; open: Open }) {
   )
 }
 
+const DESKTOP_QUERY = "(min-width: 1280px)"
+function useDesktop() {
+  return useSyncExternalStore(
+    (onChange) => {
+      const mq = window.matchMedia(DESKTOP_QUERY)
+      mq.addEventListener("change", onChange)
+      return () => mq.removeEventListener("change", onChange)
+    },
+    () => window.matchMedia(DESKTOP_QUERY).matches,
+    () => false,
+  )
+}
+
 type HostProps = {
   view: OfficeView
   state: OfficeState
@@ -474,6 +507,7 @@ type HostProps = {
 
 function ViewHost({ view, state, copy, base, origin, reduce, contactHref, back, home, go, open }: HostProps) {
   const s = copy.shell
+  const desktop = useDesktop()
   const toOffice = { label: s.backOffice, onClick: back }
   const common = { origin, reduce }
 
@@ -497,6 +531,8 @@ function ViewHost({ view, state, copy, base, origin, reduce, contactHref, back, 
         </FocusShell>
       )
     case "how":
+      // Desktop: the phone on the desk is physically picked up. Smaller screens keep the close-up view.
+      if (desktop) return <PhonePickup copy={copy} how={base.how} reduce={reduce} onClose={back} onCase={() => open("case-002", null)} />
       return (
         <FocusShell {...common} title={copy.how.title} back={toOffice} backdrop={DESK.src}>
           <HowView copy={copy} how={base.how} onCase={() => open("case-002", null)} />
