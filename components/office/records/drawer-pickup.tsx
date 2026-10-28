@@ -74,6 +74,16 @@ function measure() {
   }
 }
 type Geo = ReturnType<typeof measure>
+
+/** Where the opened page's top ends up, and how much of the file stays in view at the bottom. */
+const PAGE_TOP = 28
+const FILE_SHOWN = 0.4
+/** How far the file lowers from the middle of the screen once it is in the hands. */
+const flatDrop = ({ vh, box: { file } }: Geo) => vh - (file.tab + FILE_SHOWN * file.h) - (vh / 2 - (file.h + file.tab) / 2)
+/** The page runs from PAGE_TOP to a little below the flap's top edge, so its foot stays in the file. */
+const pageHeight = ({ vh, box: { file } }: Geo) => vh - FILE_SHOWN * file.h + file.h * 0.05 + 70 - PAGE_TOP
+/** Bottom padding of the page so its last line clears the flap. */
+const PAGE_FOOT = 96
 type Rect = { x: number; y: number; w: number; h: number }
 
 const plate = { backgroundImage: `url(${PLATE})`, backgroundRepeat: "no-repeat" } as const
@@ -257,6 +267,7 @@ export function DrawerPickup({ copy, faq, code, onTab, reduce, onClose }: Props)
   const liftRef = useRef<HTMLDivElement>(null)
   const flatRef = useRef<HTMLDivElement>(null)
   const coverRef = useRef<HTMLDivElement>(null)
+  const coverWrapRef = useRef<HTMLDivElement>(null)
   const pageRef = useRef<HTMLDivElement>(null)
   const headingRef = useRef<HTMLHeadingElement>(null)
   const fileRefs = useRef<Partial<Record<RecordsTab, HTMLButtonElement | null>>>({})
@@ -328,21 +339,25 @@ export function DrawerPickup({ copy, faq, code, onTab, reduce, onClose }: Props)
     root.style.setProperty("--pick", smoothstep(0.42, DRAWER_T, t) * (1 - smoothstep(DRAWER_T, 0.58, t)) + "")
     root.style.setProperty("--chrome", page.toFixed(3))
     root.style.setProperty("--scene", inHands ? "hidden" : "visible")
-    // once the page is out the empty file drops low, behind it
-    const fileDrop = page * (g.vh / 2 + 24 - file.h / 2)
-    if (flatRef.current) {
-      flatRef.current.style.visibility = inHands ? "visible" : "hidden"
-      flatRef.current.style.transform = `translate(-50%, calc(-50% + ${(fileDrop - file.tab / 2).toFixed(1)}px))`
+    // in the hands the file lowers to the bottom of the screen, its front flap tips open and the page is
+    // drawn up out of it — the page sits between the back panel and the flap, its foot stays in the file
+    const F = file.h + file.tab
+    const top = g.vh / 2 - F / 2 + cover * flatDrop(g)
+    const flapTop = top + file.tab + file.h * 0.05
+    for (const el of [flatRef.current, coverWrapRef.current]) {
+      if (!el) continue
+      el.style.visibility = inHands ? "visible" : "hidden"
+      el.style.transform = `translate(-50%, ${top.toFixed(1)}px)`
     }
-    if (coverRef.current) coverRef.current.style.transform = `rotateX(${(-168 * cover).toFixed(2)}deg)`
+    if (coverRef.current) coverRef.current.style.transform = `rotateX(${(-16 * cover).toFixed(2)}deg)`
     if (pageRef.current) {
-      // the page starts tucked in the file (its top just below the file's top edge) and is drawn up out of it
-      const tucked = g.page.h / 2 - file.h / 2 + 26
-      const pageY = (1 - page) * tucked
-      const below = Math.max(0, g.page.h / 2 + pageY - (file.h / 2 + fileDrop))
-      pageRef.current.style.transform = `translate(-50%, calc(-50% + ${pageY.toFixed(1)}px))`
+      const pageH = pageHeight(g)
+      const y = flapTop + 10 + (PAGE_TOP - (flapTop + 10)) * page
+      const below = Math.max(0, y + pageH - (top + F))
+      pageRef.current.style.height = `${pageH}px`
+      pageRef.current.style.transform = `translate(-50%, ${y.toFixed(1)}px)`
       pageRef.current.style.clipPath = below > 0 ? `inset(-60px -60px ${below.toFixed(1)}px -60px)` : "none"
-      pageRef.current.style.visibility = inHands && cover > 0.55 ? "visible" : "hidden"
+      pageRef.current.style.visibility = inHands && page > 0 ? "visible" : "hidden"
     }
   }
 
@@ -516,7 +531,7 @@ export function DrawerPickup({ copy, faq, code, onTab, reduce, onClose }: Props)
                 ref={liftRef}
                 aria-hidden="true"
                 className="absolute left-0 top-0 origin-top-left"
-                style={{ width: box.file.w, height: box.file.h + box.file.tab, visibility: pulled ? "visible" : "hidden" }}
+                style={{ width: box.file.w, height: box.file.h + box.file.tab, visibility: pulled ? "inherit" : "hidden" }}
               >
                 <HangingFile label={r.tabs[shown]} tabX={shownFile.tabX} tabH={box.file.tab} shade={0.12 + FILES.indexOf(shownFile) * 0.05} />
               </div>
@@ -534,28 +549,43 @@ export function DrawerPickup({ copy, faq, code, onTab, reduce, onClose }: Props)
         {atDrawer ? r.pick : ""}
       </p>
 
-      {/* 2D: the same file in the hands, opened; the page slides out of it */}
+      {/* 2D: the same file in the hands — back panel, then the page drawn up out of it, then the front flap */}
       <div
         ref={flatRef}
         aria-hidden="true"
-        className="absolute left-1/2 top-1/2"
-        style={{ width: box.file.w, height: box.file.h + box.file.tab, visibility: "hidden", perspective: "1600px" }}
+        className="absolute left-1/2 top-0"
+        style={{ width: box.file.w, height: box.file.h + box.file.tab, visibility: "hidden" }}
       >
-        <div className="absolute inset-0">
-          <HangingFile label={r.tabs[shown]} tabX={shownFile.tabX} tabH={box.file.tab} shade={0} back />
-        </div>
-        <div ref={coverRef} className="absolute inset-x-0 bottom-0 origin-bottom" style={{ top: box.file.tab + box.file.h * 0.05, transformStyle: "preserve-3d" }}>
-          <div className="board-manila absolute inset-0 rounded-sm [backface-visibility:hidden]" />
-          <div className="board-manila-deep absolute inset-0 rounded-sm [backface-visibility:hidden] [transform:rotateX(180deg)]" />
-        </div>
+        <HangingFile label={r.tabs[shown]} tabX={shownFile.tabX} tabH={box.file.tab} shade={0} back />
+        {/* the inside of the back panel, in the shadow of the flap */}
+        <div
+          className="absolute inset-x-[2%] bottom-0 rounded-sm"
+          style={{ top: box.file.tab + box.file.h * 0.03, background: "linear-gradient(rgb(20 12 6 / 0.05), rgb(20 12 6 / 0.35))" }}
+        />
       </div>
 
-      <div ref={pageRef} inert={!atFile} className="absolute left-1/2 top-1/2 flex flex-col" style={{ width: g.page.w, height: g.page.h, visibility: "hidden" }}>
-        <div className="board-paper min-h-0 flex-1 overflow-y-auto rounded-sm px-10 py-9 text-reel shadow-[0_40px_80px_-24px_rgb(0_0_0/0.95)]">
+      <div ref={pageRef} inert={!atFile} className="absolute left-1/2 top-0 flex flex-col" style={{ width: g.page.w, visibility: "hidden" }}>
+        <div
+          className="board-paper min-h-0 flex-1 overflow-y-auto rounded-sm px-10 pt-9 text-reel shadow-[0_30px_60px_-20px_rgb(0_0_0/0.9)]"
+          style={{ paddingBottom: PAGE_FOOT }}
+        >
           <h3 ref={headingRef} tabIndex={-1} className="mb-6 font-serif text-[1.75rem] font-black leading-tight outline-none">
             {r.tabs[shown]}
           </h3>
           <RecordsContent faq={faq} code={code} tab={shown} />
+        </div>
+      </div>
+
+      <div
+        ref={coverWrapRef}
+        aria-hidden="true"
+        className="pointer-events-none absolute left-1/2 top-0"
+        style={{ width: box.file.w, height: box.file.h + box.file.tab, visibility: "hidden", perspective: "1400px" }}
+      >
+        <div ref={coverRef} className="absolute inset-x-0 bottom-0 origin-bottom" style={{ top: box.file.tab + box.file.h * 0.05 }}>
+          <div className="board-manila absolute inset-0 rounded-sm shadow-[0_-10px_24px_-6px_rgb(0_0_0/0.55)]" />
+          {/* folded top edge of the flap catching the light */}
+          <div className="absolute inset-x-0 top-0 h-[1.5%] rounded-t-sm" style={{ background: "linear-gradient(rgb(255 236 200 / 0.35), transparent)" }} />
         </div>
       </div>
 
