@@ -4,6 +4,9 @@ import type { MouseEvent } from "react"
 import { cn } from "@/lib/utils"
 import { pct, type Hotspot } from "./scenes"
 
+/** objects whose teaser would cover something below the tag, so it opens upwards instead */
+const TEASER_ABOVE = new Set<string>(["how", "records", "trailer"])
+
 type Props = {
   spot: Hotspot
   label: string
@@ -49,8 +52,9 @@ export function RoomHotspot({ spot, label, teaser, teaserInTag, onOpen, onHover 
         <span
           className={cn(
             teaserInTag
-              ? "pointer-events-none absolute left-1/2 top-full mt-1.5 w-56 -translate-x-1/2 rounded-[3px] bg-reel/85 px-2.5 py-1.5 text-center font-sans text-sm leading-snug text-reel-white opacity-0 transition-opacity duration-200 group-hover/spot:opacity-100 group-focus-visible/spot:opacity-100"
+              ? "pointer-events-none absolute left-1/2 w-56 -translate-x-1/2 rounded-[3px] bg-reel/85 px-2.5 py-1.5 text-center font-sans text-sm leading-snug text-reel-white opacity-0 transition-opacity duration-200 group-hover/spot:opacity-100 group-focus-visible/spot:opacity-100"
               : "sr-only",
+            teaserInTag && (TEASER_ABOVE.has(spot.id) ? "bottom-full mb-1.5" : "top-full mt-1.5"),
           )}
         >
           {teaser}
