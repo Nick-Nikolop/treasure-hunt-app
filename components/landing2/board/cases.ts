@@ -54,7 +54,19 @@ export type NoteSpot = Spot & { link?: number | "title" | null }
 
 export type CaseSpots = { photo: Spot; folder: Spot; notes: [NoteSpot, NoteSpot, NoteSpot]; focus: { x: number; y: number; s: number } }
 
-/** The cork board only holds the current case; solved cases live in the archive drawer. */
+/** Solved cases share one corner of the board: a label card, a tied bundle, and the spread-out files once opened. */
+export type ArchiveSpots = {
+  label: Spot
+  bundle: Spot
+  /** spread positions, indexed by how many solved cases there are (1, 2, 3+) */
+  spread: Spot[][]
+  /** where the "close archive" chip sits while the files are spread out */
+  close: { x: number; y: number }
+  /** start of the archive area along the split axis, in board % (x on wide boards, y on tall ones) */
+  edge: number
+}
+
+/** One cork board: the current case on one side, the archive of solved cases on the other. */
 export type BoardLayout = {
   /** board width / height */
   ratio: number
@@ -62,40 +74,77 @@ export type BoardLayout = {
   unit: string
   title: Spot
   current: CaseSpots
+  archive: ArchiveSpots
 }
 
 /** Every paper has a fixed shape so pins and strings can be computed instead of measured. */
-export const SHAPE = { photo: 1.12, folder: 0.64, note: 0.8, title: 0.4 }
+export const SHAPE = { photo: 1.12, folder: 0.64, note: 0.8, title: 0.4, file: 1 }
 
 export const WIDE: BoardLayout = {
-  ratio: 1.5,
-  unit: "1.3cqw",
-  title: { x: 31, y: 14, w: 34, r: -1.5 },
+  ratio: 1.6,
+  unit: "1cqw",
+  title: { x: 25, y: 13, w: 22, r: -1.5 },
   current: {
-    photo: { x: 33, y: 58, w: 29, r: -3 },
-    folder: { x: 71, y: 69, w: 36, r: 2.5 },
+    photo: { x: 23, y: 50, w: 22, r: -3 },
+    folder: { x: 44, y: 71, w: 21, r: 2.5 },
     notes: [
-      { x: 68, y: 21, w: 15, r: 5 },
-      { x: 88, y: 32, w: 14, r: -4, link: 0 },
-      { x: 9.5, y: 46, w: 13.5, r: -6, link: "title" },
+      { x: 45, y: 29, w: 10.5, r: 5 },
+      { x: 52.5, y: 45, w: 10, r: -4, link: 0 },
+      { x: 8.5, y: 80, w: 10, r: -6, link: null },
     ],
-    focus: { x: 55, y: 60, s: 1.25 },
+    focus: { x: 31, y: 50, s: 1.45 },
+  },
+  archive: {
+    label: { x: 81, y: 14, w: 19, r: 1.5 },
+    bundle: { x: 81, y: 53, w: 25, r: -2 },
+    spread: [
+      [{ x: 81, y: 55, w: 22, r: -2 }],
+      [
+        { x: 73, y: 54, w: 15, r: -3 },
+        { x: 89, y: 56, w: 15, r: 3 },
+      ],
+      [
+        { x: 71, y: 44, w: 13, r: -3 },
+        { x: 90, y: 46, w: 13, r: 3 },
+        { x: 80.5, y: 77, w: 13, r: -1 },
+      ],
+    ],
+    close: { x: 81, y: 88 },
+    edge: 62,
   },
 }
 
 export const TALL: BoardLayout = {
-  ratio: 0.74,
+  ratio: 0.52,
   unit: "2.6cqw",
-  title: { x: 50, y: 11, w: 64, r: -1.5 },
+  title: { x: 50, y: 6.5, w: 58, r: -1.5 },
   current: {
-    photo: { x: 37, y: 44, w: 54, r: -3 },
-    folder: { x: 62, y: 84, w: 60, r: 2 },
+    photo: { x: 38, y: 28, w: 50, r: -3 },
+    folder: { x: 60, y: 48, w: 56, r: 2 },
     notes: [
-      { x: 83, y: 31, w: 28, r: 6 },
-      { x: 84, y: 53, w: 27, r: -5, link: 0 },
-      { x: 15, y: 82, w: 25, r: -6, link: null },
+      { x: 84, y: 19, w: 26, r: 6 },
+      { x: 85, y: 33.5, w: 25, r: -5, link: 0 },
+      { x: 14, y: 52, w: 22, r: -6, link: null },
     ],
-    focus: { x: 50, y: 62, s: 1.2 },
+    focus: { x: 50, y: 30, s: 1.3 },
+  },
+  archive: {
+    label: { x: 28, y: 66, w: 42, r: 1.5 },
+    bundle: { x: 57, y: 86, w: 54, r: -2 },
+    spread: [
+      [{ x: 56, y: 84, w: 40, r: -2 }],
+      [
+        { x: 28, y: 85, w: 34, r: -3 },
+        { x: 72, y: 85, w: 34, r: 3 },
+      ],
+      [
+        { x: 18, y: 85, w: 28, r: -3 },
+        { x: 50, y: 85, w: 28, r: 1 },
+        { x: 82, y: 85, w: 28, r: 3 },
+      ],
+    ],
+    close: { x: 78, y: 66 },
+    edge: 60,
   },
 }
 
