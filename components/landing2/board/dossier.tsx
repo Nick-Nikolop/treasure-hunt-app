@@ -82,12 +82,12 @@ export function Dossier({ open, board, reel, notifyHref, onClose, onClosed, onMo
             >
               <span
                 aria-hidden="true"
-                className="absolute -top-7 left-5 flex h-8 items-center rounded-t-md bg-board-manila px-5 font-sans text-sm font-bold uppercase tracking-[0.25em] text-reel md:-top-8 md:h-9"
+                className="board-manila-deep absolute -top-7 left-5 flex h-8 items-center rounded-t-md px-5 font-sans text-sm font-bold uppercase tracking-[0.25em] text-reel md:-top-8 md:h-9"
               >
                 Hunt {open.ref}
               </span>
 
-              <div className="relative rounded-md rounded-tl-none bg-board-manila p-3 shadow-[0_40px_80px_-20px_rgb(0_0_0/0.9)] md:p-6">
+              <div className="board-manila relative rounded-md rounded-tl-none p-3 shadow-[inset_0_1px_0_rgb(255_240_200/0.35),0_40px_80px_-20px_rgb(0_0_0/0.9)] md:p-6">
                 <motion.div
                   className="grid gap-5 md:grid-cols-[0.85fr_1.15fr] md:gap-6"
                   initial={reduce ? false : { opacity: 0 }}
@@ -101,7 +101,7 @@ export function Dossier({ open, board, reel, notifyHref, onClose, onClosed, onMo
                 {!reduce && (
                   <motion.div
                     aria-hidden="true"
-                    className="absolute inset-0 origin-top rounded-md rounded-tl-none bg-board-manila-deep shadow-[inset_0_-2px_0_rgb(0_0_0/0.15)] [backface-visibility:hidden] [will-change:transform]"
+                    className="board-manila-deep absolute inset-0 origin-top rounded-md rounded-tl-none shadow-[inset_0_-2px_0_rgb(0_0_0/0.15)] [backface-visibility:hidden] [will-change:transform]"
                     initial={{ rotateX: 0 }}
                     animate={{ rotateX: -178 }}
                     exit={{ rotateX: 0, transition: { duration: 0.4, ease: EASE } }}
@@ -138,12 +138,12 @@ export function Dossier({ open, board, reel, notifyHref, onClose, onClosed, onMo
 function Evidence({ item, board }: { item: BoardCase; board: ReelCopy["board"] }) {
   return (
     <div className="relative flex flex-col gap-4">
-      <div className="relative -rotate-2 bg-reel-white p-2.5 pb-10 shadow-[0_14px_28px_-10px_rgb(0_0_0/0.55)]">
+      <div className="board-paper relative -rotate-2 p-2.5 pb-10 shadow-[0_1px_1px_rgb(0_0_0/0.35),0_14px_28px_-10px_rgb(0_0_0/0.6)]">
         <span
           aria-hidden="true"
-          className="absolute -top-3 left-8 z-10 h-10 w-4 rounded-full border-[3px] border-reel-mute/90 border-b-transparent"
+          className="absolute -top-3 left-8 z-10 h-10 w-4 rounded-full border-[3px] border-[#b9b4a8] border-b-transparent shadow-[1px_2px_2px_rgb(0_0_0/0.35)]"
         />
-        <div className="relative aspect-[4/3] overflow-hidden bg-reel">
+        <div className="relative aspect-[4/3] overflow-hidden bg-reel shadow-[inset_0_0_0_1px_rgb(0_0_0/0.25)]">
           <Image
             src={HUNT_IMAGES[item.ref]}
             alt=""
@@ -152,6 +152,7 @@ function Evidence({ item, board }: { item: BoardCase; board: ReelCopy["board"] }
             className="object-cover"
             style={item.live ? undefined : { filter: "sepia(0.35) contrast(1.05)" }}
           />
+          <span aria-hidden="true" className="board-gloss absolute inset-0" />
         </div>
         <span className="absolute inset-x-3 bottom-2.5 truncate font-serif text-base italic text-reel/80">
           Hunt {item.ref} · {item.title}
@@ -164,7 +165,7 @@ function Evidence({ item, board }: { item: BoardCase; board: ReelCopy["board"] }
           <li
             key={tag}
             className={cn(
-              "bg-reel-white/90 px-3 py-1.5 font-serif text-base italic text-reel shadow-[0_6px_12px_-6px_rgb(0_0_0/0.5)]",
+              "board-card px-3 py-1.5 font-serif text-base italic text-reel shadow-[0_1px_1px_rgb(0_0_0/0.3),0_6px_12px_-6px_rgb(0_0_0/0.55)]",
               i % 2 ? "rotate-1" : "-rotate-1",
             )}
           >
@@ -190,7 +191,7 @@ function Sheet({
   onMore: (ref: HuntRef) => void
 }) {
   return (
-    <div className="relative flex flex-col gap-5 bg-reel-white p-5 text-reel shadow-[0_14px_28px_-10px_rgb(0_0_0/0.5)] md:p-7">
+    <div className="board-paper relative flex flex-col gap-5 p-5 text-reel shadow-[0_1px_1px_rgb(0_0_0/0.3),0_14px_28px_-10px_rgb(0_0_0/0.55)] md:p-7">
       <div aria-hidden="true" className="absolute inset-x-5 top-0 h-px bg-reel/10 md:inset-x-7" />
       <div className="flex items-center gap-2 font-sans text-sm font-bold uppercase tracking-[0.3em] text-reel/60">
         <FileSearch className="size-4" aria-hidden="true" />
@@ -252,7 +253,7 @@ export function Stamp({
     <span
       style={style}
       className={cn(
-        "pointer-events-none absolute right-4 top-5 rotate-[-9deg] whitespace-nowrap rounded-sm border-[3px] bg-reel-white/85 px-3 py-1 font-sans text-base font-extrabold uppercase leading-none tracking-[0.18em] md:text-lg",
+        "pointer-events-none absolute right-4 top-5 rotate-[-9deg] whitespace-nowrap rounded-sm border-[3px] bg-reel-white/80 px-3 py-1 opacity-[0.88] font-sans text-base font-extrabold uppercase leading-none tracking-[0.18em] md:text-lg",
         live ? "border-reel-gold-deep text-reel-gold-deep" : "border-board-string text-board-string",
         className,
       )}
