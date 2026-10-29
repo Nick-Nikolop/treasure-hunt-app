@@ -10,7 +10,9 @@ import { preload } from "react-dom"
 import { useI18n } from "@/components/pythea/language-provider"
 import { LANDING_CONTACT, LANDING_COPY } from "@/components/landing/copy"
 import { cn } from "@/lib/utils"
+import { BoardBar, useBoardCamera } from "./board-camera"
 import { CaseBoard } from "./case-board"
+import { CasePickup } from "./case-pickup"
 import { OFFICE_COPY, type OfficeCopy } from "./copy"
 import { FocusShell } from "./focus-shell"
 import { RoomHotspot } from "./hotspot"
@@ -42,9 +44,12 @@ export function OfficePage() {
 
   const opener = useRef<HTMLElement | null>(null)
   const [origin, setOrigin] = useState<DOMRect | null>(null)
+  // A view reached by a click animates out of its object; one reached by URL or history just appears.
+  const navigated = useRef(false)
 
   const open: Open = useCallback(
     (view, el, extra) => {
+      navigated.current = true
       // null = moving between views: keep the object in the room that started it as the focus target.
       if (el !== null) opener.current = el ?? (document.activeElement as HTMLElement | null)
       setOrigin(el ? el.getBoundingClientRect() : null)
@@ -53,22 +58,33 @@ export function OfficePage() {
     [go, state.archive],
   )
 
-  // Restore focus to whatever opened the view once we are back in the room.
+  // Restore focus to whatever opened the view once we are back in the room. A sheet that is still
+  // travelling back to the cork is hidden, so wait until it is visible again.
   const lastView = useRef(state.view)
   useEffect(() => {
     if (lastView.current && !state.view) {
       const el = opener.current
-      if (el?.isConnected) el.focus({ preventScroll: true })
+      let tries = 0
+      const attempt = () => {
+        if (!el?.isConnected) return
+        el.focus({ preventScroll: true })
+        if (document.activeElement !== el && tries++ < 60) raf = requestAnimationFrame(attempt)
+      }
+      let raf = requestAnimationFrame(attempt)
+      lastView.current = state.view
+      return () => cancelAnimationFrame(raf)
     }
     lastView.current = state.view
   }, [state.view])
 
+  const desktop = useDesktop()
+  const atBoard = !!state.board && desktop
   const setArchive = useCallback(
     (openArchive: boolean) => {
-      if (openArchive) go({ archive: true })
+      if (openArchive) go(state.view === "board" ? { view: "board", archive: true, board: true } : { archive: true })
       else back()
     },
-    [go, back],
+    [go, back, state.view],
   )
 
   const board = (variant: "desk" | "wall") => (
@@ -77,21 +93,23 @@ export function OfficePage() {
       copy={copy}
       archiveOpen={state.archive}
       reduce={reduce}
-      onOpenCase={(el) => open("case-002", el)}
-      onOpenArchived={(el) => open("case-001", el)}
+      onOpenCase={(el) => open("case-002", el, { board: variant === "desk" && atBoard })}
+      onOpenArchived={(el, id) => open(id, el, { board: variant === "desk" && atBoard })}
       onArchive={setArchive}
     />
   )
 
-  const viewOpen = state.view !== null
+  const viewOpen = state.view !== null && state.view !== "board"
 
   return (
     <div data-office-root className="min-h-svh overflow-x-clip bg-reel font-sans text-reel-white">
       <div inert={viewOpen}>
-        <DesktopRoom copy={copy} locale={locale} onToggleLocale={toggle} open={open} board={board("desk")} />
-        <MobileRoom copy={copy} locale={locale} onToggleLocale={toggle} open={open} board={board("wall")} />
-        <OfficeFooter copy={copy} open={open} contactHref={contactHref} />
-        <BottomNav copy={copy} open={open} />
+        <DesktopRoom copy={copy} locale={locale} onToggleLocale={toggle} open={open} board={board("desk")} atBoard={atBoard} reduce={reduce} />
+        <div inert={atBoard}>
+          <MobileRoom copy={copy} locale={locale} onToggleLocale={toggle} open={open} board={board("wall")} />
+          <OfficeFooter copy={copy} open={open} contactHref={contactHref} />
+          <BottomNav copy={copy} open={open} />
+        </div>
       </div>
 
       <AnimatePresence>
@@ -103,6 +121,7 @@ export function OfficePage() {
             copy={copy}
             base={base}
             origin={origin}
+            instant={!navigated.current}
             reduce={reduce}
             contactHref={contactHref}
             back={back}
@@ -173,7 +192,7 @@ const sceneSrcSet = (scene: Scene) =>
   scene.srcLarge ? `${scene.src} ${scene.width}w, ${scene.srcLarge.src} ${scene.srcLarge.width}w` : undefined
 
 /** The room photo is atmosphere only (every object on it is a labelled control), so it is hidden from assistive tech. */
-function SceneFrame({ scene, children, className }: { scene: Scene; label?: string; children?: ReactNode; className?: string }) {
+function SceneFrame({ scene, children, className, sizes = "100vw" }: { scene: Scene; label?: string; children?: ReactNode; className?: string; sizes?: string }) {
   return (
     <div className={cn("relative w-full bg-[#0b0a09]", className)} style={{ aspectRatio: `${scene.width} / ${scene.height}` }}>
       {scene.srcLarge ? (
@@ -183,7 +202,7 @@ function SceneFrame({ scene, children, className }: { scene: Scene; label?: stri
           alt=""
           src={scene.src}
           srcSet={sceneSrcSet(scene)}
-          sizes="100vw"
+          sizes={sizes}
           fetchPriority="high"
           className="absolute inset-0 size-full object-cover"
         />
@@ -197,21 +216,42 @@ function SceneFrame({ scene, children, className }: { scene: Scene; label?: stri
 
 type RoomProps = { copy: OfficeCopy; locale: "el" | "en"; onToggleLocale: () => void; open: Open; board: ReactNode }
 
-function DesktopRoom({ copy, onToggleLocale, open, board }: RoomProps) {
+function DesktopRoom({ copy, onToggleLocale, open, board, atBoard, reduce }: RoomProps & { atBoard: boolean; reduce: boolean }) {
   const h = copy.hero
+  const stageRef = useRef<HTMLDivElement>(null)
+  const frame = DESKTOP.hotspots.find((s) => s.id === "board")!.rect
+  useBoardCamera(stageRef, frame, atBoard, reduce)
+  const others = DESKTOP.hotspots.filter((s) => s.id !== "board")
   return (
     <section aria-labelledby="office-title-desktop" className="hidden bg-[#0b0a09] xl:block">
       <div
+        ref={stageRef}
         data-office-stage
-        className="@container/stage relative mx-auto"
+        className="@container/stage relative mx-auto origin-top-left"
         style={{ aspectRatio: `${DESKTOP.width} / ${DESKTOP.height}`, width: `min(100%, calc(100svh * ${DESKTOP.width / DESKTOP.height}))` }}
       >
-        <SceneFrame scene={DESKTOP} label="" className="absolute inset-0" />
+        <SceneFrame scene={DESKTOP} label="" className="absolute inset-0" sizes={atBoard ? "260vw" : "100vw"} />
         <DeskPhone />
         {/* soft edges so a letterboxed room melts into the page */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 shadow-[inset_0_0_80px_30px_#0b0a09]" />
         <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 w-[34%] bg-linear-to-r from-[#0b0a09]/80 via-[#0b0a09]/45 to-transparent" />
 
+        <div inert={atBoard} className={atBoard ? "invisible" : "contents"}>
+          {DESKTOP.hotspots
+            .filter((s) => s.id === "board")
+            .map((spot) => (
+              <RoomHotspot key={spot.id} spot={spot} label={copy.objects.board.label} teaser={copy.objects.board.teaser} teaserInTag onOpen={(el) => open("board", el)} />
+            ))}
+        </div>
+
+        {/* everything around the board loses focus and light as the camera steps in */}
+        <BoardSurround frame={frame} />
+
+        <div className={cn("absolute", atBoard ? "z-[31]" : "z-10")} style={pct(DESKTOP.cork!)}>
+          {board}
+        </div>
+
+        <div inert={atBoard} className="contents">
         <header className="absolute inset-x-0 top-0 z-20 flex items-center gap-6 bg-linear-to-b from-[#0b0a09]/85 to-transparent px-[4%] pb-8 pt-4">
           <Logo />
           <nav aria-label={copy.nav.label} className="ml-auto flex items-center gap-1">
@@ -257,11 +297,7 @@ function DesktopRoom({ copy, onToggleLocale, open, board }: RoomProps) {
           <Status label={h.status} />
         </div>
 
-        <div className="absolute z-10" style={pct(DESKTOP.cork!)}>
-          {board}
-        </div>
-
-        {DESKTOP.hotspots.map((spot) => (
+        {others.map((spot) => (
           <RoomHotspot
             key={spot.id}
             spot={spot}
@@ -271,8 +307,24 @@ function DesktopRoom({ copy, onToggleLocale, open, board }: RoomProps) {
             onOpen={(el) => open(spot.id, el)}
           />
         ))}
+        </div>
       </div>
     </section>
+  )
+}
+
+/** Four dark, defocused bands around the board frame (no seams, nothing over the board itself). */
+function BoardSurround({ frame }: { frame: { x: number; y: number; w: number; h: number } }) {
+  const band = "absolute bg-[#0b0a09]/72 backdrop-blur-[5px]"
+  const right = frame.x + frame.w
+  const bottom = frame.y + frame.h
+  return (
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-[30]" style={{ opacity: "var(--cam, 0)", visibility: "var(--cam-vis, hidden)" as never }}>
+      <span className={band} style={{ left: 0, right: 0, top: 0, height: `${frame.y}%` }} />
+      <span className={band} style={{ left: 0, right: 0, top: `${bottom}%`, bottom: 0 }} />
+      <span className={band} style={{ left: 0, width: `${frame.x}%`, top: `${frame.y}%`, height: `${frame.h}%` }} />
+      <span className={band} style={{ left: `${right}%`, right: 0, top: `${frame.y}%`, height: `${frame.h}%` }} />
+    </div>
   )
 }
 
@@ -497,6 +549,7 @@ type HostProps = {
   copy: OfficeCopy
   base: (typeof LANDING_COPY)["el"]
   origin: DOMRect | null
+  instant: boolean
   reduce: boolean
   contactHref: string
   back: () => void
@@ -505,14 +558,28 @@ type HostProps = {
   open: Open
 }
 
-function ViewHost({ view, state, copy, base, origin, reduce, contactHref, back, home, go, open }: HostProps) {
+function ViewHost({ view, state, copy, base, origin, instant, reduce, contactHref, back, home, go, open }: HostProps) {
   const s = copy.shell
   const desktop = useDesktop()
   const toOffice = { label: s.backOffice, onClick: back }
   const common = { origin, reduce }
 
   switch (view) {
+    case "board":
+      return desktop ? <BoardBar copy={copy} onClose={back} /> : null
     case "case-002":
+      if (desktop)
+        return (
+          <CasePickup
+            copy={copy}
+            reduce={reduce}
+            instant={instant}
+            fromBoard={!!state.board}
+            contactHref={contactHref}
+            onClose={back}
+            onHow={() => open("how", null)}
+          />
+        )
       return (
         <FocusShell {...common} title={copy.case2.tab} back={toOffice} backdrop={DESK.src}>
           <CurrentCaseDossier copy={copy} reduce={reduce} contactHref={contactHref} onHow={() => open("how", null)} />

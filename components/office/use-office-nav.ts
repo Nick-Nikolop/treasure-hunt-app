@@ -2,11 +2,14 @@
 
 import { useCallback, useMemo, useSyncExternalStore } from "react"
 
-export const VIEWS = ["case-002", "case-001", "how", "map", "records", "trailer", "contact"] as const
+export const VIEWS = ["board", "case-002", "case-001", "how", "map", "records", "trailer", "contact"] as const
 export type OfficeView = (typeof VIEWS)[number]
 export type RecordsTab = "faq" | "code"
 
-export type OfficeState = { view: OfficeView | null; archive: boolean; tab: RecordsTab }
+/** `board`: the camera is at the case board (the board view itself, or a case opened from it). */
+export type OfficeState = { view: OfficeView | null; archive: boolean; tab: RecordsTab; board?: boolean }
+
+const BOARD_CHILDREN: readonly (OfficeView | null)[] = ["case-002", "case-001"]
 
 const NAV_EVENT = "office:nav"
 
@@ -17,7 +20,8 @@ export function parseState(search: string): OfficeState {
   // The archived dossier always sits on top of the opened archive.
   const archive = params.get("archive") === "open" || view === "case-001"
   const tab = params.get("tab") === "code" ? "code" : "faq"
-  return { view, archive, tab }
+  const board = view === "board" || (BOARD_CHILDREN.includes(view) && params.get("from") === "board")
+  return { view, archive, tab, board }
 }
 
 export function toSearch(state: Partial<OfficeState>): string {
@@ -25,13 +29,17 @@ export function toSearch(state: Partial<OfficeState>): string {
   if (state.view) params.set("view", state.view)
   if (state.archive || state.view === "case-001") params.set("archive", "open")
   if (state.view === "records" && state.tab === "code") params.set("tab", "code")
+  if (state.board && BOARD_CHILDREN.includes(state.view ?? null)) params.set("from", "board")
   const query = params.toString()
   return query ? `?${query}` : ""
 }
 
-/** Where each view returns to. Nested: archived dossier → open archive → office. */
+/** Where each view returns to. Nested: archived dossier → open archive → board (if we came from it) → office. */
 export function parentOf(state: OfficeState): OfficeState {
-  if (state.view === "case-001") return { view: null, archive: true, tab: "faq" }
+  const atBoard = state.board && state.view !== "board"
+  if (state.view === "case-001") return atBoard ? { view: "board", archive: true, tab: "faq", board: true } : { view: null, archive: true, tab: "faq" }
+  if (atBoard) return { view: "board", archive: state.archive, tab: "faq", board: true }
+  if (state.view === "board" && state.archive) return { view: "board", archive: false, tab: "faq", board: true }
   if (state.view) return { view: null, archive: state.archive, tab: "faq" }
   return { view: null, archive: false, tab: "faq" }
 }

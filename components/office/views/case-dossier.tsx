@@ -61,9 +61,19 @@ export function CurrentCaseDossier({ copy, reduce, contactHref, onHow }: Case2Pr
     <Folder tab={c.tab} stamp={c.stamp} reduce={reduce}>
       <div className="flex flex-col gap-6 md:flex-row md:gap-9">
         <Print src="/landing2/mission-carnival.webp" alt={c.photoAlt} className="w-full max-w-64 -rotate-2 self-center md:w-72 md:max-w-none md:self-start" />
-        <div className="flex min-w-0 flex-1 flex-col gap-5">
-          <p className="font-sans text-sm font-bold uppercase tracking-[0.24em] text-reel/60 md:pr-28">{c.tab}</p>
-          <h3 className="text-balance font-serif text-3xl font-black leading-tight md:text-4xl">{c.title}</h3>
+        <Case2Details copy={copy} contactHref={contactHref} onHow={onHow} />
+      </div>
+    </Folder>
+  )
+}
+
+/** The readable part of the Case 002 file. Also the inner page of the desktop pickup. */
+export function Case2Details({ copy, contactHref, onHow, titleId, compact }: { copy: OfficeCopy; contactHref: string; onHow: () => void; titleId?: string; compact?: boolean }) {
+  const c = copy.case2
+  return (
+        <div className={cn("flex min-w-0 flex-1 flex-col", compact ? "gap-4" : "gap-5")}>
+          <p className={cn("font-sans text-sm font-bold uppercase tracking-[0.24em] text-reel/60", !compact && "md:pr-28")}>{c.tab}</p>
+          <h3 id={titleId} className={cn("text-balance font-serif font-black leading-tight", compact ? "text-3xl" : "text-3xl md:text-4xl")}>{c.title}</h3>
           <p className="max-w-[60ch] text-pretty font-sans text-base leading-relaxed text-reel/80">{c.lead}</p>
 
           <div className="flex flex-col gap-2">
@@ -119,8 +129,6 @@ export function CurrentCaseDossier({ copy, reduce, contactHref, onHow }: Case2Pr
             </section>
           </div>
         </div>
-      </div>
-    </Folder>
   )
 }
 
