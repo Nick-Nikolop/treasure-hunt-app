@@ -12,8 +12,8 @@ import { mapInHand, useTransit } from "../transit"
 import { MapSheet, type MapSheetHandle } from "./map-sheet"
 import { MAP_ASPECT, mapFrame, type MapFrameInput } from "./pose"
 
-const OPEN_MS = 1500
-const FOLD_MS = 1150
+const OPEN_MS = 2100
+const FOLD_MS = 1600
 
 type Props = { copy: OfficeCopy; reduce: boolean; onClose: () => void }
 type Geo = MapFrameInput & { hold: { x: number; y: number }; open: { x: number; y: number }; panel: { left: number; width: number } }
