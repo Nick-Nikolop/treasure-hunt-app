@@ -132,42 +132,94 @@ export function Case2Details({ copy, contactHref, onHow, titleId, compact }: { c
   )
 }
 
+const EVIDENCE = [
+  { src: "/pythea/treasure-equation.png", width: 2172, height: 724, rotate: "-rotate-1", sizes: "(min-width: 768px) 520px, 90vw" },
+  { src: "/pythea/hunt-complete-celebration.png", width: 1254, height: 1254, rotate: "rotate-2", sizes: "(min-width: 768px) 300px, 80vw" },
+] as const
+
+const SectionLabel = ({ id, children }: { id: string; children: ReactNode }) => (
+  <h4 id={id} className="font-sans text-xs font-bold uppercase tracking-[0.2em] text-reel/55">
+    {children}
+  </h4>
+)
+
+/** The closed Case 001 file: what it was, how it unfolded, what was left behind and who took the prize. */
 export function ArchivedCaseDossier({ copy, reduce }: { copy: OfficeCopy; reduce: boolean }) {
   const c = copy.case1
+  const reveal = (i: number) =>
+    reduce ? {} : { initial: { opacity: 0, y: 10 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, margin: "-40px" }, transition: { duration: 0.35, delay: i * 0.06, ease: EASE } }
+
   return (
     <Folder tab={c.tab} stamp={c.stamp} done reduce={reduce}>
-      <div className="flex flex-col gap-6 md:flex-row md:gap-9">
-        <Print src="/landing2/mission-pythea.webp" alt={c.photoAlt} sepia className="w-full max-w-64 -rotate-2 self-center md:w-72 md:max-w-none md:self-start" />
-        <div className="flex min-w-0 flex-1 flex-col gap-5">
-          <p className="font-sans text-sm font-bold uppercase tracking-[0.24em] text-reel/60 md:pr-44">
-            {c.tab} · {c.period}
-          </p>
-          <h3 className="text-balance font-serif text-3xl font-black leading-tight md:text-4xl">{c.title}</h3>
-          <p className="max-w-[60ch] text-pretty font-sans text-base leading-relaxed text-reel/80">{c.body}</p>
+      <div className="flex flex-col gap-10">
+        <div className="flex flex-col gap-6 md:flex-row md:gap-9">
+          <Print src="/landing2/mission-pythea.webp" alt={c.photoAlt} sepia className="w-full max-w-64 -rotate-2 self-center md:w-72 md:max-w-none md:self-start" />
+          <div className="flex min-w-0 flex-1 flex-col gap-5">
+            <p className="font-sans text-sm font-bold uppercase tracking-[0.24em] text-reel/60 md:pr-44">
+              {c.tab} · {c.period}
+            </p>
+            <h3 className="text-balance font-serif text-3xl font-black leading-tight md:text-4xl">{c.title}</h3>
+            <p className="max-w-[60ch] text-pretty font-sans text-base leading-relaxed text-reel/80">{c.body}</p>
 
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-3 border-y border-reel/15 py-4">
-            {c.facts.map((fact) => (
-              <div key={fact.label} className="flex flex-col gap-0.5">
-                <dt className="font-sans text-xs font-bold uppercase tracking-[0.18em] text-reel/55">{fact.label}</dt>
-                <dd className="font-serif text-xl font-bold leading-tight">{fact.value}</dd>
-              </div>
-            ))}
-          </dl>
-
-          <section aria-labelledby="case1-split" className="flex flex-col gap-2">
-            <h4 id="case1-split" className="font-sans text-xs font-bold uppercase tracking-[0.2em] text-reel/55">
-              {c.splitLabel}
-            </h4>
-            <ol className="grid grid-cols-3 gap-2">
-              {c.split.map((row) => (
-                <li key={row.place} className="board-card flex flex-col items-center gap-0.5 px-2 py-2.5 text-center shadow-[0_1px_1px_rgb(0_0_0/0.25)]">
-                  <span className="font-sans text-sm text-reel/70">{row.place}</span>
-                  <span className="font-serif text-xl font-black">{row.amount}</span>
-                </li>
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-3 border-y border-reel/15 py-4">
+              {c.facts.map((fact) => (
+                <div key={fact.label} className="flex flex-col gap-0.5">
+                  <dt className="font-sans text-xs font-bold uppercase tracking-[0.18em] text-reel/55">{fact.label}</dt>
+                  <dd className="font-serif text-xl font-bold leading-tight">{fact.value}</dd>
+                </div>
               ))}
-            </ol>
-          </section>
+            </dl>
+          </div>
+        </div>
 
+        <section aria-labelledby="case1-log" className="flex flex-col gap-5 border-t border-reel/15 pt-8">
+          <SectionLabel id="case1-log">{c.logLabel}</SectionLabel>
+          <ol className="flex flex-col gap-6 border-l-2 border-dashed border-reel/25 pl-6 md:pl-8">
+            {c.log.map((entry, i) => (
+              <motion.li key={entry.title} className="relative flex flex-col gap-1" {...reveal(i)}>
+                <span aria-hidden="true" className="absolute -left-[calc(1.5rem+7px)] top-1 size-3 rounded-full bg-board-string shadow-[0_0_0_3px_rgb(0_0_0/0.08)] md:-left-[calc(2rem+7px)]" />
+                <span className="font-sans text-xs font-bold uppercase tracking-[0.2em] text-board-string">{entry.when}</span>
+                <span className="font-serif text-xl font-bold leading-tight">{entry.title}</span>
+                <p className="max-w-[62ch] text-pretty font-sans text-base leading-relaxed text-reel/80">{entry.body}</p>
+              </motion.li>
+            ))}
+          </ol>
+        </section>
+
+        <section aria-labelledby="case1-evidence" className="flex flex-col gap-5 border-t border-reel/15 pt-8">
+          <SectionLabel id="case1-evidence">{c.evidenceLabel}</SectionLabel>
+          <div className="grid items-start gap-8 md:grid-cols-[1.7fr_1fr] md:gap-7">
+            {c.evidence.map((item, i) => {
+              const e = EVIDENCE[i]
+              return (
+                <motion.figure
+                  key={item.mark}
+                  className={cn("board-paper relative flex flex-col gap-3 p-2 pb-4 shadow-[0_1px_1px_rgb(0_0_0/0.35),0_12px_22px_-10px_rgb(0_0_0/0.6)]", e.rotate)}
+                  {...reveal(i)}
+                >
+                  <span className="board-card absolute -top-3 left-4 z-[1] -rotate-3 px-2 py-0.5 font-sans text-xs font-extrabold uppercase tracking-[0.16em] text-reel shadow-[0_1px_2px_rgb(0_0_0/0.3)]">
+                    {c.exhibit} {item.mark}
+                  </span>
+                  <div className="overflow-hidden bg-reel">
+                    <Image src={e.src} alt={item.alt} width={e.width} height={e.height} sizes={e.sizes} className="h-auto w-full" />
+                  </div>
+                  <figcaption className="px-1 text-pretty font-serif text-base italic leading-snug text-reel/80">{item.caption}</figcaption>
+                </motion.figure>
+              )
+            })}
+          </div>
+        </section>
+
+        <section aria-labelledby="case1-split" className="flex flex-col gap-4 border-t border-reel/15 pt-8">
+          <SectionLabel id="case1-split">{c.splitLabel}</SectionLabel>
+          <ol className="grid grid-cols-3 gap-2 md:gap-3">
+            {c.split.map((row, i) => (
+              <li key={row.place} className="board-card flex flex-col items-center gap-0.5 px-2 py-3 text-center shadow-[0_1px_1px_rgb(0_0_0/0.25)]">
+                <span className="font-sans text-sm text-reel/70">{row.place}</span>
+                <span className={cn("font-serif font-black", i === 0 ? "text-2xl md:text-3xl" : "text-xl md:text-2xl")}>{row.amount}</span>
+              </li>
+            ))}
+          </ol>
           <Link
             href="/standings"
             className="flex min-h-12 w-fit items-center gap-2 rounded-full bg-reel px-5 font-sans text-base font-bold text-reel-white transition hover:bg-reel-raised"
@@ -175,7 +227,7 @@ export function ArchivedCaseDossier({ copy, reduce }: { copy: OfficeCopy; reduce
             <Trophy className="size-4" aria-hidden="true" />
             {c.standings}
           </Link>
-        </div>
+        </section>
       </div>
     </Folder>
   )

@@ -287,6 +287,30 @@ function ArchiveFolder({
       {/* inside of the folder: shade where the cover meets the spine */}
       <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-[0.3em] bg-linear-to-r from-reel/35 via-transparent to-transparent" />
 
+      {/* loose evidence tucked behind the files: hidden under the cover, it slides out as the folder opens */}
+      <motion.div
+        aria-hidden="true"
+        className="board-paper absolute bottom-[6%] right-[5%] w-[34%] p-[2.5%] pb-[7%] shadow-[0_1px_1px_rgb(0_0_0/0.35),0_6px_10px_-6px_rgb(0_0_0/0.7)]"
+        initial={false}
+        animate={open ? { rotate: 7, x: "10%", y: "30%" } : { rotate: 0, x: "0%", y: "0%" }}
+        transition={fileT(1)}
+      >
+        <span className="relative block aspect-square w-full overflow-hidden bg-reel">
+          <Image src="/pythea/hunt-complete-celebration.png" alt="" fill sizes="160px" className="object-cover" />
+        </span>
+      </motion.div>
+      <motion.div
+        aria-hidden="true"
+        className="absolute bottom-[5%] left-[4%] w-[64%] bg-reel p-[1.2%] shadow-[0_1px_1px_rgb(0_0_0/0.4),0_6px_10px_-6px_rgb(0_0_0/0.8)]"
+        initial={false}
+        animate={open ? { rotate: -3, x: "-4%", y: "78%" } : { rotate: 0, x: "0%", y: "0%" }}
+        transition={fileT(2)}
+      >
+        <span className="relative block aspect-[3/1] w-full overflow-hidden">
+          <Image src="/pythea/treasure-equation.png" alt="" fill sizes="320px" className="object-cover" />
+        </span>
+      </motion.div>
+
       {/* the files inside: the first sits on top, later ones peek out beneath it */}
       {files
         .map((file, i) => ({ file, i }))
