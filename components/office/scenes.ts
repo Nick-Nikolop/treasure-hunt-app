@@ -13,6 +13,8 @@ export type Hotspot = {
 
 export type Scene = {
   src: string
+  /** larger master for wide / high-density screens */
+  srcLarge?: { src: string; width: number }
   width: number
   height: number
   /** the bare cork inside the photographed frame */
@@ -22,7 +24,9 @@ export type Scene = {
 
 /** Coordinates were measured on the renders themselves (cork edges by colour scan, objects by eye). */
 export const DESKTOP: Scene = {
-  src: "/office/room-desktop.webp",
+  // clean plate: the phone was removed from the photo (scripts/office/clean-plate.py), a live one lies there instead
+  src: "/office/room-desktop-clean.webp",
+  srcLarge: { src: "/office/room-desktop-clean-2064.webp", width: 2064 },
   width: 1376,
   height: 768,
   cork: { x: 35.54, y: 18.75, w: 32.12, h: 36.5 },

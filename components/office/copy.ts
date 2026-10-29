@@ -106,6 +106,8 @@ export const OFFICE_COPY = {
       need: "Τι χρειάζεσαι",
       needs: ["Περιέργεια", "Παρατηρητικότητα", "Την ομάδα σου", "Ένα κινητό"],
       toCase: "Δες την Υπόθεση 002",
+      toCaseShort: "Υπόθεση 002",
+      putDown: "Άφησε το κινητό",
     },
     map: {
       title: "Χάρτης πεδίου",
@@ -256,6 +258,8 @@ export const OFFICE_COPY = {
       need: "What you need",
       needs: ["Curiosity", "A sharp eye", "Your team", "A phone"],
       toCase: "See Case 002",
+      toCaseShort: "Case 002",
+      putDown: "Put the phone down",
     },
     map: {
       title: "Field map",
