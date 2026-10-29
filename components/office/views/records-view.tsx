@@ -62,37 +62,42 @@ export function RecordsView({ copy, faq, code, tab, onTab }: Props) {
           aria-labelledby={`records-tab-${tab}`}
           className="board-paper px-5 py-7 text-reel md:px-10 md:py-10"
         >
-          {tab === "faq" ? (
-            <div className="flex flex-col gap-6">
-              <h3 className="font-serif text-3xl font-black leading-tight">{faq.title}</h3>
-              <dl className="flex flex-col divide-y divide-reel/15">
-                {faq.items.map((item) => (
-                  <div key={item.q} className="flex flex-col gap-1.5 py-4">
-                    <dt className="font-serif text-xl font-bold leading-snug">{item.q}</dt>
-                    <dd className="max-w-[65ch] text-pretty font-sans text-base leading-relaxed text-reel/80">{item.a}</dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-6">
-              <h3 className="text-balance font-serif text-3xl font-black leading-tight">{code.title}</h3>
-              <ol className="flex flex-col divide-y divide-reel/15">
-                {code.rules.map((rule, i) => (
-                  <li key={rule.title} className="flex gap-4 py-4">
-                    <span className="font-serif text-2xl font-black leading-none text-board-string">{i + 1}.</span>
-                    <span className="flex flex-col gap-1">
-                      <span className="font-serif text-xl font-bold leading-snug">{rule.title}</span>
-                      <span className="max-w-[65ch] text-pretty font-sans text-base leading-relaxed text-reel/80">{rule.body}</span>
-                    </span>
-                  </li>
-                ))}
-              </ol>
-              <p className="self-end font-serif text-lg italic text-reel/60">— {code.sign}</p>
-            </div>
-          )}
+          <RecordsContent faq={faq} code={code} tab={tab} />
         </div>
       </div>
+    </div>
+  )
+}
+
+/** The document inside each file: FAQ or the hunter's code. */
+export function RecordsContent({ faq, code, tab }: { faq: LandingCopy["faq"]; code: LandingCopy["code"]; tab: RecordsTab }) {
+  return tab === "faq" ? (
+    <div className="flex flex-col gap-6">
+      <h3 className="font-serif text-3xl font-black leading-tight">{faq.title}</h3>
+      <dl className="flex flex-col divide-y divide-reel/15">
+        {faq.items.map((item) => (
+          <div key={item.q} className="flex flex-col gap-1.5 py-4">
+            <dt className="font-serif text-xl font-bold leading-snug">{item.q}</dt>
+            <dd className="max-w-[65ch] text-pretty font-sans text-base leading-relaxed text-reel/80">{item.a}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  ) : (
+    <div className="flex flex-col gap-6">
+      <h3 className="text-balance font-serif text-3xl font-black leading-tight">{code.title}</h3>
+      <ol className="flex flex-col divide-y divide-reel/15">
+        {code.rules.map((rule, i) => (
+          <li key={rule.title} className="flex gap-4 py-4">
+            <span className="font-serif text-2xl font-black leading-none text-board-string">{i + 1}.</span>
+            <span className="flex flex-col gap-1">
+              <span className="font-serif text-xl font-bold leading-snug">{rule.title}</span>
+              <span className="max-w-[65ch] text-pretty font-sans text-base leading-relaxed text-reel/80">{rule.body}</span>
+            </span>
+          </li>
+        ))}
+      </ol>
+      <p className="self-end font-serif text-lg italic text-reel/60">— {code.sign}</p>
     </div>
   )
 }

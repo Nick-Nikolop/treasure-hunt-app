@@ -20,8 +20,9 @@ import { DeskPhone } from "./phone/desk-phone"
 import { PhonePickup } from "./phone/phone-pickup"
 import { DeskMap } from "./map/desk-map"
 import { MapPickup } from "./map/map-pickup"
+import { DrawerPickup } from "./records/drawer-pickup"
 import { DESK, DESKTOP, RECORDS, WALL, pct, type Scene } from "./scenes"
-import { toSearch, useOfficeNav, type OfficeState, type OfficeView } from "./use-office-nav"
+import { toSearch, useOfficeNav, type OfficeState, type OfficeView, type RecordsTab } from "./use-office-nav"
 import { ArchivedCaseDossier, CurrentCaseDossier } from "./views/case-dossier"
 import { ContactView } from "./views/contact-view"
 import { HowView } from "./views/how-view"
@@ -616,12 +617,16 @@ function ViewHost({ view, state, copy, base, origin, instant, reduce, contactHre
           <MapView copy={copy} />
         </FocusShell>
       )
-    case "records":
+    case "records": {
+      const onTab = (tab: RecordsTab) => go({ view: "records", archive: state.archive, tab }, "replace")
+      // Desktop: the top drawer slides out and the file is taken from it. Smaller screens keep the close-up view.
+      if (desktop) return <DrawerPickup copy={copy} faq={base.faq} code={base.code} tab={state.tab} onTab={onTab} reduce={reduce} onClose={back} />
       return (
         <FocusShell {...common} title={copy.records.title} back={toOffice} backdrop={RECORDS.src}>
-          <RecordsView copy={copy} faq={base.faq} code={base.code} tab={state.tab} onTab={(tab) => go({ view: "records", archive: state.archive, tab }, "replace")} />
+          <RecordsView copy={copy} faq={base.faq} code={base.code} tab={state.tab} onTab={onTab} />
         </FocusShell>
       )
+    }
     case "trailer":
       return (
         <FocusShell {...common} title={copy.trailer.title} back={toOffice} backdrop={RECORDS.src}>
