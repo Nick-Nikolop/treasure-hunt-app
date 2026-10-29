@@ -10,8 +10,8 @@ import type { OfficeCopy } from "./copy"
 import { archiveInHand, lerp, smoothstep, useTransit } from "./transit"
 import { ArchivedCaseBody } from "./views/case-dossier"
 
-const PICKUP_MS = 1300
-const PUTDOWN_MS = 950
+const PICKUP_MS = 2300
+const PUTDOWN_MS = 1700
 const TOP_BAR = 64
 
 type Rect = { x: number; y: number; w: number; h: number }
