@@ -28,7 +28,8 @@ export function RoomHotspot({ spot, label, teaser, teaserInTag, onOpen, onHover 
       onClick={(e: MouseEvent<HTMLButtonElement>) => onOpen(e.currentTarget)}
       onPointerEnter={onHover && (() => onHover(true))}
       onPointerLeave={onHover && (() => onHover(false))}
-      onFocus={onHover && (() => onHover(true))}
+      // keyboard focus only: focus handed back after a pickup closes must not lift the object again
+      onFocus={onHover && ((e) => e.currentTarget.matches(":focus-visible") && onHover(true))}
       onBlur={onHover && (() => onHover(false))}
       className="group/spot absolute rounded-xl outline-none"
       style={pct(rect)}

@@ -371,6 +371,8 @@ export function DrawerPickup({ copy, faq, code, onTab, reduce, onClose }: Props)
         rootRef.current?.focus({ preventScroll: true })
         // the hover peek already pulled the drawer out a little: carry on from there
         if (drawerPeek.get()) transit.set(slideT(PEEK))
+        // the dialog now covers the cabinet, so its pointerleave may never fire: the hover ends here
+        drawerPeek.set(false)
       }
       transit.set(transit.t.current)
       setRest(null)
