@@ -278,11 +278,8 @@ function ArchiveFolder({
       {/* back panel and its tab: this is what the pin holds, it never moves */}
       <span
         aria-hidden="true"
-        className="board-manila-deep absolute -top-[9%] left-[6%] flex h-[11%] items-center rounded-t-[0.35em] pl-[11%] pr-[6%] font-sans font-bold uppercase tracking-[0.2em] text-reel/75"
-        style={fs(3.4)}
-      >
-        {b.archive}
-      </span>
+        className="board-manila-deep absolute -top-[9%] left-[6%] h-[11%] w-[42%] rounded-t-[0.35em]"
+      />
       <span
         aria-hidden="true"
         className="board-manila-deep absolute inset-0 rounded-[0.3em] rounded-tl-none shadow-[0_1px_1px_rgb(0_0_0/0.45),0_16px_26px_-10px_rgb(0_0_0/0.9)]"
@@ -327,10 +324,6 @@ function ArchiveFolder({
                 style={fs(3.4)}
               >
                 {file.stamp}
-              </span>
-              <span className="mt-auto flex items-center gap-[0.35em] font-sans font-bold text-board-string" style={fs(4.2)}>
-                {b.openFile}
-                <ArrowRight className="size-[1.05em] transition-transform duration-200 group-hover/file:translate-x-1" aria-hidden="true" />
               </span>
             </button>
           </motion.div>
