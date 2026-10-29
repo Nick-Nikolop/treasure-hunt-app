@@ -11,10 +11,12 @@ type Props = {
   /** desktop shows the teaser on hover/focus inside the tag; phones list teasers under the scene */
   teaserInTag: boolean
   onOpen: (el: HTMLElement) => void
+  /** pointer over / focus on the object (e.g. the cabinet drawer gives a little) */
+  onHover?: (on: boolean) => void
 }
 
 /** One photographed object made interactive: the object itself is the button, its paper tag names it. */
-export function RoomHotspot({ spot, label, teaser, teaserInTag, onOpen }: Props) {
+export function RoomHotspot({ spot, label, teaser, teaserInTag, onOpen, onHover }: Props) {
   const { rect, tag } = spot
   const tagLeft = ((tag.x - rect.x) / rect.w) * 100
   const tagTop = ((tag.y - rect.y) / rect.h) * 100
@@ -24,6 +26,10 @@ export function RoomHotspot({ spot, label, teaser, teaserInTag, onOpen }: Props)
       type="button"
       data-object={spot.id}
       onClick={(e: MouseEvent<HTMLButtonElement>) => onOpen(e.currentTarget)}
+      onPointerEnter={onHover && (() => onHover(true))}
+      onPointerLeave={onHover && (() => onHover(false))}
+      onFocus={onHover && (() => onHover(true))}
+      onBlur={onHover && (() => onHover(false))}
       className="group/spot absolute rounded-xl outline-none"
       style={pct(rect)}
     >

@@ -135,6 +135,8 @@ export const OFFICE_COPY = {
       tabs: { faq: "Ερωτήσεις", code: "Κώδικας κυνηγού" },
       tabsLabel: "Περιεχόμενα συρταριού",
       putBack: "Κλείσε το συρτάρι",
+      putFileBack: "Βάλε τον φάκελο πίσω",
+      pick: "Διάλεξε φάκελο",
     },
     trailer: {
       title: "Το τρέιλερ",
@@ -294,6 +296,8 @@ export const OFFICE_COPY = {
       tabs: { faq: "Questions", code: "Hunter's code" },
       tabsLabel: "Drawer contents",
       putBack: "Close the drawer",
+      putFileBack: "Put the file back",
+      pick: "Pick a file",
     },
     trailer: {
       title: "The trailer",
