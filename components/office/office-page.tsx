@@ -17,6 +17,7 @@ import { CasePickup } from "./case-pickup"
 import { OFFICE_COPY, type OfficeCopy } from "./copy"
 import { FocusShell } from "./focus-shell"
 import { RoomHotspot } from "./hotspot"
+import { RoomTitle } from "./room-title"
 import { DeskPhone } from "./phone/desk-phone"
 import { PhonePickup } from "./phone/phone-pickup"
 import { DeskMap } from "./map/desk-map"
@@ -118,7 +119,7 @@ export function OfficePage() {
   return (
     <div data-office-root className="min-h-svh overflow-x-clip bg-reel font-sans text-reel-white">
       <div inert={viewOpen}>
-        <DesktopRoom copy={copy} locale={locale} onToggleLocale={toggle} open={open} board={board("desk")} atBoard={atBoard} reduce={reduce} />
+        <DesktopRoom copy={copy} locale={locale} onToggleLocale={toggle} open={open} board={board("desk")} atBoard={atBoard} reduce={reduce} skipTitle={state.view !== null || atBoard} />
         <div inert={atBoard}>
           <MobileRoom copy={copy} locale={locale} onToggleLocale={toggle} open={open} board={board("wall")} />
           <OfficeFooter copy={copy} open={open} contactHref={contactHref} />
@@ -230,7 +231,7 @@ function SceneFrame({ scene, children, className, sizes = "100vw" }: { scene: Sc
 
 type RoomProps = { copy: OfficeCopy; locale: "el" | "en"; onToggleLocale: () => void; open: Open; board: ReactNode }
 
-function DesktopRoom({ copy, onToggleLocale, open, board, atBoard, reduce }: RoomProps & { atBoard: boolean; reduce: boolean }) {
+function DesktopRoom({ copy, onToggleLocale, open, board, atBoard, reduce, skipTitle }: RoomProps & { atBoard: boolean; reduce: boolean; skipTitle: boolean }) {
   const h = copy.hero
   const stageRef = useRef<HTMLDivElement>(null)
   const frame = DESKTOP.hotspots.find((s) => s.id === "board")!.rect
@@ -290,29 +291,7 @@ function DesktopRoom({ copy, onToggleLocale, open, board, atBoard, reduce }: Roo
           </nav>
         </header>
 
-        <div className="absolute left-[4%] top-[14%] z-10 flex w-[27%] flex-col gap-[1.4cqw]">
-          <p className="font-sans text-[max(13px,0.9cqw)] font-bold uppercase tracking-[0.28em] text-reel-gold">{h.eyebrow}</p>
-          <h1 id="office-title-desktop" className="font-serif text-[max(32px,2.85cqw)] font-black leading-[1.02] text-reel-white [text-shadow:0_2px_24px_rgb(0_0_0/0.7)]">
-            {h.title[0]}
-            <br />
-            {h.title[1]}
-          </h1>
-          <p className="text-pretty font-sans text-[max(15px,1.12cqw)] leading-relaxed text-reel-white/85 [text-shadow:0_1px_12px_rgb(0_0_0/0.8)]">{h.body}</p>
-          <div className="flex flex-wrap gap-2.5">
-            <ViewLink view="case-002" open={open} className="reel-cta flex min-h-11 items-center gap-2 rounded-full px-5 font-sans text-[max(15px,1cqw)] font-bold">
-              <FileText className="size-4" aria-hidden="true" />
-              {h.primary}
-            </ViewLink>
-            <ViewLink
-              view="how"
-              open={open}
-              className="flex min-h-11 items-center gap-2 rounded-full bg-reel/50 px-5 font-sans text-[max(15px,1cqw)] font-bold text-reel-white ring-1 ring-reel-white/35 backdrop-blur-sm transition hover:bg-reel-white/10"
-            >
-              {h.secondary}
-            </ViewLink>
-          </div>
-          <Status label={h.status} />
-        </div>
+        <RoomTitle copy={copy} reduce={reduce} skip={skipTitle} status={<Status label={h.status} />} />
 
         {others.map((spot) => (
           <RoomHotspot
