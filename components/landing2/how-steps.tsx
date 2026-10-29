@@ -63,7 +63,7 @@ export function HowSteps({ how }: { how: LandingCopy["how"] }) {
         </div>
       </div>
 
-      <ol className="flex flex-col gap-12 md:gap-0">
+      <ol className="flex flex-col gap-10 md:gap-0">
         {how.steps.map((step, index) => {
           const isActive = index === active
           return (
@@ -79,7 +79,7 @@ export function HowSteps({ how }: { how: LandingCopy["how"] }) {
             >
               <div
                 className={cn(
-                  "relative order-last h-72 overflow-hidden rounded-3xl border border-reel-white/10 bg-reel md:hidden",
+                  "relative order-last h-56 overflow-hidden rounded-3xl border border-reel-white/10 bg-reel md:hidden",
                   STAGE_GRID,
                 )}
               >
