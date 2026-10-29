@@ -12,8 +12,8 @@ import { useTransit } from "../transit"
 import type { RecordsTab } from "../use-office-nav"
 import { RecordsContent } from "../views/records-view"
 
-const OPEN_MS = 2100
-const CLOSE_MS = 1500
+const OPEN_MS = 3600
+const CLOSE_MS = 2600
 const PLATE = "/office/room-desktop-clean-2064.webp"
 
 /** The top drawer's front in the photo (photo px), measured on the clean plate. */
