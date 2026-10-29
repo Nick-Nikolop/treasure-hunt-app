@@ -14,19 +14,19 @@ export const PHONE_ASPECT = 2.06
 export const PHONE_THICKNESS = 0.05
 
 /** World height of the phone, in photo px. Only fixes the depth scale; the fit below is solved for it. */
-const PHONE_WORLD_H = 160
+export const PHONE_WORLD_H = 160
 
 /**
  * Rest pose solved (Levenberg–Marquardt, max error 1.4 px) against the four corners of the phone
  * that was originally photographed on the desk, so the live phone lies on the desk with the photo's
  * own perspective. Top of the phone points right/away; its face normal is the desk normal.
  */
-const REST_POS: V3 = [281.2, 826.31, -981.28]
-const REST_QUAT: Quat = [0.5251, -0.33938, 0.32785, 0.70824]
+export const REST_POS: V3 = [281.2, 826.31, -981.28]
+export const REST_QUAT: Quat = [0.5251, -0.33938, 0.32785, 0.70824]
 
-type V3 = [number, number, number]
-type Quat = [number, number, number, number]
-type M4 = number[] // row-major 4×4
+export type V3 = [number, number, number]
+export type Quat = [number, number, number, number]
+export type M4 = number[] // row-major 4×4
 
 export type PhoneFrameInput = {
   /** the desktop stage (photo) rect, in the coordinates of the layer container */
@@ -138,14 +138,14 @@ export function smoothstep(a: number, b: number, x: number) {
   return s * s * (3 - 2 * s)
 }
 
-const clamp01 = (x: number) => Math.min(1, Math.max(0, x))
+export const clamp01 = (x: number) => Math.min(1, Math.max(0, x))
 
 /* ---------- vectors, quaternions, matrices ---------- */
 
-const add = (a: V3, b: V3): V3 => [a[0] + b[0], a[1] + b[1], a[2] + b[2]]
-const mul = (a: V3, s: number): V3 => [a[0] * s, a[1] * s, a[2] * s]
+export const add = (a: V3, b: V3): V3 => [a[0] + b[0], a[1] + b[1], a[2] + b[2]]
+export const mul = (a: V3, s: number): V3 => [a[0] * s, a[1] * s, a[2] * s]
 
-type V2 = [number, number]
+export type V2 = [number, number]
 
 function bezier2(a: V2, b: V2, c: V2, e: V2, t: number): V2 {
   const u = 1 - t
@@ -153,12 +153,12 @@ function bezier2(a: V2, b: V2, c: V2, e: V2, t: number): V2 {
   return [0, 1].map((i) => a[i] * w[0] + b[i] * w[1] + c[i] * w[2] + e[i] * w[3]) as V2
 }
 
-const project = (p: V3, cx: number, cy: number, d: number): V2 => {
+export const project = (p: V3, cx: number, cy: number, d: number): V2 => {
   const s = d / (d - p[2])
   return [cx + (p[0] - cx) * s, cy + (p[1] - cy) * s]
 }
 
-function slerp(a: Quat, b: Quat, t: number): Quat {
+export function slerp(a: Quat, b: Quat, t: number): Quat {
   let dot = a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3]
   let bb = b
   if (dot < 0) {
@@ -177,7 +177,7 @@ function slerp(a: Quat, b: Quat, t: number): Quat {
   return a.map((v, i) => v * wa + bb[i] * wb) as Quat
 }
 
-function rotationRows([x, y, z, w]: Quat) {
+export function rotationRows([x, y, z, w]: Quat) {
   return [
     [1 - 2 * (y * y + z * z), 2 * (x * y - z * w), 2 * (x * z + y * w)],
     [2 * (x * y + z * w), 1 - 2 * (x * x + z * z), 2 * (y * z - x * w)],
@@ -185,26 +185,26 @@ function rotationRows([x, y, z, w]: Quat) {
   ]
 }
 
-function rotate(q: Quat, v: V3): V3 {
+export function rotate(q: Quat, v: V3): V3 {
   const r = rotationRows(q)
   return [0, 1, 2].map((i) => r[i][0] * v[0] + r[i][1] * v[1] + r[i][2] * v[2]) as V3
 }
 
-function rotation(q: Quat): M4 {
+export function rotation(q: Quat): M4 {
   const r = rotationRows(q)
   return [...r[0], 0, ...r[1], 0, ...r[2], 0, 0, 0, 0, 1]
 }
 
-const translate = (x: number, y: number, z: number): M4 => [1, 0, 0, x, 0, 1, 0, y, 0, 0, 1, z, 0, 0, 0, 1]
-const scaleM = (s: number): M4 => [s, 0, 0, 0, 0, s, 0, 0, 0, 0, s, 0, 0, 0, 0, 1]
+export const translate = (x: number, y: number, z: number): M4 => [1, 0, 0, x, 0, 1, 0, y, 0, 0, 1, z, 0, 0, 0, 1]
+export const scaleM = (s: number): M4 => [s, 0, 0, 0, 0, s, 0, 0, 0, 0, s, 0, 0, 0, 0, 1]
 
 /** translate(c) · perspective(d) · translate(-c), i.e. CSS `perspective` with its origin at the camera. */
-function cameraMatrix(cx: number, cy: number, d: number): M4 {
+export function cameraMatrix(cx: number, cy: number, d: number): M4 {
   const persp: M4 = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, -1 / d, 1]
   return matMul(translate(cx, cy, 0), matMul(persp, translate(-cx, -cy, 0)))
 }
 
-function matMul(a: M4, b: M4): M4 {
+export function matMul(a: M4, b: M4): M4 {
   const out = new Array(16).fill(0)
   for (let r = 0; r < 4; r++)
     for (let c = 0; c < 4; c++) {
@@ -216,7 +216,7 @@ function matMul(a: M4, b: M4): M4 {
 }
 
 /** CSS matrix3d is column-major. */
-function css(m: M4) {
+export function css(m: M4) {
   const cols = [0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15].map((i) => +m[i].toFixed(7))
   return `matrix3d(${cols.join(",")})`
 }

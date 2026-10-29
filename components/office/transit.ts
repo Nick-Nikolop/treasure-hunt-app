@@ -67,6 +67,7 @@ export function createHeldFlag() {
 }
 
 export const caseInHand = createHeldFlag()
+export const mapInHand = createHeldFlag()
 
 export const lerp = (a: number, b: number, t: number) => a + (b - a) * t
 export { smoothstep } from "./phone/pose"

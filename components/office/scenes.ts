@@ -34,7 +34,7 @@ export const DESKTOP: Scene = {
     // the wooden frame around the cork; papers on the board sit above it and stay directly clickable
     { id: "board", rect: { x: 33.2, y: 15.1, w: 36.7, h: 44.9 }, tag: { x: 51.6, y: 15.4 } },
     { id: "how", rect: { x: 27.3, y: 82, w: 8.9, h: 8 }, tag: { x: 31.7, y: 79.2 } },
-    { id: "map", rect: { x: 36.8, y: 81.2, w: 27.7, h: 11.8 }, tag: { x: 50.6, y: 79.2 } },
+    { id: "map", rect: { x: 43.5, y: 82.5, w: 11.5, h: 11 }, tag: { x: 49.2, y: 80.2 } },
     { id: "contact", rect: { x: 66.2, y: 78.5, w: 21.6, h: 16.3 }, tag: { x: 77, y: 88.5 } },
     { id: "records", rect: { x: 74.2, y: 48.4, w: 14.7, h: 28.6 }, tag: { x: 81.5, y: 45.6 } },
     { id: "trailer", rect: { x: 90.8, y: 56, w: 8.7, h: 18 }, tag: { x: 94, y: 52.6 } },

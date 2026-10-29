@@ -18,6 +18,8 @@ import { FocusShell } from "./focus-shell"
 import { RoomHotspot } from "./hotspot"
 import { DeskPhone } from "./phone/desk-phone"
 import { PhonePickup } from "./phone/phone-pickup"
+import { DeskMap } from "./map/desk-map"
+import { MapPickup } from "./map/map-pickup"
 import { DESK, DESKTOP, RECORDS, WALL, pct, type Scene } from "./scenes"
 import { toSearch, useOfficeNav, type OfficeState, type OfficeView } from "./use-office-nav"
 import { ArchivedCaseDossier, CurrentCaseDossier } from "./views/case-dossier"
@@ -232,6 +234,7 @@ function DesktopRoom({ copy, onToggleLocale, open, board, atBoard, reduce }: Roo
       >
         <SceneFrame scene={DESKTOP} label="" className="absolute inset-0" sizes={atBoard ? "260vw" : "100vw"} />
         <DeskPhone />
+        <DeskMap copy={copy} />
         {/* soft edges so a letterboxed room melts into the page */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 shadow-[inset_0_0_80px_30px_#0b0a09]" />
         <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 w-[34%] bg-linear-to-r from-[#0b0a09]/80 via-[#0b0a09]/45 to-transparent" />
@@ -606,6 +609,8 @@ function ViewHost({ view, state, copy, base, origin, instant, reduce, contactHre
         </FocusShell>
       )
     case "map":
+      // Desktop: the folded map on the desk is lifted and opened. Smaller screens keep the close-up view.
+      if (desktop) return <MapPickup copy={copy} reduce={reduce} onClose={back} />
       return (
         <FocusShell {...common} title={copy.map.title} back={toOffice} backdrop={DESK.src}>
           <MapView copy={copy} />

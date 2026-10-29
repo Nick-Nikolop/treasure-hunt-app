@@ -126,6 +126,9 @@ export const OFFICE_COPY = {
       engravingAlt: "Παλιό χαρακτικό της Καλαμάτας του 1686",
       engravingCaption: "Καλαμάτα, 1686",
       credits: ["Χάρτης © OpenStreetMap contributors, ODbL", "Χαρακτικό V. Coronelli, 1686, CC BY-SA 4.0"],
+      putDown: "Δίπλωσε τον χάρτη",
+      coverCity: "ΚΑΛΑΜΑΤΑ",
+      coverKind: "Οδικός χάρτης κέντρου",
     },
     records: {
       title: "Οδηγίες & Απαντήσεις",
@@ -281,6 +284,9 @@ export const OFFICE_COPY = {
       engravingAlt: "Old engraving of Kalamata from 1686",
       engravingCaption: "Kalamata, 1686",
       credits: ["Map © OpenStreetMap contributors, ODbL", "Engraving by V. Coronelli, 1686, CC BY-SA 4.0"],
+      putDown: "Fold the map",
+      coverCity: "KALAMATA",
+      coverKind: "City centre street map",
     },
     records: {
       title: "Rules & Answers",
