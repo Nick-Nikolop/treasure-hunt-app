@@ -1,7 +1,6 @@
 "use client"
 
 import { useRef, useState } from "react"
-import { cn } from "@/lib/utils"
 import type { OfficeCopy } from "./copy"
 
 /** Lamp geometry measured on the desktop render, in % of the scene. */
@@ -115,29 +114,9 @@ export function DeskLamp({ copy, reduce, hidden }: { copy: OfficeCopy; reduce: b
           aria-pressed={on}
           aria-label={on ? l.off : l.on}
           onClick={toggle}
-          className="group/lamp absolute z-[12] rounded-xl outline-none"
+          className="absolute z-[12] cursor-pointer outline-none"
           style={{ left: `${SHADE.x}%`, top: `${SHADE.y}%`, width: `${CHAIN.x + 1.6 - SHADE.x}%`, height: `${CHAIN.bottom + 1.2 - SHADE.y}%` }}
-        >
-          <span
-            aria-hidden="true"
-            className="absolute rounded-xl opacity-0 shadow-[0_0_0_2px_rgb(226_176_79/0.75),0_0_34px_4px_rgb(226_176_79/0.28)] transition-opacity duration-200 group-hover/lamp:opacity-100 group-focus-visible/lamp:opacity-100"
-            style={{
-              left: 0,
-              top: 0,
-              width: `${(SHADE.w / (CHAIN.x + 1.6 - SHADE.x)) * 100}%`,
-              height: `${(SHADE.h / (CHAIN.bottom + 1.2 - SHADE.y)) * 100}%`,
-            }}
-          />
-          <span
-            className={cn(
-              "office-tag absolute left-[104%] top-[82%] flex -translate-y-1/2 items-center gap-1.5 whitespace-nowrap rounded-[3px] px-2.5 py-1 font-sans text-sm font-bold leading-tight text-reel opacity-0 transition duration-200",
-              "group-hover/lamp:opacity-100 group-focus-visible/lamp:opacity-100 group-focus-visible/lamp:ring-2 group-focus-visible/lamp:ring-reel-gold",
-            )}
-          >
-            <span aria-hidden="true" className={cn("size-1.5 shrink-0 rounded-full", on ? "bg-reel-gold" : "bg-reel/40")} />
-            {on ? l.off : l.on}
-          </span>
-        </button>
+        />
         {/* the brass stem and base are part of the lamp too */}
         <button
           type="button"
