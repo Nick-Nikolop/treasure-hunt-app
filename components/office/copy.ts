@@ -26,6 +26,8 @@ export const OFFICE_COPY = {
       primary: "Άνοιξε την Υπόθεση 002",
       secondary: "Πώς παίζεται",
       status: "Υπόθεση 002 · Σύντομα",
+      hint: "Κάθε αντικείμενο στο γραφείο ανοίγει. Ξεκίνα από τον πίνακα.",
+      enter: "Μπες στο γραφείο",
     },
     objects: {
       case: { label: "Υπόθεση 002 · Σύντομα", teaser: "Μια νέα ιστορία έρχεται στην Καλαμάτα. Τα υπόλοιπα παραμένουν απόρρητα." },
@@ -203,6 +205,8 @@ export const OFFICE_COPY = {
       primary: "Open Case 002",
       secondary: "How it works",
       status: "Case 002 · Coming soon",
+      hint: "Every object in the office opens. Start with the board.",
+      enter: "Step into the office",
     },
     objects: {
       case: { label: "Case 002 · Coming soon", teaser: "A new story is coming to Kalamata. The rest remains classified." },

@@ -884,3 +884,20 @@ body {
 .office-fade-in { animation: office-fade-in 260ms ease-out 180ms both; }
 @keyframes office-fade-in { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .office-fade-in { animation: none; } }
+
+/* office opening title card */
+@keyframes office-reveal {
+  from { opacity: 0; transform: translateY(0.4em); filter: blur(6px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+.office-reveal { animation: office-reveal 900ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+/* the lamp catching: two short flickers, then the room is lit */
+@keyframes office-lights-on {
+  0% { opacity: 0.93; }
+  12% { opacity: 0.55; }
+  18% { opacity: 0.9; }
+  30% { opacity: 0.4; }
+  36% { opacity: 0.72; }
+  100% { opacity: 0; }
+}
+.office-lights-on { animation: office-lights-on 1400ms ease-out both; }
