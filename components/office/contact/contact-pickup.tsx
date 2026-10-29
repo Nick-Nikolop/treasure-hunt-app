@@ -15,6 +15,8 @@ const CLOSE_MS = 3300
 const PHOTO_TEX = "/office/contact/envelope-photo.webp"
 const EMPTY_TEX = "/office/contact/tray-empty.webp"
 const WALLS_TEX = "/office/contact/tray-walls.webp"
+/** Textures the hover peek needs, preloaded by the room so the first hover is not drawn before they arrive. */
+export const ENVELOPE_TEXTURES = [PHOTO_TEX, EMPTY_TEX, WALLS_TEX]
 
 /** Where the letter's top ends up, and how much of the envelope stays in view at the bottom. */
 const PAGE_TOP = 76
