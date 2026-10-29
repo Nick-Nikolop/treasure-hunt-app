@@ -17,7 +17,9 @@ import {
   type M4,
   type Quat,
   type V3,
+  axisQuat,
   cameraMatrix,
+  qmul,
   css,
   matMul,
   project,
@@ -50,6 +52,8 @@ export type MapFrameInput = {
   hold?: { x: number; y: number }
   /** screen centre of the fully opened map */
   open?: { x: number; y: number }
+  /** 0→1 hover pose at t = 0: the packet lifts a little and its cover flap starts to part */
+  peek?: number
 }
 
 export type MapFace = { transform: string; z: number; visible: boolean; shade: number }
@@ -158,7 +162,8 @@ export function mapFrame(t: number, input: MapFrameInput): MapFrame {
 
   const p0: V3 = [stage.left + REST.pos[0] * k, stage.top + REST.pos[1] * k, REST.pos[2] * k]
   const lift = smoothstep(PHASE.lift[0], PHASE.lift[1], t)
-  const vOpen = smoothstep(PHASE.vertical[0], PHASE.vertical[1], t)
+  const peek = t === 0 ? (input.peek ?? 0) : 0
+  const vOpen = t === 0 ? Math.max(0, peek) * 0.06 : smoothstep(PHASE.vertical[0], PHASE.vertical[1], t)
   const hOpen = smoothstep(PHASE.horizontal[0], PHASE.horizontal[1], t)
 
   // The anchor is the centre of the BL panel, which the folded packet covers.
@@ -185,6 +190,13 @@ export function mapFrame(t: number, input: MapFrameInput): MapFrame {
     const dist = 1 / (1 / dist0 + (1 / distHold - 1 / dist0) * smoothstep(0.05, 1, a) ** 0.85)
     pos = [cam.x + ((sx - cam.x) * dist) / cam.d, cam.y + ((sy - cam.y) * dist) / cam.d, cam.d - dist]
     quat = slerp(REST.quat, IDENTITY, smoothstep(0.02, 0.9, a))
+  }
+  if (peek !== 0) {
+    // raised off the desk with the near edge tipped up towards the eye, like a hand closing on it
+    const up = REST.normal[2] > 0 ? 1 : -1
+    const h = worldH * 0.08 * peek * up
+    pos = [p0[0] + REST.normal[0] * h, p0[1] + REST.normal[1] * h, p0[2] + REST.normal[2] * h]
+    quat = qmul(REST.quat, qmul(axisQuat([1, 0, 0], -0.16 * peek * up), axisQuat([0, 0, 1], -0.06 * peek)))
   }
 
   const sheetToWorld = matMul(translate(pos[0], pos[1], pos[2]), matMul(rotationOf(quat), matMul(scaleM(scale), translate(q.w / 2, -q.h / 2, 0))))
@@ -224,7 +236,7 @@ export function mapFrame(t: number, input: MapFrameInput): MapFrame {
     translate(p0[0], p0[1], p0[2]),
     matMul(rotationOf(REST.quat), matMul(scaleM(scale * 1.04), translate(-q.w / 2, -q.h / 2, -0.5))),
   )
-  return { faces, shadow: css(matMul(cameraMatrix(cx, cy, d), shadowWorld)), lift: t === 0 ? 0 : Math.min(1, t / 0.12) }
+  return { faces, shadow: css(matMul(cameraMatrix(cx, cy, d), shadowWorld)), lift: t === 0 ? Math.min(1, Math.max(0, peek)) * 0.35 : Math.min(1, t / 0.12) }
 }
 
 export function rotationOf(q: Quat): M4 {
