@@ -17,6 +17,7 @@ import { CasePickup } from "./case-pickup"
 import { OFFICE_COPY, type OfficeCopy } from "./copy"
 import { FocusShell } from "./focus-shell"
 import { RoomHotspot } from "./hotspot"
+import { DeskLamp } from "./desk-lamp"
 import { RoomTitle } from "./room-title"
 import { DeskPhone } from "./phone/desk-phone"
 import { PhonePickup } from "./phone/phone-pickup"
@@ -265,6 +266,8 @@ function DesktopRoom({ copy, onToggleLocale, open, board, atBoard, reduce, skipT
         {/* everything around the board loses focus and light as the camera steps in */}
         <BoardSurround frame={frame} />
 
+        <DeskLamp copy={copy} reduce={reduce} hidden={atBoard} />
+
         <div className={cn("absolute", atBoard ? "z-[31]" : "z-10")} style={pct(DESKTOP.cork!)}>
           {board}
         </div>
@@ -302,6 +305,7 @@ function DesktopRoom({ copy, onToggleLocale, open, board, atBoard, reduce, skipT
             teaserInTag
             onOpen={(el) => open(spot.id, el)}
             onHover={HOVER_PEEK[spot.id]}
+            className="z-[12]"
           />
         ))}
         </div>

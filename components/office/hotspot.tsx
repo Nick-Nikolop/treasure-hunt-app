@@ -16,10 +16,11 @@ type Props = {
   onOpen: (el: HTMLElement) => void
   /** pointer over / focus on the object (e.g. the cabinet drawer gives a little) */
   onHover?: (on: boolean) => void
+  className?: string
 }
 
 /** One photographed object made interactive: the object itself is the button, its paper tag names it. */
-export function RoomHotspot({ spot, label, teaser, teaserInTag, onOpen, onHover }: Props) {
+export function RoomHotspot({ spot, label, teaser, teaserInTag, onOpen, onHover, className }: Props) {
   const { rect, tag } = spot
   const tagLeft = ((tag.x - rect.x) / rect.w) * 100
   const tagTop = ((tag.y - rect.y) / rect.h) * 100
@@ -34,7 +35,7 @@ export function RoomHotspot({ spot, label, teaser, teaserInTag, onOpen, onHover 
       // keyboard focus only: focus handed back after a pickup closes must not lift the object again
       onFocus={onHover && ((e) => e.currentTarget.matches(":focus-visible") && onHover(true))}
       onBlur={onHover && (() => onHover(false))}
-      className="group/spot absolute rounded-xl outline-none"
+      className={cn("group/spot absolute rounded-xl outline-none", className)}
       style={pct(rect)}
     >
       <span
