@@ -365,10 +365,10 @@ function ArchiveFolder({
           ref={coverRef}
           type="button"
           data-object="archive"
-          onClick={() => onToggle(true)}
+          // one click goes straight into the latest solved file; the folder only fans open via a direct link
+          onClick={(e) => (files[0] ? onOpenFile(e.currentTarget, files[0].id) : onToggle(true))}
           disabled={open}
-          aria-expanded={open}
-          aria-label={`${b.archiveOpen}: ${b.archive}, ${b.archiveCount}`}
+          aria-label={files[0] ? `${b.archiveOpen}: ${files[0].title}` : `${b.archiveOpen}: ${b.archive}, ${b.archiveCount}`}
           className="group/bundle absolute inset-0 rounded-[0.3em] text-left outline-none [backface-visibility:hidden] focus-visible:ring-4 focus-visible:ring-reel-gold disabled:cursor-default"
         >
           <span className="board-manila absolute inset-0 rounded-[0.3em] shadow-[0_1px_1px_rgb(0_0_0/0.4),inset_0_1px_0_rgb(255_240_200/0.35)]" />
