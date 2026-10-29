@@ -29,6 +29,7 @@ export const OFFICE_COPY = {
       hint: "Κάθε αντικείμενο στο γραφείο ανοίγει. Ξεκίνα από τον πίνακα.",
       enter: "Μπες στο γραφείο",
     },
+    lamp: { off: "Σβήσε τη λάμπα", on: "Άναψε τη λάμπα" },
     objects: {
       case: { label: "Υπόθεση 002 · Σύντομα", teaser: "Μια νέα ιστορία έρχεται στην Καλαμάτα. Τα υπόλοιπα παραμένουν απόρρητα." },
       archive: { label: "Αρχείο αποστολών", teaser: "Ανακάλυψε τις προηγούμενες αποστολές και δες πώς ολοκληρώθηκαν." },
@@ -208,6 +209,7 @@ export const OFFICE_COPY = {
       hint: "Every object in the office opens. Start with the board.",
       enter: "Step into the office",
     },
+    lamp: { off: "Switch the lamp off", on: "Switch the lamp on" },
     objects: {
       case: { label: "Case 002 · Coming soon", teaser: "A new story is coming to Kalamata. The rest remains classified." },
       archive: { label: "Case archive", teaser: "Explore past missions and discover how they ended." },
