@@ -7,6 +7,9 @@ import { pct, type Hotspot } from "./scenes"
 /** objects whose teaser would cover something below the tag, so it opens upwards instead */
 const TEASER_ABOVE = new Set<string>(["how", "records", "trailer", "map"])
 
+/** objects that show no gold hover frame, only their tag */
+const NO_FRAME = new Set<string>(["board", "records", "contact", "trailer"])
+
 type Props = {
   spot: Hotspot
   label: string
@@ -38,10 +41,10 @@ export function RoomHotspot({ spot, label, teaser, teaserInTag, onOpen, onHover,
       className={cn("group/spot absolute rounded-xl outline-none", className)}
       style={pct(rect)}
     >
-      <span
+      {!NO_FRAME.has(spot.id) && <span
         aria-hidden="true"
         className="absolute inset-0 rounded-xl opacity-0 shadow-[0_0_0_2px_rgb(226_176_79/0.75),0_0_34px_4px_rgb(226_176_79/0.28)] transition-opacity duration-200 group-hover/spot:opacity-100 group-focus-visible/spot:opacity-100"
-      />
+      />}
       <span
         className="absolute z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center"
         style={{ left: `${tagLeft}%`, top: `${tagTop}%` }}
