@@ -23,8 +23,8 @@ import { DeskPhone } from "./phone/desk-phone"
 import { PhonePickup } from "./phone/phone-pickup"
 import { DeskMap } from "./map/desk-map"
 import { MapPickup } from "./map/map-pickup"
-import { DrawerPeek, DrawerPickup } from "./records/drawer-pickup"
-import { ContactPickup, DeskEnvelope } from "./contact/contact-pickup"
+import { DRAWER_TEXTURES, DrawerPeek, DrawerPickup } from "./records/drawer-pickup"
+import { ContactPickup, DeskEnvelope, ENVELOPE_TEXTURES } from "./contact/contact-pickup"
 import { contactPeek, drawerPeek, mapPeek, phonePeek } from "./transit"
 import { DESK, DESKTOP, RECORDS, WALL, pct, type Scene } from "./scenes"
 import { toSearch, useOfficeNav, type OfficeState, type OfficeView, type RecordsTab } from "./use-office-nav"
@@ -35,6 +35,11 @@ import { MapView } from "./views/map-view"
 import { RecordsView } from "./views/records-view"
 
 /** Hotspots whose object reacts in the room while hovered. */
+/** Photo patches the cabinet and letter-tray hovers draw; fetched and decoded once the room is idle. */
+const PEEK_TEXTURES = [...DRAWER_TEXTURES, ...ENVELOPE_TEXTURES]
+/** Held for the page's lifetime so the browser keeps the decoded images. */
+const warmed = new Map<string, HTMLImageElement>()
+
 const HOVER_PEEK: Partial<Record<string, (on: boolean) => void>> = {
   records: drawerPeek.set,
   contact: contactPeek.set,
@@ -73,6 +78,24 @@ export function OfficePage() {
     },
     [go, state.archive],
   )
+
+  useEffect(() => {
+    const run = () => {
+      for (const src of PEEK_TEXTURES) {
+        if (warmed.has(src)) continue
+        const img = new window.Image()
+        img.src = src
+        img.decode().catch(() => {})
+        warmed.set(src, img)
+      }
+    }
+    if ("requestIdleCallback" in window) {
+      const id = window.requestIdleCallback(run, { timeout: 1500 })
+      return () => window.cancelIdleCallback(id)
+    }
+    const id = window.setTimeout(run, 600)
+    return () => window.clearTimeout(id)
+  }, [])
 
   // Restore focus to whatever opened the view once we are back in the room. A sheet that is still
   // travelling back to the cork is hidden, so wait until it is visible again.

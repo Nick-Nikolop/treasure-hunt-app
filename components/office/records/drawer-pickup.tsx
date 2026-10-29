@@ -17,6 +17,8 @@ const OPEN_MS = 4600
 const CLOSE_MS = 3600
 const DRAWER_T = 0.52
 const PLATE = "/office/room-desktop-clean-2064.webp"
+/** Textures the hover peek needs, preloaded by the room so the first hover is not drawn before they arrive. */
+export const DRAWER_TEXTURES = [PLATE]
 
 /** The top drawer's front in the photo (photo px), measured on the clean plate. */
 const FRONT = { x: 1086, y: 385, w: 128, h: 90 }
