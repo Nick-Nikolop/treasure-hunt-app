@@ -12,6 +12,7 @@ import { LANDING_CONTACT, LANDING_COPY } from "@/components/landing/copy"
 import { cn } from "@/lib/utils"
 import { BoardBar, useBoardCamera } from "./board-camera"
 import { CaseBoard } from "./case-board"
+import { ArchivePickup } from "./archive-pickup"
 import { CasePickup } from "./case-pickup"
 import { OFFICE_COPY, type OfficeCopy } from "./copy"
 import { FocusShell } from "./focus-shell"
@@ -66,7 +67,7 @@ export function OfficePage() {
       // null = moving between views: keep the object in the room that started it as the focus target.
       if (el !== null) opener.current = el ?? (document.activeElement as HTMLElement | null)
       setOrigin(el ? el.getBoundingClientRect() : null)
-      go({ view, archive: view === "case-001" || state.archive, ...extra })
+      go({ view, archive: state.archive, ...extra })
     },
     [go, state.archive],
   )
@@ -575,7 +576,7 @@ type HostProps = {
   open: Open
 }
 
-function ViewHost({ view, state, copy, base, origin, instant, reduce, contactHref, back, home, go, open }: HostProps) {
+function ViewHost({ view, state, copy, base, origin, instant, reduce, contactHref, back, go, open }: HostProps) {
   const s = copy.shell
   const desktop = useDesktop()
   const toOffice = { label: s.backOffice, onClick: back }
@@ -603,14 +604,10 @@ function ViewHost({ view, state, copy, base, origin, instant, reduce, contactHre
         </FocusShell>
       )
     case "case-001":
+      if (desktop)
+        return <ArchivePickup copy={copy} reduce={reduce} instant={instant} startOpen={state.archive} fromBoard={!!state.board} onClose={back} />
       return (
-        <FocusShell
-          {...common}
-          title={`${copy.case1.tab} · ${copy.case1.title}`}
-          back={{ label: s.backArchive, onClick: back }}
-          home={{ label: s.backOffice, onClick: home }}
-          backdrop={DESK.src}
-        >
+        <FocusShell {...common} title={`${copy.case1.tab} · ${copy.case1.title}`} back={toOffice} backdrop={DESK.src}>
           <ArchivedCaseDossier copy={copy} reduce={reduce} />
         </FocusShell>
       )

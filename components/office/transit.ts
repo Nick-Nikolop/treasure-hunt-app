@@ -123,6 +123,8 @@ export function usePeekSpring(on: boolean, draw: (v: number) => void) {
 }
 
 export const caseInHand = createHeldFlag()
+/** The archive folder is off the cork (in the pickup): the board shows the bare cork where it hung. */
+export const archiveInHand = createHeldFlag()
 export const mapInHand = createHeldFlag()
 
 export const lerp = (a: number, b: number, t: number) => a + (b - a) * t

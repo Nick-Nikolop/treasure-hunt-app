@@ -6,7 +6,7 @@ import { ArrowRight, X } from "lucide-react"
 import { useEffect, useRef, type CSSProperties, type KeyboardEvent, type Ref } from "react"
 import { cn } from "@/lib/utils"
 import type { OfficeCopy } from "./copy"
-import { caseInHand } from "./transit"
+import { archiveInHand, caseInHand } from "./transit"
 
 const EASE = [0.22, 1, 0.36, 1] as const
 /** paper settling under its own weight: quick start, long soft stop, no overshoot */
@@ -272,9 +272,15 @@ function ArchiveFolder({
   const twineT = { duration: s * 0.42, delay: open ? 0 : s * 0.62, ease: open ? ([0.5, 0, 0.9, 0.6] as const) : EASE }
   const coverT = { duration: s * 0.62, delay: open ? s * 0.22 : s * 0.12, ease: SETTLE }
   const fileT = (i: number) => ({ duration: s * 0.45, delay: open ? s * (0.5 + i * 0.06) : 0, ease: SETTLE })
+  // one physical folder: while it is in hand the board shows the bare cork instead
+  const held = archiveInHand.useValue()
 
   return (
-    <div className="absolute z-[2]" style={{ ...box(layout.bundle), perspective: "calc(var(--u) * 260)" }}>
+    <div
+      data-archive-folder
+      className="absolute z-[2]"
+      style={{ ...box(layout.bundle), perspective: "calc(var(--u) * 260)", visibility: held ? "hidden" : undefined }}
+    >
       {/* back panel and its tab: this is what the pin holds, it never moves */}
       <span
         aria-hidden="true"

@@ -17,8 +17,7 @@ export function parseState(search: string): OfficeState {
   const params = new URLSearchParams(search)
   const raw = params.get("view")
   const view = (VIEWS as readonly string[]).includes(raw ?? "") ? (raw as OfficeView) : null
-  // The archived dossier always sits on top of the opened archive.
-  const archive = params.get("archive") === "open" || view === "case-001"
+  const archive = params.get("archive") === "open"
   const tab = params.get("tab") === "code" ? "code" : "faq"
   const board = view === "board" || (BOARD_CHILDREN.includes(view) && params.get("from") === "board")
   return { view, archive, tab, board }
@@ -27,17 +26,17 @@ export function parseState(search: string): OfficeState {
 export function toSearch(state: Partial<OfficeState>): string {
   const params = new URLSearchParams()
   if (state.view) params.set("view", state.view)
-  if (state.archive || state.view === "case-001") params.set("archive", "open")
+  if (state.archive) params.set("archive", "open")
   if (state.view === "records" && state.tab === "code") params.set("tab", "code")
   if (state.board && BOARD_CHILDREN.includes(state.view ?? null)) params.set("from", "board")
   const query = params.toString()
   return query ? `?${query}` : ""
 }
 
-/** Where each view returns to. Nested: archived dossier → open archive → board (if we came from it) → office. */
+/** Where each view returns to: a case goes back to the board if it was opened there, everything else to the office. */
 export function parentOf(state: OfficeState): OfficeState {
   const atBoard = state.board && state.view !== "board"
-  if (state.view === "case-001") return atBoard ? { view: "board", archive: true, tab: "faq", board: true } : { view: null, archive: true, tab: "faq" }
+  if (state.view === "case-001") return atBoard ? { view: "board", archive: state.archive, tab: "faq", board: true } : { view: null, archive: state.archive, tab: "faq" }
   if (atBoard) return { view: "board", archive: state.archive, tab: "faq", board: true }
   if (state.view === "board" && state.archive) return { view: "board", archive: false, tab: "faq", board: true }
   if (state.view) return { view: null, archive: state.archive, tab: "faq" }
