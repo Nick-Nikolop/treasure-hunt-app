@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import { INTRO_END, STILL_TIME, renderOffice, type FilmFonts, type FilmLabels } from "./render"
+import { INTRO_END, PLATE_SRC, STILL_TIME, renderOffice } from "./render"
 
 type Mode = "pending" | "play" | "still"
 
@@ -15,29 +15,27 @@ export function OfficeFilm({
   mode,
   reduce,
   skipped,
-  labels,
   className,
 }: {
   mode: Mode
   reduce: boolean
   skipped: boolean
-  labels: FilmLabels
   className?: string
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const clock = useRef({ t: STILL_TIME, last: 0 })
-  const live = useRef({ mode, reduce, labels })
+  const live = useRef({ mode, reduce })
   const redraw = useRef<() => void>(() => {})
   const started = useRef(false)
 
   useEffect(() => {
-    live.current = { mode, reduce, labels }
+    live.current = { mode, reduce }
     if (mode === "play" && !started.current) {
       started.current = true
       clock.current.t = 0
     }
     redraw.current()
-  }, [mode, reduce, labels])
+  }, [mode, reduce])
 
   useEffect(() => {
     if (skipped && clock.current.t < INTRO_END) {
@@ -51,11 +49,10 @@ export function OfficeFilm({
     const ctx = canvas?.getContext("2d")
     if (!canvas || !ctx) return
 
-    const css = getComputedStyle(document.documentElement)
-    const fonts: FilmFonts = {
-      serif: css.getPropertyValue("--font-alegreya").trim() || "Georgia, serif",
-      sans: css.getPropertyValue("--font-alegreya-sans").trim() || "system-ui, sans-serif",
-    }
+    const plate = new Image()
+    plate.decoding = "async"
+    plate.src = PLATE_SRC
+
     let frozen = false
     const debugAt = new URLSearchParams(window.location.search).get("filmAt")
     if (debugAt) {
@@ -63,9 +60,9 @@ export function OfficeFilm({
       frozen = true
     }
 
-    const draw = () => renderOffice(ctx, clock.current.t, canvas.width, canvas.height, live.current.labels, fonts)
+    const draw = () => renderOffice(ctx, clock.current.t, canvas.width, canvas.height, plate.complete ? plate : null)
     redraw.current = draw
-    void document.fonts?.ready.then(draw)
+    plate.onload = draw
 
     const resize = () => {
       const k = Math.min(window.devicePixelRatio || 1, 2)
@@ -89,7 +86,8 @@ export function OfficeFilm({
       const dt = c.last ? Math.min(0.1, (now - c.last) / 1000) : 0
       c.last = now
       const { mode: m, reduce: r } = live.current
-      if (!frozen && !r && m !== "pending" && visible && !document.hidden) {
+      // hold the opening on black until the plate has arrived
+      if (!frozen && !r && m !== "pending" && visible && !document.hidden && plate.complete) {
         c.t += dt
         draw()
       }
@@ -100,6 +98,7 @@ export function OfficeFilm({
       cancelAnimationFrame(raf)
       ro.disconnect()
       io.disconnect()
+      plate.onload = null
     }
   }, [])
 
