@@ -3,7 +3,7 @@
 import Image from "next/image"
 import { motion } from "framer-motion"
 import { ArrowRight, X } from "lucide-react"
-import { useEffect, useRef, type CSSProperties, type KeyboardEvent, type Ref } from "react"
+import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type Ref } from "react"
 import { cn } from "@/lib/utils"
 import type { OfficeCopy } from "./copy"
 import { archiveInHand, caseInHand } from "./transit"
@@ -185,9 +185,10 @@ export function CaseSheetFace({ copy, cta = true }: { copy: OfficeCopy; cta?: bo
           <span className="relative block size-full overflow-hidden bg-reel">
             <Image src="/landing2/mission-carnival.webp" alt="" fill sizes="(min-width: 1280px) 520px, 260px" className="object-cover" />
             <span aria-hidden="true" className="board-gloss absolute inset-0" />
+            <span aria-hidden="true" className="board-sheet-glint absolute inset-0" />
           </span>
           <span
-            className="office-stamp absolute bottom-[12%] right-[6%] z-[1] w-fit rotate-[-7deg] rounded-[2px] border-2 px-[0.45em] py-[0.15em] font-sans font-extrabold uppercase leading-none tracking-[0.14em]"
+            className="office-stamp board-sheet-stamp absolute bottom-[12%] right-[6%] z-[1] w-fit rotate-[-7deg] rounded-[2px] border-2 px-[0.45em] py-[0.15em] font-sans font-extrabold uppercase leading-none tracking-[0.14em]"
             style={{ ...fs(4.4), background: "rgb(246 242 234 / 0.94)", mixBlendMode: "normal", boxShadow: "0 1px 3px rgb(0 0 0 / 0.35)" }}
           >
             {b.soon}
@@ -229,10 +230,11 @@ function CaseSheet({ layout, copy, dim, onOpen }: { layout: Layout; copy: Office
         aria-label={`${b.openCase}: ${copy.objects.case.label}`}
         className={cn(
           SHEET_FACE_CLASS,
-          "group/case shadow-[0_1px_1px_rgb(0_0_0/0.45),0_16px_26px_-10px_rgb(0_0_0/0.9)] outline-none transition-[translate,box-shadow] duration-200 ease-out hover:-translate-y-[0.6%] hover:shadow-[0_1px_1px_rgb(0_0_0/0.35),0_20px_30px_-10px_rgb(0_0_0/0.9)] focus-visible:ring-4 focus-visible:ring-reel-gold",
+          "board-sheet group/case shadow-[0_1px_1px_rgb(0_0_0/0.45),0_16px_26px_-10px_rgb(0_0_0/0.9)] outline-none focus-visible:ring-4 focus-visible:ring-reel-gold",
         )}
       >
         <CaseSheetFace copy={copy} />
+        <span aria-hidden="true" className="board-sheet-light pointer-events-none absolute inset-0" />
       </button>
       <Pin brass style={{ left: `${SHEET_PIN.x}%`, top: `${SHEET_PIN.y}%` }} />
     </div>
@@ -274,12 +276,21 @@ function ArchiveFolder({
   const fileT = (i: number) => ({ duration: s * 0.45, delay: open ? s * (0.5 + i * 0.06) : 0, ease: SETTLE })
   // one physical folder: while it is in hand the board shows the bare cork instead
   const held = archiveInHand.useValue()
+  // hovering the closed folder lifts it off the cork and the file inside starts to slide out
+  const [hovered, setHovered] = useState(false)
+  const lifted = hovered && !open && !held && s > 0
+  const sway = { type: "spring", stiffness: 230, damping: 15, mass: 0.9 } as const
+  const peekT = (delay: number) => ({ duration: 0.5, delay: lifted ? delay : 0, ease: [0.3, 1.4, 0.5, 1] as const })
+  const peekEnd = { onPointerEnter: () => setHovered(true), onPointerLeave: () => setHovered(false), onFocus: () => setHovered(true), onBlur: () => setHovered(false) }
 
   return (
-    <div
+    <motion.div
       data-archive-folder
       className="absolute z-[2]"
-      style={{ ...box(layout.bundle), perspective: "calc(var(--u) * 260)", visibility: held ? "hidden" : undefined }}
+      style={{ ...box(layout.bundle), rotate: undefined, perspective: "calc(var(--u) * 260)", visibility: held ? "hidden" : undefined, transformOrigin: "11% -4%" }}
+      initial={false}
+      animate={lifted ? { scale: 1.03, rotate: layout.bundle.r - 1.6 } : { scale: 1, rotate: layout.bundle.r }}
+      transition={sway}
     >
       {/* back panel and its tab: this is what the pin holds, it never moves */}
       <span
@@ -288,7 +299,12 @@ function ArchiveFolder({
       />
       <span
         aria-hidden="true"
-        className="board-manila-deep absolute inset-0 rounded-[0.3em] rounded-tl-none shadow-[0_1px_1px_rgb(0_0_0/0.45),0_16px_26px_-10px_rgb(0_0_0/0.9)]"
+        className={cn(
+          "board-manila-deep absolute inset-0 rounded-[0.3em] rounded-tl-none transition-shadow duration-500 ease-out",
+          lifted
+            ? "shadow-[0_2px_2px_rgb(0_0_0/0.35),0_28px_36px_-12px_rgb(0_0_0/0.9),0_46px_60px_-24px_rgb(0_0_0/0.6)]"
+            : "shadow-[0_1px_1px_rgb(0_0_0/0.45),0_16px_26px_-10px_rgb(0_0_0/0.9)]",
+        )}
       />
       {/* inside of the folder: shade where the cover meets the spine */}
       <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-[0.3em] bg-linear-to-r from-reel/35 via-transparent to-transparent" />
@@ -298,8 +314,8 @@ function ArchiveFolder({
         aria-hidden="true"
         className="board-paper absolute bottom-[6%] right-[5%] w-[34%] p-[2.5%] pb-[7%] shadow-[0_1px_1px_rgb(0_0_0/0.35),0_6px_10px_-6px_rgb(0_0_0/0.7)]"
         initial={false}
-        animate={open ? { rotate: 7, x: "10%", y: "30%" } : { rotate: 0, x: "0%", y: "0%" }}
-        transition={fileT(1)}
+        animate={open ? { rotate: 7, x: "10%", y: "30%" } : lifted ? { rotate: 8, x: "12%", y: "40%" } : { rotate: 0, x: "0%", y: "0%" }}
+        transition={open || !s ? fileT(1) : peekT(0.12)}
       >
         <span className="relative block aspect-square w-full overflow-hidden bg-reel">
           <Image src="/pythea/hunt-complete-celebration.png" alt="" fill sizes="160px" className="object-cover" />
@@ -309,8 +325,8 @@ function ArchiveFolder({
         aria-hidden="true"
         className="absolute bottom-[5%] left-[4%] w-[64%] bg-reel p-[1.2%] shadow-[0_1px_1px_rgb(0_0_0/0.4),0_6px_10px_-6px_rgb(0_0_0/0.8)]"
         initial={false}
-        animate={open ? { rotate: -3, x: "-4%", y: "78%" } : { rotate: 0, x: "0%", y: "0%" }}
-        transition={fileT(2)}
+        animate={open ? { rotate: -3, x: "-4%", y: "78%" } : lifted ? { rotate: -3.5, x: "-5%", y: "88%" } : { rotate: 0, x: "0%", y: "0%" }}
+        transition={open || !s ? fileT(2) : peekT(0.2)}
       >
         <span className="relative block aspect-[3/1] w-full overflow-hidden">
           <Image src="/pythea/treasure-equation.png" alt="" fill sizes="320px" className="object-cover" />
@@ -326,8 +342,14 @@ function ArchiveFolder({
             key={file.id}
             className="absolute inset-[4%] top-[3%]"
             initial={false}
-            animate={open ? { rotate: i === 0 ? -1.2 : 1.5 + i * 1.6, x: `${-i * 3}%`, y: `${i * 2.5}%` } : { rotate: 0, x: "0%", y: "0%" }}
-            transition={fileT(i)}
+            animate={
+              open
+                ? { rotate: i === 0 ? -1.2 : 1.5 + i * 1.6, x: `${-i * 3}%`, y: `${i * 2.5}%` }
+                : lifted && i === 0
+                  ? { rotate: -2.6, x: "3%", y: "-17%" }
+                  : { rotate: 0, x: "0%", y: "0%" }
+            }
+            transition={open || !s ? fileT(i) : peekT(0.04)}
           >
             <button
               ref={i === 0 ? fileRef : undefined}
@@ -371,6 +393,7 @@ function ArchiveFolder({
           ref={coverRef}
           type="button"
           data-object="archive"
+          {...peekEnd}
           // one click goes straight into the latest solved file; the folder only fans open via a direct link
           onClick={(e) => (files[0] ? onOpenFile(e.currentTarget, files[0].id) : onToggle(true))}
           disabled={open}
@@ -419,8 +442,8 @@ function ArchiveFolder({
         <motion.span
           className="office-knot absolute left-[31.1%] top-[57.6%] size-[9%] -translate-x-1/2 -translate-y-1/2 rounded-full"
           initial={false}
-          animate={{ scale: open ? 1.25 : 1 }}
-          transition={{ duration: s * 0.2, delay: open ? 0 : s * 0.62 }}
+          animate={{ scale: open ? 1.25 : lifted ? 0.86 : 1 }}
+          transition={open || !lifted ? { duration: s * 0.2, delay: open ? 0 : hovered ? 0 : s * 0.62 } : peekT(0.06)}
         />
       </motion.span>
 
@@ -437,6 +460,6 @@ function ArchiveFolder({
           {b.archiveClose}
         </button>
       )}
-    </div>
+    </motion.div>
   )
 }

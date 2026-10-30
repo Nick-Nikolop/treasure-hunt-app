@@ -796,6 +796,69 @@ body {
 .board-gloss {
   background: linear-gradient(125deg, rgb(255 255 255 / 0.2) 0%, rgb(255 255 255 / 0.04) 28%, transparent 45%, rgb(0 0 0 / 0.12) 100%);
 }
+/*
+ * Case 002 sheet on hover: it peels off the cork, swinging on its brass pin (the transform origin),
+ * the free bottom edge tilting out toward the viewer. The overshooting curve lets it sway and settle.
+ */
+.board-sheet {
+  transform-origin: 22% 2.5%;
+  transition:
+    transform 0.62s cubic-bezier(0.3, 1.45, 0.45, 1),
+    box-shadow 0.45s ease-out;
+}
+.board-sheet:hover,
+.board-sheet:focus-visible {
+  transform: perspective(1100px) rotateX(9deg) rotate(1.8deg) scale(1.035);
+  box-shadow:
+    0 2px 2px rgb(0 0 0 / 0.3),
+    0 26px 34px -12px rgb(0 0 0 / 0.85),
+    0 44px 60px -24px rgb(0 0 0 / 0.6);
+}
+/* the lamp catches the lifted lower edge */
+.board-sheet-light {
+  background: linear-gradient(to top, rgb(255 236 200 / 0.22), transparent 45%);
+  opacity: 0;
+  transition: opacity 0.45s ease-out;
+}
+.board-sheet:hover .board-sheet-light,
+.board-sheet:focus-visible .board-sheet-light {
+  opacity: 1;
+}
+/* one glint across the photo print as it tilts into the light; only runs on the way in */
+.board-sheet-glint {
+  background: linear-gradient(105deg, transparent 35%, rgb(255 246 225 / 0.42) 50%, transparent 65%);
+  translate: -120% 0;
+}
+.board-sheet:hover .board-sheet-glint,
+.board-sheet:focus-visible .board-sheet-glint {
+  translate: 120% 0;
+  transition: translate 0.95s cubic-bezier(0.4, 0, 0.2, 1) 0.08s;
+}
+.board-sheet .board-sheet-stamp {
+  transition: scale 0.42s cubic-bezier(0.34, 1.8, 0.64, 1), rotate 0.42s cubic-bezier(0.34, 1.8, 0.64, 1);
+}
+.board-sheet:hover .board-sheet-stamp,
+.board-sheet:focus-visible .board-sheet-stamp {
+  scale: 1.12;
+  rotate: -10deg;
+}
+@media (prefers-reduced-motion: reduce) {
+  .board-sheet {
+    transition: box-shadow 0.2s ease-out;
+  }
+  .board-sheet:hover,
+  .board-sheet:focus-visible {
+    transform: none;
+  }
+  .board-sheet:hover .board-sheet-glint,
+  .board-sheet:focus-visible .board-sheet-glint {
+    translate: -120% 0;
+  }
+  .board-sheet .board-sheet-stamp {
+    transition: none;
+  }
+}
+
 .board-pin {
   background: center / contain no-repeat;
 }
