@@ -4,7 +4,7 @@ import Image from "next/image"
 import Link from "next/link"
 import dynamic from "next/dynamic"
 import { AnimatePresence, useReducedMotion } from "framer-motion"
-import { FileText, Mail, Smartphone } from "lucide-react"
+import { ArrowRight, FileText, Mail, Smartphone } from "lucide-react"
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type MouseEvent, type ReactNode } from "react"
 import { preload } from "react-dom"
 import { useI18n } from "@/components/pythea/language-provider"
@@ -365,6 +365,27 @@ function Status({ label }: { label: string }) {
   )
 }
 
+function DossierStatus({ label }: { label: string }) {
+  const [name, state] = label.split(" · ")
+  return (
+    <p className="flex items-center justify-between gap-3 border-t border-dashed border-reel-white/15 pt-4 font-sans text-sm font-bold text-reel-white/80">
+      <span className="flex items-center gap-2.5">
+        <span aria-hidden="true" className="relative flex size-2.5">
+          <span className="absolute inset-0 rounded-full bg-board-string motion-safe:animate-ping" />
+          <span className="relative size-2.5 rounded-full bg-board-string" />
+        </span>
+        {name}
+      </span>
+      {state ? (
+        <span className="-rotate-3 rounded-sm px-2 py-0.5 text-xs uppercase tracking-[0.2em] text-board-string ring-1 ring-board-string/70">
+          <span className="sr-only"> · </span>
+          {state}
+        </span>
+      ) : null}
+    </p>
+  )
+}
+
 function MobileRoom({ copy, onToggleLocale, open, board, reduce, skipTitle }: RoomProps & { reduce: boolean; skipTitle: boolean }) {
   const h = copy.hero
   const heroRef = useRef<HTMLDivElement>(null)
@@ -379,30 +400,38 @@ function MobileRoom({ copy, onToggleLocale, open, board, reduce, skipTitle }: Ro
         </span>
       </header>
 
-      <section aria-labelledby="office-title-mobile" className="mx-auto flex max-w-xl flex-col gap-3 px-5 pb-6 pt-2">
+      <section aria-labelledby="office-title-mobile" className="mx-auto flex max-w-xl flex-col gap-5 px-5 pb-7 pt-3">
         <div ref={heroRef} className="flex flex-col gap-3">
-          <p className="font-sans text-[13px] font-bold uppercase tracking-[0.24em] text-reel-gold">{h.eyebrow}</p>
-          <h1 id="office-title-mobile" className="font-serif text-[2rem] font-black leading-[1.05] sm:text-5xl">
+          <p className="flex items-center gap-3 font-sans text-[13px] font-bold uppercase tracking-[0.24em] text-reel-gold">
+            <span className="shrink-0">{h.eyebrow}</span>
+            <span aria-hidden="true" className="h-px flex-1 bg-reel-gold/35" />
+          </p>
+          <h1 id="office-title-mobile" className="text-balance font-serif text-[2rem] font-black leading-[1.08] sm:text-5xl">
             <span className="block">{h.title[0]}</span>
-            <span className="block">{h.title[1]}</span>
+            <span className="block italic text-reel-gold">{h.title[1]}</span>
           </h1>
-          <p className="text-pretty font-sans text-base leading-relaxed text-reel-white/80">{h.body}</p>
+          <p className="text-pretty font-sans text-base leading-relaxed text-reel-white/75">{h.body}</p>
         </div>
-        <div ref={restRef} className="flex flex-col gap-3">
-        <div className="flex gap-2 pt-1">
-          <ViewLink view="case-002" open={open} className="reel-cta flex min-h-12 flex-1 items-center justify-center gap-2 rounded-full px-4 font-sans text-[15px] font-bold sm:flex-none">
-            <FileText className="size-4" aria-hidden="true" />
-            {copy.nav.case}
-          </ViewLink>
-          <ViewLink
-            view="how"
-            open={open}
-            className="flex min-h-12 flex-1 items-center justify-center rounded-full px-4 font-sans text-[15px] font-bold text-reel-white ring-1 ring-reel-white/35 sm:flex-none"
-          >
-            {h.secondary}
-          </ViewLink>
-        </div>
-        <Status label={h.status} />
+        <div ref={restRef} className="flex flex-col gap-4">
+          <div className="flex gap-2">
+            <ViewLink
+              view="case-002"
+              open={open}
+              className="reel-cta group flex min-h-12 flex-[1.35] items-center justify-center gap-2 rounded-full px-4 font-sans text-[15px] font-bold sm:flex-none sm:px-6"
+            >
+              <FileText className="size-4" aria-hidden="true" />
+              {copy.nav.case}
+              <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+            </ViewLink>
+            <ViewLink
+              view="how"
+              open={open}
+              className="flex min-h-12 flex-1 items-center justify-center rounded-full px-4 font-sans text-[15px] font-bold text-reel-white/85 ring-1 ring-reel-white/20 transition hover:text-reel-white hover:ring-reel-white/40 sm:flex-none sm:px-6"
+            >
+              {h.secondary}
+            </ViewLink>
+          </div>
+          <DossierStatus label={h.status} />
         </div>
       </section>
 

@@ -118,18 +118,22 @@ export function MobileTitle({
             transition: lit ? `transform ${TRAVEL_MS}ms cubic-bezier(0.65, 0, 0.25, 1) 150ms` : undefined,
           }}
         >
-          <p className={cn("font-sans text-[13px] font-bold uppercase tracking-[0.24em] text-reel-gold", !lit && "office-reveal")} style={reveal(150)}>
-            {h.eyebrow}
+          <p
+            className={cn("flex items-center gap-3 font-sans text-[13px] font-bold uppercase tracking-[0.24em] text-reel-gold", !lit && "office-reveal")}
+            style={reveal(150)}
+          >
+            <span className="shrink-0">{h.eyebrow}</span>
+            <span className="h-px flex-1 bg-reel-gold/35" />
           </p>
-          <p className="font-serif text-[2rem] font-black leading-[1.05] text-reel-white sm:text-5xl">
+          <p className="text-balance font-serif text-[2rem] font-black leading-[1.08] text-reel-white sm:text-5xl">
             <span className={cn("block", !lit && "office-reveal")} style={reveal(450)}>
               {h.title[0]}
             </span>
-            <span className={cn("block", !lit && "office-reveal")} style={reveal(950)}>
+            <span className={cn("block italic text-reel-gold", !lit && "office-reveal")} style={reveal(950)}>
               {h.title[1]}
             </span>
           </p>
-          <p className={cn("text-pretty font-sans text-base leading-relaxed text-reel-white/80", !lit && "office-reveal")} style={reveal(1500)}>
+          <p className={cn("text-pretty font-sans text-base leading-relaxed text-reel-white/75", !lit && "office-reveal")} style={reveal(1500)}>
             {h.body}
           </p>
         </div>
