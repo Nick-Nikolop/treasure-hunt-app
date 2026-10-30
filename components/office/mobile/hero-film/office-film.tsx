@@ -1,27 +1,34 @@
 "use client"
 
-import { useEffect, useRef } from "react"
-import { INTRO_END, PLATE_SRC, STILL_TIME, renderOffice } from "./render"
+import { useEffect, useRef, type ReactNode } from "react"
+import { INTRO_END, STAGE_H, STAGE_W, STILL_TIME, frameFor, renderOffice } from "./render"
 
 type Mode = "pending" | "play" | "still"
 
 /**
- * Canvas player for the phone hero film. `mode` "play" runs the opening from 0 and then idles; "still" starts on
- * the calm frame (returning visitors, deep links) and keeps idling; reduced motion draws one frame and stops.
- * `skipped` jumps a running opening to its end. Pauses offscreen and in background tabs. `?filmAt=<sec>` freezes a
- * frame for checking.
+ * Player for the phone hero film. `stage` is the desktop room (plate + objects), laid out at STAGE_W x STAGE_H and
+ * moved by the film camera; a canvas above it carries the light. The stage is decoration only: inert and hidden
+ * from assistive tech, so nothing in it can be clicked or focused.
+ *
+ * `mode` "play" runs the opening from 0 and then idles; "still" starts on the calm frame and keeps idling; reduced
+ * motion draws one frame and stops. `skipped` jumps a running opening to its end. Pauses offscreen and in
+ * background tabs. `?filmAt=<sec>` freezes a frame for checking.
  */
 export function OfficeFilm({
   mode,
   reduce,
   skipped,
+  stage,
   className,
 }: {
   mode: Mode
   reduce: boolean
   skipped: boolean
+  stage: ReactNode
   className?: string
 }) {
+  const rootRef = useRef<HTMLDivElement>(null)
+  const stageRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const clock = useRef({ t: STILL_TIME, last: 0 })
   const live = useRef({ mode, reduce })
@@ -45,13 +52,11 @@ export function OfficeFilm({
   }, [skipped])
 
   useEffect(() => {
+    const root = rootRef.current
+    const stageEl = stageRef.current
     const canvas = canvasRef.current
     const ctx = canvas?.getContext("2d")
-    if (!canvas || !ctx) return
-
-    const plate = new Image()
-    plate.decoding = "async"
-    plate.src = PLATE_SRC
+    if (!root || !stageEl || !canvas || !ctx) return
 
     let frozen = false
     const debugAt = new URLSearchParams(window.location.search).get("filmAt")
@@ -60,25 +65,38 @@ export function OfficeFilm({
       frozen = true
     }
 
-    const draw = () => renderOffice(ctx, clock.current.t, canvas.width, canvas.height, plate.complete ? plate : null)
+    let cw = 1
+    let ch = 1
+    let k = 1
+    const draw = () => {
+      const t = clock.current.t
+      const f = frameFor(t, cw, ch)
+      stageEl.style.transform = `translate3d(${f.ox}px, ${f.oy}px, 0) scale(${f.s})`
+      renderOffice(ctx, t, cw, ch, k, f)
+    }
     redraw.current = draw
-    plate.onload = draw
 
     const resize = () => {
-      const k = Math.min(window.devicePixelRatio || 1, 2)
-      canvas.width = Math.max(1, Math.round(canvas.clientWidth * k))
-      canvas.height = Math.max(1, Math.round(canvas.clientHeight * k))
+      cw = Math.max(1, root.clientWidth)
+      ch = Math.max(1, root.clientHeight)
+      k = Math.min(window.devicePixelRatio || 1, 2)
+      canvas.width = Math.round(cw * k)
+      canvas.height = Math.round(ch * k)
       draw()
     }
     const ro = new ResizeObserver(resize)
-    ro.observe(canvas)
+    ro.observe(root)
     resize()
 
     let visible = true
     const io = new IntersectionObserver(([e]) => {
       visible = e.isIntersecting
     })
-    io.observe(canvas)
+    io.observe(root)
+
+    // hold the opening on black until the plate has arrived
+    const plate = stageEl.querySelector("img")
+    const ready = () => !plate || plate.complete
 
     let raf = 0
     const tick = (now: number) => {
@@ -86,8 +104,7 @@ export function OfficeFilm({
       const dt = c.last ? Math.min(0.1, (now - c.last) / 1000) : 0
       c.last = now
       const { mode: m, reduce: r } = live.current
-      // hold the opening on black until the plate has arrived
-      if (!frozen && !r && m !== "pending" && visible && !document.hidden && plate.complete) {
+      if (!frozen && !r && m !== "pending" && visible && !document.hidden && ready()) {
         c.t += dt
         draw()
       }
@@ -98,9 +115,23 @@ export function OfficeFilm({
       cancelAnimationFrame(raf)
       ro.disconnect()
       io.disconnect()
-      plate.onload = null
     }
   }, [])
 
-  return <canvas ref={canvasRef} aria-hidden="true" className={className} />
+  return (
+    <div ref={rootRef} aria-hidden="true" className={className}>
+      <div className="absolute inset-0 overflow-hidden bg-reel">
+        <div
+          ref={stageRef}
+          inert
+          data-hero-stage
+          className="@container/stage pointer-events-none absolute left-0 top-0 origin-top-left select-none will-change-transform"
+          style={{ width: STAGE_W, height: STAGE_H }}
+        >
+          {stage}
+        </div>
+      </div>
+      <canvas ref={canvasRef} className="pointer-events-none absolute inset-0 size-full" />
+    </div>
+  )
 }

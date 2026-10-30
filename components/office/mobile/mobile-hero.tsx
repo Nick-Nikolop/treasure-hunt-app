@@ -29,7 +29,10 @@ export function MobileHero({
   header,
   actions,
   nextId,
+  stage,
 }: {
+  /** the desktop room (plate + objects) the film camera tours; decoration only */
+  stage: ReactNode
   copy: OfficeCopy
   reduce: boolean
   skip: boolean
@@ -110,7 +113,8 @@ export function MobileHero({
           mode={pending ? "pending" : played ? "play" : "still"}
           reduce={reduce}
           skipped={skipped}
-          className={cn("size-full transition-opacity duration-500", pending && "opacity-0")}
+          stage={stage}
+          className={cn("absolute inset-0 transition-opacity duration-500", pending && "opacity-0")}
         />
         {/* legibility: a dark ceiling for the header, the desk front falls into shadow under the title */}
         <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-reel/70 to-transparent" />

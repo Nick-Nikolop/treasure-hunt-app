@@ -146,7 +146,16 @@ export function OfficePage() {
       <div inert={viewOpen}>
         <DesktopRoom copy={copy} locale={locale} onToggleLocale={toggle} open={open} board={board("desk")} atBoard={atBoard} reduce={reduce} skipTitle={state.view !== null || atBoard} />
         <div inert={atBoard}>
-          <MobileRoom copy={copy} locale={locale} onToggleLocale={toggle} open={open} board={board("wall")} reduce={reduce} skipTitle={state.view !== null || atBoard} />
+          <MobileRoom
+            copy={copy}
+            locale={locale}
+            onToggleLocale={toggle}
+            open={open}
+            board={board("wall")}
+            heroStage={<HeroStage copy={copy} reduce={reduce} board={board("desk")} />}
+            reduce={reduce}
+            skipTitle={state.view !== null || atBoard}
+          />
           <OfficeFooter copy={copy} open={open} contactHref={contactHref} />
           <BottomNav copy={copy} open={open} />
         </div>
@@ -367,7 +376,35 @@ function Status({ label }: { label: string }) {
 
 
 
-function MobileRoom({ copy, onToggleLocale, open, board, reduce, skipTitle }: RoomProps & { reduce: boolean; skipTitle: boolean }) {
+/**
+ * The desktop room exactly as the desktop shows it (plate, case board, phone, map, drawer, envelope tray, lamp),
+ * minus title, header and hotspots: the phone hero film tours it. Rendered inert inside the film.
+ */
+function HeroStage({ copy, reduce, board }: { copy: OfficeCopy; reduce: boolean; board: ReactNode }) {
+  return (
+    <>
+      <SceneFrame scene={DESKTOP} label="" className="absolute inset-0" sizes="1376px" />
+      <DeskPhone />
+      <DeskMap copy={copy} />
+      <DrawerPeek />
+      <DeskEnvelope />
+      <DeskLamp copy={copy} reduce={reduce} hidden />
+      <div className="absolute z-10" style={pct(DESKTOP.cork!)}>
+        {board}
+      </div>
+    </>
+  )
+}
+
+function MobileRoom({
+  copy,
+  onToggleLocale,
+  open,
+  board,
+  heroStage,
+  reduce,
+  skipTitle,
+}: RoomProps & { heroStage: ReactNode; reduce: boolean; skipTitle: boolean }) {
   const h = copy.hero
   return (
     <div className="xl:hidden">
@@ -375,6 +412,7 @@ function MobileRoom({ copy, onToggleLocale, open, board, reduce, skipTitle }: Ro
         copy={copy}
         reduce={reduce}
         skip={skipTitle}
+        stage={heroStage}
         nextId="scene-board"
         header={
           <header className="flex h-14 items-center gap-3 px-4">

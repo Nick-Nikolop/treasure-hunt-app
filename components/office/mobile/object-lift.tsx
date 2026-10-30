@@ -70,7 +70,9 @@ type Geo = {
 
 function measure(id: LiftId): Geo | null {
   const def = OBJECTS[id]
-  const button = Array.from(document.querySelectorAll<HTMLElement>(`[data-object="${id}"]`)).find((el) => el.offsetParent !== null)
+  const button = Array.from(document.querySelectorAll<HTMLElement>(`[data-object="${id}"]`)).find(
+    (el) => el.offsetParent !== null && !el.closest("[data-hero-stage]"),
+  )
   const sceneEl = button?.offsetParent as HTMLElement | null
   if (!sceneEl) return null
   const r = sceneEl.getBoundingClientRect()
