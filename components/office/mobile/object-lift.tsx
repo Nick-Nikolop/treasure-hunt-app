@@ -298,10 +298,8 @@ export function ObjectLift({ id, title, backLabel, reduce, instant, onClose, chi
         // hinged on the top edge; a real 3D flip would be flattened by the object's drop shadow
         const c = Math.cos((angle * Math.PI) / 180)
         flap.style.transform = `scaleY(${c})`
-        const front = flap.firstElementChild as HTMLElement | null
-        const backFace = flap.lastElementChild as HTMLElement | null
-        if (front) front.style.opacity = c >= 0 ? "1" : "0"
-        if (backFace) backFace.style.opacity = c < 0 ? "1" : "0"
+        if (p.flapFront) p.flapFront.style.opacity = c >= 0 ? "1" : "0"
+        if (p.flapBack) p.flapBack.style.opacity = c < 0 ? "1" : "0"
         if (p.sealTop) p.sealTop.style.opacity = c >= 0 ? skin.toFixed(3) : "0"
         // past edge-on the open flap stands behind the letter
         flap.style.zIndex = angle > 90 ? "1" : "5"
@@ -358,12 +356,20 @@ export function ObjectLift({ id, title, backLabel, reduce, instant, onClose, chi
       const radius = lerp(kind === "phone" ? rv.w * 0.12 : 4, 0, open)
       panel.style.clipPath = `inset(${top}px ${right}px ${bottom}px ${left}px round ${radius}px)`
       panel.style.visibility = open > 0 ? "visible" : "hidden"
-      // cross-fades from the object's own surface (paper, screen, wall) into the page
-      panel.style.opacity = smoothstep(openAt, openAt + 0.07, t).toFixed(3)
+      panel.style.opacity = smoothstep(openAt, openAt + 0.025, t).toFixed(3)
+    }
+    // the panel opens as the object's own surface (paper, screen, lit wall), which then dims into the page
+    // the lit wall gives way fast: the trailer behind it is dark, a long bright cross-fade reads as fog
+    const fade = kind === "beam" ? [0.08, 0.5] : [0.3, 0.85]
+    if (p.surface) p.surface.style.opacity = (1 - smoothstep(fade[0], fade[1], open)).toFixed(3)
+    const content = smoothstep(0.42, 1, open)
+    if (p.content) {
+      p.content.style.opacity = content.toFixed(3)
+      p.content.style.transform = `translateY(${((1 - content) * 18).toFixed(1)}px)`
     }
     root.style.setProperty("--skin", skin.toFixed(3))
     root.style.setProperty("--dim", smoothstep(0.02, 0.4, t).toFixed(3))
-    root.style.setProperty("--chrome", smoothstep(0.84, 1, t).toFixed(3))
+    root.style.setProperty("--chrome", smoothstep(0.78, 1, t).toFixed(3))
   }
 
   const { t, set, run } = useTransit({ draw, reduce, inMs: IN_MS[def.kind], outMs: OUT_MS[def.kind] })
@@ -647,14 +653,14 @@ export function ObjectLift({ id, title, backLabel, reduce, instant, onClose, chi
             />
             {/* the flap: the same photo, hinged on the top edge */}
             <span ref={part("flap")} className="absolute inset-x-0 top-0 z-[5] h-[60%] origin-top">
-              <span className="absolute inset-0 overflow-hidden" style={{ clipPath: "polygon(0 0, 100% 0, 50% 100%)" }}>
+              <span ref={part("flapFront")} className="absolute inset-0 overflow-hidden" style={{ clipPath: "polygon(0 0, 100% 0, 50% 100%)" }}>
                 <span className="absolute inset-x-0 top-0" style={{ height: `${100 / FLAP_H}%` }}>
                   {photo()}
                 </span>
                 <span className="board-manila absolute inset-0 brightness-[0.97]" style={{ opacity: "var(--skin, 0)" }} />
               </span>
               {/* inside face of the flap, seen once it has swung past edge-on */}
-              <span className="board-manila absolute inset-0 opacity-0 brightness-[0.82]" style={{ clipPath: "polygon(0 0, 100% 0, 50% 100%)" }} />
+              <span ref={part("flapBack")} className="board-manila absolute inset-0 opacity-0 brightness-[0.82]" style={{ clipPath: "polygon(0 0, 100% 0, 50% 100%)" }} />
               {/* upper half of the wax, stuck to the tip of the flap */}
               <span
                 ref={part("sealTop")}
@@ -701,6 +707,7 @@ export function ObjectLift({ id, title, backLabel, reduce, instant, onClose, chi
 
       {/* the view, growing out of the object */}
       <div ref={panelRef} className="absolute inset-0 z-10 flex flex-col bg-reel" style={{ visibility: "hidden" }}>
+        <Surface kind={def.kind} geo={geo} photo={photo} partRef={part("surface")} />
         <header
           className="relative z-10 flex h-14 shrink-0 items-center gap-2 border-b border-reel-white/10 bg-reel/80 px-3 backdrop-blur-sm"
           style={{ opacity: "var(--chrome, 0)" }}
@@ -718,16 +725,76 @@ export function ObjectLift({ id, title, backLabel, reduce, instant, onClose, chi
             {title}
           </h2>
         </header>
-        <div
-          inert={!usable}
-          className="reel-modal-scroll relative flex-1 overflow-y-auto overscroll-contain"
-          style={{ opacity: "var(--chrome, 0)" }}
-        >
-          <div className="mx-auto flex w-full max-w-5xl flex-col px-4 pb-[calc(2.5rem+env(safe-area-inset-bottom))] pt-6">{children}</div>
+        <div inert={!usable} className="reel-modal-scroll relative flex-1 overflow-y-auto overscroll-contain">
+          <div ref={part("content")} className="mx-auto flex w-full max-w-5xl flex-col px-4 pb-[calc(2.5rem+env(safe-area-inset-bottom))] pt-6" style={{ opacity: 0 }}>
+            {children}
+          </div>
         </div>
       </div>
     </div>,
     document.body,
+  )
+}
+
+/**
+ * What the view is made of in its first moments: it grows out of the object as that object's own material
+ * (the lit screen, the paper, the projected light), so there is no hard cut to an empty box.
+ */
+function Surface({
+  kind,
+  geo,
+  photo,
+  partRef,
+}: {
+  kind: Kind
+  geo: Geo
+  photo: (style?: CSSProperties) => ReactNode
+  partRef: (el: HTMLElement | null) => void
+}) {
+  const rv = geo.reveal
+  const anchor: CSSProperties = { left: rv.x, top: rv.y, width: rv.w, height: rv.h }
+  const held = { w: geo.rest.w * geo.end.s, h: geo.rest.h * geo.end.s }
+  return (
+    <div ref={partRef} aria-hidden="true" className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+      {kind === "phone" && (
+        <>
+          <span className="absolute inset-0 bg-reel" />
+          <span
+            className="absolute inset-0"
+            style={{ background: `radial-gradient(circle at ${rv.x + rv.w / 2}px ${rv.y + rv.h * 0.42}px, rgb(226 176 79 / 0.3), transparent ${Math.max(rv.w, rv.h) * 0.7}px)` }}
+          />
+        </>
+      )}
+      {kind === "map" && (
+        <>
+          <span className="board-paper absolute inset-0" />
+          <span
+            className="absolute overflow-hidden"
+            style={{ left: geo.end.x - held.w / 2, top: geo.end.y - held.h / 2, width: held.w, height: held.h, clipPath: "inset(1.2% 0.8% 1.2% 1.4%)" }}
+          >
+            {photo()}
+          </span>
+          <span className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgb(60_40_20/0.35)_100%)]" />
+        </>
+      )}
+      {(kind === "letter" || kind === "drawer") && (
+        <>
+          <span className="board-paper absolute inset-0" />
+          <span className={cn("absolute", kind === "drawer" && "hidden")} style={anchor}>
+            <span className="absolute inset-x-[12%] top-[14%] h-[3%] bg-reel/25" />
+            <span className="absolute inset-x-[12%] top-[24%] h-[2%] bg-reel/15" />
+            <span className="absolute left-[12%] right-[30%] top-[30%] h-[2%] bg-reel/15" />
+          </span>
+          <span className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_50%,rgb(60_40_20/0.3)_100%)]" />
+        </>
+      )}
+      {kind === "beam" && (
+        <>
+          <span className="absolute inset-0 bg-[#f1e2c2]" />
+          <span className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgb(60_40_20/0.45)_100%)]" />
+        </>
+      )}
+    </div>
   )
 }
 
