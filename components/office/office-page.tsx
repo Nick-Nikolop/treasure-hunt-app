@@ -491,20 +491,21 @@ function SceneNotes({ items }: { items: { label: string; teaser: string }[] }) {
 }
 
 function OfficeFooter({ copy, open, contactHref }: { copy: OfficeCopy; open: Open; contactHref: string }) {
-  const link = "font-sans text-base text-reel-white/80 underline-offset-4 transition hover:text-reel-white hover:underline"
+  const link =
+    "block truncate font-sans text-sm leading-6 text-reel-white/75 underline-offset-4 transition hover:text-reel-white hover:underline"
+  const small = "font-sans text-sm text-reel-mute underline-offset-4 transition hover:text-reel-white hover:underline"
   return (
-    <footer className="border-t border-reel-white/10 px-5 pb-[calc(5rem+env(safe-area-inset-bottom))] pt-10 xl:px-[4%] xl:pb-10">
+    <footer className="border-t border-reel-white/10 px-5 pb-[calc(4.5rem+env(safe-area-inset-bottom))] pt-6 xl:px-[4%] xl:pb-8">
       <nav aria-label={copy.footer.label} className="mx-auto flex max-w-6xl flex-col gap-5">
-        <p className="font-sans text-xs font-bold uppercase tracking-[0.24em] text-reel-mute">{copy.footer.label}</p>
-        <ul className="flex flex-wrap gap-x-6 gap-y-3">
+        <ul className="grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-4">
           <li>
             <ViewLink view="case-002" open={open} className={link}>
-              {copy.objects.case.label}
+              {copy.objects.case.label.split(" · ")[0]}
             </ViewLink>
           </li>
           <li>
             <ViewLink view="case-001" open={open} className={link}>
-              {copy.case1.tab} · {copy.case1.title}
+              {copy.case1.tab}
             </ViewLink>
           </li>
           <li>
@@ -533,22 +534,23 @@ function OfficeFooter({ copy, open, contactHref }: { copy: OfficeCopy; open: Ope
             </ViewLink>
           </li>
           <li>
-            <a href={contactHref} className={link}>
-              {LANDING_CONTACT.email}
-            </a>
-          </li>
-          <li>
             <Link href="/standings" className={link}>
               {copy.footer.standings}
             </Link>
           </li>
-          <li>
-            <Link href="/terms" className={link}>
+        </ul>
+        <div className="flex flex-col gap-1 border-t border-reel-white/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <a href={contactHref} className={small}>
+            {LANDING_CONTACT.email}
+          </a>
+          <p className="flex items-center gap-2 font-sans text-sm text-reel-mute">
+            <span>© {new Date().getFullYear()} The Hunt</span>
+            <span aria-hidden="true" className="text-reel-white/20">·</span>
+            <Link href="/terms" className={small}>
               {copy.footer.terms}
             </Link>
-          </li>
-        </ul>
-        <p className="font-sans text-sm text-reel-mute">© {new Date().getFullYear()} The Hunt · Kalamata</p>
+          </p>
+        </div>
       </nav>
     </footer>
   )
