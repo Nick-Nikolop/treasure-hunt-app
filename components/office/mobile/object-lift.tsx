@@ -4,6 +4,7 @@ import { usePresence } from "framer-motion"
 import { ArrowLeft } from "lucide-react"
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react"
 import { createPortal } from "react-dom"
+import { cn } from "@/lib/utils"
 import { DESK, RECORDS, type Scene } from "../scenes"
 import { lerp, smoothstep, useTransit } from "../transit"
 
@@ -25,7 +26,7 @@ type ObjectDef = {
 
 /** Outlines fitted on the phone renders (scripts: minAreaRect of each object in room-desk / room-records). */
 const OBJECTS: Record<LiftId, ObjectDef> = {
-  how: { scene: DESK, frame: { cx: 254.5, cy: 381.5, w: 96, h: 160, a: 27.7 }, kind: "phone", travel: true, reveal: { x: 0.1, y: 0.06, w: 0.8, h: 0.88 } },
+  how: { scene: DESK, frame: { cx: 254.5, cy: 381.5, w: 90, h: 155, a: 27.7 }, kind: "phone", travel: true, reveal: { x: 0.1, y: 0.06, w: 0.8, h: 0.88 } },
   map: { scene: DESK, frame: { cx: 693.1, cy: 388.9, w: 352.5, h: 188.3, a: 23.2 }, kind: "map", travel: true, reveal: { x: 0, y: 0, w: 1, h: 1 } },
   contact: { scene: DESK, frame: { cx: 743, cy: 885.1, w: 147.4, h: 236.9, a: -2.7 }, kind: "letter", travel: true, reveal: { x: 0.06, y: 0.08 - LETTER_RISE(), w: 0.88, h: 0.84 } },
   records: { scene: RECORDS, frame: { cx: 252.5, cy: 470, w: 236, h: 162, a: 0 }, kind: "drawer", travel: false, reveal: { x: 0.1, y: -0.98, w: 0.8, h: 0.78 } },
@@ -400,7 +401,7 @@ export function ObjectLift({ id, title, backLabel, reduce, instant, onClose, chi
         <span
           ref={part("cavity")}
           aria-hidden="true"
-          className="absolute bg-[#070605] shadow-[inset_0_10px_18px_rgb(0_0_0/0.9)]"
+          className="absolute z-[2] bg-[#070605] shadow-[inset_0_10px_18px_rgb(0_0_0/0.9)]"
           style={{ left: rest.x - rest.w / 2, top: rest.y - rest.h / 2, width: rest.w, height: rest.h, opacity: 0 }}
         />
       )}
@@ -410,7 +411,7 @@ export function ObjectLift({ id, title, backLabel, reduce, instant, onClose, chi
           <span
             ref={part("beam")}
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 mix-blend-screen"
+            className="pointer-events-none absolute inset-0 z-[2] mix-blend-screen"
             style={{
               opacity: 0,
               clipPath: beamPolygon(geo),
@@ -420,7 +421,7 @@ export function ObjectLift({ id, title, backLabel, reduce, instant, onClose, chi
           <span
             ref={part("wall")}
             aria-hidden="true"
-            className="pointer-events-none absolute overflow-hidden rounded-[2px] bg-[#f1e2c2] shadow-[0_0_40px_10px_rgb(255_226_170/0.25)]"
+            className="pointer-events-none absolute z-[2] overflow-hidden rounded-[2px] bg-[#f1e2c2] shadow-[0_0_40px_10px_rgb(255_226_170/0.25)]"
             style={{ left: geo.reveal.x, top: geo.reveal.y, width: geo.reveal.w, height: geo.reveal.h, opacity: 0 }}
           >
             <span className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgb(60_40_20/0.45)_100%)]" />
@@ -497,8 +498,9 @@ export function ObjectLift({ id, title, backLabel, reduce, instant, onClose, chi
           <>
             <span ref={part("ring")} className="absolute left-[46%] top-[56%] z-[4] size-[16%] rounded-full border-2 border-board-string opacity-0" style={{ aspectRatio: "1" }} />
             <span ref={part("pin")} className="absolute left-[46%] top-[56%] z-[5] flex flex-col items-center opacity-0">
-              <span className="size-3.5 rounded-full bg-board-string shadow-[inset_-2px_-2px_3px_rgb(0_0_0/0.35),0_2px_3px_rgb(0_0_0/0.5)]" />
-              <span className="h-3 w-0.5 bg-reel/70" />
+              {/* drawn small: the whole map (and the pin with it) is scaled up ~2.4x when held */}
+              <span className="size-1.5 rounded-full bg-board-string shadow-[inset_-1px_-1px_1px_rgb(0_0_0/0.35),0_1px_1px_rgb(0_0_0/0.5)]" />
+              <span className="h-1.5 w-px bg-reel/70" />
             </span>
           </>
         )}

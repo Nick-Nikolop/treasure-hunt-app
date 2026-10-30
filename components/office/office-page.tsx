@@ -16,8 +16,10 @@ import { ArchivePickup } from "./archive-pickup"
 import { CasePickup } from "./case-pickup"
 import { OFFICE_COPY, type OfficeCopy } from "./copy"
 import { ObjectLift } from "./mobile/object-lift"
+import { MobileTitle } from "./mobile/mobile-title"
+import { SceneLights } from "./mobile/scene-lights"
 import { RoomHotspot } from "./hotspot"
-import { DeskLamp } from "./desk-lamp"
+import { DeskLamp, MobileDeskLamp } from "./desk-lamp"
 import { RoomTitle } from "./room-title"
 import { DeskPhone } from "./phone/desk-phone"
 import { PhonePickup } from "./phone/phone-pickup"
@@ -144,7 +146,7 @@ export function OfficePage() {
       <div inert={viewOpen}>
         <DesktopRoom copy={copy} locale={locale} onToggleLocale={toggle} open={open} board={board("desk")} atBoard={atBoard} reduce={reduce} skipTitle={state.view !== null || atBoard} />
         <div inert={atBoard}>
-          <MobileRoom copy={copy} locale={locale} onToggleLocale={toggle} open={open} board={board("wall")} />
+          <MobileRoom copy={copy} locale={locale} onToggleLocale={toggle} open={open} board={board("wall")} reduce={reduce} skipTitle={state.view !== null || atBoard} />
           <OfficeFooter copy={copy} open={open} contactHref={contactHref} />
           <BottomNav copy={copy} open={open} />
         </div>
@@ -376,11 +378,14 @@ function Teasers({ items }: { items: { label: string; teaser: string }[] }) {
   )
 }
 
-function MobileRoom({ copy, onToggleLocale, open, board }: RoomProps) {
+function MobileRoom({ copy, onToggleLocale, open, board, reduce, skipTitle }: RoomProps & { reduce: boolean; skipTitle: boolean }) {
   const h = copy.hero
   const o = copy.objects
+  const heroRef = useRef<HTMLDivElement>(null)
+  const restRef = useRef<HTMLDivElement>(null)
   return (
     <div className="xl:hidden">
+      <MobileTitle copy={copy} reduce={reduce} skip={skipTitle} heroRef={heroRef} restRef={restRef} />
       <header className="flex h-14 items-center gap-3 px-4">
         <Logo />
         <span className="ml-auto">
@@ -389,13 +394,15 @@ function MobileRoom({ copy, onToggleLocale, open, board }: RoomProps) {
       </header>
 
       <section aria-labelledby="office-title-mobile" className="mx-auto flex max-w-xl flex-col gap-3 px-5 pb-6 pt-2">
-        <p className="font-sans text-[13px] font-bold uppercase tracking-[0.24em] text-reel-gold">{h.eyebrow}</p>
-        <h1 id="office-title-mobile" className="font-serif text-[2rem] font-black leading-[1.05] sm:text-5xl">
-          {h.title[0]}
-          <br />
-          {h.title[1]}
-        </h1>
-        <p className="text-pretty font-sans text-base leading-relaxed text-reel-white/80">{h.body}</p>
+        <div ref={heroRef} className="flex flex-col gap-3">
+          <p className="font-sans text-[13px] font-bold uppercase tracking-[0.24em] text-reel-gold">{h.eyebrow}</p>
+          <h1 id="office-title-mobile" className="font-serif text-[2rem] font-black leading-[1.05] sm:text-5xl">
+            <span className="block">{h.title[0]}</span>
+            <span className="block">{h.title[1]}</span>
+          </h1>
+          <p className="text-pretty font-sans text-base leading-relaxed text-reel-white/80">{h.body}</p>
+        </div>
+        <div ref={restRef} className="flex flex-col gap-3">
         <div className="flex gap-2 pt-1">
           <ViewLink view="case-002" open={open} className="reel-cta flex min-h-12 flex-1 items-center justify-center gap-2 rounded-full px-4 font-sans text-[15px] font-bold sm:flex-none">
             <FileText className="size-4" aria-hidden="true" />
@@ -410,6 +417,7 @@ function MobileRoom({ copy, onToggleLocale, open, board }: RoomProps) {
           </ViewLink>
         </div>
         <Status label={h.status} />
+        </div>
       </section>
 
       <section aria-labelledby="scene-board" className="flex flex-col">
@@ -420,19 +428,39 @@ function MobileRoom({ copy, onToggleLocale, open, board }: RoomProps) {
           <div className="absolute" style={pct(WALL.cork!)}>
             {board}
           </div>
+          <SceneLights reduce={reduce} />
         </SceneFrame>
         <div className="mx-auto w-full max-w-xl">
           <Teasers items={[o.case, o.archive]} />
         </div>
       </section>
 
-      <MobileScene id="scene-desk" title={copy.scenes.desk.title} body={copy.scenes.desk.body} scene={DESK} copy={copy} open={open} />
-      <MobileScene id="scene-records" title={copy.scenes.records.title} body={copy.scenes.records.body} scene={RECORDS} copy={copy} open={open} />
+      <MobileScene id="scene-desk" title={copy.scenes.desk.title} body={copy.scenes.desk.body} scene={DESK} copy={copy} open={open} reduce={reduce} props={<MobileDeskLamp copy={copy} reduce={reduce} />} />
+      <MobileScene id="scene-records" title={copy.scenes.records.title} body={copy.scenes.records.body} scene={RECORDS} copy={copy} open={open} reduce={reduce} />
     </div>
   )
 }
 
-function MobileScene({ id, title, body, scene, copy, open }: { id: string; title: string; body: string; scene: Scene; copy: OfficeCopy; open: Open }) {
+function MobileScene({
+  id,
+  title,
+  body,
+  scene,
+  copy,
+  open,
+  reduce,
+  props,
+}: {
+  id: string
+  title: string
+  body: string
+  scene: Scene
+  copy: OfficeCopy
+  open: Open
+  reduce: boolean
+  /** live props laid on the photo under the labels (the desk lamp) */
+  props?: ReactNode
+}) {
   return (
     <section aria-labelledby={id} className="mx-auto flex max-w-xl flex-col pt-14">
       <div className="flex flex-col gap-1.5 px-5 pb-5">
@@ -442,6 +470,7 @@ function MobileScene({ id, title, body, scene, copy, open }: { id: string; title
         <p className="text-pretty font-sans text-base leading-relaxed text-reel-white/75">{body}</p>
       </div>
       <SceneFrame scene={scene} label="">
+        {props}
         {scene.hotspots.map((spot) => (
           <RoomHotspot
             key={spot.id}
@@ -452,6 +481,7 @@ function MobileScene({ id, title, body, scene, copy, open }: { id: string; title
             onOpen={(el) => open(spot.id, el)}
           />
         ))}
+        <SceneLights reduce={reduce} />
       </SceneFrame>
       <Teasers items={scene.hotspots.map((spot) => copy.objects[spot.id])} />
     </section>

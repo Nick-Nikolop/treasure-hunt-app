@@ -33,6 +33,8 @@ export function RoomHotspot({ spot, label, teaser, teaserInTag, onOpen, onHover,
       type="button"
       data-object={spot.id}
       onClick={(e: MouseEvent<HTMLButtonElement>) => onOpen(e.currentTarget)}
+  // phones have no hover: a tiny tick under the thumb confirms the press
+  onPointerDown={(e) => e.pointerType === "touch" && navigator.vibrate?.(6)}
       onPointerEnter={onHover && (() => onHover(true))}
       onPointerLeave={onHover && (() => onHover(false))}
       // keyboard focus only: focus handed back after a pickup closes must not lift the object again
@@ -43,14 +45,18 @@ export function RoomHotspot({ spot, label, teaser, teaserInTag, onOpen, onHover,
     >
       {!NO_FRAME.has(spot.id) && <span
         aria-hidden="true"
-        className="absolute inset-0 rounded-xl opacity-0 shadow-[0_0_0_2px_rgb(226_176_79/0.75),0_0_34px_4px_rgb(226_176_79/0.28)] transition-opacity duration-200 group-hover/spot:opacity-100 group-focus-visible/spot:opacity-100"
+        className="absolute inset-0 rounded-xl opacity-0 shadow-[0_0_0_2px_rgb(226_176_79/0.75),0_0_34px_4px_rgb(226_176_79/0.28)] transition-opacity duration-200 group-hover/spot:opacity-100 group-focus-visible/spot:opacity-100 group-active/spot:opacity-100"
       />}
       <span
         className="absolute z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center"
         style={{ left: `${tagLeft}%`, top: `${tagTop}%` }}
       >
-        <span className="office-tag flex items-center gap-1.5 whitespace-nowrap rounded-[3px] px-2.5 py-1 font-sans text-sm font-bold leading-tight text-reel transition-transform duration-200 group-hover/spot:-translate-y-0.5 group-focus-visible/spot:ring-2 group-focus-visible/spot:ring-reel-gold">
-          <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-board-string" />
+        <span className="office-tag flex items-center gap-1.5 whitespace-nowrap rounded-[3px] px-2.5 py-1 font-sans text-sm font-bold leading-tight text-reel transition-transform duration-200 group-hover/spot:-translate-y-0.5 group-focus-visible/spot:ring-2 group-focus-visible/spot:ring-reel-gold group-active/spot:scale-95">
+          <span aria-hidden="true" className="relative flex size-1.5 shrink-0">
+            {/* phone tags (no hover there) breathe softly so they read as tappable */}
+            {!teaserInTag && <span className="absolute inset-0 rounded-full bg-board-string motion-safe:animate-ping" />}
+            <span className="relative size-1.5 rounded-full bg-board-string" />
+          </span>
           {label}
         </span>
         <span
