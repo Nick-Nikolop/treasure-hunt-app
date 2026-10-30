@@ -19,6 +19,8 @@ export type Scene = {
   height: number
   /** the bare cork inside the photographed frame */
   cork?: Rect
+  /** same photo with the pickable objects removed: shown under an object while it is in hand */
+  emptySrc?: string
   hotspots: Hotspot[]
 }
 
@@ -51,6 +53,8 @@ export const WALL: Scene = {
 
 export const DESK: Scene = {
   src: "/office/room-desk.webp",
+  // scripts/office/desk-empty.py
+  emptySrc: "/office/room-desk-empty.webp",
   width: 928,
   height: 1152,
   hotspots: [

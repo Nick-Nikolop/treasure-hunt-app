@@ -26,7 +26,7 @@ type ObjectDef = {
 
 /** Outlines fitted on the phone renders (scripts: minAreaRect of each object in room-desk / room-records). */
 const OBJECTS: Record<LiftId, ObjectDef> = {
-  how: { scene: DESK, frame: { cx: 254.5, cy: 381.5, w: 90, h: 155, a: 27.7 }, kind: "phone", travel: true, reveal: { x: 0.1, y: 0.06, w: 0.8, h: 0.88 } },
+  how: { scene: DESK, frame: { cx: 254.5, cy: 381.5, w: 90, h: 155, a: 27.7 }, kind: "phone", travel: true, reveal: { x: 0.05, y: 0.03, w: 0.9, h: 0.94 } },
   map: { scene: DESK, frame: { cx: 693.1, cy: 388.9, w: 352.5, h: 188.3, a: 23.2 }, kind: "map", travel: true, reveal: { x: 0, y: 0, w: 1, h: 1 } },
   contact: { scene: DESK, frame: { cx: 743, cy: 885.1, w: 147.4, h: 236.9, a: -2.7 }, kind: "letter", travel: true, reveal: { x: 0.06, y: 0.08 - LETTER_RISE(), w: 0.88, h: 0.84 } },
   records: { scene: RECORDS, frame: { cx: 252.5, cy: 470, w: 236, h: 162, a: 0 }, kind: "drawer", travel: false, reveal: { x: 0.1, y: -0.98, w: 0.8, h: 0.78 } },
@@ -49,6 +49,13 @@ const LENS = { x: 512, y: 575 }
 const WALL_SCREEN = { x: 205, y: 62, w: 450, h: 253 }
 /** wax seal on the envelope, object fractions */
 const SEAL = { x: 0.53, y: 0.5 }
+/** the envelope flap covers this much of its height */
+const FLAP_H = 0.6
+const WAX: CSSProperties = {
+  background: "radial-gradient(circle at 38% 34%, #b8444b 0%, #8a1d27 40%, #560d15 78%)",
+  boxShadow: "inset 0 0 0 0.6px rgb(0 0 0 / 0.3), 0 0.5px 1px rgb(0 0 0 / 0.45)",
+  transform: "translate(-50%, -50%)",
+}
 
 const IN_MS: Record<Kind, number> = { phone: 1500, map: 1350, letter: 1900, drawer: 1700, beam: 2200 }
 const OUT_MS: Record<Kind, number> = { phone: 1000, map: 950, letter: 1250, drawer: 1100, beam: 1200 }
@@ -134,6 +141,8 @@ export function ObjectLift({ id, title, backLabel, reduce, instant, onClose, chi
   const part = (name: string) => (el: HTMLElement | null) => {
     parts.current[name] = el
   }
+  /** 1 while picking up, -1 while putting back */
+  const dirRef = useRef(1)
   const [geo, setGeo] = useState<Geo | null>(null)
   const [settled, setSettled] = useState(false)
 
@@ -162,6 +171,14 @@ export function ObjectLift({ id, title, backLabel, reduce, instant, onClose, chi
     const act2 = def.travel ? smoothstep(0.52, 0.76, t) : smoothstep(0.34, 0.7, t)
     const openAt = kind === "letter" ? 0.76 : 0.7
     const open = smoothstep(openAt, 1, t)
+    /** putting it back down, not a pickup played backwards */
+    const back = dirRef.current < 0
+    // the photo crop is tiny (the phone is ~90px in the render): once off the desk a drawn twin takes over so it stays sharp in hand
+    const skin = smoothstep(0.05, 0.26, t)
+    if (p.skin) {
+      p.skin.style.opacity = skin.toFixed(3)
+      if (p.photo) p.photo.style.opacity = (1 - skin).toFixed(3)
+    }
 
     // size follows 1/distance: a steady approach, not a zoom
     let scale = 1
@@ -182,26 +199,61 @@ export function ObjectLift({ id, title, backLabel, reduce, instant, onClose, chi
       y = lerp(g.rest.y, g.end.y, act)
       rot = 0
     }
+    let tiltY = 0
     if (kind === "map") {
       // the paper settles flat with a small spring once it is in front of you
       tilt += Math.sin(Math.PI * 2 * act) * (1 - act) * 6
+      // held by one edge, the sheet sags towards the free side while it travels
+      tiltY = Math.sin(Math.PI * travel) * -9
+    } else if (def.travel) {
+      tiltY = Math.sin(Math.PI * travel) * (kind === "phone" ? 6 : -5)
     }
-    obj.style.transform = `translate(${x - g.rest.x}px, ${y - g.rest.y}px) perspective(${g.rest.w * g.end.s * 4}px) rotateX(${tilt}deg) rotate(${rot}deg) scale(${scale})`
+    if (def.travel && back) {
+      // the last few millimetres: it lands, presses into the wood for a moment and comes to rest
+      const land = Math.sin(Math.PI * smoothstep(0, 0.09, t))
+      scale *= 1 - 0.022 * land
+      if (kind === "map") x += land * g.rest.w * 0.018
+      if (kind === "letter") y += land * g.rest.h * 0.012
+    }
+    // grow by resizing the box, not with scale(): a scaled layer is rastered small and stretched (blocky in hand),
+    // a resized one is painted at its real size every frame (all contents are laid out in %)
+    const w = g.rest.w * scale
+    const h = g.rest.h * scale
+    obj.style.width = `${w}px`
+    obj.style.height = `${h}px`
+    obj.style.left = `${g.rest.x - w / 2}px`
+    obj.style.top = `${g.rest.y - h / 2}px`
+    obj.style.transform = `translate(${x - g.rest.x}px, ${y - g.rest.y}px) perspective(${g.rest.w * g.end.s * 4}px) rotateX(${tilt}deg) rotateY(${tiltY}deg) rotate(${rot}deg)`
     const shadow = def.travel ? Math.max(lift * 0.4, travel) : act
-    obj.style.filter = `drop-shadow(0 ${lerp(2, 26, shadow)}px ${lerp(3, 28, shadow)}px rgb(0 0 0 / ${lerp(0.4, 0.75, shadow)}))`
+    if (def.travel) {
+      // on the desk the lamp (lower left) throws the shadow up and right; in hand it falls straight down
+      const onDesk = lift * (1 - travel)
+      const dx = 10 * onDesk
+      const dy = lerp(2, 26, shadow) * travel + (2 - 8 * onDesk) * (1 - travel)
+      obj.style.filter = `drop-shadow(${dx.toFixed(1)}px ${dy.toFixed(1)}px ${lerp(3, 28, shadow).toFixed(1)}px rgb(0 0 0 / ${lerp(0.45, 0.75, shadow).toFixed(3)}))`
+    } else {
+      obj.style.filter = `drop-shadow(0 ${lerp(2, 26, shadow)}px ${lerp(3, 28, shadow)}px rgb(0 0 0 / ${lerp(0.4, 0.75, shadow)}))`
+    }
+    if (p.sheen) {
+      // a light catching the glass / paper as it turns towards you
+      p.sheen.style.transform = `translateX(${lerp(-130, 230, travel)}%) skewX(-14deg)`
+      p.sheen.style.opacity = (Math.sin(Math.PI * travel) * (kind === "phone" ? 0.55 : 0.28)).toFixed(3)
+    }
     // the object hides behind the view once that has fully grown out of it
     obj.style.opacity = t > 0.995 ? "0" : "1"
 
     if (kind === "phone") {
       const screen = p.screen
       if (screen) {
-        screen.style.opacity = act.toFixed(3)
-        screen.style.boxShadow = `0 0 ${40 * act}px ${8 * act}px rgb(226 176 79 / ${(0.22 * act).toFixed(3)})`
+        // a screen snaps on (and off when locked), it does not fade like a lamp
+        const wake = back ? smoothstep(0.6, 0.63, t) : smoothstep(0.46, 0.5, t)
+        screen.style.opacity = wake.toFixed(3)
+        screen.style.boxShadow = `0 0 ${40 * wake}px ${8 * wake}px rgb(226 176 79 / ${(0.22 * wake).toFixed(3)})`
       }
       const logo = p.logo
       if (logo) {
         const on = smoothstep(0.55, 0.7, t)
-        logo.style.opacity = (on * (1 - smoothstep(0.74, 0.86, t))).toFixed(3)
+        logo.style.opacity = back ? "0" : (on * (1 - smoothstep(0.74, 0.86, t))).toFixed(3)
         logo.style.transform = `translate(-50%, -50%) scale(${lerp(0.7, 1, on)})`
       }
     }
@@ -209,13 +261,19 @@ export function ObjectLift({ id, title, backLabel, reduce, instant, onClose, chi
       const pin = p.pin
       if (pin) {
         const drop = smoothstep(0.5, 0.66, t)
-        pin.style.opacity = drop > 0 ? "1" : "0"
-        pin.style.transform = `translate(-50%, ${-100 - (1 - drop) * 260}%) scale(${lerp(1.6, 1, drop)})`
+        if (back) {
+          // pulled out, not flying back up into the air
+          pin.style.opacity = drop.toFixed(3)
+          pin.style.transform = `translate(-50%, ${-100 - (1 - drop) * 30}%)`
+        } else {
+          pin.style.opacity = drop > 0 ? "1" : "0"
+          pin.style.transform = `translate(-50%, ${-100 - (1 - drop) * 260}%) scale(${lerp(1.6, 1, drop)})`
+        }
       }
       const ring = p.ring
       if (ring) {
         const hit = smoothstep(0.64, 0.76, t)
-        ring.style.opacity = (hit > 0 ? 1 - hit : 0).toFixed(3)
+        ring.style.opacity = (hit > 0 && !back ? 1 - hit : 0).toFixed(3)
         ring.style.transform = `translate(-50%, -50%) scale(${lerp(0.3, 2.6, hit)})`
       }
     }
@@ -223,8 +281,15 @@ export function ObjectLift({ id, title, backLabel, reduce, instant, onClose, chi
       const burst = smoothstep(0.42, 0.52, t)
       const ring = p.ring
       if (ring) {
-        ring.style.opacity = (burst > 0 ? 1 - burst : 0).toFixed(3)
+        ring.style.opacity = (burst > 0 && !back ? 1 - burst : 0).toFixed(3)
         ring.style.transform = `translate(-50%, -50%) scale(${lerp(0.4, 3, burst)})`
+      }
+      // the wax cracks in two: one half rides up with the flap, the other stays on the envelope (and stays broken)
+      const crack = back ? 1 : smoothstep(0.42, 0.5, t)
+      if (p.sealTop) p.sealTop.style.transform = `translate(-50%, -50%) translate(${-crack * 4}%, ${-crack * 7}%) rotate(${-crack * 9}deg)`
+      if (p.sealBottom) {
+        p.sealBottom.style.transform = `translate(-50%, -50%) translate(${crack * 5}%, ${crack * 9}%) rotate(${crack * 11}deg)`
+        p.sealBottom.style.opacity = skin.toFixed(3)
       }
       const flapT = smoothstep(0.48, 0.62, t)
       const angle = flapT * 180
@@ -237,6 +302,7 @@ export function ObjectLift({ id, title, backLabel, reduce, instant, onClose, chi
         const backFace = flap.lastElementChild as HTMLElement | null
         if (front) front.style.opacity = c >= 0 ? "1" : "0"
         if (backFace) backFace.style.opacity = c < 0 ? "1" : "0"
+        if (p.sealTop) p.sealTop.style.opacity = c >= 0 ? skin.toFixed(3) : "0"
         // past edge-on the open flap stands behind the letter
         flap.style.zIndex = angle > 90 ? "1" : "5"
       }
@@ -295,6 +361,7 @@ export function ObjectLift({ id, title, backLabel, reduce, instant, onClose, chi
       // cross-fades from the object's own surface (paper, screen, wall) into the page
       panel.style.opacity = smoothstep(openAt, openAt + 0.07, t).toFixed(3)
     }
+    root.style.setProperty("--skin", skin.toFixed(3))
     root.style.setProperty("--dim", smoothstep(0.02, 0.4, t).toFixed(3))
     root.style.setProperty("--chrome", smoothstep(0.84, 1, t).toFixed(3))
   }
@@ -305,6 +372,7 @@ export function ObjectLift({ id, title, backLabel, reduce, instant, onClose, chi
 
   useLayoutEffect(() => {
     if (!geo) return
+    dirRef.current = isPresent ? 1 : -1
     if (isPresent) {
       if (t.current === 0) rootRef.current?.focus({ preventScroll: true })
       if (instant && t.current === 0) set(1)
@@ -365,14 +433,15 @@ export function ObjectLift({ id, title, backLabel, reduce, instant, onClose, chi
     <span
       aria-hidden="true"
       className="absolute bg-no-repeat"
+      // in % of the object box so it follows the box as it grows
       style={{
-        left: rest.w / 2 - f.cx * k,
-        top: rest.h / 2 - f.cy * k,
-        width: scene.width,
-        height: scene.height,
+        left: `${((rest.w / 2 - f.cx * k) / rest.w) * 100}%`,
+        top: `${((rest.h / 2 - f.cy * k) / rest.h) * 100}%`,
+        width: `${(scene.width / rest.w) * 100}%`,
+        height: `${(scene.height / rest.h) * 100}%`,
         backgroundImage: `url(${src})`,
         backgroundSize: "100% 100%",
-        transformOrigin: `${f.cx * k}px ${f.cy * k}px`,
+        transformOrigin: `${((f.cx * k) / scene.width) * 100}% ${((f.cy * k) / scene.height) * 100}%`,
         transform: `rotate(${-f.a}deg)`,
         ...style,
       }}
@@ -389,6 +458,23 @@ export function ObjectLift({ id, title, backLabel, reduce, instant, onClose, chi
       onKeyDown={onKeyDown}
       className="fixed inset-0 z-50 overflow-hidden font-sans text-reel-white outline-none"
     >
+      {def.scene.emptySrc && def.travel && (
+        // the bare wood where the object lay, so it is not left behind as a double
+        <span
+          aria-hidden="true"
+          className="absolute z-0 bg-no-repeat"
+          style={{
+            left: scene.left,
+            top: scene.top,
+            width: scene.width,
+            height: scene.height,
+            backgroundImage: `url(${def.scene.emptySrc})`,
+            backgroundSize: "100% 100%",
+            clipPath: emptyClip(f, k, scene.width, scene.height, def.kind === "map" ? 40 : 22),
+          }}
+        />
+      )}
+
       {/* the room drops out of focus behind the object */}
       <div
         aria-hidden="true"
@@ -448,7 +534,8 @@ export function ObjectLift({ id, title, backLabel, reduce, instant, onClose, chi
       <div
         ref={objRef}
         aria-hidden="true"
-        className="absolute left-0 top-0 origin-center will-change-transform"
+        // no will-change: a promoted layer is rastered once at desk size and then stretched (blurry in hand)
+        className="absolute left-0 top-0 origin-center"
         style={{ left: rest.x - rest.w / 2, top: rest.y - rest.h / 2, width: rest.w, height: rest.h, zIndex: def.kind === "beam" ? 0 : 3 }}
       >
         {def.kind === "letter" && (
@@ -477,10 +564,53 @@ export function ObjectLift({ id, title, backLabel, reduce, instant, onClose, chi
         {/* the object itself, cut out of the photo (the projector stays put: only its reels turn) */}
         {def.kind !== "beam" && (
           <span
+            ref={part("photo")}
             className="absolute inset-0 z-[3] overflow-hidden"
-            style={{ borderRadius: def.kind === "phone" ? "16% / 10%" : def.kind === "letter" || def.kind === "map" ? "2px" : undefined }}
+            style={{
+              borderRadius: def.kind === "phone" ? "16% / 10%" : def.kind === "letter" || def.kind === "map" ? "2px" : undefined,
+              // the fitted outline catches a sliver of desk along the map's edges
+              clipPath: def.kind === "map" ? "inset(1.2% 0.8% 1.2% 1.4%)" : undefined,
+            }}
           >
             {photo()}
+          </span>
+        )}
+
+        {def.kind === "phone" && (
+          // drawn twin of the photographed phone: black glass, thin metal rim, camera island
+          <span
+            ref={part("skin")}
+            className="absolute inset-0 z-[3] opacity-0"
+            style={{
+              borderRadius: "16% / 10%",
+              background: "linear-gradient(155deg, #26272b 0%, #0c0c0e 38%, #050506 100%)",
+              boxShadow: "inset 0 0 0 0.6px rgb(255 255 255 / 0.22), inset 0 0 0 1.6px #000",
+            }}
+          >
+            <span className="absolute left-1/2 top-[2.6%] h-[2.6%] w-[24%] -translate-x-1/2 rounded-full bg-[#020203] shadow-[inset_0_0_0_0.4px_rgb(255_255_255/0.08)]" />
+          </span>
+        )}
+
+        {def.kind === "letter" && (
+          // drawn twin of the envelope: manila body with its three folded panels
+          <span ref={part("skin")} className="board-manila absolute inset-0 z-[3] overflow-hidden rounded-[2px] opacity-0">
+            <span className="absolute inset-0 bg-[#3b2a12]/[0.08]" style={{ clipPath: "polygon(0 100%, 50% 50%, 100% 100%)" }} />
+            <span className="absolute inset-0 bg-[#fff6e0]/[0.07]" style={{ clipPath: "polygon(0 0, 50% 50%, 0 100%)" }} />
+            <span className="absolute inset-0 bg-[#3b2a12]/[0.05]" style={{ clipPath: "polygon(100% 0, 50% 50%, 100% 100%)" }} />
+          </span>
+        )}
+
+        {def.travel && (
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 z-[7] overflow-hidden"
+            style={{ borderRadius: def.kind === "phone" ? "16% / 10%" : "2px" }}
+          >
+            <span
+              ref={part("sheen")}
+              className="absolute -inset-y-1/4 left-0 w-1/2 opacity-0"
+              style={{ background: "linear-gradient(100deg, transparent 10%, rgb(255 242 214 / 0.7) 50%, transparent 90%)" }}
+            />
           </span>
         )}
 
@@ -488,7 +618,7 @@ export function ObjectLift({ id, title, backLabel, reduce, instant, onClose, chi
           <span
             ref={part("screen")}
             className="absolute z-[4] overflow-hidden bg-reel"
-            style={{ left: "10%", top: "6%", width: "80%", height: "88%", borderRadius: "12% / 6%", opacity: 0 }}
+            style={{ left: "5%", top: "3%", width: "90%", height: "94%", borderRadius: "13% / 6.5%", opacity: 0 }}
           >
             <span className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_40%,rgb(226_176_79/0.28),transparent_70%)]" />
             {/* eslint-disable-next-line @next/next/no-img-element -- tiny decorative logo, already cached by the header */}
@@ -499,10 +629,10 @@ export function ObjectLift({ id, title, backLabel, reduce, instant, onClose, chi
         {def.kind === "map" && (
           <>
             <span ref={part("ring")} className="absolute left-[46%] top-[56%] z-[4] size-[16%] rounded-full border-2 border-board-string opacity-0" style={{ aspectRatio: "1" }} />
-            <span ref={part("pin")} className="absolute left-[46%] top-[56%] z-[5] flex flex-col items-center opacity-0">
-              {/* drawn small: the whole map (and the pin with it) is scaled up ~2.4x when held */}
-              <span className="size-1.5 rounded-full bg-board-string shadow-[inset_-1px_-1px_1px_rgb(0_0_0/0.35),0_1px_1px_rgb(0_0_0/0.5)]" />
-              <span className="h-1.5 w-px bg-reel/70" />
+            <span ref={part("pin")} className="absolute left-[46%] top-[56%] z-[5] flex w-[4.2%] flex-col items-center opacity-0">
+              {/* sized in % of the map, which grows ~2.4x when held */}
+              <span className="aspect-square w-full rounded-full bg-board-string shadow-[inset_-1.5px_-1.5px_2px_rgb(0_0_0/0.35),0_1px_2px_rgb(0_0_0/0.5)]" />
+              <span className="aspect-[1/7] w-[14%] bg-reel/70" />
             </span>
           </>
         )}
@@ -518,13 +648,26 @@ export function ObjectLift({ id, title, backLabel, reduce, instant, onClose, chi
             {/* the flap: the same photo, hinged on the top edge */}
             <span ref={part("flap")} className="absolute inset-x-0 top-0 z-[5] h-[60%] origin-top">
               <span className="absolute inset-0 overflow-hidden" style={{ clipPath: "polygon(0 0, 100% 0, 50% 100%)" }}>
-                <span className="absolute left-0 top-0" style={{ width: rest.w, height: rest.h }}>
+                <span className="absolute inset-x-0 top-0" style={{ height: `${100 / FLAP_H}%` }}>
                   {photo()}
                 </span>
+                <span className="board-manila absolute inset-0 brightness-[0.97]" style={{ opacity: "var(--skin, 0)" }} />
               </span>
               {/* inside face of the flap, seen once it has swung past edge-on */}
               <span className="board-manila absolute inset-0 opacity-0 brightness-[0.82]" style={{ clipPath: "polygon(0 0, 100% 0, 50% 100%)" }} />
+              {/* upper half of the wax, stuck to the tip of the flap */}
+              <span
+                ref={part("sealTop")}
+                className="absolute aspect-square w-[20%] rounded-full opacity-0"
+                style={{ ...WAX, left: `${SEAL.x * 100}%`, top: `${(SEAL.y / FLAP_H) * 100}%`, clipPath: "inset(0 0 50% 0)" }}
+              />
             </span>
+            {/* lower half of the wax, left on the envelope once it cracks */}
+            <span
+              ref={part("sealBottom")}
+              className="absolute z-[6] aspect-square w-[20%] rounded-full opacity-0"
+              style={{ ...WAX, left: `${SEAL.x * 100}%`, top: `${SEAL.y * 100}%`, clipPath: "inset(50% 0 0 0)" }}
+            />
             <span
               ref={part("ring")}
               className="absolute z-[6] size-[22%] rounded-full border-2 border-reel-gold opacity-0"
@@ -586,6 +729,18 @@ export function ObjectLift({ id, title, backLabel, reduce, instant, onClose, chi
     </div>,
     document.body,
   )
+}
+
+/** bounding box of the turned object (plus a margin for its contact shadow), as an inset on the scene element */
+function emptyClip(f: Frame, k: number, width: number, height: number, pad: number) {
+  const a = (f.a * Math.PI) / 180
+  const ex = (f.w * Math.abs(Math.cos(a)) + f.h * Math.abs(Math.sin(a))) / 2 + pad
+  const ey = (f.w * Math.abs(Math.sin(a)) + f.h * Math.abs(Math.cos(a))) / 2 + pad
+  const top = Math.max(0, (f.cy - ey) * k)
+  const left = Math.max(0, (f.cx - ex) * k)
+  const right = Math.max(0, width - (f.cx + ex) * k)
+  const bottom = Math.max(0, height - (f.cy + ey) * k)
+  return `inset(${top}px ${right}px ${bottom}px ${left}px)`
 }
 
 /** light cone from the lens to the lit patch on the wall (convex hull of lens + patch corners) */

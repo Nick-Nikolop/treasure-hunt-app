@@ -524,6 +524,7 @@ function MobileScene({
   /** live props laid on the photo under the labels (the desk lamp) */
   props?: ReactNode
 }) {
+  if (scene.emptySrc) preload(scene.emptySrc, { as: "image", fetchPriority: "low" })
   return (
     <section aria-labelledby={id} className="mx-auto flex max-w-xl flex-col pt-14">
       <div className="flex flex-col gap-1.5 px-5 pb-5">
