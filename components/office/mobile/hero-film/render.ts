@@ -278,18 +278,27 @@ function drawLampLight(ctx: Ctx, t: number, P: (x: number, y: number) => { x: nu
   ctx.closePath()
   ctx.fill()
 
+  // dust does not stream anywhere: each mote hangs at a spot in the beam and wanders slowly on the air,
+  // glinting as it turns, and fades out to reappear somewhere else in the light
   const u = width / 1376
-  for (let i = 0; i < 22; i++) {
-    const period = 9 + hash(i) * 8
-    const p = ((t + hash(i + 40) * period) % period) / period
-    const q = hash(i + 80)
-    const fx = lerp(MOUTH.x - 0.06, MOUTH.x + 0.06, q)
-    const tx = lerp(0.06, 0.42, q)
-    const d = 1 - p
-    const pt = P(lerp(fx, tx, d) + Math.sin(t * 0.5 + i) * 0.006, lerp(MOUTH.y + 0.01, POOL.y - 0.03, d))
-    ctx.fillStyle = `rgba(255,228,175,${Math.sin(p * Math.PI) * 0.55 * L})`
+  for (let i = 0; i < 26; i++) {
+    const period = 10 + hash(i) * 9
+    const age = t + hash(i + 40) * period
+    const cycle = Math.floor(age / period)
+    const p = (age % period) / period
+    const v = lerp(0.08, 0.92, hash(i * 13 + cycle * 7 + 3))
+    const across = hash(i * 17 + cycle * 11 + 5)
+    const homeX = lerp(lerp(MOUTH.x - 0.06, 0.05, v), lerp(MOUTH.x + 0.06, 0.43, v), across)
+    const homeY = lerp(MOUTH.y + 0.015, POOL.y - 0.03, v)
+    const ph = hash(i + 60) * 6.28
+    const wx = 0.012 * Math.sin(t * (0.16 + hash(i + 90) * 0.14) + ph) + 0.005 * Math.sin(t * 0.41 + ph * 2)
+    const wy = 0.009 * Math.sin(t * (0.12 + hash(i + 100) * 0.12) + ph * 1.7) + 0.004 * Math.cos(t * 0.37 + ph)
+    const pt = P(homeX + wx, homeY + wy)
+    const glint = 0.55 + 0.45 * Math.sin(t * (0.9 + hash(i + 110) * 1.2) + ph * 3)
+    const falloff = lerp(1, 0.45, v)
+    ctx.fillStyle = `rgba(255,230,180,${Math.sin(p * Math.PI) * 0.5 * glint * falloff * L})`
     ctx.beginPath()
-    ctx.arc(pt.x, pt.y, Math.max(0.6, (1 + hash(i + 120) * 1.6) * u * 1.3), 0, Math.PI * 2)
+    ctx.arc(pt.x, pt.y, Math.max(0.45, (0.45 + hash(i + 120) * 0.6) * u * 1.3), 0, Math.PI * 2)
     ctx.fill()
   }
   ctx.restore()
