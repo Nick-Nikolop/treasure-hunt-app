@@ -30,10 +30,10 @@ export function MobileHero({
   header,
   actions,
   nextId,
-  stage,
+  plate,
 }: {
-  /** the desktop room (plate + objects) the film camera tours; decoration only */
-  stage: ReactNode
+  /** flat still of the desktop room (plate + objects) the film camera tours */
+  plate: string
   copy: OfficeCopy
   reduce: boolean
   /** the loading screen has lifted; the opening is decided only then */
@@ -117,7 +117,7 @@ export function MobileHero({
           reduce={reduce}
           // once the opening is over (timer or tap) the film must be lit, even if it fell behind the clock
           skipped={skipped || (played && phase === "room")}
-          stage={stage}
+          plate={plate}
           className={cn("absolute inset-0 transition-opacity duration-500", pending && "opacity-0")}
         />
         {/* legibility: a dark ceiling for the header, the desk front falls into shadow under the title */}

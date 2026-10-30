@@ -1,14 +1,13 @@
 "use client"
 
-import { useEffect, useRef, type ReactNode } from "react"
-import { INTRO_END, STAGE_H, STAGE_W, STILL_TIME, frameFor, renderOffice } from "./render"
+import { useEffect, useRef } from "react"
+import { INTRO_END, STILL_TIME, frameFor, renderOffice } from "./render"
 
 type Mode = "pending" | "play" | "still"
 
 /**
- * Player for the phone hero film. `stage` is the desktop room (plate + objects), laid out at STAGE_W x STAGE_H and
- * moved by the film camera; a canvas above it carries the light. The stage is decoration only: inert and hidden
- * from assistive tech, so nothing in it can be clicked or focused.
+ * Player for the phone hero film: one canvas that pans a flat still of the desktop room (`plate`) and draws the
+ * light on top. Decoration only (aria-hidden, no pointer events).
  *
  * `mode` "play" runs the opening from 0 and then idles; "still" starts on the calm frame and keeps idling; reduced
  * motion draws one frame and stops. `skipped` jumps a running opening to its end. Pauses offscreen and in
@@ -18,17 +17,17 @@ export function OfficeFilm({
   mode,
   reduce,
   skipped,
-  stage,
+  plate,
   className,
 }: {
   mode: Mode
   reduce: boolean
   skipped: boolean
-  stage: ReactNode
+  plate: string
   className?: string
 }) {
   const rootRef = useRef<HTMLDivElement>(null)
-  const stageRef = useRef<HTMLDivElement>(null)
+  const imgRef = useRef<HTMLImageElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const clock = useRef({ t: STILL_TIME, last: 0 })
   const live = useRef({ mode, reduce })
@@ -53,10 +52,10 @@ export function OfficeFilm({
 
   useEffect(() => {
     const root = rootRef.current
-    const stageEl = stageRef.current
+    const img = imgRef.current
     const canvas = canvasRef.current
     const ctx = canvas?.getContext("2d")
-    if (!root || !stageEl || !canvas || !ctx) return
+    if (!root || !img || !canvas || !ctx) return
 
     let frozen = false
     const debugAt = new URLSearchParams(window.location.search).get("filmAt")
@@ -70,11 +69,11 @@ export function OfficeFilm({
     let k = 1
     const draw = () => {
       const t = clock.current.t
-      const f = frameFor(t, cw, ch)
-      stageEl.style.transform = `translate3d(${f.ox}px, ${f.oy}px, 0) scale(${f.s})`
-      renderOffice(ctx, t, cw, ch, k, f)
+      renderOffice(ctx, t, cw, ch, k, frameFor(t, cw, ch), img)
     }
     redraw.current = draw
+    // the loading screen waits for this image, but redraw anyway when it lands (locale switch, slow network)
+    img.addEventListener("load", draw)
 
     const resize = () => {
       cw = Math.max(1, root.clientWidth)
@@ -94,8 +93,6 @@ export function OfficeFilm({
     })
     io.observe(root)
 
-    // the office loading screen holds the page until the plate is decoded, so the clock never waits on images
-    // (Safari can report `complete` late for srcset images, which used to leave the room stuck in the dark)
     let raf = 0
     const tick = (now: number) => {
       const c = clock.current
@@ -111,6 +108,7 @@ export function OfficeFilm({
     raf = requestAnimationFrame(tick)
     return () => {
       cancelAnimationFrame(raf)
+      img.removeEventListener("load", draw)
       ro.disconnect()
       io.disconnect()
     }
@@ -118,16 +116,10 @@ export function OfficeFilm({
 
   return (
     <div ref={rootRef} aria-hidden="true" className={className}>
-      <div className="absolute inset-0 overflow-hidden bg-reel">
-        <div
-          ref={stageRef}
-          inert
-          data-hero-stage
-          className="@container/stage pointer-events-none absolute left-0 top-0 origin-top-left select-none will-change-transform"
-          style={{ width: STAGE_W, height: STAGE_H }}
-        >
-          {stage}
-        </div>
+      {/* source for the canvas; inside data-hero-stage so the loading screen waits for it even though it is hidden */}
+      <div data-hero-stage className="hidden">
+        {/* eslint-disable-next-line @next/next/no-img-element -- drawn into the canvas, never shown */}
+        <img ref={imgRef} src={plate} alt="" width={2064} height={1152} decoding="async" />
       </div>
       <canvas ref={canvasRef} className="pointer-events-none absolute inset-0 size-full" />
     </div>
