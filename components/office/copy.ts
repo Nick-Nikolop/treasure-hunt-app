@@ -50,7 +50,7 @@ export const OFFICE_COPY = {
       soon: "Σύντομα",
       caseLine: "Μια νέα ιστορία έρχεται στην Καλαμάτα.",
       openCase: "Άνοιξε τον φάκελο",
-      note: "Τι κρύβει;",
+      note: "Τι είναι;",
       archive: "Αρχείο αποστολών",
       archiveCount: "1 λυμένη υπόθεση",
       archiveOpen: "Άνοιξε το αρχείο",
@@ -98,7 +98,7 @@ export const OFFICE_COPY = {
       exhibit: "Τεκμήριο",
       evidence: [
         { mark: "Α", caption: "Η εξίσωση του δεύτερου σημειώματος. Η λύση της έδειχνε πού ήταν ο θησαυρός.", alt: "Ο πίνακας B με τις στροφές A(90°) και A(−90°) πάνω σε παλιό χάρτη της Καλαμάτας" },
-        { mark: "Β", caption: "Η βραδιά του τέλους, στην παραλία κάτω από τον φάρο.", alt: "Εξερευνητές χορεύουν στην παραλία το σούρουπο, με φωτάκια, φωτιά και τον φάρο στο βάθος" },
+        { mark: "Β", caption: "Η βραδιά του τέλους, στην παραλία κάτω από τον φάρο.", alt: "Εξερευνητές χορεύουν στη�� παραλία το σούρουπο, με φωτάκια, φωτιά και τον φάρο στο βάθος" },
       ],
       facts: [
         { label: "Σταθμοί", value: "10" },
@@ -230,7 +230,7 @@ export const OFFICE_COPY = {
       soon: "Coming soon",
       caseLine: "A new story is coming to Kalamata.",
       openCase: "Open the file",
-      note: "What is it hiding?",
+      note: "What is it?",
       archive: "Case archive",
       archiveCount: "1 solved case",
       archiveOpen: "Open the archive",
