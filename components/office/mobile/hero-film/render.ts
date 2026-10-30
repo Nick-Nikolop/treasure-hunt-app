@@ -23,7 +23,9 @@ const ANCHOR_Y = PLATE_H / 2
 
 // geometry on the render, as fractions of the scene
 const WINDOW = { x0: 0.855, x1: 1, y0: 0, y1: 0.64 }
-const MOUTH = { x: 0.152, y: 0.625 }
+const MOUTH = { x: 0.165, y: 0.622 }
+/** the shade's lower rim, left end (lower) to right end (higher), measured on the plate */
+const RIM = { x0: 0.09, y0: 0.632, x1: 0.238, y1: 0.598 }
 const POOL = { x: 0.24, y: 0.88 }
 const WALL_BOTTOM = 0.62
 const LAMP_ON = 2.7
@@ -257,15 +259,31 @@ function drawLampLight(ctx: Ctx, t: number, P: (x: number, y: number) => { x: nu
   const pool = P(POOL.x, POOL.y)
   ctx.save()
   ctx.globalCompositeOperation = "lighter"
-  const r = width * 0.12
-  const bloom = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, r)
-  bloom.addColorStop(0, `rgba(255,220,150,${0.3 * L})`)
+  // light only exists below the shade's rim, so the brass dome itself never gets a glow painted on top
+  const rimL = P(RIM.x0 - 0.02, RIM.y0)
+  const rimR = P(RIM.x1 + 0.02, RIM.y1)
+  const slope = (rimR.y - rimL.y) / (rimR.x - rimL.x)
+  ctx.beginPath()
+  ctx.moveTo(0, rimL.y - slope * rimL.x)
+  ctx.lineTo(ctx.canvas.width, rimL.y + slope * (ctx.canvas.width - rimL.x))
+  ctx.lineTo(ctx.canvas.width, ctx.canvas.height)
+  ctx.lineTo(0, ctx.canvas.height)
+  ctx.closePath()
+  ctx.clip()
+
+  const r = width * 0.11
+  ctx.save()
+  ctx.translate(m.x, m.y)
+  ctx.scale(1, 0.5)
+  const bloom = ctx.createRadialGradient(0, 0, 0, 0, 0, r)
+  bloom.addColorStop(0, `rgba(255,220,150,${0.32 * L})`)
   bloom.addColorStop(1, "rgba(255,220,150,0)")
   ctx.fillStyle = bloom
-  ctx.fillRect(m.x - r, m.y - r, r * 2, r * 2)
+  ctx.fillRect(-r, -r, r * 2, r * 2)
+  ctx.restore()
 
-  const left = P(MOUTH.x - 0.075, MOUTH.y)
-  const right = P(MOUTH.x + 0.08, MOUTH.y)
+  const left = P(RIM.x0, RIM.y0)
+  const right = P(RIM.x1, RIM.y1)
   const beam = ctx.createLinearGradient(m.x, m.y, pool.x, pool.y)
   beam.addColorStop(0, `rgba(255,205,120,${0.1 * L})`)
   beam.addColorStop(1, "rgba(255,205,120,0)")
