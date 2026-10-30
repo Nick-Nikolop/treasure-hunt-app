@@ -5,7 +5,8 @@ import { usePresence } from "framer-motion"
 import { ArrowLeft, ArrowRight } from "lucide-react"
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react"
 import { createPortal } from "react-dom"
-import { archivedCases, LAYOUTS, Pin } from "./case-board"
+import { cn } from "@/lib/utils"
+import { archivedCases, boardPiece, Pin } from "./case-board"
 import type { OfficeCopy } from "./copy"
 import { archiveInHand, lerp, smoothstep, useTransit } from "./transit"
 import { ArchivedCaseBody } from "./views/case-dossier"
@@ -24,30 +25,34 @@ type Geo = {
   read: Rect
   /** text unit of the folder face at held size */
   u: number
+  /** phone wall board: wide folder, edge-to-edge reading page */
+  compact: boolean
 }
 
 const fs = (n: number): CSSProperties => ({ fontSize: `calc(var(--u) * ${n})` })
 
 function measure(): Geo | null {
-  const stage = document.querySelector<HTMLElement>("[data-office-stage]")
-  const folder = stage?.querySelector<HTMLElement>("[data-archive-folder]")
-  const cork = folder?.offsetParent as HTMLElement | null
-  if (!stage || !folder || !cork) return null
-  const zoom = stage.getBoundingClientRect().width / stage.offsetWidth
+  const piece = boardPiece("[data-archive-folder]")
+  if (!piece) return null
+  const { el: folder, cork, layout, zoom, compact } = piece
   const rect = folder.getBoundingClientRect()
   const aspect = folder.offsetWidth / folder.offsetHeight
 
   const vw = window.innerWidth
   const vh = window.innerHeight
-  const heldH = Math.min(vh - TOP_BAR - 150, 560)
-  const heldW = heldH * aspect
-  const readW = Math.min(vw - 160, 920)
+  // phone: the wide wall folder is held across the screen; desktop: the tall desk folder at eye height
+  const heldW = compact ? Math.min(vw - 40, 460) : Math.min(vh - TOP_BAR - 150, 560) * aspect
+  const heldH = heldW / aspect
+  const readW = compact ? vw - 24 : Math.min(vw - 160, 920)
 
   return {
-    start: { cx: rect.left + rect.width / 2, cy: rect.top + rect.height / 2, w: folder.offsetWidth * zoom, h: folder.offsetHeight * zoom, r: LAYOUTS.desk.bundle.r },
+    start: { cx: rect.left + rect.width / 2, cy: rect.top + rect.height / 2, w: folder.offsetWidth * zoom, h: folder.offsetHeight * zoom, r: layout.bundle.r },
     held: { cx: vw / 2, cy: TOP_BAR + (vh - TOP_BAR) / 2 + 12, w: heldW, h: heldH },
-    read: { x: (vw - readW) / 2, y: TOP_BAR + 8, w: readW, h: vh - TOP_BAR - 24 },
-    u: LAYOUTS.desk.unitFr * cork.offsetWidth * (heldW / folder.offsetWidth),
+    read: compact
+      ? { x: (vw - readW) / 2, y: TOP_BAR + 4, w: readW, h: vh - TOP_BAR - 16 }
+      : { x: (vw - readW) / 2, y: TOP_BAR + 8, w: readW, h: vh - TOP_BAR - 24 },
+    u: layout.unitFr * cork.offsetWidth * (heldW / folder.offsetWidth),
+    compact,
   }
 }
 
@@ -242,7 +247,7 @@ export function ArchivePickup({ copy, reduce, instant, startOpen, fromBoard, onC
         style={{ opacity: "var(--dim, 0)" }}
       />
 
-      <header className="absolute inset-x-0 top-0 z-10 flex h-16 items-center gap-4 px-6" style={{ opacity: "var(--chrome, 0)" }} inert={!usable}>
+      <header className="absolute inset-x-0 top-0 z-10 flex h-16 items-center gap-4 px-4 md:px-6" style={{ opacity: "var(--chrome, 0)" }} inert={!usable}>
         <button
           type="button"
           onClick={onClose}
@@ -267,7 +272,7 @@ export function ArchivePickup({ copy, reduce, instant, startOpen, fromBoard, onC
         <span className="board-manila-deep absolute inset-0 rounded-[0.3em] rounded-tl-none" />
         <span className="absolute inset-0 rounded-[0.3em] bg-linear-to-r from-reel/35 via-transparent to-transparent" />
 
-        <div ref={faceRef} className="board-paper absolute inset-[4%] top-[3%] flex flex-col gap-[3.5%] p-[6%] text-reel shadow-[0_1px_1px_rgb(0_0_0/0.35)]">
+        <div ref={faceRef} className="board-paper absolute inset-[4%] top-[3%] flex flex-col gap-[3.5%] overflow-hidden p-[6%] text-reel shadow-[0_1px_1px_rgb(0_0_0/0.35)]">
           <span className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-reel">
             <Image src={file.image} alt="" fill sizes="480px" className="object-cover sepia-[0.35] contrast-[1.05]" />
           </span>
@@ -320,10 +325,15 @@ export function ArchivePickup({ copy, reduce, instant, startOpen, fromBoard, onC
         className="board-paper absolute left-0 top-0 origin-top-left text-reel shadow-[0_1px_1px_rgb(0_0_0/0.3),0_30px_60px_-20px_rgb(0_0_0/0.9)] will-change-transform"
         style={{ width: geo.read.w, height: geo.read.h, opacity: 0 }}
       >
-        <div ref={contentRef} inert={!usable} className="reel-modal-scroll relative size-full overflow-y-auto px-10 py-9" style={{ opacity: 0 }}>
+        <div
+          ref={contentRef}
+          inert={!usable}
+          className={cn("reel-modal-scroll relative size-full overflow-y-auto overscroll-contain", geo.compact ? "px-5 pb-8 pt-14" : "px-10 py-9")}
+          style={{ opacity: 0 }}
+        >
           <span
             aria-hidden="true"
-            className="office-stamp office-stamp-done pointer-events-none absolute right-8 top-8 rotate-[-8deg] rounded-[2px] border-[3px] px-3 py-1 font-sans text-base font-extrabold uppercase leading-none tracking-[0.16em] opacity-90"
+            className="office-stamp office-stamp-done pointer-events-none absolute right-5 top-5 md:right-8 md:top-8 rotate-[-8deg] rounded-[2px] border-[3px] px-3 py-1 font-sans text-base font-extrabold uppercase leading-none tracking-[0.16em] opacity-90"
           >
             {copy.case1.stamp}
           </span>

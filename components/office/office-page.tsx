@@ -15,7 +15,7 @@ import { CaseBoard } from "./case-board"
 import { ArchivePickup } from "./archive-pickup"
 import { CasePickup } from "./case-pickup"
 import { OFFICE_COPY, type OfficeCopy } from "./copy"
-import { FocusShell } from "./focus-shell"
+import { ObjectLift } from "./mobile/object-lift"
 import { RoomHotspot } from "./hotspot"
 import { DeskLamp } from "./desk-lamp"
 import { RoomTitle } from "./room-title"
@@ -28,7 +28,6 @@ import { ContactPickup, DeskEnvelope, ENVELOPE_TEXTURES } from "./contact/contac
 import { contactPeek, drawerPeek, mapPeek, phonePeek } from "./transit"
 import { DESK, DESKTOP, RECORDS, WALL, pct, type Scene } from "./scenes"
 import { toSearch, useOfficeNav, type OfficeState, type OfficeView, type RecordsTab } from "./use-office-nav"
-import { ArchivedCaseDossier, CurrentCaseDossier } from "./views/case-dossier"
 import { ContactView } from "./views/contact-view"
 import { HowView } from "./views/how-view"
 import { MapView } from "./views/map-view"
@@ -585,77 +584,66 @@ type HostProps = {
 function ViewHost({ view, state, copy, base, origin, instant, reduce, contactHref, back, go, open }: HostProps) {
   const s = copy.shell
   const desktop = useDesktop()
-  const toOffice = { label: s.backOffice, onClick: back }
-  const common = { origin, reduce }
+  // phones: the photographed object leaves its scene and the view grows out of it
+  const lift = { backLabel: s.backOffice, reduce, instant, onClose: back }
 
   switch (view) {
     case "board":
       return desktop ? <BoardBar copy={copy} onClose={back} /> : null
+    // Both board papers are live HTML on desktop and on the phone's wall board, so the same pickups run everywhere.
     case "case-002":
-      if (desktop)
-        return (
-          <CasePickup
-            copy={copy}
-            reduce={reduce}
-            instant={instant}
-            fromBoard={!!state.board}
-            contactHref={contactHref}
-            onClose={back}
-            onHow={() => open("how", null)}
-          />
-        )
       return (
-        <FocusShell {...common} title={copy.case2.tab} back={toOffice} backdrop={DESK.src}>
-          <CurrentCaseDossier copy={copy} reduce={reduce} contactHref={contactHref} onHow={() => open("how", null)} />
-        </FocusShell>
+        <CasePickup
+          copy={copy}
+          reduce={reduce}
+          instant={instant}
+          fromBoard={!!state.board}
+          contactHref={contactHref}
+          onClose={back}
+          onHow={() => open("how", null)}
+        />
       )
     case "case-001":
-      if (desktop)
-        return <ArchivePickup copy={copy} reduce={reduce} instant={instant} startOpen={state.archive} fromBoard={!!state.board} onClose={back} />
-      return (
-        <FocusShell {...common} title={`${copy.case1.tab} · ${copy.case1.title}`} back={toOffice} backdrop={DESK.src}>
-          <ArchivedCaseDossier copy={copy} reduce={reduce} />
-        </FocusShell>
-      )
+      return <ArchivePickup copy={copy} reduce={reduce} instant={instant} startOpen={state.archive} fromBoard={!!state.board} onClose={back} />
     case "how":
       // Desktop: the phone on the desk is physically picked up. Smaller screens keep the close-up view.
       if (desktop) return <PhonePickup copy={copy} how={base.how} reduce={reduce} onClose={back} onCase={() => open("case-002", null)} />
       return (
-        <FocusShell {...common} title={copy.how.title} back={toOffice} backdrop={DESK.src}>
+        <ObjectLift id="how" {...lift} title={copy.how.title}>
           <HowView copy={copy} how={base.how} onCase={() => open("case-002", null)} />
-        </FocusShell>
+        </ObjectLift>
       )
     case "map":
       // Desktop: the folded map on the desk is lifted and opened. Smaller screens keep the close-up view.
       if (desktop) return <MapPickup copy={copy} reduce={reduce} onClose={back} />
       return (
-        <FocusShell {...common} title={copy.map.title} back={toOffice} backdrop={DESK.src}>
+        <ObjectLift id="map" {...lift} title={copy.map.title}>
           <MapView copy={copy} />
-        </FocusShell>
+        </ObjectLift>
       )
     case "records": {
       const onTab = (tab: RecordsTab) => go({ view: "records", archive: state.archive, tab }, "replace")
       // Desktop: the top drawer slides out and the file is taken from it. Smaller screens keep the close-up view.
       if (desktop) return <DrawerPickup copy={copy} faq={base.faq} code={base.code} onTab={onTab} reduce={reduce} onClose={back} />
       return (
-        <FocusShell {...common} title={copy.records.title} back={toOffice} backdrop={RECORDS.src}>
+        <ObjectLift id="records" {...lift} title={copy.records.title}>
           <RecordsView copy={copy} faq={base.faq} code={base.code} tab={state.tab} onTab={onTab} />
-        </FocusShell>
+        </ObjectLift>
       )
     }
     case "trailer":
       return (
-        <FocusShell {...common} title={copy.trailer.title} back={toOffice} backdrop={RECORDS.src}>
+        <ObjectLift id="trailer" {...lift} title={copy.trailer.title}>
           <TrailerView copy={copy} reduce={reduce} />
-        </FocusShell>
+        </ObjectLift>
       )
     case "contact":
       // Desktop: the sealed envelope is lifted out of the letter tray and opened. Smaller screens keep the close-up view.
       if (desktop) return <ContactPickup copy={copy} reduce={reduce} href={contactHref} onClose={back} />
       return (
-        <FocusShell {...common} title={copy.contact.title} back={toOffice} backdrop={DESK.src}>
+        <ObjectLift id="contact" {...lift} title={copy.contact.title}>
           <ContactView copy={copy} reduce={reduce} href={contactHref} />
-        </FocusShell>
+        </ObjectLift>
       )
   }
 }

@@ -27,6 +27,20 @@ type Layout = {
 }
 
 /** Positions in % of the cork. "desk" = the wide desktop board, "wall" = the tall phone board. */
+/**
+ * The paper a pickup lifts off whichever board is on screen (desktop room or the phone's wall scene),
+ * with that board's layout and the board camera's zoom (1 when the room is not scaled).
+ */
+export function boardPiece(selector: string) {
+  const el = Array.from(document.querySelectorAll<HTMLElement>(selector)).find((e) => e.offsetParent !== null)
+  const cork = el?.offsetParent as HTMLElement | null
+  if (!el || !cork) return null
+  const variant = (el.closest<HTMLElement>("[data-board-variant]")?.dataset.boardVariant ?? "desk") as "desk" | "wall"
+  const stage = el.closest<HTMLElement>("[data-office-stage]")
+  const zoom = stage ? stage.getBoundingClientRect().width / stage.offsetWidth : 1
+  return { el, cork, layout: LAYOUTS[variant], zoom, compact: variant === "wall" }
+}
+
 export const LAYOUTS: Record<"desk" | "wall", Layout> = {
   desk: {
     unitFr: 0.0066,
@@ -117,6 +131,7 @@ export function CaseBoard({ variant, copy, archiveOpen, reduce, onOpenCase, onOp
     <div
       role="group"
       aria-label={copy.scenes.board.title}
+      data-board-variant={variant}
       onKeyDown={onKeyDown}
       className="@container pointer-events-none absolute inset-0 [&_button]:pointer-events-auto"
       style={{ ["--u" as string]: `${L.unitFr * 100}cqw` }}

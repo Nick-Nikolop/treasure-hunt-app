@@ -5,7 +5,7 @@ import { ArrowLeft } from "lucide-react"
 import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from "react"
 import { createPortal } from "react-dom"
 import { cn } from "@/lib/utils"
-import { CaseSheetFace, LAYOUTS, Pin, SHEET_FACE_CLASS, SHEET_PIN } from "./case-board"
+import { boardPiece, CaseSheetFace, Pin, SHEET_FACE_CLASS, SHEET_PIN } from "./case-board"
 import type { OfficeCopy } from "./copy"
 import { caseInHand, lerp, smoothstep, useTransit } from "./transit"
 import { Case2Details } from "./views/case-dossier"
@@ -21,6 +21,10 @@ type Geo = {
   held: { cx: number; cy: number; w: number; h: number }
   /** text unit of the face at held size */
   u: number
+  /** phone: one sheet held up; it flicks away and the page beneath grows into the reading page */
+  compact: boolean
+  /** phone reading page (top + height; width = held width) */
+  read: { top: number; h: number }
 }
 
 type Props = {
@@ -35,11 +39,9 @@ type Props = {
 }
 
 function measure(): Geo | null {
-  const stage = document.querySelector<HTMLElement>("[data-office-stage]")
-  const sheet = stage?.querySelector<HTMLElement>("[data-case-sheet]")
-  const cork = sheet?.offsetParent as HTMLElement | null
-  if (!stage || !sheet || !cork) return null
-  const zoom = stage.getBoundingClientRect().width / stage.offsetWidth
+  const piece = boardPiece("[data-case-sheet]")
+  if (!piece) return null
+  const { el: sheet, cork, layout, zoom, compact } = piece
   const rect = sheet.getBoundingClientRect()
   const w = sheet.offsetWidth * zoom
   const h = sheet.offsetHeight * zoom
@@ -47,6 +49,22 @@ function measure(): Geo | null {
 
   const vw = window.innerWidth
   const vh = window.innerHeight
+  const start = { cx: rect.left + rect.width / 2, cy: rect.top + rect.height / 2, w, h, r: layout.sheet.r }
+
+  if (compact) {
+    // phone: the sheet comes up nearly edge to edge, centred in the space under the back bar
+    const heldW = Math.min(vw - 32, 480)
+    const heldH = heldW / aspect
+    const readH = vh - TOP_BAR - 16
+    return {
+      start,
+      held: { cx: vw / 2, cy: TOP_BAR + (vh - TOP_BAR) / 2, w: heldW, h: heldH },
+      u: layout.unitFr * cork.offsetWidth * (heldW / sheet.offsetWidth),
+      compact,
+      read: { top: TOP_BAR + 4, h: readH },
+    }
+  }
+
   // held at a comfortable reading distance: the spread leaves the room visible around it
   const heldH = Math.min(vh - TOP_BAR - 110, (vw * 0.39) / aspect, 700)
   const heldW = heldH * aspect
@@ -55,9 +73,11 @@ function measure(): Geo | null {
   const left = (vw - spread) / 2
 
   return {
-    start: { cx: rect.left + rect.width / 2, cy: rect.top + rect.height / 2, w, h, r: LAYOUTS.desk.sheet.r },
+    start,
     held: { cx: left + heldW / 2, cy: TOP_BAR + (vh - TOP_BAR) / 2, w: heldW, h: heldH },
-    u: LAYOUTS.desk.unitFr * cork.offsetWidth * (heldW / sheet.offsetWidth),
+    u: layout.unitFr * cork.offsetWidth * (heldW / sheet.offsetWidth),
+    compact,
+    read: { top: 0, h: heldH },
   }
 }
 
@@ -131,6 +151,26 @@ export function CasePickup({ copy, reduce, instant, fromBoard, contactHref, onCl
       pin.style.opacity = String(1 - smoothstep(0.55, 0.7, t))
     }
     const page = pageRef.current
+    if (g.compact) {
+      // phone: no room for a spread. The held sheet is flicked up and away like a cover page, and the
+      // page that was behind it grows down into the full-height reading page.
+      const flick = smoothstep(0.6, 0.9, t)
+      const grow = smoothstep(0.62, 1, t)
+      if (sheet && flick > 0) {
+        const vh = window.innerHeight
+        sheet.style.transform = `translate(${cx - h.w / 2 - flick * h.w * 0.18}px, ${cy - h.h / 2 - flick * (vh * 0.55 + h.h)}px) perspective(${h.w * 3}px) rotateX(${tilt + flick * 18}deg) rotate(${rot - flick * 13}deg) scale(${scale})`
+        sheet.style.opacity = String(1 - smoothstep(0.75, 0.9, t))
+      } else if (sheet) sheet.style.opacity = "1"
+      if (page) {
+        const top = lerp(h.cy - h.h / 2, g.read.top, grow)
+        page.style.height = `${lerp(h.h, g.read.h, grow)}px`
+        page.style.transform = `translate(${h.cx - h.w / 2}px, ${top}px) rotate(${lerp(rot * (1 - travel), 0, grow)}deg)`
+        page.style.opacity = travel > 0.98 ? "1" : "0"
+      }
+      root.style.setProperty("--dim", smoothstep(0.04, 0.6, t).toFixed(3))
+      root.style.setProperty("--chrome", smoothstep(0.7, 1, t).toFixed(3))
+      return
+    }
     if (page) {
       // it starts exactly behind the front page and slides out to the right
       const dx = lerp(-(h.w - 14), 0, open)
@@ -218,7 +258,7 @@ export function CasePickup({ copy, reduce, instant, fromBoard, contactHref, onCl
       />
 
       <header
-        className="absolute inset-x-0 top-0 z-10 flex h-16 items-center gap-4 px-6"
+        className="absolute inset-x-0 top-0 z-10 flex h-16 items-center gap-4 px-4 md:px-6"
         style={{ opacity: "var(--chrome, 0)" }}
         inert={!usable}
       >
@@ -243,7 +283,10 @@ export function CasePickup({ copy, reduce, instant, fromBoard, contactHref, onCl
       >
         <div
           inert={!usable}
-          className="board-paper reel-modal-scroll relative size-full overflow-y-auto px-[7%] py-[8%] text-reel shadow-[0_1px_1px_rgb(0_0_0/0.3),0_30px_60px_-20px_rgb(0_0_0/0.9)]"
+          className={cn(
+            "board-paper reel-modal-scroll relative size-full overflow-y-auto overscroll-contain text-reel shadow-[0_1px_1px_rgb(0_0_0/0.3),0_30px_60px_-20px_rgb(0_0_0/0.9)]",
+            geo.compact ? "px-5 pb-8 pt-14" : "px-[7%] py-[8%]",
+          )}
         >
           <span
             aria-hidden="true"
