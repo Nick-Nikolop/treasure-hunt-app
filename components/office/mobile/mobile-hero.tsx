@@ -8,29 +8,24 @@ import { EV } from "@/lib/analytics-events"
 import { track } from "@/lib/analytics-client"
 import { cn } from "@/lib/utils"
 import type { OfficeCopy } from "../copy"
-import { DESKTOP, pct } from "../scenes"
+import { DESKTOP } from "../scenes"
 
 // separate from the desktop key: both rooms are mounted, so they would mark each other as seen
 const SEEN_KEY = "office:title-seen-mobile"
-/** lamp catches → room fills → camera settles on the board → title lands */
+/** lamp catches → room fills → camera eases back from the lamp → title lands */
 const INTRO_MS = 4600
 
-/** horizontal centres of the lamp and the board in the room render, % of its width */
+/** horizontal centre of the lamp in the room render, % of its width; the shot settles a little right of it,
+ * still short of the board, so the board is first seen in its own scene below */
 const LAMP_X = 14
-const BOARD_X = 51.6
-
-/** the two case files pinned to the cork, positions as % of the cork */
-const PINNED = [
-  { src: "/landing2/mission-pythea.webp", left: "14%", top: "14%", width: "27%", rotate: -5 },
-  { src: "/landing2/mission-carnival.webp", left: "56%", top: "22%", width: "27%", rotate: 4 },
-]
+const REST_X = 17.5
 
 type Phase = "pending" | "intro" | "room"
 
 /**
- * Phone opening: you walk into the dark office, the desk lamp clicks on, the room fills with light and the camera
- * pulls back from the lamp to the case board while the title lands over the desk. Scrolling pushes you into the
- * room, straight onto the board scene below. Once per session; reduced motion, deep links and scrolled arrivals
+ * Phone opening: you step into the dark office and the desk lamp clicks on. The room comes up around it and the
+ * camera eases back while the title lands over the desk. The board stays out of frame; scrolling down is looking
+ * up at it in the board scene below. Once per session; reduced motion, deep links and scrolled arrivals
  * get the lit room straight away. A tap anywhere skips to the end.
  */
 export function MobileHero({
@@ -119,32 +114,18 @@ export function MobileHero({
       <motion.div aria-hidden="true" className="absolute inset-0 -z-10 origin-[50%_35%]" style={{ scale: roomScale }}>
         <div
           className={cn(
-            "office-hero-room absolute left-0 top-0 aspect-[1376/768] h-[max(68%,55.82vw)] origin-[14%_62%]",
+            "office-hero-room absolute left-0 top-[-26%] aspect-[1376/768] h-[max(100%,55.82vw)] origin-[14%_70%]",
             intro && "office-hero-pan",
             pending && "opacity-0",
           )}
           style={
             {
               "--pan-from": `clamp(calc(100vw - 100%), calc(50vw - ${LAMP_X}%), 0px)`,
-              "--pan-to": `clamp(calc(100vw - 100%), calc(50vw - ${BOARD_X}%), 0px)`,
+              "--pan-to": `clamp(calc(100vw - 100%), calc(50vw - ${REST_X}%), 0px)`,
             } as CSSProperties
           }
         >
           <Image src={DESKTOP.src} alt="" fill priority sizes="200vw" className="object-cover" />
-          <div className="absolute" style={pct(DESKTOP.cork!)}>
-            {PINNED.map((p) => (
-              <div
-                key={p.src}
-                className="absolute bg-reel-white p-[3%] pb-[7%] shadow-[0_6px_14px_rgb(0_0_0/0.55)]"
-                style={{ left: p.left, top: p.top, width: p.width, transform: `rotate(${p.rotate}deg)` }}
-              >
-                <span className="absolute -top-1.5 left-1/2 size-3 -translate-x-1/2 rounded-full bg-[#9b1c1c] shadow-[0_1px_2px_rgb(0_0_0/0.6)]" />
-                <div className="relative aspect-[4/5] w-full overflow-hidden">
-                  <Image src={p.src} alt="" fill sizes="120px" className="object-cover sepia-[0.25]" />
-                </div>
-              </div>
-            ))}
-          </div>
           {/* only the lamp's pool of light at first, then the rest of the room comes up */}
           <div
             className={cn("absolute inset-0", intro ? "office-hero-dark" : "opacity-0")}
