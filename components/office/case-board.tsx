@@ -294,6 +294,7 @@ function ArchiveFolder({
   // hovering the closed folder lifts it off the cork and the file inside starts to slide out
   const [hovered, setHovered] = useState(false)
   const lifted = hovered && !open && !held && s > 0
+  const compact = layout === LAYOUTS.wall
   const sway = { type: "spring", stiffness: 230, damping: 15, mass: 0.9 } as const
   const peekT = (delay: number) => ({ duration: 0.5, delay: lifted ? delay : 0, ease: [0.3, 1.4, 0.5, 1] as const })
   const peekEnd = { onPointerEnter: () => setHovered(true), onPointerLeave: () => setHovered(false), onFocus: () => setHovered(true), onBlur: () => setHovered(false) }
@@ -374,7 +375,8 @@ function ArchiveFolder({
               aria-hidden={!open}
               onClick={(e) => onOpenFile(e.currentTarget, file.id)}
               aria-label={`${b.openFile}: ${file.tab}, ${file.title}, ${file.stamp}`}
-              className="group/file board-paper flex size-full flex-col gap-[3.5%] p-[6%] text-left text-reel shadow-[0_1px_1px_rgb(0_0_0/0.35),0_6px_10px_-6px_rgb(0_0_0/0.7)] outline-none transition-[translate] duration-200 hover:-translate-y-[1%] focus-visible:ring-4 focus-visible:ring-reel-gold"
+              // clipped to the folder: on the short phone folder the file is taller than its pocket
+              className="group/file board-paper flex size-full flex-col gap-[3.5%] overflow-hidden p-[6%] text-left text-reel shadow-[0_1px_1px_rgb(0_0_0/0.35),0_6px_10px_-6px_rgb(0_0_0/0.7)] outline-none transition-[translate] duration-200 hover:-translate-y-[1%] focus-visible:ring-4 focus-visible:ring-reel-gold"
             >
               <span className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-reel">
                 <Image src={file.image} alt="" fill sizes="(min-width: 1280px) 360px, 240px" className="object-cover sepia-[0.35] contrast-[1.05]" />
@@ -424,18 +426,34 @@ function ArchiveFolder({
             animate={{ opacity: open ? 0.5 : 0 }}
             transition={coverT}
           />
-          <span className="board-card absolute bottom-[9%] left-[36%] right-[6%] flex flex-col gap-[0.25em] px-[6%] py-[5%] shadow-[0_1px_1px_rgb(0_0_0/0.35),0_6px_10px_-5px_rgb(0_0_0/0.6)]">
-            <span className="font-serif font-bold leading-tight text-reel" style={fs(5)}>
-              {b.archive}
+          {compact ? (
+            // phone folder is wide and short: a filing label above the twine, every line on one row
+            <span className="board-card absolute left-[24%] right-[5%] top-[11%] flex flex-col gap-[0.35em] px-[5%] py-[4%] shadow-[0_1px_1px_rgb(0_0_0/0.35),0_6px_10px_-5px_rgb(0_0_0/0.6)]">
+              <span className="truncate border-b border-reel/15 pb-[0.3em] font-serif font-bold leading-tight text-reel" style={fs(4.8)}>
+                {b.archive}
+              </span>
+              <span className="truncate font-sans text-reel/70" style={fs(3.8)}>
+                {b.archiveCount}
+              </span>
+              <span className="flex items-center gap-[0.3em] whitespace-nowrap font-sans font-bold text-board-string" style={fs(3.8)}>
+                {b.archiveOpen}
+                <ArrowRight className="size-[1.1em] shrink-0" aria-hidden="true" />
+              </span>
             </span>
-            <span className="font-sans text-reel/75" style={fs(4.4)}>
-              {b.archiveCount}
+          ) : (
+            <span className="board-card absolute bottom-[9%] left-[36%] right-[6%] flex flex-col gap-[0.25em] px-[6%] py-[5%] shadow-[0_1px_1px_rgb(0_0_0/0.35),0_6px_10px_-5px_rgb(0_0_0/0.6)]">
+              <span className="font-serif font-bold leading-tight text-reel" style={fs(5)}>
+                {b.archive}
+              </span>
+              <span className="font-sans text-reel/75" style={fs(4.4)}>
+                {b.archiveCount}
+              </span>
+              <span className="flex items-center gap-[0.3em] font-sans font-bold text-board-string" style={fs(4.4)}>
+                {b.archiveOpen}
+                <ArrowRight className="size-[1.1em] transition-transform duration-200 group-hover/bundle:translate-x-1" aria-hidden="true" />
+              </span>
             </span>
-            <span className="flex items-center gap-[0.3em] font-sans font-bold text-board-string" style={fs(4.4)}>
-              {b.archiveOpen}
-              <ArrowRight className="size-[1.1em] transition-transform duration-200 group-hover/bundle:translate-x-1" aria-hidden="true" />
-            </span>
-          </span>
+          )}
         </button>
         <span
           aria-hidden="true"
@@ -452,10 +470,14 @@ function ArchiveFolder({
         animate={open ? { y: "18%", rotate: 3, opacity: 0 } : { y: "0%", rotate: 0, opacity: 1 }}
         transition={{ ...twineT, opacity: { duration: s * 0.18, delay: open ? s * 0.26 : s * 0.62 } }}
       >
-        <span className="office-twine absolute inset-y-[-2%] left-[30%] w-[2.2%]" />
-        <span className="office-twine absolute inset-x-[-2%] top-[56%] h-[3.2%]" />
+        {/* on the phone the twine runs down the left and across the lower third, clear of the label */}
+        <span className={cn("office-twine absolute inset-y-[-2%] w-[2.2%]", compact ? "left-[14%]" : "left-[30%]")} />
+        <span className={cn("office-twine absolute inset-x-[-2%] h-[3.2%]", compact ? "top-[76%]" : "top-[56%]")} />
         <motion.span
-          className="office-knot absolute left-[31.1%] top-[57.6%] size-[9%] -translate-x-1/2 -translate-y-1/2 rounded-full"
+          className={cn(
+            "office-knot absolute -translate-x-1/2 -translate-y-1/2 rounded-full",
+            compact ? "left-[15.1%] top-[77.6%] size-[7%]" : "left-[31.1%] top-[57.6%] size-[9%]",
+          )}
           initial={false}
           animate={{ scale: open ? 1.25 : lifted ? 0.86 : 1 }}
           transition={open || !lifted ? { duration: s * 0.2, delay: open ? 0 : hovered ? 0 : s * 0.62 } : peekT(0.06)}

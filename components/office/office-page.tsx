@@ -365,22 +365,8 @@ function Status({ label }: { label: string }) {
   )
 }
 
-function Teasers({ items }: { items: { label: string; teaser: string }[] }) {
-  return (
-    <ul aria-hidden="true" className="grid gap-x-6 gap-y-3 px-5 pt-4 sm:grid-cols-2">
-      {items.map((item) => (
-        <li key={item.label} className="flex flex-col gap-0.5">
-          <span className="font-serif text-base font-bold text-reel-white">{item.label}</span>
-          <span className="text-pretty font-sans text-sm leading-relaxed text-reel-mute">{item.teaser}</span>
-        </li>
-      ))}
-    </ul>
-  )
-}
-
 function MobileRoom({ copy, onToggleLocale, open, board, reduce, skipTitle }: RoomProps & { reduce: boolean; skipTitle: boolean }) {
   const h = copy.hero
-  const o = copy.objects
   const heroRef = useRef<HTMLDivElement>(null)
   const restRef = useRef<HTMLDivElement>(null)
   return (
@@ -430,9 +416,6 @@ function MobileRoom({ copy, onToggleLocale, open, board, reduce, skipTitle }: Ro
           </div>
           <SceneLights reduce={reduce} />
         </SceneFrame>
-        <div className="mx-auto w-full max-w-xl">
-          <Teasers items={[o.case, o.archive]} />
-        </div>
       </section>
 
       <MobileScene id="scene-desk" title={copy.scenes.desk.title} body={copy.scenes.desk.body} scene={DESK} copy={copy} open={open} reduce={reduce} props={<MobileDeskLamp copy={copy} reduce={reduce} />} />
@@ -483,7 +466,6 @@ function MobileScene({
         ))}
         <SceneLights reduce={reduce} />
       </SceneFrame>
-      <Teasers items={scene.hotspots.map((spot) => copy.objects[spot.id])} />
     </section>
   )
 }
