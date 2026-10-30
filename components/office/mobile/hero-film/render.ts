@@ -1,8 +1,9 @@
 /**
- * Phone hero film over the REAL desktop room: the same plate and the same live objects (case board, phone, map,
- * drawer, envelope tray, lamp) are mounted as an inert stage, and a virtual camera tours it. `frameFor(t, ...)`
- * gives the stage transform for time `t`; `renderOffice(...)` draws only the light layers on a transparent canvas
- * above it (darkness, rain on the window, headlights, beam + dust).
+ * Phone hero film over the desktop room: a flat still of the whole desktop scene with every object on it
+ * (`/office/room-hero-<locale>.webp`, captured from the live desktop room at 1376x768 @1.5x) is panned by a virtual
+ * camera on one canvas, with live light layers on top (darkness, rain on the window, headlights, beam + dust).
+ * One flat image instead of a transformed DOM stage: Android Chrome dropped tiles of the big moving layer (black
+ * rectangles). Recapture the stills when the desk objects or board copy change.
  *
  * Opening 0..INTRO_END: dark room and rain on the arched window → pan to the lamp, which catches → desk (phone,
  * map) → case board → filing cabinet and envelope tray. Then the camera keeps panning slowly across the whole room,
@@ -112,14 +113,19 @@ function sweep(t: number) {
   return p < 1 ? p : -1
 }
 
-/** draws the light layers for time t; cw/ch in CSS px, k = device pixel ratio of the canvas */
-export function renderOffice(ctx: Ctx, t: number, cw: number, ch: number, k: number, f: Frame) {
+/** draws the room still + light layers for time t; cw/ch in CSS px, k = device pixel ratio of the canvas */
+export function renderOffice(ctx: Ctx, t: number, cw: number, ch: number, k: number, f: Frame, plate: HTMLImageElement | null) {
   ctx.setTransform(k, 0, 0, k, 0, 0)
   ctx.globalCompositeOperation = "source-over"
   ctx.globalAlpha = 1
-  ctx.clearRect(0, 0, cw, ch)
+  ctx.fillStyle = "#141414"
+  ctx.fillRect(0, 0, cw, ch)
 
   const width = STAGE_W * f.s
+  if (plate && plate.naturalWidth > 0) {
+    ctx.imageSmoothingQuality = "high"
+    ctx.drawImage(plate, f.ox, f.oy, width, STAGE_H * f.s)
+  }
   const P = (fx: number, fy: number) => ({ x: f.ox + fx * width, y: f.oy + fy * STAGE_H * f.s })
   const L = lampLevel(t)
 
