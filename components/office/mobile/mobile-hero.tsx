@@ -25,6 +25,7 @@ type Phase = "pending" | "intro" | "room"
 export function MobileHero({
   copy,
   reduce,
+  ready,
   skip,
   header,
   actions,
@@ -35,6 +36,8 @@ export function MobileHero({
   stage: ReactNode
   copy: OfficeCopy
   reduce: boolean
+  /** the loading screen has lifted; the opening is decided only then */
+  ready: boolean
   skip: boolean
   header: ReactNode
   /** CTAs, rendered under the body */
@@ -51,7 +54,7 @@ export function MobileHero({
 
   const decided = useRef(false)
   useEffect(() => {
-    if (decided.current) return
+    if (!ready || decided.current) return
     decided.current = true
     let seen = false
     try {
@@ -67,9 +70,9 @@ export function MobileHero({
       setPlayed(true)
     }
     setPhase(play ? "intro" : "room")
-    // decided once on arrival; later navigation never replays the opening
+    // decided once, when the loading screen lifts; later navigation never replays the opening
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [ready])
 
   const finish = useCallback((action: "finished" | "skipped") => {
     setPhase((p) => {
@@ -112,7 +115,8 @@ export function MobileHero({
         <OfficeFilm
           mode={pending ? "pending" : played ? "play" : "still"}
           reduce={reduce}
-          skipped={skipped}
+          // once the opening is over (timer or tap) the film must be lit, even if it fell behind the clock
+          skipped={skipped || (played && phase === "room")}
           stage={stage}
           className={cn("absolute inset-0 transition-opacity duration-500", pending && "opacity-0")}
         />

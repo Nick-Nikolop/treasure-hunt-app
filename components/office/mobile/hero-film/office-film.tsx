@@ -94,17 +94,15 @@ export function OfficeFilm({
     })
     io.observe(root)
 
-    // hold the opening on black until the plate has arrived
-    const plate = stageEl.querySelector("img")
-    const ready = () => !plate || plate.complete
-
+    // the office loading screen holds the page until the plate is decoded, so the clock never waits on images
+    // (Safari can report `complete` late for srcset images, which used to leave the room stuck in the dark)
     let raf = 0
     const tick = (now: number) => {
       const c = clock.current
       const dt = c.last ? Math.min(0.1, (now - c.last) / 1000) : 0
       c.last = now
       const { mode: m, reduce: r } = live.current
-      if (!frozen && !r && m !== "pending" && visible && !document.hidden && ready()) {
+      if (!frozen && !r && m !== "pending" && visible && !document.hidden) {
         c.t += dt
         draw()
       }
