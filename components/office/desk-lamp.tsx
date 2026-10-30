@@ -37,6 +37,68 @@ function playPullClick(on: boolean) {
   } catch {}
 }
 
+/** Same old bulb as desktop: a stutter when it catches, a short fade as the filament cools. */
+function flickLight(dark: HTMLElement | null, next: boolean, reduce: boolean) {
+  if (!dark) return
+  const frames = next
+    ? [{ opacity: 1 }, { opacity: 0.35, offset: 0.12 }, { opacity: 0.85, offset: 0.2 }, { opacity: 0, offset: 0.36 }, { opacity: 0 }]
+    : [{ opacity: 0 }, { opacity: 0.7, offset: 0.25 }, { opacity: 1 }]
+  dark.animate(reduce ? [{ opacity: next ? 1 : 0 }, { opacity: next ? 0 : 1 }] : frames, {
+    duration: reduce ? 150 : next ? 520 : 380,
+    delay: reduce ? 0 : 90,
+    easing: "ease-out",
+    fill: "backwards",
+  })
+}
+
+/** The lamp in the top-down phone photo of the desk, in % of that scene. */
+const TOP_LAMP = { x: 2, y: 55, w: 40, h: 36 }
+
+/**
+ * Phone desk: the photo is shot from above, so there is no chain to pull; tapping the lamp itself is the switch.
+ * Off, the warm pool goes and the desk sinks into cool night light; the labels stay readable on top.
+ */
+export function MobileDeskLamp({ copy, reduce }: { copy: OfficeCopy; reduce: boolean }) {
+  const [on, setOn] = useState(true)
+  const darkRef = useRef<HTMLDivElement>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const l = copy.lamp
+
+  const toggle = () => {
+    const next = !on
+    playPullClick(next)
+    navigator.vibrate?.(8)
+    if (!reduce) {
+      buttonRef.current?.animate([{ transform: "scale(1)" }, { transform: "scale(0.97)", offset: 0.3 }, { transform: "scale(1)" }], { duration: 260, easing: "ease-out" })
+    }
+    flickLight(darkRef.current, next, reduce)
+    setOn(next)
+  }
+
+  return (
+    <>
+      <div ref={darkRef} aria-hidden="true" className="pointer-events-none absolute inset-0 mix-blend-multiply" style={{ opacity: on ? 0 : 1 }}>
+        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse 80% 55% at 88% 6%, #8390ad 0%, #3f475d 42%, #20242f 78%)" }} />
+        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse 34% 26% at 30% 72%, rgb(4 6 12 / 0.6), transparent 72%)" }} />
+      </div>
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 mix-blend-screen transition-opacity duration-300"
+        style={{ opacity: on ? 1 : 0, background: "radial-gradient(ellipse 30% 20% at 32% 70%, rgb(255 186 104 / 0.16), transparent 70%)" }}
+      />
+      <button
+        ref={buttonRef}
+        type="button"
+        aria-pressed={on}
+        aria-label={on ? l.off : l.on}
+        onClick={toggle}
+        className="absolute rounded-[40%] outline-none [-webkit-tap-highlight-color:transparent] focus-visible:ring-2 focus-visible:ring-reel-gold"
+        style={{ left: `${TOP_LAMP.x}%`, top: `${TOP_LAMP.y}%`, width: `${TOP_LAMP.w}%`, height: `${TOP_LAMP.h}%` }}
+      />
+    </>
+  )
+}
+
 /**
  * The banker's lamp on the desk is a real switch: pull the chain (or click the lamp) and the warm pool of
  * light goes out, leaving the room to the moonlight from the window. It is on whenever you arrive.
