@@ -21,6 +21,7 @@ import { SceneLights } from "./mobile/scene-lights"
 import { RoomHotspot } from "./hotspot"
 import { DeskLamp, MobileDeskLamp } from "./desk-lamp"
 import { RoomTitle } from "./room-title"
+import { OfficeLoader } from "./office-loader"
 import { DeskPhone } from "./phone/desk-phone"
 import { PhonePickup } from "./phone/phone-pickup"
 import { DeskMap } from "./map/desk-map"
@@ -140,11 +141,24 @@ export function OfficePage() {
   )
 
   const viewOpen = state.view !== null && state.view !== "board"
+  const [ready, setReady] = useState(false)
+  const markReady = useCallback(() => setReady(true), [])
 
   return (
     <div data-office-root className="min-h-svh overflow-x-clip bg-reel font-sans text-reel-white">
-      <div inert={viewOpen}>
-        <DesktopRoom copy={copy} locale={locale} onToggleLocale={toggle} open={open} board={board("desk")} atBoard={atBoard} reduce={reduce} skipTitle={state.view !== null || atBoard} />
+      <OfficeLoader label={locale === "el" ? "Ανοίγει το γραφείο" : "Opening the office"} onReady={markReady} />
+      <div inert={viewOpen || !ready}>
+        <DesktopRoom
+          copy={copy}
+          locale={locale}
+          onToggleLocale={toggle}
+          open={open}
+          board={board("desk")}
+          atBoard={atBoard}
+          reduce={reduce}
+          ready={ready}
+          skipTitle={state.view !== null || atBoard}
+        />
         <div inert={atBoard}>
           <MobileRoom
             copy={copy}
@@ -154,6 +168,7 @@ export function OfficePage() {
             board={board("wall")}
             heroStage={<HeroStage copy={copy} reduce={reduce} board={board("desk")} />}
             reduce={reduce}
+            ready={ready}
             skipTitle={state.view !== null || atBoard}
           />
           <OfficeFooter copy={copy} open={open} contactHref={contactHref} />
@@ -265,7 +280,16 @@ function SceneFrame({ scene, children, className, sizes = "100vw" }: { scene: Sc
 
 type RoomProps = { copy: OfficeCopy; locale: "el" | "en"; onToggleLocale: () => void; open: Open; board: ReactNode }
 
-function DesktopRoom({ copy, onToggleLocale, open, board, atBoard, reduce, skipTitle }: RoomProps & { atBoard: boolean; reduce: boolean; skipTitle: boolean }) {
+function DesktopRoom({
+  copy,
+  onToggleLocale,
+  open,
+  board,
+  atBoard,
+  reduce,
+  ready,
+  skipTitle,
+}: RoomProps & { atBoard: boolean; reduce: boolean; ready: boolean; skipTitle: boolean }) {
   const h = copy.hero
   const stageRef = useRef<HTMLDivElement>(null)
   const frame = DESKTOP.hotspots.find((s) => s.id === "board")!.rect
@@ -327,7 +351,7 @@ function DesktopRoom({ copy, onToggleLocale, open, board, atBoard, reduce, skipT
           </nav>
         </header>
 
-        <RoomTitle copy={copy} reduce={reduce} skip={skipTitle} status={<Status label={h.status} />} />
+        <RoomTitle copy={copy} reduce={reduce} ready={ready} skip={skipTitle} status={<Status label={h.status} />} />
 
         {others.map((spot) => (
           <RoomHotspot
@@ -403,14 +427,16 @@ function MobileRoom({
   board,
   heroStage,
   reduce,
+  ready,
   skipTitle,
-}: RoomProps & { heroStage: ReactNode; reduce: boolean; skipTitle: boolean }) {
+}: RoomProps & { heroStage: ReactNode; reduce: boolean; ready: boolean; skipTitle: boolean }) {
   const h = copy.hero
   return (
     <div className="xl:hidden">
       <MobileHero
         copy={copy}
         reduce={reduce}
+        ready={ready}
         skip={skipTitle}
         stage={heroStage}
         nextId="scene-board"

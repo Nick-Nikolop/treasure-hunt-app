@@ -16,7 +16,20 @@ type Phase = "pending" | "card" | "lights" | "room"
  * Then the lights flicker on, the title shrinks back into its corner and the objects in the room become the
  * way in. Plays once per session; reduced motion, deep links and the board camera go straight to the room.
  */
-export function RoomTitle({ copy, reduce, skip, status }: { copy: OfficeCopy; reduce: boolean; skip: boolean; status: ReactNode }) {
+export function RoomTitle({
+  copy,
+  reduce,
+  ready,
+  skip,
+  status,
+}: {
+  copy: OfficeCopy
+  reduce: boolean
+  /** the loading screen has lifted; the opening is decided only then */
+  ready: boolean
+  skip: boolean
+  status: ReactNode
+}) {
   const h = copy.hero
   const blockRef = useRef<HTMLDivElement>(null)
   const [phase, setPhase] = useState<Phase>("pending")
@@ -39,7 +52,7 @@ export function RoomTitle({ copy, reduce, skip, status }: { copy: OfficeCopy; re
 
   const decided = useRef(false)
   useEffect(() => {
-    if (decided.current) return
+    if (!ready || decided.current) return
     decided.current = true
     let seen = false
     try {
@@ -48,9 +61,9 @@ export function RoomTitle({ copy, reduce, skip, status }: { copy: OfficeCopy; re
     } catch {}
     const desktop = window.matchMedia("(min-width: 1280px)").matches
     setPhase(skip || reduce || seen || !desktop ? "room" : "card")
-    // decided once on arrival; later navigation never replays the opening
+    // decided once, when the loading screen lifts; later navigation never replays the opening
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [ready])
 
   const lightsOn = useCallback(() => setPhase((p) => (p === "card" ? "lights" : p)), [])
 
