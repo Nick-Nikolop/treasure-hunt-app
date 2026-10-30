@@ -166,7 +166,7 @@ export function OfficePage() {
             onToggleLocale={toggle}
             open={open}
             board={board("wall")}
-            heroPlate={`/office/room-hero-${locale}.webp`}
+            heroPlate={`/office/room-hero-${locale}.webp?v=2`}
             reduce={reduce}
             ready={ready}
             skipTitle={state.view !== null || atBoard}
@@ -275,6 +275,37 @@ function SceneFrame({ scene, children, className, sizes = "100vw" }: { scene: Sc
       )}
       {children}
     </div>
+  )
+}
+
+/**
+ * `/landing4heroimage`: the desktop room with every object (plate, board, phone, map, drawer, envelope, lamp) filling
+ * the screen, without header, title, hotspot tags or edge fades. For screenshotting the phone hero still.
+ */
+export function OfficeHeroImage({ locale }: { locale: "el" | "en" }) {
+  const copy = OFFICE_COPY[locale]
+  const reduce = useReducedMotion() ?? false
+  const noop = () => {}
+  return (
+    <main className="flex h-svh w-full items-center justify-center overflow-hidden bg-[#0b0a09]">
+      <div
+        className="@container/stage relative shrink-0"
+        style={{
+          aspectRatio: `${DESKTOP.width} / ${DESKTOP.height}`,
+          width: `min(100vw, calc(100svh * ${DESKTOP.width / DESKTOP.height}))`,
+        }}
+      >
+        <SceneFrame scene={DESKTOP} label="" className="absolute inset-0" sizes="100vw" />
+        <DeskPhone />
+        <DeskMap copy={copy} />
+        <DrawerPeek />
+        <DeskEnvelope />
+        <DeskLamp copy={copy} reduce={reduce} hidden />
+        <div className="absolute z-10" style={pct(DESKTOP.cork!)}>
+          <CaseBoard variant="desk" copy={copy} archiveOpen={false} reduce={reduce} onOpenCase={noop} onOpenArchived={noop} onArchive={noop} />
+        </div>
+      </div>
+    </main>
   )
 }
 
