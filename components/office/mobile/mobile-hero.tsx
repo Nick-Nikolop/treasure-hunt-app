@@ -2,7 +2,7 @@
 
 import { motion, useScroll, useTransform } from "framer-motion"
 import { ChevronDown } from "lucide-react"
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react"
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react"
 import { EV } from "@/lib/analytics-events"
 import { track } from "@/lib/analytics-client"
 import { cn } from "@/lib/utils"
@@ -17,9 +17,9 @@ const INTRO_MS = INTRO_END * 1000
 type Phase = "pending" | "intro" | "room"
 
 /**
- * Phone opening: a code-drawn film of the dark office (headlights through the blinds, rain on the window). The lamp
- * chain is pulled, the lamp catches, the camera pulls back, the case folder slides into the light and gets stamped,
- * the compass settles. The title lands over the dark desk front, then the room idles (rain, steam, clock, dust).
+ * Phone opening: a camera film over the desktop office render. Dark room, rain on the arched window, headlights on
+ * the wall; the camera pans past the board to the lamp, the lamp catches, the camera settles and the title lands
+ * over the desk. Then the room idles (dust in the beam, slow drift, a passing car).
  * Opening once per session; reduced motion, deep links and scrolled arrivals start on the calm frame. Tap skips.
  */
 export function MobileHero({
@@ -45,9 +45,6 @@ export function MobileHero({
   const [played, setPlayed] = useState(false)
   const [skipped, setSkipped] = useState(false)
   const started = useRef(0)
-
-  const [caseName, state] = h.status.split(" · ")
-  const labels = useMemo(() => ({ caseName, state: state ?? "" }), [caseName, state])
 
   const decided = useRef(false)
   useEffect(() => {
@@ -113,7 +110,6 @@ export function MobileHero({
           mode={pending ? "pending" : played ? "play" : "still"}
           reduce={reduce}
           skipped={skipped}
-          labels={labels}
           className={cn("size-full transition-opacity duration-500", pending && "opacity-0")}
         />
         {/* legibility: a dark ceiling for the header, the desk front falls into shadow under the title */}
