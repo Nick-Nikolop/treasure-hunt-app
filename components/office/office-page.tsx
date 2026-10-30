@@ -17,7 +17,6 @@ import { CasePickup } from "./case-pickup"
 import { OFFICE_COPY, type OfficeCopy } from "./copy"
 import { ObjectLift } from "./mobile/object-lift"
 import { MobileHero } from "./mobile/mobile-hero"
-import { CaseSlip } from "./mobile/case-slip"
 import { SceneLights } from "./mobile/scene-lights"
 import { RoomHotspot } from "./hotspot"
 import { DeskLamp, MobileDeskLamp } from "./desk-lamp"
@@ -406,19 +405,6 @@ function MobileRoom({ copy, onToggleLocale, open, board, reduce, skipTitle }: Ro
             </ViewLink>
           </div>
           </>
-        }
-        slip={
-          <ViewLink
-            view="case-002"
-            open={open}
-            className="block w-[15.5rem] max-w-[78%] self-end rounded-[3px] transition-transform active:scale-[0.98]"
-          >
-            <CaseSlip
-              name={h.status.split(" · ")[0]}
-              state={h.status.split(" · ")[1]}
-              note={copy.objects.case.teaser.split(". ").at(-1) ?? copy.objects.case.teaser}
-            />
-          </ViewLink>
         }
       />
 
