@@ -166,7 +166,7 @@ export function OfficePage() {
             onToggleLocale={toggle}
             open={open}
             board={board("wall")}
-            heroPlate={`/office/room-hero-${locale}.webp?v=2`}
+            heroPlate={`/office/room-hero-${locale}.webp?v=3`}
             reduce={reduce}
             ready={ready}
             skipTitle={state.view !== null || atBoard}
