@@ -136,10 +136,6 @@ export function MobileHero({
       >
         <p className="sr-only">{h.status}</p>
         <div className="flex flex-col gap-3">
-          <p {...step(3800, "flex items-center gap-3 font-sans text-[13px] font-bold uppercase tracking-[0.24em] text-reel-gold")}>
-            <span className="shrink-0">{h.eyebrow}</span>
-            <span aria-hidden="true" className="h-px flex-1 bg-reel-gold/40" />
-          </p>
           <h1 id="office-title-mobile" className="text-balance font-serif text-[2.25rem] font-black leading-[1.04] text-reel-white sm:text-5xl">
             <span {...step(4100, "block")}>{h.title[0]}</span>
             <span {...step(4450, "block italic text-reel-gold")}>{h.title[1]}</span>

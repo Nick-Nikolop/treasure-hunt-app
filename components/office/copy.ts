@@ -6,7 +6,7 @@ export const OFFICE_COPY = {
   el: {
     nav: {
       label: "Κύρια πλοήγηση",
-      case: "Υπόθεση 002",
+      case: "Νέα υπόθεση",
       how: "Πώς παίζεται",
       faq: "Ερωτήσεις",
       contact: "Επικοινωνία",
@@ -21,7 +21,7 @@ export const OFFICE_COPY = {
     },
     hero: {
       eyebrow: "Καλαμάτα · Παιχνίδι μυστηρίου",
-      title: ["Ένα escape room.", "Μια ολόκληρη πόλη."],
+      title: ["Ένα κυνήγι.", "Μια ολόκληρη πόλη."],
       body: "Γρίφοι, πραγματικές τοποθεσίες και μια ιστορία που ξετυλίγεται στους δρόμους της Καλαμάτας.",
       primary: "Άνοιξε την Υπόθεση 002",
       secondary: "Πώς παίζεται",
@@ -125,8 +125,8 @@ export const OFFICE_COPY = {
       note: "Δεν κερδίζει όποιος τρέχει πιο γρήγορα. Κερδίζει όποιος παρατηρεί, σκέφτεται και συνεργάζεται.",
       need: "Τι χρειάζεσαι",
       needs: ["Περιέργεια", "Παρατηρητικότητα", "Την ομάδα σου", "Ένα κινητό"],
-      toCase: "Δες την Υπόθεση 002",
-      toCaseShort: "Υπόθεση 002",
+      toCase: "Δες τη νέα υπόθεση",
+      toCaseShort: "Νέα υπόθεση",
       putDown: "Άφησε το κινητό",
     },
     map: {
@@ -186,7 +186,7 @@ export const OFFICE_COPY = {
   en: {
     nav: {
       label: "Main navigation",
-      case: "Case 002",
+      case: "New case",
       how: "How it works",
       faq: "FAQ",
       contact: "Contact",
@@ -201,7 +201,7 @@ export const OFFICE_COPY = {
     },
     hero: {
       eyebrow: "Kalamata · Mystery game",
-      title: ["An escape room.", "A whole city."],
+      title: ["A hunt.", "A whole city."],
       body: "Riddles, real locations and a story that unfolds through the streets of Kalamata.",
       primary: "Open Case 002",
       secondary: "How it works",
@@ -305,8 +305,8 @@ export const OFFICE_COPY = {
       note: "The fastest team doesn't win. The team that observes, thinks and works together does.",
       need: "What you need",
       needs: ["Curiosity", "A sharp eye", "Your team", "A phone"],
-      toCase: "See Case 002",
-      toCaseShort: "Case 002",
+      toCase: "See the new case",
+      toCaseShort: "New case",
       putDown: "Put the phone down",
     },
     map: {

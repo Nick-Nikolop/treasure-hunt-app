@@ -112,9 +112,6 @@ export function RoomTitle({
           opacity: phase === "pending" ? 0 : 1,
         }}
       >
-        <p className={cn("font-sans text-[max(13px,0.9cqw)] font-bold uppercase tracking-[0.28em] text-reel-gold", phase === "card" && "office-reveal")} style={reveal(150)}>
-          {h.eyebrow}
-        </p>
         <h1 id="office-title-desktop" className="font-serif text-[max(32px,2.85cqw)] font-black leading-[1.02] text-reel-white [text-shadow:0_2px_24px_rgb(0_0_0/0.7)]">
           <span className={cn("block", phase === "card" && "office-reveal")} style={reveal(450)}>
             {h.title[0]}
