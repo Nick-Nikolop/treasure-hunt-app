@@ -32,7 +32,10 @@ type Layout = {
  * with that board's layout and the board camera's zoom (1 when the room is not scaled).
  */
 export function boardPiece(selector: string) {
-  const el = Array.from(document.querySelectorAll<HTMLElement>(selector)).find((e) => e.offsetParent !== null)
+  // the phone hero film mounts a decorative copy of the desk board; never lift from it
+  const el = Array.from(document.querySelectorAll<HTMLElement>(selector)).find(
+    (e) => e.offsetParent !== null && !e.closest("[data-hero-stage]"),
+  )
   const cork = el?.offsetParent as HTMLElement | null
   if (!el || !cork) return null
   const variant = (el.closest<HTMLElement>("[data-board-variant]")?.dataset.boardVariant ?? "desk") as "desk" | "wall"
