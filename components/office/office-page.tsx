@@ -416,6 +416,9 @@ function MobileRoom({ copy, onToggleLocale, open, board, reduce, skipTitle }: Ro
           </div>
           <SceneLights reduce={reduce} />
         </SceneFrame>
+        <div className="mx-auto w-full max-w-xl">
+          <SceneNotes items={[copy.objects.case, copy.objects.archive]} />
+        </div>
       </section>
 
       <MobileScene id="scene-desk" title={copy.scenes.desk.title} body={copy.scenes.desk.body} scene={DESK} copy={copy} open={open} reduce={reduce} props={<MobileDeskLamp copy={copy} reduce={reduce} />} />
@@ -466,7 +469,24 @@ function MobileScene({
         ))}
         <SceneLights reduce={reduce} />
       </SceneFrame>
+      <SceneNotes items={scene.hotspots.map((spot) => copy.objects[spot.id])} />
     </section>
+  )
+}
+
+function SceneNotes({ items }: { items: { label: string; teaser: string }[] }) {
+  return (
+    <ul className="mx-5 mt-5 flex flex-col divide-y divide-reel-white/10 border-y border-reel-gold/30">
+      {items.map((item) => (
+        <li key={item.label} className="flex gap-3 py-3.5">
+          <span aria-hidden="true" className="mt-2 size-1.5 shrink-0 rotate-45 bg-reel-gold" />
+          <span className="flex min-w-0 flex-col gap-1">
+            <span className="font-serif text-[1.0625rem] font-bold leading-snug text-reel-white">{item.label}</span>
+            <span className="text-pretty font-sans text-[0.9375rem] leading-relaxed text-reel-mute">{item.teaser}</span>
+          </span>
+        </li>
+      ))}
+    </ul>
   )
 }
 
