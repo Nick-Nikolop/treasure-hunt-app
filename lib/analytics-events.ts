@@ -28,6 +28,8 @@ export const EV = {
   explainerComplete: "explainer.complete", // durationMs; props: { interactions }
   // /carnival-intro poster puzzle (never the typed key, only outcomes)
   carnivalOpening: "carnival.opening", // durationMs; props: { action: "finished" | "skipped" }
+  // landing office walk-in opening (phone hero)
+  officeIntro: "office.intro", // durationMs; props: { action: "finished" | "skipped", device }
   carnivalUv: "carnival.uv_toggle", // props: { on }
   carnivalMarks: "carnival.marks_found", // props: { mark, total } (once per mark per poster view)
   carnivalPosterOpen: "carnival.poster_open", // props: { fullscreen }

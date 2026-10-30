@@ -16,7 +16,7 @@ import { ArchivePickup } from "./archive-pickup"
 import { CasePickup } from "./case-pickup"
 import { OFFICE_COPY, type OfficeCopy } from "./copy"
 import { ObjectLift } from "./mobile/object-lift"
-import { MobileTitle } from "./mobile/mobile-title"
+import { MobileHero } from "./mobile/mobile-hero"
 import { SceneLights } from "./mobile/scene-lights"
 import { RoomHotspot } from "./hotspot"
 import { DeskLamp, MobileDeskLamp } from "./desk-lamp"
@@ -94,8 +94,8 @@ export function OfficePage() {
       const id = window.requestIdleCallback(run, { timeout: 1500 })
       return () => window.cancelIdleCallback(id)
     }
-    const id = window.setTimeout(run, 600)
-    return () => window.clearTimeout(id)
+    const id = globalThis.setTimeout(run, 600)
+    return () => globalThis.clearTimeout(id)
   }, [])
 
   // Restore focus to whatever opened the view once we are back in the room. A sheet that is still
@@ -388,31 +388,23 @@ function DossierStatus({ label }: { label: string }) {
 
 function MobileRoom({ copy, onToggleLocale, open, board, reduce, skipTitle }: RoomProps & { reduce: boolean; skipTitle: boolean }) {
   const h = copy.hero
-  const heroRef = useRef<HTMLDivElement>(null)
-  const restRef = useRef<HTMLDivElement>(null)
   return (
     <div className="xl:hidden">
-      <MobileTitle copy={copy} reduce={reduce} skip={skipTitle} heroRef={heroRef} restRef={restRef} />
-      <header className="flex h-14 items-center gap-3 px-4">
-        <Logo />
-        <span className="ml-auto">
-          <LangButton copy={copy} onClick={onToggleLocale} />
-        </span>
-      </header>
-
-      <section aria-labelledby="office-title-mobile" className="mx-auto flex max-w-xl flex-col gap-5 px-5 pb-7 pt-3">
-        <div ref={heroRef} className="flex flex-col gap-3">
-          <p className="flex items-center gap-3 font-sans text-[13px] font-bold uppercase tracking-[0.24em] text-reel-gold">
-            <span className="shrink-0">{h.eyebrow}</span>
-            <span aria-hidden="true" className="h-px flex-1 bg-reel-gold/35" />
-          </p>
-          <h1 id="office-title-mobile" className="text-balance font-serif text-[2rem] font-black leading-[1.08] sm:text-5xl">
-            <span className="block">{h.title[0]}</span>
-            <span className="block italic text-reel-gold">{h.title[1]}</span>
-          </h1>
-          <p className="text-pretty font-sans text-base leading-relaxed text-reel-white/75">{h.body}</p>
-        </div>
-        <div ref={restRef} className="flex flex-col gap-4">
+      <MobileHero
+        copy={copy}
+        reduce={reduce}
+        skip={skipTitle}
+        nextId="scene-board"
+        header={
+          <header className="flex h-14 items-center gap-3 px-4">
+            <Logo />
+            <span className="ml-auto">
+              <LangButton copy={copy} onClick={onToggleLocale} />
+            </span>
+          </header>
+        }
+        actions={
+          <>
           <div className="flex gap-2">
             <ViewLink
               view="case-002"
@@ -432,10 +424,11 @@ function MobileRoom({ copy, onToggleLocale, open, board, reduce, skipTitle }: Ro
             </ViewLink>
           </div>
           <DossierStatus label={h.status} />
-        </div>
-      </section>
+          </>
+        }
+      />
 
-      <section aria-labelledby="scene-board" className="flex flex-col">
+      <section aria-labelledby="scene-board" className="flex scroll-mt-2 flex-col pt-4">
         <h2 id="scene-board" className="sr-only">
           {copy.scenes.board.title}
         </h2>

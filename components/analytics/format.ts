@@ -112,6 +112,12 @@ export function describeEvent(e: EventLike): { text: string; detail: string | nu
         detail: `${typeof p.interactions === "number" ? p.interactions : 0} interactions`,
         tone: "normal",
       }
+    case "office.intro":
+      return {
+        text: p.action === "skipped" ? "Skipped the office walk-in" : "Watched the office walk-in",
+        detail: e.durationMs ? duration(e.durationMs) : null,
+        tone: "quiet",
+      }
     case "carnival.opening":
       return {
         text: p.action === "skipped" ? "Skipped the carnival intro" : "Watched the carnival intro",
