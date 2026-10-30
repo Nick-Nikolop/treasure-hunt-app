@@ -990,7 +990,28 @@ body {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(3px); }
 }
+/* the case slip slides into the light, then the status stamp thunks down on it */
+.office-slip-in { animation: office-slip-in 700ms cubic-bezier(0.2, 0.8, 0.2, 1) 2300ms both; }
+@keyframes office-slip-in {
+  from { opacity: 0; transform: translate(2.5rem, -0.75rem) rotate(7deg); }
+  to { opacity: 1; transform: none; }
+}
+.office-slip-in .office-stamp { animation: office-stamp 380ms cubic-bezier(0.3, 0, 0.2, 1.4) 3050ms both; }
+@keyframes office-stamp {
+  from { opacity: 0; transform: rotate(-4deg) scale(2.2); }
+  60% { opacity: 1; }
+  to { opacity: 1; transform: rotate(8deg) scale(1); }
+}
+.office-dust { opacity: 0; animation: office-dust linear infinite; filter: blur(0.6px); box-shadow: 0 0 6px var(--color-reel-gold); }
+@keyframes office-dust {
+  0% { opacity: 0; transform: translate(0, 0); }
+  20% { opacity: 0.85; }
+  80% { opacity: 0.6; }
+  100% { opacity: 0; transform: translate(14px, -46px); }
+}
 @media (prefers-reduced-motion: reduce) {
+  .office-slip-in, .office-slip-in .office-stamp { animation: none; }
+  .office-dust { display: none; }
   .office-hero-pan, .office-hero-off, .office-hero-dark, .office-fade-late, .office-hero-cue { animation: none; }
   .office-hero-off, .office-hero-dark { opacity: 0; }
 }
