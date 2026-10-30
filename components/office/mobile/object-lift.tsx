@@ -22,13 +22,18 @@ type ObjectDef = {
   travel: boolean
   /** where the view grows out of, in object fractions at the end pose */
   reveal: Box
+  /** scene-sized alpha mask of the object's real silhouette, so the lift carries the whole object and no desk */
+  mask?: string
 }
 
-/** Outlines fitted on the phone renders (scripts: minAreaRect of each object in room-desk / room-records). */
+/**
+ * Outlines fitted on the phone renders: minAreaRect of the difference between room-desk and room-desk-empty,
+ * so each rectangle holds the entire object (the earlier hand fits clipped the map's corner and the phone's ends).
+ */
 const OBJECTS: Record<LiftId, ObjectDef> = {
-  how: { scene: DESK, frame: { cx: 254.5, cy: 381.5, w: 90, h: 155, a: 27.7 }, kind: "phone", travel: true, reveal: { x: 0.05, y: 0.03, w: 0.9, h: 0.94 } },
-  map: { scene: DESK, frame: { cx: 693.1, cy: 388.9, w: 352.5, h: 188.3, a: 23.2 }, kind: "map", travel: true, reveal: { x: 0, y: 0, w: 1, h: 1 } },
-  contact: { scene: DESK, frame: { cx: 743, cy: 885.1, w: 147.4, h: 236.9, a: -2.7 }, kind: "letter", travel: true, reveal: { x: 0.06, y: 0.08 - LETTER_RISE(), w: 0.88, h: 0.84 } },
+  how: { scene: DESK, frame: { cx: 252.5, cy: 381.5, w: 100, h: 168, a: 30 }, kind: "phone", travel: true, reveal: { x: 0.05, y: 0.03, w: 0.9, h: 0.94 } },
+  map: { scene: DESK, frame: { cx: 704.9, cy: 366.6, w: 359.8, h: 241.2, a: 22.6 }, kind: "map", travel: true, reveal: { x: 0, y: 0, w: 1, h: 1 }, mask: "/office/desk-mask-map.png" },
+  contact: { scene: DESK, frame: { cx: 744.7, cy: 884.4, w: 154.6, h: 243, a: -3 }, kind: "letter", travel: true, reveal: { x: 0.06, y: 0.08 - LETTER_RISE(), w: 0.88, h: 0.84 }, mask: "/office/desk-mask-contact.png" },
   records: { scene: RECORDS, frame: { cx: 252.5, cy: 470, w: 236, h: 162, a: 0 }, kind: "drawer", travel: false, reveal: { x: 0.1, y: -0.98, w: 0.8, h: 0.78 } },
   trailer: { scene: RECORDS, frame: { cx: 596, cy: 567, w: 192, h: 235, a: 0 }, kind: "beam", travel: false, reveal: { x: 0, y: 0, w: 1, h: 1 } },
 }
@@ -48,7 +53,7 @@ const REELS = [
 const LENS = { x: 512, y: 575 }
 const WALL_SCREEN = { x: 205, y: 62, w: 450, h: 253 }
 /** wax seal on the envelope, object fractions */
-const SEAL = { x: 0.53, y: 0.5 }
+const SEAL = { x: 0.52, y: 0.5 }
 /** the envelope flap covers this much of its height */
 const FLAP_H = 0.6
 const WAX: CSSProperties = {
@@ -449,6 +454,12 @@ export function ObjectLift({ id, title, backLabel, reduce, instant, onClose, chi
         backgroundSize: "100% 100%",
         transformOrigin: `${((f.cx * k) / scene.width) * 100}% ${((f.cy * k) / scene.height) * 100}%`,
         transform: `rotate(${-f.a}deg)`,
+        ...(def.mask && {
+          maskImage: `url(${def.mask})`,
+          WebkitMaskImage: `url(${def.mask})`,
+          maskSize: "100% 100%",
+          WebkitMaskSize: "100% 100%",
+        }),
         ...style,
       }}
     />
@@ -476,7 +487,7 @@ export function ObjectLift({ id, title, backLabel, reduce, instant, onClose, chi
             height: scene.height,
             backgroundImage: `url(${def.scene.emptySrc})`,
             backgroundSize: "100% 100%",
-            clipPath: emptyClip(f, k, scene.width, scene.height, def.kind === "map" ? 40 : 22),
+            clipPath: emptyClip(f, k, scene.width, scene.height, def.kind === "map" ? 16 : 8),
           }}
         />
       )}
@@ -573,9 +584,7 @@ export function ObjectLift({ id, title, backLabel, reduce, instant, onClose, chi
             ref={part("photo")}
             className="absolute inset-0 z-[3] overflow-hidden"
             style={{
-              borderRadius: def.kind === "phone" ? "16% / 10%" : def.kind === "letter" || def.kind === "map" ? "2px" : undefined,
-              // the fitted outline catches a sliver of desk along the map's edges
-              clipPath: def.kind === "map" ? "inset(1.2% 0.8% 1.2% 1.4%)" : undefined,
+              borderRadius: def.kind === "phone" ? "16% / 10%" : undefined,
             }}
           >
             {photo()}
@@ -770,7 +779,7 @@ function Surface({
           <span className="board-paper absolute inset-0" />
           <span
             className="absolute overflow-hidden"
-            style={{ left: geo.end.x - held.w / 2, top: geo.end.y - held.h / 2, width: held.w, height: held.h, clipPath: "inset(1.2% 0.8% 1.2% 1.4%)" }}
+            style={{ left: geo.end.x - held.w / 2, top: geo.end.y - held.h / 2, width: held.w, height: held.h }}
           >
             {photo()}
           </span>
