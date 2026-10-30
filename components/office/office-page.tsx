@@ -17,6 +17,7 @@ import { CasePickup } from "./case-pickup"
 import { OFFICE_COPY, type OfficeCopy } from "./copy"
 import { ObjectLift } from "./mobile/object-lift"
 import { MobileHero } from "./mobile/mobile-hero"
+import { CaseSlip } from "./mobile/case-slip"
 import { SceneLights } from "./mobile/scene-lights"
 import { RoomHotspot } from "./hotspot"
 import { DeskLamp, MobileDeskLamp } from "./desk-lamp"
@@ -365,26 +366,7 @@ function Status({ label }: { label: string }) {
   )
 }
 
-function DossierStatus({ label }: { label: string }) {
-  const [name, state] = label.split(" · ")
-  return (
-    <p className="flex items-center justify-between gap-3 border-t border-dashed border-reel-white/15 pt-4 font-sans text-sm font-bold text-reel-white/80">
-      <span className="flex items-center gap-2.5">
-        <span aria-hidden="true" className="relative flex size-2.5">
-          <span className="absolute inset-0 rounded-full bg-board-string motion-safe:animate-ping" />
-          <span className="relative size-2.5 rounded-full bg-board-string" />
-        </span>
-        {name}
-      </span>
-      {state ? (
-        <span className="-rotate-3 rounded-sm px-2 py-0.5 text-xs uppercase tracking-[0.2em] text-board-string ring-1 ring-board-string/70">
-          <span className="sr-only"> · </span>
-          {state}
-        </span>
-      ) : null}
-    </p>
-  )
-}
+
 
 function MobileRoom({ copy, onToggleLocale, open, board, reduce, skipTitle }: RoomProps & { reduce: boolean; skipTitle: boolean }) {
   const h = copy.hero
@@ -423,8 +405,20 @@ function MobileRoom({ copy, onToggleLocale, open, board, reduce, skipTitle }: Ro
               {h.secondary}
             </ViewLink>
           </div>
-          <DossierStatus label={h.status} />
           </>
+        }
+        slip={
+          <ViewLink
+            view="case-002"
+            open={open}
+            className="block w-[15.5rem] max-w-[78%] self-end rounded-[3px] transition-transform active:scale-[0.98]"
+          >
+            <CaseSlip
+              name={h.status.split(" · ")[0]}
+              state={h.status.split(" · ")[1]}
+              note={copy.objects.case.teaser.split(". ").at(-1) ?? copy.objects.case.teaser}
+            />
+          </ViewLink>
         }
       />
 

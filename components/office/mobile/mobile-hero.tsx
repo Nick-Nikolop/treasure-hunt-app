@@ -20,6 +20,20 @@ const INTRO_MS = 4600
 const LAMP_X = 14
 const REST_X = 17.5
 
+/** fixed (not random) so server and client render the same motes; positions are % of the beam box */
+const DUST = [
+  { x: 18, y: 72, size: 3.5, dur: 11, delay: 1 },
+  { x: 42, y: 58, size: 4.5, dur: 14, delay: 6 },
+  { x: 63, y: 80, size: 3.5, dur: 12, delay: 3 },
+  { x: 30, y: 40, size: 3.5, dur: 16, delay: 9 },
+  { x: 75, y: 50, size: 4, dur: 13, delay: 2 },
+  { x: 52, y: 88, size: 3.5, dur: 10, delay: 7 },
+  { x: 12, y: 30, size: 3, dur: 15, delay: 4 },
+  { x: 85, y: 68, size: 3, dur: 12, delay: 10 },
+  { x: 36, y: 64, size: 3.5, dur: 17, delay: 12 },
+  { x: 58, y: 34, size: 3, dur: 14, delay: 5 },
+]
+
 type Phase = "pending" | "intro" | "room"
 
 /**
@@ -34,8 +48,11 @@ export function MobileHero({
   skip,
   header,
   actions,
+  slip,
   nextId,
 }: {
+  /** the case slip that slides in under the lamp, above the title */
+  slip: ReactNode
   copy: OfficeCopy
   reduce: boolean
   skip: boolean
@@ -114,7 +131,7 @@ export function MobileHero({
       <motion.div aria-hidden="true" className="absolute inset-0 -z-10 origin-[50%_35%]" style={{ scale: roomScale }}>
         <div
           className={cn(
-            "office-hero-room absolute left-0 top-[-26%] aspect-[1376/768] h-[max(100%,55.82vw)] origin-[14%_70%]",
+            "office-hero-room absolute left-0 top-[-36%] aspect-[1376/768] h-[max(100%,55.82vw)] origin-[14%_70%]",
             intro && "office-hero-pan",
             pending && "opacity-0",
           )}
@@ -126,6 +143,23 @@ export function MobileHero({
           }
         >
           <Image src={DESKTOP.src} alt="" fill priority sizes="200vw" className="object-cover" />
+          {/* dust drifting through the lamp's beam; under the dark layers so it only shows once the lamp is on */}
+          <div className="absolute" style={{ left: `${LAMP_X - 6}%`, top: "60%", width: "17%", height: "30%" }}>
+            {DUST.map((d, i) => (
+              <span
+                key={i}
+                className="office-dust absolute rounded-full bg-reel-gold"
+                style={{
+                  left: `${d.x}%`,
+                  top: `${d.y}%`,
+                  width: d.size,
+                  height: d.size,
+                  animationDuration: `${d.dur}s`,
+                  animationDelay: `-${d.delay}s`,
+                }}
+              />
+            ))}
+          </div>
           {/* only the lamp's pool of light at first, then the rest of the room comes up */}
           <div
             className={cn("absolute inset-0", intro ? "office-hero-dark" : "opacity-0")}
@@ -150,6 +184,7 @@ export function MobileHero({
         )}
         style={{ opacity: copyOpacity, y: copyY }}
       >
+        <div className={cn("flex flex-col", intro && "office-slip-in")}>{slip}</div>
         <div className="flex flex-col gap-3">
           <p {...step(2500, "flex items-center gap-3 font-sans text-[13px] font-bold uppercase tracking-[0.24em] text-reel-gold")}>
             <span className="shrink-0">{h.eyebrow}</span>
