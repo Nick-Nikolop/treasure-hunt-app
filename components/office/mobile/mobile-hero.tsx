@@ -10,9 +10,7 @@ import type { OfficeCopy } from "../copy"
 import { isDesktopRoom } from "../view-mode"
 import { OfficeFilm } from "./hero-film/office-film"
 import { INTRO_END } from "./hero-film/render"
-
-// separate from the desktop key: both rooms are mounted, so they would mark each other as seen
-const SEEN_KEY = "office:title-seen-mobile"
+import { introSeen, markIntroSeen } from "../intro-memory"
 const INTRO_MS = INTRO_END * 1000
 
 type Phase = "pending" | "intro" | "room"
@@ -60,16 +58,10 @@ export function MobileHero({
   useEffect(() => {
     if (!ready || decided.current) return
     decided.current = true
-    let seen = false
-    try {
-      seen = sessionStorage.getItem(SEEN_KEY) === "1"
-    } catch {}
     const phone = !isDesktopRoom()
-    const play = phone && !skip && !reduce && !seen && window.scrollY < 40
+    const play = phone && !skip && !reduce && !introSeen() && window.scrollY < 40
     if (play) {
-      try {
-        sessionStorage.setItem(SEEN_KEY, "1")
-      } catch {}
+      markIntroSeen()
       started.current = performance.now()
       setPlayed(true)
     }

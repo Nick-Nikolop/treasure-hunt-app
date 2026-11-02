@@ -4,8 +4,7 @@ import { isDesktopRoom } from "./view-mode"
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react"
 import { cn } from "@/lib/utils"
 import type { OfficeCopy } from "./copy"
-
-const SEEN_KEY = "office:title-seen"
+import { introSeen, markIntroSeen } from "./intro-memory"
 const CARD_MS = 3800
 const LIGHTS_MS = 1400
 const CARD_SCALE = 1.6
@@ -55,13 +54,9 @@ export function RoomTitle({
   useEffect(() => {
     if (!ready || decided.current) return
     decided.current = true
-    let seen = false
-    try {
-      seen = sessionStorage.getItem(SEEN_KEY) === "1"
-      sessionStorage.setItem(SEEN_KEY, "1")
-    } catch {}
-    const desktop = isDesktopRoom()
-    setPhase(skip || reduce || seen || !desktop ? "room" : "card")
+    const play = isDesktopRoom() && !skip && !reduce && !introSeen()
+    if (play) markIntroSeen()
+    setPhase(play ? "card" : "room")
     // decided once, when the loading screen lifts; later navigation never replays the opening
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready])
