@@ -15,7 +15,7 @@ import { BoardBar, useBoardCamera } from "./board-camera"
 import { CaseBoard } from "./case-board"
 import { ArchivePickup } from "./archive-pickup"
 import { CasePickup } from "./case-pickup"
-import { OFFICE_COPY, type OfficeCopy } from "./copy"
+import { OFFICE_COPY, type ObjectId, type OfficeCopy } from "./copy"
 import { ObjectLift } from "./mobile/object-lift"
 import { MobileHero } from "./mobile/mobile-hero"
 import { SceneLights } from "./mobile/scene-lights"
@@ -554,7 +554,7 @@ function MobileRoom({
               <SceneLights reduce={reduce} />
             </SceneFrame>
           </DeskPhoto>
-          <SceneText id="scene-board" title={copy.scenes.board.title} body={copy.scenes.board.body} items={[copy.objects.case, copy.objects.archive]} />
+          <SceneText id="scene-board" title={copy.scenes.board.title} body={copy.scenes.board.body} ids={["case", "archive"]} copy={copy} open={open} />
         </section>
       ) : (
         <section aria-labelledby="scene-board" className="flex scroll-mt-2 flex-col pt-4">
@@ -568,7 +568,7 @@ function MobileRoom({
             <SceneLights reduce={reduce} />
           </SceneFrame>
           <div className="mx-auto w-full max-w-xl">
-            <SceneNotes items={[copy.objects.case, copy.objects.archive]} />
+            <SceneNotes ids={["case", "archive"]} copy={copy} open={open} />
           </div>
         </section>
       )}
@@ -590,14 +590,28 @@ function DeskPhoto({ scene, children }: { scene: Scene; children: ReactNode }) {
 }
 
 /** Desktop simple view: the scene's heading, line and object notes beside the photo. */
-function SceneText({ id, title, body, items }: { id: string; title: string; body: string; items: { label: string; teaser: string }[] }) {
+function SceneText({
+  id,
+  title,
+  body,
+  ids,
+  copy,
+  open,
+}: {
+  id: string
+  title: string
+  body: string
+  ids: ObjectId[]
+  copy: OfficeCopy
+  open: Open
+}) {
   return (
     <div className="flex flex-col gap-4">
       <h2 id={id} className="text-balance font-serif text-4xl font-black leading-tight">
         {title}
       </h2>
       <p className="text-pretty font-sans text-lg leading-relaxed text-reel-white/75">{body}</p>
-      <SceneNotes items={items} className="mx-0 mt-2" />
+      <SceneNotes ids={ids} copy={copy} open={open} className="mx-0 mt-2" />
     </div>
   )
 }
@@ -651,13 +665,13 @@ function MobileScene({
       <section aria-labelledby={id} className="mx-auto grid w-full max-w-6xl grid-cols-2 items-center gap-16 px-8 pt-28">
         {flip ? (
           <>
-            <SceneText id={id} title={title} body={body} items={scene.hotspots.map((spot) => copy.objects[spot.id])} />
+            <SceneText id={id} title={title} body={body} ids={scene.hotspots.map((spot) => spot.id)} copy={copy} open={open} />
             {fitted}
           </>
         ) : (
           <>
             {fitted}
-            <SceneText id={id} title={title} body={body} items={scene.hotspots.map((spot) => copy.objects[spot.id])} />
+            <SceneText id={id} title={title} body={body} ids={scene.hotspots.map((spot) => spot.id)} copy={copy} open={open} />
           </>
         )}
       </section>
@@ -685,23 +699,51 @@ function MobileScene({
         ))}
         <SceneLights reduce={reduce} />
       </SceneFrame>
-      <SceneNotes items={scene.hotspots.map((spot) => copy.objects[spot.id])} />
+      <SceneNotes ids={scene.hotspots.map((spot) => spot.id)} copy={copy} open={open} />
     </section>
   )
 }
 
-function SceneNotes({ items, className }: { items: { label: string; teaser: string }[]; className?: string }) {
+/** the board's two objects open the open case and the latest solved file, every other object opens its own view */
+const NOTE_VIEW: Record<ObjectId, OfficeView> = {
+  case: "case-002",
+  archive: "case-001",
+  board: "board",
+  how: "how",
+  map: "map",
+  records: "records",
+  trailer: "trailer",
+  contact: "contact",
+}
+
+function SceneNotes({ ids, copy, open, className }: { ids: ObjectId[]; copy: OfficeCopy; open: Open; className?: string }) {
   return (
     <ul className={cn("mx-5 mt-5 flex flex-col divide-y divide-reel-white/10 border-y border-reel-gold/30", className)}>
-      {items.map((item) => (
-        <li key={item.label} className="flex gap-3 py-3.5">
-          <span aria-hidden="true" className="mt-2 size-1.5 shrink-0 rotate-45 bg-reel-gold" />
-          <span className="flex min-w-0 flex-col gap-1">
-            <span className="font-serif text-[1.0625rem] font-bold leading-snug text-reel-white">{item.label}</span>
-            <span className="text-pretty font-sans text-[0.9375rem] leading-relaxed text-reel-mute">{item.teaser}</span>
-          </span>
-        </li>
-      ))}
+      {ids.map((id) => {
+        const item = copy.objects[id]
+        return (
+          <li key={id}>
+            <button
+              type="button"
+              data-track={`office.note-${id}`}
+              onClick={(e) => open(NOTE_VIEW[id], e.currentTarget)}
+              className="group flex min-h-14 w-full items-center gap-3 rounded-sm py-3.5 text-left outline-none transition-colors hover:bg-reel-white/[0.04] focus-visible:ring-2 focus-visible:ring-reel-gold"
+            >
+              <span aria-hidden="true" className="size-1.5 shrink-0 rotate-45 self-start bg-reel-gold mt-2.5" />
+              <span className="flex min-w-0 flex-1 flex-col gap-1">
+                <span className="font-serif text-[1.0625rem] font-bold leading-snug text-reel-white">{item.label}</span>
+                <span className="text-pretty font-sans text-[0.9375rem] leading-relaxed text-reel-mute">{item.teaser}</span>
+              </span>
+              <span
+                aria-hidden="true"
+                className="mr-1 grid size-9 shrink-0 place-items-center rounded-full border border-reel-gold/40 text-reel-gold transition group-hover:translate-x-0.5 group-hover:border-reel-gold group-hover:bg-reel-gold group-hover:text-reel"
+              >
+                <ArrowRight className="size-4" />
+              </span>
+            </button>
+          </li>
+        )
+      })}
     </ul>
   )
 }
