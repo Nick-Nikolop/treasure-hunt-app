@@ -727,18 +727,37 @@ function SceneNotes({ ids, copy, open, className }: { ids: ObjectId[]; copy: Off
               type="button"
               data-track={`office.note-${id}`}
               onClick={(e) => open(NOTE_VIEW[id], e.currentTarget)}
-              className="group flex min-h-14 w-full items-center gap-3 rounded-sm py-3.5 text-left outline-none transition-colors hover:bg-reel-white/[0.04] focus-visible:ring-2 focus-visible:ring-reel-gold"
+              className="group relative isolate flex min-h-14 w-full items-center gap-3 overflow-hidden rounded-sm px-2 py-3.5 text-left outline-none transition-transform duration-150 active:scale-[0.985] focus-visible:ring-2 focus-visible:ring-reel-gold"
             >
-              <span aria-hidden="true" className="size-1.5 shrink-0 rotate-45 self-start bg-reel-gold mt-2.5" />
-              <span className="flex min-w-0 flex-1 flex-col gap-1">
-                <span className="font-serif text-[1.0625rem] font-bold leading-snug text-reel-white">{item.label}</span>
-                <span className="text-pretty font-sans text-[0.9375rem] leading-relaxed text-reel-mute">{item.teaser}</span>
+              {/* lamp-light wash sweeping in from the left */}
+              <span
+                aria-hidden="true"
+                className="absolute inset-0 -z-10 origin-left scale-x-0 bg-gradient-to-r from-reel-gold/15 via-reel-gold/[0.06] to-transparent transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-x-100 group-focus-visible:scale-x-100 motion-reduce:transition-none"
+              />
+              {/* gold rule drawn under the row */}
+              <span
+                aria-hidden="true"
+                className="absolute inset-x-0 bottom-0 h-px origin-left scale-x-0 bg-reel-gold transition-transform delay-75 duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-x-100 group-focus-visible:scale-x-100 motion-reduce:transition-none"
+              />
+              <span
+                aria-hidden="true"
+                className="mt-2.5 size-1.5 shrink-0 rotate-45 self-start bg-reel-gold transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:rotate-[225deg] group-hover:scale-[1.6] motion-reduce:transition-none group-focus-visible:rotate-[225deg] group-focus-visible:scale-[1.6]"
+              />
+              <span className="flex min-w-0 flex-1 flex-col gap-1 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-1.5 motion-reduce:transition-none group-focus-visible:translate-x-1.5">
+                <span className="font-serif text-[1.0625rem] font-bold leading-snug text-reel-white transition-colors duration-300 group-hover:text-reel-gold group-focus-visible:text-reel-gold">
+                  {item.label}
+                </span>
+                <span className="text-pretty font-sans text-[0.9375rem] leading-relaxed text-reel-mute transition-colors duration-300 group-hover:text-reel-white/80 group-focus-visible:text-reel-white/80">
+                  {item.teaser}
+                </span>
               </span>
               <span
                 aria-hidden="true"
-                className="mr-1 grid size-9 shrink-0 place-items-center rounded-full border border-reel-gold/40 text-reel-gold transition group-hover:translate-x-0.5 group-hover:border-reel-gold group-hover:bg-reel-gold group-hover:text-reel"
+                className="relative grid size-9 shrink-0 place-items-center overflow-hidden rounded-full border border-reel-gold/40 text-reel-gold transition-[background-color,border-color,color,transform] duration-300 group-hover:scale-110 group-hover:border-reel-gold group-hover:bg-reel-gold group-hover:text-reel motion-reduce:transition-none group-focus-visible:scale-110 group-focus-visible:border-reel-gold group-focus-visible:bg-reel-gold group-focus-visible:text-reel"
               >
-                <ArrowRight className="size-4" />
+                {/* the arrow leaves to the right while a fresh one slides in from the left */}
+                <ArrowRight className="col-start-1 row-start-1 size-4 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-6 motion-reduce:transition-none group-focus-visible:translate-x-6" />
+                <ArrowRight className="col-start-1 row-start-1 size-4 -translate-x-6 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-0 motion-reduce:transition-none group-focus-visible:translate-x-0" />
               </span>
             </button>
           </li>
