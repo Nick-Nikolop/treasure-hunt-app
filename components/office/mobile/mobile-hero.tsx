@@ -32,7 +32,10 @@ export function MobileHero({
   actions,
   nextId,
   plate,
+  wide = false,
 }: {
+  /** simple view on a desktop screen: landscape composition, copy on the left, no bottom nav to clear */
+  wide?: boolean
   /** flat still of the desktop room (plate + objects) the film camera tours */
   plate: string
   copy: OfficeCopy
@@ -123,32 +126,48 @@ export function MobileHero({
         />
         {/* legibility: a dark ceiling for the header, the desk front falls into shadow under the title */}
         <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-reel/70 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 h-[54%] bg-gradient-to-t from-reel from-50% via-reel/75 to-transparent" />
+        {wide ? (
+          <>
+            <div className="absolute inset-y-0 left-0 w-[62%] bg-gradient-to-r from-reel from-15% via-reel/70 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 h-[30%] bg-gradient-to-t from-reel to-transparent" />
+          </>
+        ) : (
+          <div className="absolute inset-x-0 bottom-0 h-[54%] bg-gradient-to-t from-reel from-50% via-reel/75 to-transparent" />
+        )}
       </motion.div>
 
       <div className={cn("relative z-10", intro && "office-fade-late", pending && "opacity-0")}>{header}</div>
 
       <motion.div
         className={cn(
-          "relative z-10 mx-auto mt-auto flex w-full max-w-xl flex-col gap-4 px-5 pb-[calc(4.25rem+env(safe-area-inset-bottom))]",
+          "relative z-10 mx-auto flex w-full flex-col",
+          wide
+            ? "my-auto max-w-6xl gap-6 px-8 pb-10 *:max-w-xl"
+            : "mt-auto max-w-xl gap-4 px-5 pb-[calc(4.25rem+env(safe-area-inset-bottom))]",
           pending && "invisible",
         )}
         style={{ opacity: copyOpacity, y: copyY }}
       >
         <p className="sr-only">{h.status}</p>
-        <div className="flex flex-col gap-3">
-          <h1 id="office-title-mobile" className="text-balance font-serif text-[2.25rem] font-black leading-[1.04] text-reel-white sm:text-5xl">
+        <div className={cn("flex flex-col", wide ? "gap-5" : "gap-3")}>
+          <h1
+            id="office-title-mobile"
+            className={cn(
+              "text-balance font-serif font-black text-reel-white",
+              wide ? "text-6xl leading-[1.02]" : "text-[2.25rem] leading-[1.04] sm:text-5xl",
+            )}
+          >
             <span {...step(4100, "block")}>{h.title[0]}</span>
             <span {...step(4450, "block italic text-reel-gold")}>{h.title[1]}</span>
           </h1>
-          <p {...step(4800, "text-pretty font-sans text-base leading-relaxed text-reel-white/80")}>{h.body}</p>
+          <p {...step(4800, cn("text-pretty font-sans leading-relaxed text-reel-white/80", wide ? "text-lg" : "text-base"))}>{h.body}</p>
         </div>
         <div {...step(5150, "flex flex-col gap-4")}>{actions}</div>
         <button
           type="button"
           data-track="office.hero-enter"
           onClick={goNext}
-          {...step(5500, "mx-auto flex min-h-11 items-center gap-2 font-sans text-[13px] font-bold uppercase tracking-[0.22em] text-reel-white/65 transition-colors hover:text-reel-white")}
+          {...step(5500, cn(wide ? "mr-auto" : "mx-auto", "flex min-h-11 items-center gap-2 font-sans text-[13px] font-bold uppercase tracking-[0.22em] text-reel-white/65 transition-colors hover:text-reel-white"))}
         >
           {h.enter}
           <ChevronDown className="office-hero-cue size-4 text-reel-gold" aria-hidden="true" />

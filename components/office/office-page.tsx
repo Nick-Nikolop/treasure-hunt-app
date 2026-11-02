@@ -177,8 +177,8 @@ export function OfficePage() {
             ready={ready}
             skipTitle={state.view !== null || atBoard}
           />
-          <OfficeFooter copy={copy} open={open} contactHref={contactHref} simple={simple} />
-          <BottomNav copy={copy} open={open} simple={simple} />
+          <OfficeFooter copy={copy} open={open} contactHref={contactHref} simple={simple && !wide} />
+          {!(simple && wide) && <BottomNav copy={copy} open={open} simple={simple} />}
         </div>
       </div>
 
@@ -474,6 +474,7 @@ function MobileRoom({
   wide,
 }: RoomProps & { heroPlate: string; reduce: boolean; ready: boolean; skipTitle: boolean; simple: boolean; wide: boolean }) {
   const h = copy.hero
+  const desk = simple && wide
   return (
     <div className={simple ? undefined : "xl:hidden"}>
       <MobileHero
@@ -482,15 +483,39 @@ function MobileRoom({
         ready={ready}
         skip={skipTitle}
         plate={heroPlate}
+        wide={desk}
         nextId="scene-board"
         header={
-          <header className={cn("flex h-14 items-center gap-3 px-4", simple && "xl:mx-auto xl:max-w-6xl xl:px-6")}>
-            <Logo />
-            <span className="ml-auto flex items-center gap-2">
-              {simple && wide && <ViewModeButton copy={copy} simple />}
-              <LangButton copy={copy} onClick={onToggleLocale} />
-            </span>
-          </header>
+          desk ? (
+            <header className="mx-auto flex h-20 w-full max-w-6xl items-center gap-6 px-8">
+              <Logo />
+              <nav aria-label={copy.nav.label} className="ml-auto flex items-center gap-1">
+                <ViewLink view="case-002" open={open} className="office-navlink">
+                  {copy.nav.case}
+                </ViewLink>
+                <ViewLink view="how" open={open} className="office-navlink">
+                  {copy.nav.how}
+                </ViewLink>
+                <ViewLink view="records" open={open} className="office-navlink">
+                  {copy.nav.faq}
+                </ViewLink>
+                <ViewLink view="contact" open={open} className="office-navlink">
+                  {copy.nav.contact}
+                </ViewLink>
+                <span className="ml-3 flex items-center gap-2">
+                  <ViewModeButton copy={copy} simple />
+                  <LangButton copy={copy} onClick={onToggleLocale} />
+                </span>
+              </nav>
+            </header>
+          ) : (
+            <header className="flex h-14 items-center gap-3 px-4">
+              <Logo />
+              <span className="ml-auto">
+                <LangButton copy={copy} onClick={onToggleLocale} />
+              </span>
+            </header>
+          )
         }
         actions={
           <>
@@ -516,23 +541,63 @@ function MobileRoom({
         }
       />
 
-      <section aria-labelledby="scene-board" className="flex scroll-mt-2 flex-col pt-4">
-        <h2 id="scene-board" className="sr-only">
-          {copy.scenes.board.title}
-        </h2>
-        <SceneFrame scene={WALL} label="" className="mx-auto max-w-xl">
-          <div className="absolute" style={pct(WALL.cork!)}>
-            {board}
+      {desk ? (
+        <section
+          aria-labelledby="scene-board"
+          className="mx-auto grid w-full max-w-6xl scroll-mt-6 grid-cols-2 items-center gap-16 px-8 pt-16"
+        >
+          <DeskPhoto scene={WALL}>
+            <SceneFrame scene={WALL} label="" sizes="50vw" className="overflow-hidden rounded-md ring-1 ring-reel-white/10">
+              <div className="absolute" style={pct(WALL.cork!)}>
+                {board}
+              </div>
+              <SceneLights reduce={reduce} />
+            </SceneFrame>
+          </DeskPhoto>
+          <SceneText id="scene-board" title={copy.scenes.board.title} body={copy.scenes.board.body} items={[copy.objects.case, copy.objects.archive]} />
+        </section>
+      ) : (
+        <section aria-labelledby="scene-board" className="flex scroll-mt-2 flex-col pt-4">
+          <h2 id="scene-board" className="sr-only">
+            {copy.scenes.board.title}
+          </h2>
+          <SceneFrame scene={WALL} label="" className="mx-auto max-w-xl">
+            <div className="absolute" style={pct(WALL.cork!)}>
+              {board}
+            </div>
+            <SceneLights reduce={reduce} />
+          </SceneFrame>
+          <div className="mx-auto w-full max-w-xl">
+            <SceneNotes items={[copy.objects.case, copy.objects.archive]} />
           </div>
-          <SceneLights reduce={reduce} />
-        </SceneFrame>
-        <div className="mx-auto w-full max-w-xl">
-          <SceneNotes items={[copy.objects.case, copy.objects.archive]} />
-        </div>
-      </section>
+        </section>
+      )}
 
-      <MobileScene id="scene-desk" title={copy.scenes.desk.title} body={copy.scenes.desk.body} scene={DESK} copy={copy} open={open} reduce={reduce} props={<MobileDeskLamp copy={copy} reduce={reduce} />} />
-      <MobileScene id="scene-records" title={copy.scenes.records.title} body={copy.scenes.records.body} scene={RECORDS} copy={copy} open={open} reduce={reduce} />
+      <MobileScene id="scene-desk" desk={desk} flip title={copy.scenes.desk.title} body={copy.scenes.desk.body} scene={DESK} copy={copy} open={open} reduce={reduce} props={<MobileDeskLamp copy={copy} reduce={reduce} />} />
+      <MobileScene id="scene-records" desk={desk} title={copy.scenes.records.title} body={copy.scenes.records.body} scene={RECORDS} copy={copy} open={open} reduce={reduce} />
+      {desk && <div aria-hidden="true" className="h-24" />}
+    </div>
+  )
+}
+
+/** Desktop simple view: the portrait scene photos would outgrow the screen, so they are capped at 82% of its height. */
+function DeskPhoto({ scene, children }: { scene: Scene; children: ReactNode }) {
+  return (
+    <div className="w-full justify-self-center" style={{ maxWidth: `calc(82svh * ${scene.width / scene.height})` }}>
+      {children}
+    </div>
+  )
+}
+
+/** Desktop simple view: the scene's heading, line and object notes beside the photo. */
+function SceneText({ id, title, body, items }: { id: string; title: string; body: string; items: { label: string; teaser: string }[] }) {
+  return (
+    <div className="flex flex-col gap-4">
+      <h2 id={id} className="text-balance font-serif text-4xl font-black leading-tight">
+        {title}
+      </h2>
+      <p className="text-pretty font-sans text-lg leading-relaxed text-reel-white/75">{body}</p>
+      <SceneNotes items={items} className="mx-0 mt-2" />
     </div>
   )
 }
@@ -546,6 +611,8 @@ function MobileScene({
   open,
   reduce,
   props,
+  desk = false,
+  flip = false,
 }: {
   id: string
   title: string
@@ -556,8 +623,46 @@ function MobileScene({
   reduce: boolean
   /** live props laid on the photo under the labels (the desk lamp) */
   props?: ReactNode
+  /** simple view on a desktop screen: photo and text side by side */
+  desk?: boolean
+  /** desktop: photo on the right */
+  flip?: boolean
 }) {
   if (scene.emptySrc) preload(scene.emptySrc, { as: "image", fetchPriority: "low" })
+  const photo = (
+    <SceneFrame scene={scene} label="" sizes={desk ? "60vw" : undefined} className={cn(desk && "overflow-hidden rounded-md ring-1 ring-reel-white/10")}>
+      {props}
+      {scene.hotspots.map((spot) => (
+        <RoomHotspot
+          key={spot.id}
+          spot={spot}
+          label={copy.objects[spot.id].label}
+          teaser={copy.objects[spot.id].teaser}
+          teaserInTag={false}
+          onOpen={(el) => open(spot.id, el)}
+        />
+      ))}
+      <SceneLights reduce={reduce} />
+    </SceneFrame>
+  )
+  if (desk) {
+    const fitted = <DeskPhoto scene={scene}>{photo}</DeskPhoto>
+    return (
+      <section aria-labelledby={id} className="mx-auto grid w-full max-w-6xl grid-cols-2 items-center gap-16 px-8 pt-28">
+        {flip ? (
+          <>
+            <SceneText id={id} title={title} body={body} items={scene.hotspots.map((spot) => copy.objects[spot.id])} />
+            {fitted}
+          </>
+        ) : (
+          <>
+            {fitted}
+            <SceneText id={id} title={title} body={body} items={scene.hotspots.map((spot) => copy.objects[spot.id])} />
+          </>
+        )}
+      </section>
+    )
+  }
   return (
     <section aria-labelledby={id} className="mx-auto flex max-w-xl flex-col pt-14">
       <div className="flex flex-col gap-1.5 px-5 pb-5">
@@ -585,9 +690,9 @@ function MobileScene({
   )
 }
 
-function SceneNotes({ items }: { items: { label: string; teaser: string }[] }) {
+function SceneNotes({ items, className }: { items: { label: string; teaser: string }[]; className?: string }) {
   return (
-    <ul className="mx-5 mt-5 flex flex-col divide-y divide-reel-white/10 border-y border-reel-gold/30">
+    <ul className={cn("mx-5 mt-5 flex flex-col divide-y divide-reel-white/10 border-y border-reel-gold/30", className)}>
       {items.map((item) => (
         <li key={item.label} className="flex gap-3 py-3.5">
           <span aria-hidden="true" className="mt-2 size-1.5 shrink-0 rotate-45 bg-reel-gold" />
