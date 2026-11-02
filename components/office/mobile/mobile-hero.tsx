@@ -128,7 +128,7 @@ export function MobileHero({
         <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-reel/70 to-transparent" />
         {wide ? (
           <>
-            <div className="absolute inset-y-0 left-0 w-[62%] bg-gradient-to-r from-reel from-15% via-reel/70 to-transparent" />
+            <div className="absolute inset-y-0 left-0 w-[72%] bg-gradient-to-r from-reel from-30% via-reel/85 via-60% to-transparent" />
             <div className="absolute inset-x-0 bottom-0 h-[30%] bg-gradient-to-t from-reel to-transparent" />
           </>
         ) : (

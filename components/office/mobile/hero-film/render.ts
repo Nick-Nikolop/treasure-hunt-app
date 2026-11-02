@@ -77,13 +77,33 @@ function camera(t: number): Cam {
   return KEYS[KEYS.length - 1][1]
 }
 
-/** stage transform (CSS px) for a cw x ch viewport, kept on the plate: no empty edges left, right or top */
-export function frameFor(t: number, cw: number, ch: number): Frame {
-  const cam = camera(t)
+/**
+ * Stage transform (CSS px) for a cw x ch viewport, kept on the plate: no empty edges left, right or top.
+ * `cover` (landscape screens): the plate fills the whole viewport instead of its top 66%, so it is never narrower
+ * than the screen and the camera can't be clamped off-centre.
+ */
+export function frameFor(t: number, cw: number, ch: number, cover = false): Frame {
+  let cam = camera(t)
+  if (cover) {
+    // the wide frame already shows the whole room, so after the opening it settles centred and only drifts a little
+    if (t >= INTRO_END) {
+      const k = t - INTRO_END
+      const rest = { cx: 0.5 + 0.035 * Math.sin((k / IDLE_PERIOD) * Math.PI * 2), cy: 0.5, z: 1.02 }
+      const m = eio(seg(t, INTRO_END, INTRO_END + 3))
+      const from = KEYS[KEYS.length - 1][1]
+      cam = { cx: lerp(from.cx, rest.cx, m), cy: lerp(from.cy, rest.cy, m), z: lerp(from.z, rest.z, m) }
+    }
+    const s = Math.max(cw / STAGE_W, ch / STAGE_H) * cam.z
+    const halfW = cw / 2 / (STAGE_W * s)
+    const halfH = ch / 2 / (STAGE_H * s)
+    const cx = clamp(cam.cx, halfW, 1 - halfW)
+    const cy = clamp(cam.cy, halfH, 1 - halfH)
+    return { ox: cw / 2 - cx * STAGE_W * s, oy: ch / 2 - cy * STAGE_H * s, s }
+  }
   const s = ((ch * PLATE_H) / STAGE_H) * cam.z
   const halfW = cw / 2 / (STAGE_W * s)
   const halfH = (ch * ANCHOR_Y) / (STAGE_H * s)
-  const cx = clamp(cam.cx, halfW, 1 - halfW)
+  const cx = halfW >= 0.5 ? 0.5 : clamp(cam.cx, halfW, 1 - halfW)
   const cy = Math.max(cam.cy, halfH)
   return { ox: cw / 2 - cx * STAGE_W * s, oy: ch * ANCHOR_Y - cy * STAGE_H * s, s }
 }

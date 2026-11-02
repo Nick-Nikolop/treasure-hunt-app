@@ -69,7 +69,8 @@ export function OfficeFilm({
     let k = 1
     const draw = () => {
       const t = clock.current.t
-      renderOffice(ctx, t, cw, ch, k, frameFor(t, cw, ch), img)
+      // landscape screens (desktop simple view) fill the frame with the room instead of the phone's top band
+      renderOffice(ctx, t, cw, ch, k, frameFor(t, cw, ch, cw > ch), img)
     }
     redraw.current = draw
     // the loading screen waits for this image, but redraw anyway when it lands (locale switch, slow network)
