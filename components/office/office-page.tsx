@@ -3,7 +3,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import dynamic from "next/dynamic"
-import { AnimatePresence, useReducedMotion } from "framer-motion"
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
 import { ArrowRight, FileText, LayoutList, Mail, MonitorPlay, Smartphone } from "lucide-react"
 import { useCallback, useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react"
 import { setSimpleView, useDesktopRoom } from "./view-mode"
@@ -228,23 +228,55 @@ function LangButton({ copy, onClick }: { copy: OfficeCopy; onClick: () => void }
 }
 
 /** Desktop only: swap between the interactive room and the simple (phone) layout. */
+/**
+ * Both modes are always visible and the current one is lit, so it reads as "which view am I in" rather than a
+ * mystery label. The page swaps on click; the new header mounts with the pill sliding over from the old side.
+ */
 function ViewModeButton({ copy, simple }: { copy: OfficeCopy; simple: boolean }) {
-  const Icon = simple ? MonitorPlay : LayoutList
+  const reduce = useReducedMotion()
+  const options = [
+    { on: false, Icon: MonitorPlay, label: copy.nav.fullShort, hint: copy.nav.fullLabel, track: "office.view-full" },
+    { on: true, Icon: LayoutList, label: copy.nav.simpleShort, hint: copy.nav.simpleLabel, track: "office.view-simple" },
+  ]
   return (
-    <button
-      type="button"
-      data-track={simple ? "office.view-full" : "office.view-simple"}
-      onClick={() => {
-        setSimpleView(!simple)
-        window.scrollTo({ top: 0 })
-      }}
-      aria-label={simple ? copy.nav.fullLabel : copy.nav.simpleLabel}
-      title={simple ? copy.nav.fullLabel : copy.nav.simpleLabel}
-      className="flex min-h-10 items-center gap-2 rounded-md px-3 font-sans text-sm font-bold text-reel-white/85 ring-1 ring-reel-white/25 transition hover:text-reel-white hover:ring-reel-white/60"
+    <div
+      role="group"
+      aria-label={copy.nav.viewLabel}
+      className="relative grid h-10 grid-cols-2 rounded-full bg-reel-white/[0.06] p-1 ring-1 ring-reel-white/15"
     >
-      <Icon className="size-4 text-reel-gold" aria-hidden="true" />
-      {simple ? copy.nav.full : copy.nav.simple}
-    </button>
+      <motion.span
+        aria-hidden="true"
+        className="absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-full bg-reel-gold shadow-[0_0_18px_-4px] shadow-reel-gold/70"
+        initial={reduce ? false : { x: simple ? "0%" : "100%" }}
+        animate={{ x: simple ? "100%" : "0%" }}
+        transition={{ type: "spring", stiffness: 420, damping: 34 }}
+      />
+      {options.map(({ on, Icon, label, hint, track }) => {
+        const active = on === simple
+        return (
+          <button
+            key={track}
+            type="button"
+            data-track={track}
+            aria-pressed={active}
+            title={hint}
+            onClick={() => {
+              if (active) return
+              setSimpleView(on)
+              window.scrollTo({ top: 0 })
+            }}
+            className={cn(
+              "relative z-10 flex items-center justify-center gap-1.5 rounded-full px-3.5 font-sans text-[13px] font-bold outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-reel-gold focus-visible:ring-offset-2 focus-visible:ring-offset-reel",
+              active ? "cursor-default text-reel" : "text-reel-white/65 hover:text-reel-white",
+            )}
+          >
+            <Icon className="size-3.5" aria-hidden="true" />
+            {label}
+            <span className="sr-only">{` — ${hint}`}</span>
+          </button>
+        )
+      })}
+    </div>
   )
 }
 
