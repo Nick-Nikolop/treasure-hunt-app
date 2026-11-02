@@ -4,8 +4,9 @@ import Image from "next/image"
 import Link from "next/link"
 import dynamic from "next/dynamic"
 import { AnimatePresence, useReducedMotion } from "framer-motion"
-import { ArrowRight, FileText, Mail, Smartphone } from "lucide-react"
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type MouseEvent, type ReactNode } from "react"
+import { ArrowRight, FileText, LayoutList, Mail, MonitorPlay, Smartphone } from "lucide-react"
+import { useCallback, useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react"
+import { setSimpleView, useDesktopRoom } from "./view-mode"
 import { preload } from "react-dom"
 import { useI18n } from "@/components/pythea/language-provider"
 import { LANDING_CONTACT, LANDING_COPY } from "@/components/landing/copy"
@@ -118,7 +119,7 @@ export function OfficePage() {
     lastView.current = state.view
   }, [state.view])
 
-  const desktop = useDesktop()
+  const { desktop, wide, simple } = useDesktopRoom()
   const atBoard = !!state.board && desktop
   const setArchive = useCallback(
     (openArchive: boolean) => {
@@ -149,6 +150,8 @@ export function OfficePage() {
       <OfficeLoader label={locale === "el" ? "Ανοίγει το γραφείο" : "Opening the office"} onReady={markReady} />
       <div inert={viewOpen || !ready}>
         <DesktopRoom
+          key={simple ? "simple" : "room"}
+          simple={simple}
           copy={copy}
           locale={locale}
           onToggleLocale={toggle}
@@ -161,6 +164,9 @@ export function OfficePage() {
         />
         <div inert={atBoard}>
           <MobileRoom
+            key={simple ? "simple" : "room"}
+            simple={simple}
+            wide={wide}
             copy={copy}
             locale={locale}
             onToggleLocale={toggle}
@@ -171,8 +177,8 @@ export function OfficePage() {
             ready={ready}
             skipTitle={state.view !== null || atBoard}
           />
-          <OfficeFooter copy={copy} open={open} contactHref={contactHref} />
-          <BottomNav copy={copy} open={open} />
+          <OfficeFooter copy={copy} open={open} contactHref={contactHref} simple={simple} />
+          <BottomNav copy={copy} open={open} simple={simple} />
         </div>
       </div>
 
@@ -217,6 +223,27 @@ function LangButton({ copy, onClick }: { copy: OfficeCopy; onClick: () => void }
       className="flex min-h-10 items-center rounded-md px-2.5 font-sans text-sm font-bold tracking-wider text-reel-white/85 ring-1 ring-reel-white/25 transition hover:text-reel-white hover:ring-reel-white/60"
     >
       {copy.nav.lang}
+    </button>
+  )
+}
+
+/** Desktop only: swap between the interactive room and the simple (phone) layout. */
+function ViewModeButton({ copy, simple }: { copy: OfficeCopy; simple: boolean }) {
+  const Icon = simple ? MonitorPlay : LayoutList
+  return (
+    <button
+      type="button"
+      data-track={simple ? "office.view-full" : "office.view-simple"}
+      onClick={() => {
+        setSimpleView(!simple)
+        window.scrollTo({ top: 0 })
+      }}
+      aria-label={simple ? copy.nav.fullLabel : copy.nav.simpleLabel}
+      title={simple ? copy.nav.fullLabel : copy.nav.simpleLabel}
+      className="flex min-h-10 items-center gap-2 rounded-md px-3 font-sans text-sm font-bold text-reel-white/85 ring-1 ring-reel-white/25 transition hover:text-reel-white hover:ring-reel-white/60"
+    >
+      <Icon className="size-4 text-reel-gold" aria-hidden="true" />
+      {simple ? copy.nav.full : copy.nav.simple}
     </button>
   )
 }
@@ -320,12 +347,14 @@ function DesktopRoom({
   reduce,
   ready,
   skipTitle,
-}: RoomProps & { atBoard: boolean; reduce: boolean; ready: boolean; skipTitle: boolean }) {
+  simple,
+}: RoomProps & { atBoard: boolean; reduce: boolean; ready: boolean; skipTitle: boolean; simple: boolean }) {
   const h = copy.hero
   const stageRef = useRef<HTMLDivElement>(null)
   const frame = DESKTOP.hotspots.find((s) => s.id === "board")!.rect
   useBoardCamera(stageRef, frame, atBoard, reduce)
   const others = DESKTOP.hotspots.filter((s) => s.id !== "board")
+  if (simple) return null
   return (
     <section aria-labelledby="office-title-desktop" className="hidden bg-[#0b0a09] xl:block">
       <div
@@ -376,7 +405,8 @@ function DesktopRoom({
             <ViewLink view="contact" open={open} className="office-navlink">
               {copy.nav.contact}
             </ViewLink>
-            <span className="ml-3">
+            <span className="ml-3 flex items-center gap-2">
+              <ViewModeButton copy={copy} simple={false} />
               <LangButton copy={copy} onClick={onToggleLocale} />
             </span>
           </nav>
@@ -440,10 +470,12 @@ function MobileRoom({
   reduce,
   ready,
   skipTitle,
-}: RoomProps & { heroPlate: string; reduce: boolean; ready: boolean; skipTitle: boolean }) {
+  simple,
+  wide,
+}: RoomProps & { heroPlate: string; reduce: boolean; ready: boolean; skipTitle: boolean; simple: boolean; wide: boolean }) {
   const h = copy.hero
   return (
-    <div className="xl:hidden">
+    <div className={simple ? undefined : "xl:hidden"}>
       <MobileHero
         copy={copy}
         reduce={reduce}
@@ -452,9 +484,10 @@ function MobileRoom({
         plate={heroPlate}
         nextId="scene-board"
         header={
-          <header className="flex h-14 items-center gap-3 px-4">
+          <header className={cn("flex h-14 items-center gap-3 px-4", simple && "xl:mx-auto xl:max-w-6xl xl:px-6")}>
             <Logo />
-            <span className="ml-auto">
+            <span className="ml-auto flex items-center gap-2">
+              {simple && wide && <ViewModeButton copy={copy} simple />}
               <LangButton copy={copy} onClick={onToggleLocale} />
             </span>
           </header>
@@ -568,12 +601,12 @@ function SceneNotes({ items }: { items: { label: string; teaser: string }[] }) {
   )
 }
 
-function OfficeFooter({ copy, open, contactHref }: { copy: OfficeCopy; open: Open; contactHref: string }) {
+function OfficeFooter({ copy, open, contactHref, simple }: { copy: OfficeCopy; open: Open; contactHref: string; simple: boolean }) {
   const link =
     "block truncate font-sans text-sm leading-6 text-reel-white/75 underline-offset-4 transition hover:text-reel-white hover:underline"
   const small = "font-sans text-sm text-reel-mute underline-offset-4 transition hover:text-reel-white hover:underline"
   return (
-    <footer className="border-t border-reel-white/10 px-5 pb-[calc(4.5rem+env(safe-area-inset-bottom))] pt-6 xl:px-[4%] xl:pb-8">
+    <footer className={cn("border-t border-reel-white/10 px-5 pb-[calc(4.5rem+env(safe-area-inset-bottom))] pt-6", !simple && "xl:px-[4%] xl:pb-8")}>
       <nav aria-label={copy.footer.label} className="mx-auto flex max-w-6xl flex-col gap-5">
         <ul className="grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-4">
           <li>
@@ -634,7 +667,7 @@ function OfficeFooter({ copy, open, contactHref }: { copy: OfficeCopy; open: Ope
   )
 }
 
-function BottomNav({ copy, open }: { copy: OfficeCopy; open: Open }) {
+function BottomNav({ copy, open, simple }: { copy: OfficeCopy; open: Open; simple: boolean }) {
   const n = copy.bottomNav
   const items = [
     { view: "case-002" as const, icon: FileText, ...n.case },
@@ -644,7 +677,10 @@ function BottomNav({ copy, open }: { copy: OfficeCopy; open: Open }) {
   return (
     <nav
       aria-label={n.label}
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-reel-white/10 bg-reel/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md xl:hidden"
+      className={cn(
+        "fixed inset-x-0 bottom-0 z-40 border-t border-reel-white/10 bg-reel/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md",
+        !simple && "xl:hidden",
+      )}
     >
       <ul className="mx-auto grid h-14 max-w-xl grid-cols-3">
         {items.map(({ view, icon: Icon, short, full }) => (
@@ -665,19 +701,6 @@ function BottomNav({ copy, open }: { copy: OfficeCopy; open: Open }) {
   )
 }
 
-const DESKTOP_QUERY = "(min-width: 1280px)"
-function useDesktop() {
-  return useSyncExternalStore(
-    (onChange) => {
-      const mq = window.matchMedia(DESKTOP_QUERY)
-      mq.addEventListener("change", onChange)
-      return () => mq.removeEventListener("change", onChange)
-    },
-    () => window.matchMedia(DESKTOP_QUERY).matches,
-    () => false,
-  )
-}
-
 type HostProps = {
   view: OfficeView
   state: OfficeState
@@ -695,7 +718,7 @@ type HostProps = {
 
 function ViewHost({ view, state, copy, base, origin, instant, reduce, contactHref, back, go, open }: HostProps) {
   const s = copy.shell
-  const desktop = useDesktop()
+  const { desktop } = useDesktopRoom()
   // phones: the photographed object leaves its scene and the view grows out of it
   const lift = { backLabel: s.backOffice, reduce, instant, onClose: back }
 

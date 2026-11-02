@@ -7,6 +7,7 @@ import { EV } from "@/lib/analytics-events"
 import { track } from "@/lib/analytics-client"
 import { cn } from "@/lib/utils"
 import type { OfficeCopy } from "../copy"
+import { isDesktopRoom } from "../view-mode"
 import { OfficeFilm } from "./hero-film/office-film"
 import { INTRO_END } from "./hero-film/render"
 
@@ -60,7 +61,7 @@ export function MobileHero({
     try {
       seen = sessionStorage.getItem(SEEN_KEY) === "1"
     } catch {}
-    const phone = !window.matchMedia("(min-width: 1280px)").matches
+    const phone = !isDesktopRoom()
     const play = phone && !skip && !reduce && !seen && window.scrollY < 40
     if (play) {
       try {

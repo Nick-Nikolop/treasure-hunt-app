@@ -1,6 +1,7 @@
 "use client"
 
 import { useLayoutEffect, useRef, useState } from "react"
+import { isDesktopRoom } from "../view-mode"
 
 const DARK = 0.9
 // the lamp catching: two short flickers, then the room is lit (same rhythm as the opening)
@@ -24,7 +25,7 @@ export function SceneLights({ reduce }: { reduce: boolean }) {
 
   useLayoutEffect(() => {
     const el = ref.current?.parentElement
-    if (!el || reduce || window.matchMedia("(min-width: 1280px)").matches) return setDone(true)
+    if (!el || reduce || isDesktopRoom()) return setDone(true)
     if (el.getBoundingClientRect().top < window.innerHeight * 0.9) return setDone(true)
     setArmed(true)
   }, [reduce])

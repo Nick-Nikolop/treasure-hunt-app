@@ -12,6 +12,10 @@ export const OFFICE_COPY = {
       contact: "Επικοινωνία",
       lang: "EN",
       langLabel: "Switch to English",
+      simple: "Απλή προβολή",
+      simpleLabel: "Δες τη σελίδα σε απλή μορφή, χωρίς το διαδραστικό γραφείο",
+      full: "Διαδραστικό γραφείο",
+      fullLabel: "Επιστροφή στο διαδραστικό γραφείο",
     },
     bottomNav: {
       label: "Γρήγορη πλοήγηση",
@@ -98,7 +102,7 @@ export const OFFICE_COPY = {
       exhibit: "Τεκμήριο",
       evidence: [
         { mark: "Α", caption: "Η εξίσωση του δεύτερου σημειώματος. Η λύση της έδειχνε πού ήταν ο θησαυρός.", alt: "Ο πίνακας B με τις στροφές A(90°) και A(−90°) πάνω σε παλιό χάρτη της Καλαμάτας" },
-        { mark: "Β", caption: "Η βραδιά του τέλους, στην παραλία κάτω από τον φάρο.", alt: "Εξερευνητές χορεύουν στη�� παραλία το σούρουπο, με φωτάκια, φωτιά και τον φάρο στο βάθος" },
+        { mark: "Β", caption: "Η βραδιά του τέλους, στην παραλία κάτω από τον φάρο.", alt: "Εξερευνητές χορεύουν στ���� παραλία το σούρουπο, με φωτάκια, φωτιά και τον φάρο στο βάθος" },
       ],
       facts: [
         { label: "Σταθμοί", value: "10" },
@@ -192,6 +196,10 @@ export const OFFICE_COPY = {
       contact: "Contact",
       lang: "ΕΛ",
       langLabel: "Αλλαγή σε Ελληνικά",
+      simple: "Simple view",
+      simpleLabel: "View the page in a simple layout, without the interactive office",
+      full: "Interactive office",
+      fullLabel: "Back to the interactive office",
     },
     bottomNav: {
       label: "Quick navigation",

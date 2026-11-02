@@ -1,5 +1,6 @@
 "use client"
 
+import { isDesktopRoom } from "./view-mode"
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react"
 import { cn } from "@/lib/utils"
 import type { OfficeCopy } from "./copy"
@@ -59,7 +60,7 @@ export function RoomTitle({
       seen = sessionStorage.getItem(SEEN_KEY) === "1"
       sessionStorage.setItem(SEEN_KEY, "1")
     } catch {}
-    const desktop = window.matchMedia("(min-width: 1280px)").matches
+    const desktop = isDesktopRoom()
     setPhase(skip || reduce || seen || !desktop ? "room" : "card")
     // decided once, when the loading screen lifts; later navigation never replays the opening
     // eslint-disable-next-line react-hooks/exhaustive-deps
