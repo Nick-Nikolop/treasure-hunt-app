@@ -1,7 +1,7 @@
 "use client"
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
-import { Flashlight, FlashlightOff, Lightbulb, Minus, NotebookPen, Plus, Scan, X } from "lucide-react"
+import { Flashlight, FlashlightOff, Minus, NotebookPen, Plus, Scan, X } from "lucide-react"
 import Image from "next/image"
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react"
 import { createPortal } from "react-dom"
@@ -139,8 +139,6 @@ export function PosterViewer({
   const pinch = useRef<{ d: number; z: number } | null>(null)
   const miniRef = useRef<HTMLSpanElement>(null)
   const miniShown = useRef(false)
-  const [tipOpen, setTipOpen] = useState(false)
-  const tipReopened = useRef(false)
   const reported = useRef(new Set(found))
   const onFoundRef = useRef(onFound)
   onFoundRef.current = onFound
@@ -287,11 +285,7 @@ export function PosterViewer({
     const first = next && !uvUsed.current
     setUv(next)
     if (next) uvUsed.current = true
-    // The tip ("you may not need UV for everything") only makes sense once they've seen the UV view.
-    if (first) {
-      setUvSeen(true)
-      setTipOpen(true)
-    }
+    if (first) setUvSeen(true)
     track(EV.carnivalUv, { on: next, first })
   }
 
@@ -467,30 +461,6 @@ export function PosterViewer({
             </AnimatePresence>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-          <AnimatePresence>
-            {!tipOpen && uvSeen && (
-              <motion.button
-                key="tip"
-                type="button"
-                onClick={() => {
-                  tipReopened.current = true
-                  setTipOpen(true)
-                  track(EV.carnivalTip, { action: "open", uv })
-                }}
-                data-track="carnival-tip-open"
-                data-viewer-ui
-                aria-label="Δες ξανά τη συμβουλή"
-                className="pointer-events-auto relative z-10 inline-flex size-12 cursor-pointer items-center justify-center gap-2 rounded-full border border-[var(--ci-gold)]/45 bg-[var(--ci-night)] font-sans text-sm font-bold text-[var(--ci-gold)] shadow-[0_10px_40px_-8px_rgba(0,0,0,0.8)] transition hover:bg-[var(--ci-gold)]/15 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ci-gold)] sm:h-14 sm:w-auto sm:px-5"
-                initial={{ opacity: 0, scale: 0.6 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.6 }}
-                transition={{ duration: reduce ? 0.15 : 0.35, ease: EASE }}
-              >
-                <Lightbulb className="size-5" aria-hidden="true" />
-                <span className="hidden sm:inline">Συμβουλή</span>
-              </motion.button>
-            )}
-          </AnimatePresence>
           <button
             type="button"
             onClick={onClose}
@@ -508,48 +478,12 @@ export function PosterViewer({
           </div>
         </div>
 
-        <AnimatePresence>
-          {tipOpen && (
-            <motion.aside
-              data-viewer-ui
-              aria-label="Συμβουλή"
-              className="pointer-events-auto absolute bottom-4 left-4 right-4 z-10 flex max-w-sm items-start gap-3 rounded-2xl border border-[var(--ci-gold)]/35 bg-[var(--ci-night)] p-4 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.9)] [transform:translateZ(0)] sm:right-auto"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0, transition: { delay: reduce || tipReopened.current ? 0 : 1.4, duration: 0.5, ease: EASE } }}
-              exit={{ opacity: 0, y: 8, transition: { duration: 0.2 } }}
-            >
-              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[var(--ci-gold)]/15 text-[var(--ci-gold)]">
-                <Lightbulb className="size-5" aria-hidden="true" />
-              </span>
-              <div className="flex min-w-0 flex-col gap-1">
-                <p className="font-sans text-[11px] font-bold uppercase tracking-[0.3em] text-[var(--ci-gold)]">Συμβουλή</p>
-                <p className="text-pretty font-sans text-sm leading-relaxed text-[var(--ci-cream)]/85">
-                  Ίσως δεν χρειάζεται να αποκαλυφθούν όλα από το <span className="font-bold text-[#b9a4ff]">UV φως</span>. Σβήσε το, κάνε ζουμ και
-                  κοίτα την αφίσα από κοντά.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setTipOpen(false)
-                  track(EV.carnivalTip, { action: "close", uv })
-                }}
-                data-track="carnival-tip-close"
-                aria-label="Κλείσιμο συμβουλής"
-                className="-mr-1 -mt-1 grid size-8 shrink-0 place-items-center rounded-full text-[var(--ci-cream)]/60 transition hover:bg-[var(--ci-cream)]/10 hover:text-[var(--ci-cream)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ci-gold)]"
-              >
-                <X className="size-4" aria-hidden="true" />
-              </button>
-            </motion.aside>
-          )}
-        </AnimatePresence>
-
         <div
           data-viewer-ui
           aria-hidden="true"
           className={cn(
             "pointer-events-none absolute right-4 z-10 aspect-[2/5] w-14 overflow-hidden rounded-md border border-[var(--ci-cream)]/20 bg-[var(--ci-night)] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.9)] transition-all duration-300 sm:w-16",
-            tipOpen ? "bottom-36 sm:bottom-4" : "bottom-4",
+            "bottom-4",
             showMini ? "opacity-100" : "translate-y-2 opacity-0",
           )}
         >
