@@ -60,6 +60,7 @@ function UvInk() {
           }}
         >
           {m.code}
+          <sub className="ml-[0.06em] text-[0.66em] [vertical-align:-0.22em]">({m.sub})</sub>
         </span>
       ))}
       <span
