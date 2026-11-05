@@ -26,6 +26,11 @@ export const EV = {
   explainerInteract: "explainer.interact", // props: { step: "riddle" | "scan", option?, correct, auto }
   explainerJump: "explainer.jump", // props: { chapter }
   explainerComplete: "explainer.complete", // durationMs; props: { interactions }
+  // /landing6 hub + /landing6/hunts chooser
+  landing6Cta: "landing6.cta", // props: { where: "hero" | "topbar" | "join" | "menu", target }
+  landing6Hunt: "landing6.hunt", // props: { hunt: "carnival" | "pythea" | "next", where: "banner" | "chooser", action: "open" | "standings" | "locked" }
+  landing6Social: "landing6.social", // props: { network: "instagram" | "tiktok" | "facebook" | "email" }
+  landing6Menu: "landing6.menu", // mobile menu; props: { action: "open" | "close" }
   // /carnival-intro poster puzzle (never the typed key, only outcomes)
   carnivalOpening: "carnival.opening", // durationMs; props: { action: "finished" | "skipped" }
   // landing office walk-in opening (phone hero)

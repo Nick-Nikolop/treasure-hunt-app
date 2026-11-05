@@ -118,6 +118,27 @@ export function describeEvent(e: EventLike): { text: string; detail: string | nu
         detail: e.durationMs ? duration(e.durationMs) : null,
         tone: "quiet",
       }
+    case "landing6.cta":
+      return {
+        text: p.target === "hunts" ? "Clicked a 'choose your hunt' button" : `Clicked a hub button (${str(p.target) ?? "?"})`,
+        detail: str(p.where),
+        tone: "normal",
+      }
+    case "landing6.hunt":
+      return {
+        text:
+          p.action === "standings"
+            ? "Opened the Pytheas final standings"
+            : p.action === "locked"
+              ? "Tapped the locked upcoming hunt"
+              : `Picked the ${str(p.hunt) ?? "?"} hunt`,
+        detail: p.where === "chooser" ? "on the hunt chooser" : "on the hub banner",
+        tone: p.action === "open" ? "key" : "normal",
+      }
+    case "landing6.social":
+      return { text: `Opened our ${str(p.network) ?? "social"} link`, detail: null, tone: "normal" }
+    case "landing6.menu":
+      return { text: p.action === "open" ? "Opened the mobile menu" : "Closed the mobile menu", detail: null, tone: "quiet" }
     case "carnival.opening":
       return {
         text: p.action === "skipped" ? "Skipped the carnival intro" : "Watched the carnival intro",
