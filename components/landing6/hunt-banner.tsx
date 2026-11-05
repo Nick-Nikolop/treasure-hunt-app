@@ -263,6 +263,8 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
             src={hunt.image}
             alt={hunt.imageAlt}
             fill
+            loading="eager"
+            fetchPriority="high"
             sizes="(min-width: 1024px) 55vw, 100vw"
             className={cn(
               "object-cover transition-[transform,filter] duration-[1400ms] ease-out",

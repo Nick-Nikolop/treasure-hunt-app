@@ -56,7 +56,7 @@ export function JoinBand() {
         viewport={{ once: true }}
         transition={{ duration: reduce ? 0.2 : 2.4, ease: EASE }}
       >
-        <Image src="/landing/scene-finale.webp" alt="" fill sizes="100vw" className="object-cover object-[70%_60%]" />
+        <Image src="/landing/scene-finale.webp" alt="" fill loading="eager" sizes="100vw" className="object-cover object-[70%_60%]" />
       </motion.div>
       <div
         aria-hidden="true"
@@ -150,7 +150,7 @@ export function About() {
             transition={{ duration: reduce ? 0.2 : 1.2, ease: EASE }}
           >
             <div className="relative aspect-[4/5] overflow-hidden border border-[var(--l6-gold)]/60 bg-[var(--l6-night)] shadow-[0_40px_80px_-30px_rgba(12,9,7,0.6)]">
-              <Image src="/landing/scene-team.webp" alt="Τέσσερις κυνηγοί σκυμμένοι πάνω από ένα κινητό σε πλακόστρωτο δρόμο τη νύχτα" fill sizes="(min-width: 1024px) 40vw, 90vw" className="object-cover transition-transform duration-[1600ms] hover:scale-105" />
+              <Image src="/landing/scene-team.webp" alt="Τέσσερις κυνηγοί σκυμμένοι πάνω από ένα κινητό σε πλακόστρωτο δρόμο τη νύχτα" fill loading="eager" sizes="(min-width: 1024px) 40vw, 90vw" className="object-cover transition-transform duration-[1600ms] hover:scale-105" />
               <Frame />
             </div>
             <figcaption className="mt-4 text-center font-serif text-base italic text-[var(--l6-night)]/60">Η καλύτερη ομάδα είναι αυτή που προσέχει τις λεπτομέρειες.</figcaption>

@@ -31,7 +31,7 @@ function CarnivalFace({ hunt }: { hunt: Hunt }) {
 
       <span className="flex flex-col items-center gap-4">
         <span className="relative block size-40 transition-transform duration-700 ease-out group-hover:scale-105 sm:size-44">
-          <Image src="/carnival/logo.webp" alt="" fill sizes="176px" className="object-contain drop-shadow-[0_12px_30px_rgba(0,0,0,0.45)]" />
+          <Image src="/carnival/logo.webp" alt="" fill priority sizes="176px" className="object-contain drop-shadow-[0_12px_30px_rgba(0,0,0,0.45)]" />
         </span>
         <span className="flex flex-col items-center gap-1.5">
           <span className="font-sans text-2xl font-black uppercase tracking-[0.3em] text-[var(--l6-gold)]">The Hunt</span>
@@ -70,7 +70,7 @@ export function Chooser() {
             {active === "carnival" ? (
               <div className="absolute inset-0" style={{ background: FLYER_BG }} />
             ) : (
-              <Image src={CARD_IMAGE[active]} alt="" fill sizes="100vw" className="object-cover blur-2xl grayscale" />
+              <Image src={CARD_IMAGE[active]} alt="" fill loading="eager" sizes="100vw" className="object-cover blur-2xl grayscale" />
             )}
           </motion.div>
         </AnimatePresence>
@@ -130,6 +130,7 @@ function HuntCard({ hunt, onActive }: { hunt: Hunt; onActive: () => void }) {
         src={CARD_IMAGE[hunt.id as Exclude<HuntId, "carnival">]}
         alt={hunt.imageAlt}
         fill
+        priority
         sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
         className={cn(
           "object-cover transition-[transform,filter] duration-[1200ms] ease-out group-hover:scale-105",

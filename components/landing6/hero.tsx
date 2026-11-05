@@ -40,13 +40,13 @@ export function Hero() {
 
       <motion.div style={{ y: lift, opacity: fade }} className="flex flex-col items-center gap-6 text-center sm:gap-7">
         <motion.div
-          className="relative flex size-48 items-center justify-center min-[400px]:size-56 sm:size-72"
+          className="relative my-7 flex size-44 items-center justify-center min-[400px]:my-9 min-[400px]:size-52 sm:my-12 sm:size-72"
           initial={{ opacity: 0, scale: reduce ? 1 : 0.86 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: reduce ? 0.2 : 1.6, ease: EASE }}
         >
           <motion.div
-            className="absolute -inset-8 text-[var(--l6-gold)] min-[400px]:-inset-10 sm:-inset-14"
+            className="absolute -inset-7 text-[var(--l6-gold)] min-[400px]:-inset-9 sm:-inset-12"
             animate={reduce ? undefined : { rotate: 360 }}
             transition={{ duration: 160, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
           >

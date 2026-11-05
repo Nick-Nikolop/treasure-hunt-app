@@ -37,7 +37,7 @@ export function Footer() {
       <div aria-hidden="true" className="absolute inset-x-0 top-0 mx-auto h-px max-w-3xl bg-gradient-to-r from-transparent via-[var(--l6-gold)] to-transparent" />
       <div className="mx-auto grid w-full max-w-6xl grid-cols-2 gap-x-6 gap-y-10 px-5 pb-10 pt-14 sm:px-8 md:grid-cols-[1.3fr_repeat(3,1fr)] md:gap-8 md:pt-16">
         <div className="col-span-2 flex flex-col items-center gap-4 text-center md:col-span-1 md:items-start md:text-left">
-          <Image src="/landing/logo.webp" alt="The Hunt" width={88} height={88} className="size-20 object-contain" />
+          <Image src="/landing/logo.webp" alt="The Hunt" width={88} height={88} loading="eager" className="size-20 object-contain" />
           <p className="font-sans text-sm font-black uppercase tracking-[0.3em] text-[var(--l6-gold)]">The Hunt</p>
           <p className="max-w-[28ch] font-serif text-base italic leading-relaxed text-[var(--l6-cream)]/60">Κάποια μυστικά πρέπει να τα κυνηγήσεις.</p>
           <ul className="flex gap-4 pt-1">
