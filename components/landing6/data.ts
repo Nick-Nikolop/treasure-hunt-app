@@ -25,7 +25,8 @@ export interface Hunt {
   title: string
   body: string[]
   facts: string[]
-  ledger?: { label: string; value: string }[]
+  /** `note` = small unit under the value, `mark` = asterisk for a footnote. */
+  ledger?: { label: string; value: string; note?: string; mark?: boolean }[]
   perk?: string
   stamp?: { top: string; bottom: string }
   image: string
@@ -42,14 +43,14 @@ export const HUNTS: Hunt[] = [
     kicker: "The Hunt × Καλαματιανό Καρναβάλι",
     title: "Το κυνήγι του θησαυρού της Ιζαμπώ",
     body: [
-      "Ένα κυνήγι βασισμένο στην ιστορία της Ιζαμπώ, της πριγκίπισσας που έγινε η μορφή του Καλαματιανού Καρναβαλιού.",
-      "Ζήσε μια εναλλακτική εκδοχή της ιστορίας της, γραμμένη για εσένα και την ομάδα σου, με σκηνικό ολόκληρη την Καλαμάτα.",
+      "Ένα κυνήγι βασισμένο στην ιστορία της Ιζαμπώ, της πριγκίπισσας του Καλαματιανού Καρναβαλιού.",
+      "Ζήσε μια εναλλακτική εκδοχή της ιστορίας της, με την ομάδα σου και σκηνικό όλη την Καλαμάτα.",
     ],
     facts: ["12 γρίφοι", "3 εβδομάδες", "Έπαθλο 1.000 €*"],
     ledger: [
       { label: "Γρίφοι", value: "12" },
-      { label: "Διάρκεια", value: "3 εβδομάδες" },
-      { label: "Έπαθλο", value: "1.000 €*" },
+      { label: "Διάρκεια", value: "3", note: "εβδομάδες" },
+      { label: "Έπαθλο", value: "1.000 €", mark: true },
     ],
     perk: "Δωρεάν για καρναβαλικές ομάδες",
     image: "/landing/mission-carnival.webp",
@@ -67,11 +68,11 @@ export const HUNTS: Hunt[] = [
       "Η πρώτη αποστολή του The Hunt. Οι ομάδες ακολούθησαν το ημερολόγιο του Πυθέα σε δέκα σημεία στην Καλαμάτα.",
       "Στη συνέχεια, λύνοντας δύο επιπλέον γρίφους, βρήκαν την πυξίδα του και, εν τέλει, τον θησαυρό του.",
     ],
-    facts: ["12 γρίφοι", "Έπαθλο 500 €", "29 Ιουλ – 1 Αυγ"],
+    facts: ["12 γρίφοι", "Έπαθλο 500 €", "29 Ιουλ – 1 Αυγ 2026"],
     ledger: [
       { label: "Γρίφοι", value: "12" },
       { label: "Έπαθλο", value: "500 €" },
-      { label: "Κυνήγι", value: "29 Ιουλ – 1 Αυγ" },
+      { label: "Κυνήγι", value: "29.7 – 1.8", note: "2026" },
     ],
     stamp: { top: "The Hunt · Υπόθεση 001", bottom: "Lighthouse · 1.8.2026" },
     image: "/landing/mission-pythea.webp",
