@@ -1,7 +1,18 @@
 "use client"
 
 import { AnimatePresence, motion, useInView, useReducedMotion } from "framer-motion"
-import { Archive, ArrowRight, FolderOpen, Ticket, Trophy } from "lucide-react"
+import {
+  Archive,
+  ArrowRight,
+  CalendarDays,
+  Coins,
+  FolderOpen,
+  Hourglass,
+  type LucideIcon,
+  Puzzle,
+  Ticket,
+  Trophy,
+} from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useEffect, useRef, useState, useSyncExternalStore } from "react"
@@ -150,10 +161,18 @@ function Ledger({
   )
 }
 
+const LEDGER_ICON: Record<string, LucideIcon> = {
+  Γρίφοι: Puzzle,
+  Διάρκεια: Hourglass,
+  Έπαθλο: Coins,
+}
+
 function LedgerCells({ rows, dashed = false }: { rows: NonNullable<Hunt["ledger"]>; dashed?: boolean }) {
   return (
     <>
-      {rows.map((r, i) => (
+      {rows.map((r, i) => {
+        const Icon = LEDGER_ICON[r.label] ?? CalendarDays
+        return (
         <div
           key={r.label}
           className={cn(
@@ -161,7 +180,8 @@ function LedgerCells({ rows, dashed = false }: { rows: NonNullable<Hunt["ledger"
             i > 0 && (dashed ? "border-l border-dashed border-[var(--l6-gold)]/30" : "border-l border-[var(--l6-cream)]/12"),
           )}
         >
-          <dt className="whitespace-nowrap font-sans text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--l6-cream)]/55 sm:text-[11px] sm:tracking-[0.24em]">
+          <dt className="flex flex-col items-center gap-2 whitespace-nowrap font-sans text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--l6-cream)]/55 sm:text-[11px] sm:tracking-[0.24em]">
+            <Icon className="size-4 text-[var(--l6-gold)]/80" aria-hidden="true" strokeWidth={1.75} />
             {r.label}
           </dt>
           <dd className="relative whitespace-nowrap font-serif text-[1.375rem] font-black leading-none text-[var(--l6-cream)] sm:text-[1.75rem]">
@@ -176,8 +196,20 @@ function LedgerCells({ rows, dashed = false }: { rows: NonNullable<Hunt["ledger"
             )}
           </dd>
         </div>
-      ))}
+        )
+      })}
     </>
+  )
+}
+
+/** Line · diamond · line rule under the title, the same mark the hero uses. */
+function TitleRule({ delay }: { delay: (n: number) => object }) {
+  return (
+    <motion.span {...delay(1.5)} aria-hidden="true" className="hidden items-center gap-2 text-[var(--l6-gold)]/70 lg:flex">
+      <span className="h-px w-10 bg-current" />
+      <span className="size-1.5 rotate-45 bg-current" />
+      <span className="h-px w-28 bg-gradient-to-r from-current to-transparent" />
+    </motion.span>
   )
 }
 
@@ -457,9 +489,19 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
         )}
       >
         <span aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 hidden lg:block" style={paperPattern(hunt, flip)} />
-        <motion.div {...item(0, { y: 12, scale: 0.9 })} className="pointer-events-auto flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-          <StatusBadge hunt={hunt} className={hunt.stamp ? "max-lg:sr-only" : undefined} />
-          <span className="font-sans text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--l6-gold)]/90">{hunt.kicker}</span>
+        {hunt.file && (
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute bottom-2 right-8 -z-10 hidden select-none font-serif text-[12rem] font-black leading-none tracking-tight text-transparent lg:block"
+            style={{ WebkitTextStroke: "1px rgba(224,176,74,0.17)" }}
+          >
+            {hunt.file}
+          </span>
+        )}
+        <motion.div {...item(0, { y: 12, scale: 0.9 })} className="pointer-events-auto flex w-full flex-wrap items-center justify-center gap-3 lg:flex-nowrap lg:justify-start">
+          <StatusBadge hunt={hunt} className={cn("shrink-0", hunt.stamp && "max-lg:sr-only")} />
+          <span className="font-sans text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--l6-gold)]/90 lg:whitespace-nowrap">{hunt.kicker}</span>
+          <span aria-hidden="true" className="hidden h-px min-w-6 flex-1 bg-gradient-to-r from-[var(--l6-gold)]/40 to-transparent lg:block" />
         </motion.div>
 
         <motion.h3
@@ -472,10 +514,17 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
         >
           {hunt.title}
         </motion.h3>
+        <TitleRule delay={item} />
 
-        <motion.div {...item(2)} className="pointer-events-auto flex max-w-[52ch] flex-col gap-3 font-sans text-[15px] leading-relaxed text-[var(--l6-cream)]/80 sm:text-base lg:text-[var(--l6-cream)]/75">
-          {hunt.body.map((p) => (
-            <p key={p} className="text-pretty">
+        <motion.div {...item(2)} className="pointer-events-auto flex max-w-[52ch] flex-col gap-3 font-sans text-[15px] leading-relaxed text-[var(--l6-cream)]/80 sm:text-base lg:text-[var(--l6-cream)]/70">
+          {hunt.body.map((p, i) => (
+            <p
+              key={p}
+              className={cn(
+                "text-pretty",
+                i === 0 && "lg:text-lg lg:leading-[1.65] lg:text-[var(--l6-cream)]/95",
+              )}
+            >
               {p}
             </p>
           ))}
@@ -504,6 +553,12 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
               {hunt.cta}
               <ArrowRight className="size-4 transition-transform duration-300 group-hover/cta:translate-x-1" aria-hidden="true" />
             </Link>
+          )}
+          {done && hunt.stamp && (
+            <span className="hidden items-center gap-2.5 font-sans text-[11px] font-bold uppercase tracking-[0.24em] text-[var(--l6-cream)]/55 sm:inline-flex">
+              <Archive className="size-3.5 text-[var(--l6-gold)]/80" aria-hidden="true" />
+              Αρχειοθετήθηκε · {hunt.stamp.bottom}
+            </span>
           )}
           {hunt.perk && (
             <span className={cn("inline-flex items-center gap-2 font-sans text-sm font-bold text-[var(--l6-cream)]/80", live && hunt.ledger && "sm:hidden")}>
