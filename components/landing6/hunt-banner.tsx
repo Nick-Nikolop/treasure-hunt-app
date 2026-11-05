@@ -182,7 +182,14 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
   const inView = useInView(cardRef, { once: true, margin: desktop ? "-80px" : "0px 0px -18% 0px" })
   // Phones replace the status badge with the seal, always visible once the photo has opened.
   const stampable = !!hunt.stamp && (done || !!hunt.upcoming)
-  const stamped = !!hunt.stamp && (desktop ? stampable && (hovered || tapped) : inView)
+  // Phones: the seal lands 5s after the card comes into view, so the photo is seen clean first.
+  const [mobileStampDue, setMobileStampDue] = useState(false)
+  useEffect(() => {
+    if (desktop || !inView || !hunt.stamp) return
+    const t = window.setTimeout(() => setMobileStampDue(true), 5000)
+    return () => window.clearTimeout(t)
+  }, [desktop, inView, hunt.stamp])
+  const stamped = !!hunt.stamp && (desktop ? stampable && (hovered || tapped) : mobileStampDue)
 
   // Desktop: the whole text column cascades in together. Phones: whatever is on screen while the
   // image curtain opens cascades in order after it; anything scrolled to later reveals right away.
@@ -302,7 +309,7 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
 
         {hunt.stamp && (stampable || !desktop) && (
           <span className="pointer-events-none absolute inset-x-0 top-0 h-56 sm:h-72 lg:pointer-events-auto lg:inset-0 lg:h-auto">
-            <Stamp hunt={hunt} on={stamped} delay={desktop || reduce ? 0 : 0.95} />
+            <Stamp hunt={hunt} on={stamped} delay={0} />
           </span>
         )}
         {stampable && desktop && (
