@@ -20,6 +20,8 @@ export type HuntId = "carnival" | "pythea" | "next"
 export interface Hunt {
   id: HuntId
   status: "live" | "done" | "soon"
+  /** Featured and open for sign-ups, but the hunt itself has not started yet. */
+  upcoming?: boolean
   statusLabel: string
   kicker: string
   title: string
@@ -41,7 +43,8 @@ export const HUNTS: Hunt[] = [
   {
     id: "carnival",
     status: "live",
-    statusLabel: "Σε εξέλιξη",
+    upcoming: true,
+    statusLabel: "Έρχεται σύντομα",
     kicker: "The Hunt × Καλαματιανό Καρναβάλι",
     title: "Το κυνήγι του θησαυρού της Ιζαμπώ",
     body: [

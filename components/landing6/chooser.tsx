@@ -174,7 +174,7 @@ function HuntCard({ hunt, onActive }: { hunt: Hunt; onActive: () => void }) {
           )}
         >
           {done && <Trophy className="size-4" aria-hidden="true" />}
-          {live ? "Ξεκίνα την αποστολή" : hunt.cta}
+          {live && !hunt.upcoming ? "Ξεκίνα την αποστολή" : hunt.cta}
           {live && <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true" />}
         </span>
       </span>

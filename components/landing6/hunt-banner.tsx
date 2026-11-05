@@ -24,7 +24,7 @@ export function StatusBadge({ hunt, className }: { hunt: Hunt; className?: strin
     >
       {hunt.status === "live" && (
         <span aria-hidden="true" className="relative flex size-2">
-          <span className="absolute inset-0 rounded-full bg-[var(--l6-gold)] motion-safe:animate-ping" />
+          {!hunt.upcoming && <span className="absolute inset-0 rounded-full bg-[var(--l6-gold)] motion-safe:animate-ping" />}
           <span className="relative size-2 rounded-full bg-[var(--l6-gold)]" />
         </span>
       )}
