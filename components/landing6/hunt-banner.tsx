@@ -72,7 +72,7 @@ function Stamp({ hunt, on }: { hunt: Hunt; on: boolean }) {
         <motion.span
           key="stamp"
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 flex items-center justify-center"
+          className="pointer-events-none absolute inset-0 flex items-center justify-center [container-type:size]"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, transition: { duration: 0.25 } }}
@@ -86,20 +86,20 @@ function Stamp({ hunt, on }: { hunt: Hunt; on: boolean }) {
             />
           )}
           <motion.span
-            className="relative flex flex-col items-center gap-2 rounded-md border-[5px] border-double border-[var(--l6-gold)] bg-[var(--l6-night)]/35 px-6 py-4 text-[var(--l6-gold)] shadow-[0_0_0_2px_rgba(224,176,74,0.35)] sm:px-10 sm:py-6"
+            className="relative flex max-w-[82cqw] flex-col items-center gap-[1.4cqw] rounded-md border-[5px] border-double border-[var(--l6-gold)] bg-[var(--l6-night)]/35 px-[4.5cqw] py-[3cqw] text-[var(--l6-gold)] shadow-[0_0_0_2px_rgba(224,176,74,0.35)]"
             style={{ textShadow: "0 2px 0 rgba(12,9,7,0.5)" }}
             initial={reduce ? { scale: 1, rotate: -12, opacity: 0 } : { scale: 2.6, rotate: -2, opacity: 0 }}
             animate={{ scale: 1, rotate: -12, opacity: 0.95 }}
             transition={reduce ? { duration: 0.2 } : { type: "spring", stiffness: 520, damping: 24, mass: 0.9 }}
           >
             {hunt.stamp && (
-              <span className="font-sans text-[10px] font-bold uppercase tracking-[0.34em] sm:text-xs">{hunt.stamp.top}</span>
+              <span className="whitespace-nowrap font-sans text-[clamp(8px,1.9cqw,12px)] font-bold uppercase tracking-[0.3em]">{hunt.stamp.top}</span>
             )}
-            <span className="border-y-2 border-[var(--l6-gold)] py-1 font-sans text-3xl font-black uppercase tracking-[0.12em] sm:text-5xl">
+            <span className="whitespace-nowrap border-y-2 border-[var(--l6-gold)] py-1 font-sans text-[min(6.4cqw,3rem)] font-black uppercase leading-tight tracking-[0.1em]">
               Ολοκληρώθηκε
             </span>
             {hunt.stamp && (
-              <span className="font-sans text-[10px] font-bold uppercase tracking-[0.34em] sm:text-xs">{hunt.stamp.bottom}</span>
+              <span className="whitespace-nowrap font-sans text-[clamp(8px,1.9cqw,12px)] font-bold uppercase tracking-[0.3em]">{hunt.stamp.bottom}</span>
             )}
           </motion.span>
         </motion.span>
