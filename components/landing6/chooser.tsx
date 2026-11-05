@@ -41,7 +41,7 @@ export function Chooser() {
         <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse 80% 70% at 50% 40%, transparent 30%, var(--l6-night) 100%)" }} />
       </div>
 
-      <section aria-labelledby="choose-title" className="mx-auto flex min-h-svh w-full max-w-6xl flex-col items-center gap-10 px-5 pb-20 pt-28 sm:gap-14 sm:px-8 sm:pt-36">
+      <section aria-labelledby="choose-title" className="mx-auto flex min-h-svh w-full max-w-6xl flex-col items-center gap-10 px-5 pb-20 pt-12 sm:gap-14 sm:px-8 sm:pt-20">
         <motion.header
           className="flex flex-col items-center gap-4 text-center"
           initial={{ opacity: 0, y: reduce ? 0 : 24 }}

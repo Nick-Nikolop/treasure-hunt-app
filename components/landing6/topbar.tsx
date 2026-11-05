@@ -1,7 +1,7 @@
 "use client"
 
 import { AnimatePresence, motion } from "framer-motion"
-import { Menu, X } from "lucide-react"
+import { ArrowRight, Menu, X } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useEffect, useState } from "react"
@@ -10,15 +10,12 @@ import { track } from "@/lib/analytics-client"
 import { cn } from "@/lib/utils"
 import { CHOOSER, EASE, HUB, NAV } from "./data"
 
-const linkClass =
-  "relative font-sans text-[13px] font-bold uppercase tracking-[0.24em] text-[var(--l6-cream)]/80 transition hover:text-[var(--l6-cream)] focus-visible:outline-none focus-visible:text-[var(--l6-gold)] after:absolute after:-bottom-1.5 after:left-1/2 after:h-px after:w-0 after:-translate-x-1/2 after:bg-[var(--l6-gold)] after:transition-all after:duration-500 hover:after:w-full"
-
 export function Topbar() {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24)
+    const onScroll = () => setScrolled(window.scrollY > 8)
     onScroll()
     window.addEventListener("scroll", onScroll, { passive: true })
     return () => window.removeEventListener("scroll", onScroll)
@@ -40,47 +37,47 @@ export function Topbar() {
     track(EV.landing6Menu, { action: next ? "open" : "close" })
   }
 
-  const left = NAV.slice(0, 2)
-  const right = NAV.slice(2)
-
   return (
     <>
       <header
         className={cn(
-          "fixed inset-x-0 top-0 z-40 transition-[background-color,backdrop-filter,box-shadow] duration-500",
-          scrolled || open ? "bg-[var(--l6-night)]/85 backdrop-blur-md" : "bg-transparent",
+          "sticky top-0 z-40 border-b bg-[var(--l6-night)] transition-[border-color,box-shadow] duration-500",
+          scrolled || open ? "border-[var(--l6-gold)]/25 shadow-[0_10px_30px_-12px_rgba(0,0,0,0.7)]" : "border-[var(--l6-cream)]/10",
         )}
       >
-        <div className="mx-auto grid h-16 w-full max-w-7xl grid-cols-[1fr_auto_1fr] items-center gap-6 px-5 sm:h-20 sm:px-8">
-          <nav aria-label="Κύρια πλοήγηση" className="hidden items-center gap-10 lg:flex">
-            {left.map((l) => (
-              <Link key={l.href} href={l.href} className={linkClass}>
+        <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-6 px-5 sm:px-8">
+          <Link
+            href={HUB}
+            aria-label="The Hunt, αρχική"
+            className="flex shrink-0 items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--l6-gold)]"
+          >
+            <Image src="/landing/logo-sm.webp" alt="" width={40} height={40} priority className="size-9 object-contain" />
+            <span className="flex flex-col leading-none">
+              <span className="font-sans text-sm font-black uppercase tracking-[0.28em] text-[var(--l6-gold)]">The Hunt</span>
+              <span className="mt-1 font-sans text-[10px] font-semibold uppercase tracking-[0.3em] text-[var(--l6-cream)]/50">Καλαμάτα</span>
+            </span>
+          </Link>
+
+          <nav aria-label="Κύρια πλοήγηση" className="hidden items-center gap-1 lg:flex">
+            {NAV.map((l) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                className="rounded-full px-4 py-2 font-sans text-[13px] font-semibold text-[var(--l6-cream)]/75 transition hover:bg-[var(--l6-cream)]/[0.06] hover:text-[var(--l6-cream)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--l6-gold)]"
+              >
                 {l.label}
               </Link>
             ))}
           </nav>
-          <Link
-            href={HUB}
-            aria-label="The Hunt, αρχική"
-            className="col-start-1 flex items-center gap-3 justify-self-start rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--l6-gold)] lg:col-start-2 lg:justify-self-center"
-          >
-            <Image src="/landing/logo-sm.webp" alt="" width={56} height={56} priority className={cn("object-contain transition-all duration-500", scrolled ? "size-10" : "size-11 sm:size-12")} />
-            <span className="font-sans text-sm font-black uppercase tracking-[0.3em] text-[var(--l6-gold)] lg:hidden">The Hunt</span>
-          </Link>
-          <div className="col-start-3 flex items-center justify-end gap-10">
-            <nav aria-label="Δευτερεύουσα πλοήγηση" className="hidden items-center gap-10 lg:flex">
-              {right.map((l) => (
-                <Link key={l.href} href={l.href} className={linkClass}>
-                  {l.label}
-                </Link>
-              ))}
-            </nav>
+
+          <div className="flex shrink-0 items-center gap-2">
             <Link
               href={CHOOSER}
               onClick={() => track(EV.landing6Cta, { where: "topbar", target: "hunts" })}
-              className="hidden h-10 items-center rounded-full border border-[var(--l6-gold)]/70 px-5 font-sans text-xs font-bold uppercase tracking-[0.22em] text-[var(--l6-gold)] transition hover:bg-[var(--l6-gold)] hover:text-[var(--l6-night)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--l6-gold)] sm:inline-flex"
+              className="group hidden h-10 items-center gap-2 rounded-full bg-[var(--l6-gold)] pl-5 pr-4 font-sans text-xs font-bold uppercase tracking-[0.18em] text-[var(--l6-night)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--l6-cream)] sm:inline-flex"
             >
               Παίξε
+              <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
             </Link>
             <button
               type="button"
@@ -88,16 +85,11 @@ export function Topbar() {
               aria-expanded={open}
               aria-controls="l6-menu"
               onClick={() => toggle(!open)}
-              className="inline-flex size-11 items-center justify-center rounded-full border border-[var(--l6-cream)]/15 text-[var(--l6-cream)] transition hover:border-[var(--l6-gold)]/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--l6-gold)] lg:hidden"
+              className="inline-flex size-10 items-center justify-center rounded-full border border-[var(--l6-cream)]/15 text-[var(--l6-cream)] transition hover:border-[var(--l6-gold)]/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--l6-gold)] lg:hidden"
             >
               {open ? <X className="size-5" aria-hidden="true" /> : <Menu className="size-5" aria-hidden="true" />}
             </button>
           </div>
-        </div>
-        <div aria-hidden="true" className="relative mx-auto flex max-w-5xl items-center px-5">
-          <span className={cn("h-px flex-1 bg-gradient-to-r from-transparent to-[var(--l6-gold)]/50 transition-opacity duration-500", scrolled ? "opacity-0" : "opacity-100")} />
-          <span className={cn("mx-3 size-1.5 rotate-45 bg-[var(--l6-gold)] transition-opacity duration-500", scrolled ? "opacity-0" : "opacity-100")} />
-          <span className={cn("h-px flex-1 bg-gradient-to-l from-transparent to-[var(--l6-gold)]/50 transition-opacity duration-500", scrolled ? "opacity-0" : "opacity-100")} />
         </div>
       </header>
 
@@ -108,7 +100,7 @@ export function Topbar() {
             role="dialog"
             aria-modal="true"
             aria-label="Μενού"
-            className="fixed inset-0 z-30 flex flex-col bg-[var(--l6-night)]/97 px-6 pb-10 pt-28 backdrop-blur-md lg:hidden"
+            className="fixed inset-x-0 bottom-0 top-16 z-30 flex flex-col bg-[var(--l6-night)] px-6 pb-10 pt-6 lg:hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

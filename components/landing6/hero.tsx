@@ -25,7 +25,7 @@ export function Hero() {
   })
 
   return (
-    <section ref={ref} aria-labelledby="l6-title" className="relative isolate flex min-h-svh items-center justify-center overflow-hidden px-5 pb-16 pt-24 sm:px-8">
+    <section ref={ref} aria-labelledby="l6-title" className="relative isolate flex min-h-[calc(100svh-4rem)] items-center justify-center overflow-hidden px-5 pb-20 pt-16 sm:px-8 sm:pt-20">
       <motion.div aria-hidden="true" className="absolute inset-0 -z-20" style={{ scale: mapScale }}>
         <Image src="/landing/hero-kalamata-map.webp" alt="" fill priority sizes="100vw" className="object-cover opacity-[0.16] sepia" />
       </motion.div>
@@ -40,7 +40,7 @@ export function Hero() {
 
       <motion.div style={{ y: lift, opacity: fade }} className="flex flex-col items-center gap-6 text-center sm:gap-7">
         <motion.div
-          className="relative flex size-60 items-center justify-center sm:size-80 lg:size-[22rem]"
+          className="relative flex size-56 items-center justify-center sm:size-72"
           initial={{ opacity: 0, scale: reduce ? 1 : 0.86 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: reduce ? 0.2 : 1.6, ease: EASE }}
@@ -53,7 +53,7 @@ export function Hero() {
             <Dial className="size-full" />
           </motion.div>
           <div className="relative size-full">
-            <Image src="/landing/logo.webp" alt="" fill priority sizes="(min-width: 1024px) 352px, (min-width: 640px) 320px, 240px" className="object-contain drop-shadow-[0_18px_40px_rgba(224,176,74,0.28)]" />
+            <Image src="/landing/logo.webp" alt="" fill priority sizes="(min-width: 640px) 288px, 224px" className="object-contain drop-shadow-[0_18px_40px_rgba(224,176,74,0.28)]" />
             {!reduce && (
               <motion.span
                 aria-hidden="true"
