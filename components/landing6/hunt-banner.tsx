@@ -40,17 +40,17 @@ function Ledger({ rows, delay }: { rows: NonNullable<Hunt["ledger"]>; delay: (n:
         <div
           key={r.label}
           className={cn(
-            "flex flex-col items-center gap-2 px-2 py-5 text-center",
+            "flex flex-col items-center gap-2 px-1 py-4 text-center sm:px-2 sm:py-5",
             i > 0 && "border-l border-[var(--l6-cream)]/12",
           )}
         >
-          <dt className="whitespace-nowrap font-sans text-[11px] font-bold uppercase tracking-[0.24em] text-[var(--l6-cream)]/50">
+          <dt className="whitespace-nowrap font-sans text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--l6-cream)]/55 sm:text-[11px] sm:tracking-[0.24em]">
             {r.label}
           </dt>
-          <dd className="relative whitespace-nowrap font-serif text-2xl font-black leading-none text-[var(--l6-cream)] sm:text-[1.75rem]">
+          <dd className="relative whitespace-nowrap font-serif text-[1.375rem] font-black leading-none text-[var(--l6-cream)] sm:text-[1.75rem]">
             {r.value}
             {r.note && (
-              <span className="ml-1.5 font-sans text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--l6-gold)]">{r.note}</span>
+              <span className="ml-1 font-sans text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--l6-gold)] sm:ml-1.5 sm:text-[11px] sm:tracking-[0.18em]">{r.note}</span>
             )}
             {r.mark && (
               <span aria-hidden="true" className="absolute -right-2.5 -top-1 font-sans text-sm font-bold text-[var(--l6-gold)]">
@@ -208,7 +208,7 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
 
       <div
         className={cn(
-          "relative z-10 flex flex-col items-start justify-center gap-6 px-6 pb-12 pt-2 sm:px-12 lg:px-14 lg:py-16",
+          "relative z-10 flex flex-col items-start justify-center gap-5 px-5 pb-10 pt-1 sm:gap-6 sm:px-12 sm:pb-12 sm:pt-2 lg:px-14 lg:py-16",
           flip && "lg:order-1",
         )}
         style={{ background: surface }}
@@ -223,7 +223,7 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
           {...item(1)}
           id={`${hunt.id}-title`}
           className={cn(
-            "max-w-[20ch] text-balance font-serif text-[2rem] font-black leading-[1.08] sm:text-5xl",
+            "max-w-[20ch] text-balance font-serif text-[1.875rem] font-black leading-[1.1] sm:text-5xl sm:leading-[1.08]",
             "text-[var(--l6-cream)]",
           )}
         >
@@ -240,13 +240,13 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
 
         {hunt.ledger && <Ledger rows={hunt.ledger} delay={item} />}
 
-        <motion.div {...item(5)} className="flex flex-wrap items-center gap-x-6 gap-y-4 pt-2">
+        <motion.div {...item(5)} className="flex w-full flex-wrap items-center gap-x-6 gap-y-4 pt-1 sm:w-auto sm:pt-2">
           {hunt.href && (
             <Link
               href={hunt.href}
               onClick={() => track(EV.landing6Hunt, { hunt: hunt.id, where: "banner", action: done ? "standings" : "open" })}
               className={cn(
-                "group/cta inline-flex h-13 items-center gap-3 rounded-full px-7 font-sans text-sm font-bold uppercase tracking-[0.2em] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--l6-cream)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--l6-night)] active:scale-[0.98]",
+                "group/cta inline-flex h-13 w-full items-center justify-center gap-3 rounded-full px-6 font-sans text-sm font-bold uppercase tracking-[0.16em] sm:w-auto sm:px-7 sm:tracking-[0.2em] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--l6-cream)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--l6-night)] active:scale-[0.98]",
                 done
                   ? "border border-[var(--l6-gold)]/50 text-[var(--l6-gold)] hover:bg-[var(--l6-gold)] hover:text-[var(--l6-night)]"
                   : "bg-[var(--l6-gold)] text-[var(--l6-night)] shadow-[0_20px_50px_-15px_rgba(224,176,74,0.6)] hover:brightness-110",

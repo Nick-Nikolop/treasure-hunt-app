@@ -40,13 +40,13 @@ export function Hero() {
 
       <motion.div style={{ y: lift, opacity: fade }} className="flex flex-col items-center gap-6 text-center sm:gap-7">
         <motion.div
-          className="relative flex size-56 items-center justify-center sm:size-72"
+          className="relative flex size-48 items-center justify-center min-[400px]:size-56 sm:size-72"
           initial={{ opacity: 0, scale: reduce ? 1 : 0.86 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: reduce ? 0.2 : 1.6, ease: EASE }}
         >
           <motion.div
-            className="absolute -inset-10 text-[var(--l6-gold)] sm:-inset-14"
+            className="absolute -inset-8 text-[var(--l6-gold)] min-[400px]:-inset-10 sm:-inset-14"
             animate={reduce ? undefined : { rotate: 360 }}
             transition={{ duration: 160, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
           >
@@ -78,17 +78,17 @@ export function Hero() {
           </div>
         </motion.div>
 
-        <motion.p {...rise(1)} className="flex items-center gap-3 font-sans text-[11px] font-bold uppercase tracking-[0.4em] text-[var(--l6-gold)] sm:text-xs">
-          <span aria-hidden="true" className="h-px w-8 bg-[var(--l6-gold)]/60" />
+        <motion.p {...rise(1)} className="flex items-center gap-3 whitespace-nowrap font-sans text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--l6-gold)] sm:text-xs sm:tracking-[0.4em]">
+          <span aria-hidden="true" className="hidden h-px w-8 bg-[var(--l6-gold)]/60 min-[400px]:block" />
           Κυνήγι θησαυρού · Καλαμάτα
-          <span aria-hidden="true" className="h-px w-8 bg-[var(--l6-gold)]/60" />
+          <span aria-hidden="true" className="hidden h-px w-8 bg-[var(--l6-gold)]/60 min-[400px]:block" />
         </motion.p>
 
         <motion.h1 {...rise(2, 30)} id="l6-title" className="font-sans text-4xl font-black uppercase leading-none tracking-[0.18em] text-[var(--l6-cream)] sm:text-6xl sm:tracking-[0.22em]">
           The Hunt
         </motion.h1>
 
-        <motion.p {...rise(3)} className="max-w-[46ch] text-pretty font-serif text-lg italic leading-relaxed text-[var(--l6-cream)]/75 sm:text-xl">
+        <motion.p {...rise(3)} className="max-w-[46ch] text-pretty font-serif text-[17px] italic leading-relaxed text-[var(--l6-cream)]/75 sm:text-xl">
           Η πόλη γίνεται το ταμπλό. Γρίφοι σε πραγματικά σημεία, μια ιστορία σε κάθε γωνιά κι ένας θησαυρός στο τέλος.
         </motion.p>
 
