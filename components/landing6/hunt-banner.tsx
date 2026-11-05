@@ -181,7 +181,8 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
   const cardRef = useRef<HTMLElement>(null)
   const inView = useInView(cardRef, { once: true, margin: desktop ? "-80px" : "0px 0px -18% 0px" })
   // Phones replace the status badge with the seal, always visible once the photo has opened.
-  const stamped = !!hunt.stamp && (desktop ? done && (hovered || tapped) : inView)
+  const stampable = !!hunt.stamp && (done || !!hunt.upcoming)
+  const stamped = !!hunt.stamp && (desktop ? stampable && (hovered || tapped) : inView)
 
   // Desktop: the whole text column cascades in together. Phones: whatever is on screen while the
   // image curtain opens cascades in order after it; anything scrolled to later reveals right away.
@@ -217,7 +218,7 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
       aria-labelledby={`${hunt.id}-title`}
       onPointerEnter={(e) => e.pointerType === "mouse" && setHovered(true)}
       onPointerLeave={(e) => e.pointerType === "mouse" && setHovered(false)}
-      onFocus={() => done && setHovered(true)}
+      onFocus={() => stampable && setHovered(true)}
       onBlur={(e) => !e.currentTarget.contains(e.relatedTarget as Node) && setHovered(false)}
       className={cn(
         "group relative grid scroll-mt-24 overflow-hidden border border-[var(--l6-gold)]/35 shadow-[0_40px_90px_-40px_rgba(0,0,0,0.9)] lg:min-h-[36rem] lg:grid-cols-[1.1fr_1fr]",
@@ -299,12 +300,12 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
           style={{ background: surface }}
         />
 
-        {hunt.stamp && (done || !desktop) && (
+        {hunt.stamp && (stampable || !desktop) && (
           <span className="pointer-events-none absolute inset-x-0 top-0 h-56 sm:h-72 lg:pointer-events-auto lg:inset-0 lg:h-auto">
             <Stamp hunt={hunt} on={stamped} delay={desktop || reduce ? 0 : 0.95} />
           </span>
         )}
-        {hunt.stamp && done && desktop && (
+        {stampable && desktop && (
           <span className="absolute inset-0">
             <button
               type="button"
