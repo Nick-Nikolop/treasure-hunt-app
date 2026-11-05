@@ -1,7 +1,7 @@
 "use client"
 
 import { AnimatePresence, motion, useInView, useReducedMotion } from "framer-motion"
-import { ArrowRight, Flashlight, KeyRound, ScrollText, Ticket, Trophy } from "lucide-react"
+import { ArrowRight, Ticket, Trophy } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRef, useState } from "react"
@@ -30,42 +30,6 @@ export function StatusBadge({ hunt, className }: { hunt: Hunt; className?: strin
       )}
       {hunt.statusLabel}
     </span>
-  )
-}
-
-const STEP_ICON = { poster: ScrollText, uv: Flashlight, key: KeyRound } as const
-
-function Steps({ steps, delay }: { steps: NonNullable<Hunt["steps"]>; delay: (n: number) => object }) {
-  return (
-    <motion.ol
-      {...delay(4)}
-      aria-label="Πώς παίζεται"
-      className="relative grid w-full grid-cols-3 rounded-2xl border border-[var(--l6-gold)]/20 bg-[var(--l6-night)]/45"
-    >
-      {steps.map((s, i) => {
-        const Icon = STEP_ICON[s.icon]
-        return (
-          <li
-            key={s.label}
-            className={cn(
-              "flex flex-col items-start gap-3 px-3 py-5 sm:px-5",
-              i > 0 && "border-l border-[var(--l6-gold)]/15",
-            )}
-          >
-            <span className="flex size-10 items-center justify-center rounded-full bg-[var(--l6-gold)] text-[var(--l6-night)] shadow-[0_8px_24px_-8px_rgba(224,176,74,0.7)]">
-              <Icon className="size-5" aria-hidden="true" />
-            </span>
-            <span className="flex flex-col gap-1">
-              <span className="font-sans text-[11px] font-bold uppercase tracking-[0.22em] text-[var(--l6-gold)]">
-                Βήμα {i + 1}
-              </span>
-              <span className="font-serif text-lg font-bold leading-tight text-[var(--l6-cream)]">{s.label}</span>
-              <span className="text-pretty font-sans text-[13px] leading-snug text-[var(--l6-cream)]/65 sm:text-sm">{s.note}</span>
-            </span>
-          </li>
-        )
-      })}
-    </motion.ol>
   )
 }
 
@@ -241,7 +205,7 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
           {...item(1)}
           id={`${hunt.id}-title`}
           className={cn(
-            "max-w-[16ch] text-balance font-serif text-[2rem] font-black leading-[1.08] sm:text-5xl",
+            "max-w-[20ch] text-balance font-serif text-[2rem] font-black leading-[1.08] sm:text-5xl",
             "text-[var(--l6-cream)]",
           )}
         >
@@ -256,7 +220,6 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
           ))}
         </motion.div>
 
-        {hunt.steps && <Steps steps={hunt.steps} delay={item} />}
         {hunt.ledger && <Ledger rows={hunt.ledger} delay={item} />}
 
         <motion.div {...item(5)} className="flex flex-wrap items-center gap-x-6 gap-y-4 pt-2">

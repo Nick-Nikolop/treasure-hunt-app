@@ -36,8 +36,8 @@ export function HuntsSection() {
   return (
     <section id="hunts" aria-labelledby="hunts-title" className="flex scroll-mt-24 flex-col gap-12 sm:gap-16">
       <Heading id="hunts-title" kicker="Τα κυνήγια μας" title="Κάθε κυνήγι, μια άλλη ιστορία" lead={<p>Άλλος γρίφος, άλλος κόσμος, ίδιο παιχνίδι: η πόλη κρύβει κάτι και το βρίσκεις μόνο αν κοιτάξεις καλύτερα.</p>} />
-      <div className="flex flex-col gap-8 sm:gap-10">
-        <HuntBanner hunt={carnival} />
+        <div className="grid auto-rows-fr gap-8 sm:gap-10">
+          <HuntBanner hunt={carnival} />
         <HuntBanner hunt={pythea} flip />
       </div>
     </section>
@@ -119,7 +119,7 @@ export function About() {
               Το <strong className="font-bold text-[var(--l6-night)]">The Hunt</strong> γεννήθηκε στην Καλαμάτα. Είμαστε μια μικρή ομάδα που μετατρέπει την πόλη σε παιχνίδι: γρίφοι κρυμμένοι σε πραγματικά σημεία, ιστορίες δεμένες με τον τόπο και ένας θησαυρός στο τέλος.
             </p>
             <p className="text-pretty">
-              Κάθε κυνήγι έχει τη δική του μορφή. Άλλοτε είναι ένα ημερολόγιο που ξεκλειδώνει σταθμό με σταθμό, άλλοτε μια αφίσα που μιλάει μόνο κάτω από UV φως. Ο στόχος μένει ίδιος: να δεις τα γνωστά μέρη με άλλα μάτια.
+              Κάθε κυνήγι έχει τη δική του μορφή. Άλλοτε είναι ένα ημερολόγιο που ξεκλειδώνει σημείο με σημείο, άλλοτε η ιστορία μιας πριγκίπισσας που γεννήθηκε στο κάστρο της πόλης. Ο στόχος μένει ίδιος: να δεις τα γνωστά μέρη με άλλα μάτια.
             </p>
             <ul className="mt-4 flex flex-col gap-6">
               {PRINCIPLES.map(({ icon: Icon, title, body }, i) => (
