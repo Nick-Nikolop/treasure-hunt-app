@@ -10,7 +10,6 @@ export const PALETTE = {
   "--l6-cream": "#f5ecdb",
   "--l6-wine": "#6b1024",
   "--l6-ash": "#17130f",
-  "--l6-uv": "#b69cff",
 } as CSSProperties
 
 export const HUB = "/landing6"

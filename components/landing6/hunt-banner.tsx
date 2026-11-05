@@ -10,7 +10,6 @@ import { track } from "@/lib/analytics-client"
 import { cn } from "@/lib/utils"
 import { EASE, type Hunt } from "./data"
 import { Frame } from "./ornaments"
-import { UvHint, UvReveal } from "./uv-reveal"
 
 export function StatusBadge({ hunt, className }: { hunt: Hunt; className?: string }) {
   return (
@@ -38,28 +37,31 @@ const STEP_ICON = { poster: ScrollText, uv: Flashlight, key: KeyRound } as const
 
 function Steps({ steps, delay }: { steps: NonNullable<Hunt["steps"]>; delay: (n: number) => object }) {
   return (
-    <motion.ol {...delay(4)} aria-label="Πώς παίζεται" className="relative grid w-full grid-cols-3 gap-3">
-      <span aria-hidden="true" className="absolute left-[16.6%] right-[16.6%] top-6 border-t border-dashed border-[var(--l6-gold)]/45" />
+    <motion.ol
+      {...delay(4)}
+      aria-label="Πώς παίζεται"
+      className="relative grid w-full grid-cols-3 rounded-2xl border border-[var(--l6-gold)]/20 bg-[var(--l6-night)]/45"
+    >
       {steps.map((s, i) => {
         const Icon = STEP_ICON[s.icon]
-        const uv = s.icon === "uv"
         return (
-          <li key={s.label} className="relative flex flex-col items-center gap-2.5 text-center">
-            <span
-              className={cn(
-                "flex size-12 items-center justify-center rounded-full border bg-[var(--l6-wine)] transition-shadow duration-500",
-                uv
-                  ? "border-[var(--l6-uv)]/70 text-[var(--l6-uv)] group-hover:shadow-[0_0_24px_rgba(182,156,255,0.55)]"
-                  : "border-[var(--l6-gold)]/55 text-[var(--l6-gold)]",
-              )}
-            >
+          <li
+            key={s.label}
+            className={cn(
+              "flex flex-col items-start gap-3 px-3 py-5 sm:px-5",
+              i > 0 && "border-l border-[var(--l6-gold)]/15",
+            )}
+          >
+            <span className="flex size-10 items-center justify-center rounded-full bg-[var(--l6-gold)] text-[var(--l6-night)] shadow-[0_8px_24px_-8px_rgba(224,176,74,0.7)]">
               <Icon className="size-5" aria-hidden="true" />
             </span>
-            <span className="font-sans text-[11px] font-bold uppercase tracking-[0.22em] text-[var(--l6-gold)]/80">
-              {String(i + 1).padStart(2, "0")}
+            <span className="flex flex-col gap-1">
+              <span className="font-sans text-[11px] font-bold uppercase tracking-[0.22em] text-[var(--l6-gold)]">
+                Βήμα {i + 1}
+              </span>
+              <span className="font-serif text-lg font-bold leading-tight text-[var(--l6-cream)]">{s.label}</span>
+              <span className="text-pretty font-sans text-[13px] leading-snug text-[var(--l6-cream)]/65 sm:text-sm">{s.note}</span>
             </span>
-            <span className="font-serif text-lg font-bold leading-tight text-[var(--l6-cream)]">{s.label}</span>
-            <span className="text-pretty font-sans text-[13px] leading-snug text-[var(--l6-cream)]/65 sm:text-sm">{s.note}</span>
           </li>
         )
       })}
@@ -131,7 +133,7 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
   const [hovered, setHovered] = useState(false)
   const [tapped, setTapped] = useState(false)
   const stamped = done && (hovered || tapped)
-  const surface = done ? "var(--l6-ash)" : "var(--l6-wine)"
+  const surface = done ? "var(--l6-ash)" : "color-mix(in srgb, var(--l6-wine) 68%, var(--l6-night))"
   const cardRef = useRef<HTMLElement>(null)
   const inView = useInView(cardRef, { once: true, margin: "-80px" })
 
@@ -154,15 +156,18 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
       className={cn(
         "group relative grid scroll-mt-24 overflow-hidden border border-[var(--l6-gold)]/35 shadow-[0_40px_90px_-40px_rgba(0,0,0,0.9)] lg:min-h-[36rem] lg:grid-cols-[1.1fr_1fr]",
         flip && "lg:grid-cols-[1fr_1.1fr]",
-        done ? "bg-[var(--l6-ash)]" : "bg-[var(--l6-wine)]",
       )}
+      style={{ background: surface }}
       initial={{ opacity: 0, y: reduce ? 0 : 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-80px" }}
       transition={{ duration: reduce ? 0.2 : 1, ease: EASE }}
     >
       <motion.div
-        className={cn("relative min-h-80 overflow-hidden sm:min-h-[28rem] lg:min-h-0", flip && "lg:order-2")}
+        className={cn(
+          "relative min-h-80 overflow-hidden sm:min-h-[28rem] lg:min-h-0",
+          flip ? "lg:order-2 lg:-ml-1" : "lg:-mr-1",
+        )}
         initial={{ clipPath: reduce ? "inset(0 0 0 0)" : flip ? "inset(0 0 0 100%)" : "inset(0 100% 0 0)" }}
         animate={inView ? { clipPath: "inset(0 0 0 0)" } : undefined}
         transition={{ duration: reduce ? 0.2 : 1.3, delay: 0.1, ease: EASE }}
@@ -194,15 +199,13 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
         <span
           aria-hidden="true"
           className="absolute inset-0 hidden lg:block"
-          style={{ background: `linear-gradient(to ${flip ? "left" : "right"}, transparent 55%, ${surface} 100%)` }}
+          style={{ background: `linear-gradient(to ${flip ? "left" : "right"}, transparent 50%, ${surface} 96%)` }}
         />
-
-        {live && (
-          <>
-            <UvReveal />
-            <UvHint />
-          </>
-        )}
+        <span
+          aria-hidden="true"
+          className={cn("absolute inset-y-0 hidden w-1 lg:block", flip ? "left-0" : "right-0")}
+          style={{ background: surface }}
+        />
 
         {done && (
           <>
@@ -223,10 +226,11 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
 
       <div
         className={cn(
-          "relative flex flex-col items-start justify-center gap-6 px-6 pb-12 pt-2 sm:px-12 lg:px-14 lg:py-16",
+          "relative z-10 flex flex-col items-start justify-center gap-6 px-6 pb-12 pt-2 sm:px-12 lg:px-14 lg:py-16",
           flip && "lg:order-1",
         )}
-        style={live ? { background: "radial-gradient(ellipse 90% 70% at 30% 30%, rgba(224,176,74,0.12), transparent 70%)" } : undefined}
+        style={{ background: surface }}
+
       >
         <motion.div {...item(0)} className="flex flex-wrap items-center gap-3">
           <StatusBadge hunt={hunt} />
@@ -238,7 +242,7 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
           id={`${hunt.id}-title`}
           className={cn(
             "max-w-[16ch] text-balance font-serif text-[2rem] font-black leading-[1.08] sm:text-5xl",
-            live ? "text-[var(--l6-gold)]" : "text-[var(--l6-cream)]",
+            "text-[var(--l6-cream)]",
           )}
         >
           {hunt.title}
@@ -281,7 +285,7 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
         </motion.div>
       </div>
 
-      <Frame className="opacity-70" />
+      <Frame className="z-20 opacity-70" />
     </motion.article>
   )
 }
