@@ -489,15 +489,6 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
         )}
       >
         <span aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 hidden lg:block" style={paperPattern(hunt, flip)} />
-        {hunt.file && (
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute bottom-2 right-8 -z-10 hidden select-none font-serif text-[12rem] font-black leading-none tracking-tight text-transparent lg:block"
-            style={{ WebkitTextStroke: "1px rgba(224,176,74,0.17)" }}
-          >
-            {hunt.file}
-          </span>
-        )}
         <motion.div {...item(0, { y: 12, scale: 0.9 })} className="pointer-events-auto flex w-full flex-wrap items-center justify-center gap-3 lg:flex-nowrap lg:justify-start">
           <StatusBadge hunt={hunt} className={cn("shrink-0", hunt.stamp && "max-lg:sr-only")} />
           <span className="font-sans text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--l6-gold)]/90 lg:whitespace-nowrap">{hunt.kicker}</span>
@@ -553,12 +544,6 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
               {hunt.cta}
               <ArrowRight className="size-4 transition-transform duration-300 group-hover/cta:translate-x-1" aria-hidden="true" />
             </Link>
-          )}
-          {done && hunt.stamp && (
-            <span className="hidden items-center gap-2.5 font-sans text-[11px] font-bold uppercase tracking-[0.24em] text-[var(--l6-cream)]/55 sm:inline-flex">
-              <Archive className="size-3.5 text-[var(--l6-gold)]/80" aria-hidden="true" />
-              Αρχειοθετήθηκε · {hunt.stamp.bottom}
-            </span>
           )}
           {hunt.perk && (
             <span className={cn("inline-flex items-center gap-2 font-sans text-sm font-bold text-[var(--l6-cream)]/80", live && hunt.ledger && "sm:hidden")}>
