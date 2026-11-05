@@ -35,7 +35,7 @@ export function StatusBadge({ hunt, className }: { hunt: Hunt; className?: strin
 
 function Ledger({ rows, delay }: { rows: NonNullable<Hunt["ledger"]>; delay: (n: number) => object }) {
   return (
-    <motion.dl {...delay(4)} className="grid w-full grid-cols-3 border-y border-[var(--l6-cream)]/12">
+    <motion.dl {...delay(4)} className="pointer-events-auto grid w-full grid-cols-3 border-y border-[var(--l6-cream)]/12">
       {rows.map((r, i) => (
         <div
           key={r.label}
@@ -139,7 +139,7 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
         "group relative grid scroll-mt-24 overflow-hidden border border-[var(--l6-gold)]/35 shadow-[0_40px_90px_-40px_rgba(0,0,0,0.9)] lg:min-h-[36rem] lg:grid-cols-[1.1fr_1fr]",
         flip && "lg:grid-cols-[1fr_1.1fr]",
       )}
-      style={{ background: surface }}
+      style={{ background: surface, ["--l6-surface" as string]: surface }}
       initial={{ opacity: 0, y: reduce ? 0 : 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-80px" }}
@@ -147,7 +147,7 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
     >
       <motion.div
         className={cn(
-          "relative min-h-80 overflow-hidden sm:min-h-[28rem] lg:min-h-0",
+          "absolute inset-x-0 top-0 h-[24rem] overflow-hidden sm:h-[30rem] lg:relative lg:inset-auto lg:h-auto lg:min-h-0",
           flip ? "lg:order-2 lg:-ml-1" : "lg:-mr-1",
         )}
         initial={{ clipPath: reduce ? "inset(0 0 0 0)" : flip ? "inset(0 0 0 100%)" : "inset(0 100% 0 0)" }}
@@ -173,7 +173,14 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
         </motion.div>
         <span
           aria-hidden="true"
-          className="absolute inset-0"
+          className="absolute inset-0 lg:hidden"
+          style={{
+            background: `linear-gradient(to bottom, transparent 15%, color-mix(in srgb, ${surface} 70%, transparent) 55%, ${surface} 96%)`,
+          }}
+        />
+        <span
+          aria-hidden="true"
+          className="absolute inset-0 hidden lg:block"
           style={{
             background: `linear-gradient(to top, ${surface} 0%, transparent 45%)`,
           }}
@@ -190,7 +197,7 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
         />
 
         {done && (
-          <>
+          <span className="absolute inset-x-0 top-0 h-56 sm:h-72 lg:inset-0 lg:h-auto">
             <Stamp hunt={hunt} on={stamped} />
             <button
               type="button"
@@ -202,19 +209,17 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
               }}
               className="absolute inset-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--l6-gold)] lg:cursor-default"
             />
-          </>
+          </span>
         )}
       </motion.div>
 
       <div
         className={cn(
-          "relative z-10 flex flex-col items-start justify-center gap-5 px-5 pb-10 pt-1 sm:gap-6 sm:px-12 sm:pb-12 sm:pt-2 lg:px-14 lg:py-16",
+          "pointer-events-none relative z-10 flex flex-col items-center justify-center gap-4 px-6 pb-9 pt-48 text-center sm:gap-5 sm:px-12 sm:pb-12 sm:pt-60 lg:pointer-events-auto lg:items-start lg:gap-6 lg:bg-[var(--l6-surface)] lg:px-14 lg:py-16 lg:text-left",
           flip && "lg:order-1",
         )}
-        style={{ background: surface }}
-
       >
-        <motion.div {...item(0)} className="flex flex-wrap items-center gap-3">
+        <motion.div {...item(0)} className="pointer-events-auto flex flex-wrap items-center justify-center gap-3 lg:justify-start">
           <StatusBadge hunt={hunt} />
           <span className="font-sans text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--l6-gold)]/90">{hunt.kicker}</span>
         </motion.div>
@@ -223,14 +228,14 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
           {...item(1)}
           id={`${hunt.id}-title`}
           className={cn(
-            "max-w-[20ch] text-balance font-serif text-[1.875rem] font-black leading-[1.1] sm:text-5xl sm:leading-[1.08]",
-            "text-[var(--l6-cream)]",
+            "pointer-events-auto max-w-[20ch] text-balance font-serif text-[1.875rem] font-black leading-[1.1] sm:text-5xl sm:leading-[1.08]",
+            "text-[var(--l6-cream)] [text-shadow:0_2px_18px_rgba(12,9,7,0.75)] lg:[text-shadow:none]",
           )}
         >
           {hunt.title}
         </motion.h3>
 
-        <motion.div {...item(2)} className="flex max-w-[52ch] flex-col gap-3 font-sans text-[15px] leading-relaxed text-[var(--l6-cream)]/75 sm:text-base">
+        <motion.div {...item(2)} className="pointer-events-auto flex max-w-[52ch] flex-col gap-3 font-sans text-[15px] leading-relaxed text-[var(--l6-cream)]/80 sm:text-base lg:text-[var(--l6-cream)]/75">
           {hunt.body.map((p) => (
             <p key={p} className="text-pretty">
               {p}
@@ -240,7 +245,7 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
 
         {hunt.ledger && <Ledger rows={hunt.ledger} delay={item} />}
 
-        <motion.div {...item(5)} className="flex w-full flex-wrap items-center gap-x-6 gap-y-4 pt-1 sm:w-auto sm:pt-2">
+        <motion.div {...item(5)} className="pointer-events-auto flex w-full flex-wrap items-center justify-center gap-x-6 gap-y-3 pt-1 sm:w-auto sm:pt-2 lg:justify-start">
           {hunt.href && (
             <Link
               href={hunt.href}
