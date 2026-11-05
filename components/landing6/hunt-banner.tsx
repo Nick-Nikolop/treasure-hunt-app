@@ -39,7 +39,14 @@ function Ledger({ rows, delay }: { rows: NonNullable<Hunt["ledger"]>; delay: (n:
       {rows.map((r, i) => (
         <div key={r.label} className={cn("flex flex-col gap-1 py-4", i > 0 && "border-l border-[var(--l6-cream)]/12 pl-4 sm:pl-6")}>
           <dt className="font-sans text-[11px] font-bold uppercase tracking-[0.24em] text-[var(--l6-cream)]/50">{r.label}</dt>
-          <dd className="font-serif text-2xl font-black text-[var(--l6-cream)] sm:text-3xl">{r.value}</dd>
+          <dd
+            className={cn(
+              "font-serif font-black leading-tight text-[var(--l6-cream)]",
+              r.value.length > 8 ? "text-lg sm:text-xl" : "text-2xl sm:text-3xl",
+            )}
+          >
+            {r.value}
+          </dd>
         </div>
       ))}
     </motion.dl>
