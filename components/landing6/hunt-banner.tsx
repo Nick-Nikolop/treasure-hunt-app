@@ -187,7 +187,7 @@ function LedgerCells({ rows, dashed = false }: { rows: NonNullable<Hunt["ledger"
           <dd className="relative whitespace-nowrap font-serif text-[1.375rem] font-black leading-none text-[var(--l6-cream)] sm:text-[1.75rem]">
             {r.value}
             {r.note && (
-              <span className="ml-1 font-sans text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--l6-gold)] sm:ml-1.5 sm:text-[11px] sm:tracking-[0.18em]">{r.note}</span>
+                  <span className="ml-1.5 align-baseline font-serif text-[0.62em] font-semibold italic tracking-[0.01em] text-[var(--l6-gold)] sm:ml-2">{r.note}</span>
             )}
             {r.mark && (
               <span aria-hidden="true" className="absolute -right-2.5 -top-1 font-sans text-sm font-bold text-[var(--l6-gold)]">
