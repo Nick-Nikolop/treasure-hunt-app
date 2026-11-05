@@ -1,15 +1,15 @@
 "use client"
 
 import { motion, useReducedMotion } from "framer-motion"
-import { Compass, Facebook, Instagram, Mail, MapPin, Users } from "lucide-react"
+import { ArrowRight, Compass, Facebook, Instagram, Mail, MapPin, Users } from "lucide-react"
 import Image from "next/image"
+import Link from "next/link"
 import type { ReactNode } from "react"
 import { EV } from "@/lib/analytics-events"
 import { track } from "@/lib/analytics-client"
 import { CHOOSER, CONTACT_EMAIL, EASE, HUNTS, SOCIALS } from "./data"
 import { HuntBanner } from "./hunt-banner"
 import { Frame, RoseDivider, TikTokIcon } from "./ornaments"
-import { QuestButton } from "./quest-button"
 
 function Heading({ id, kicker, title, lead, light = false }: { id: string; kicker: string; title: string; lead?: ReactNode; light?: boolean }) {
   const reduce = useReducedMotion()
@@ -47,33 +47,44 @@ export function HuntsSection() {
 export function JoinBand() {
   const reduce = useReducedMotion()
   return (
-    <section aria-labelledby="join-title" className="relative isolate overflow-hidden border-y border-[var(--l6-gold)]/30 bg-[var(--l6-wine)] px-5 py-20 sm:px-8 sm:py-28">
-      <div
+    <section aria-labelledby="join-title" className="relative isolate overflow-hidden border-y border-[var(--l6-gold)]/25 bg-[var(--l6-night)]">
+      <motion.div
         aria-hidden="true"
         className="absolute inset-0 -z-10"
-        style={{
-          background:
-            "radial-gradient(ellipse 60% 80% at 50% 50%, rgba(224,176,74,0.18), transparent 70%), repeating-radial-gradient(circle at 50% 50%, transparent 0, transparent 89px, rgba(224,176,74,0.07) 90px, transparent 91px)",
-        }}
+        initial={{ scale: reduce ? 1 : 1.12 }}
+        whileInView={{ scale: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: reduce ? 0.2 : 2.4, ease: EASE }}
+      >
+        <Image src="/landing/scene-finale.webp" alt="" fill sizes="100vw" className="object-cover object-[70%_60%]" />
+      </motion.div>
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 -z-10 bg-gradient-to-t from-[var(--l6-night)] via-[var(--l6-night)]/75 to-[var(--l6-night)]/30 md:bg-gradient-to-r md:from-[var(--l6-night)] md:via-[var(--l6-night)]/80 md:to-transparent"
       />
       <motion.div
-        className="mx-auto flex max-w-3xl flex-col items-center gap-7 text-center"
-        initial={{ opacity: 0, scale: reduce ? 1 : 0.96 }}
-        whileInView={{ opacity: 1, scale: 1 }}
+        className="mx-auto flex min-h-[32rem] max-w-6xl flex-col justify-end gap-6 px-5 py-16 sm:px-8 md:min-h-[36rem] md:justify-center md:py-24"
+        initial={{ opacity: 0, y: reduce ? 0 : 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-80px" }}
-        transition={{ duration: reduce ? 0.2 : 1, ease: EASE }}
+        transition={{ duration: reduce ? 0.2 : 1, delay: 0.2, ease: EASE }}
       >
-        <RoseDivider wide className="max-w-md" />
-        <h2 id="join-title" className="text-balance font-serif text-4xl font-black uppercase leading-[1.05] tracking-wide text-[var(--l6-cream)] sm:text-6xl">
-          Γίνε κι εσύ <span className="text-[var(--l6-gold)]">κυνηγός</span>
+        <p className="font-sans text-xs font-bold uppercase tracking-[0.4em] text-[var(--l6-gold)]">Ο θησαυρός περιμένει</p>
+        <h2 id="join-title" className="max-w-[12ch] text-balance font-serif text-5xl font-black leading-[0.98] text-[var(--l6-cream)] sm:text-7xl">
+          Γίνε κι εσύ <span className="text-[var(--l6-gold)]">κυνηγός.</span>
         </h2>
-        <p className="max-w-[44ch] text-pretty font-sans text-[15px] leading-relaxed text-[var(--l6-cream)]/80 sm:text-lg">
+        <p className="max-w-[40ch] text-pretty font-sans text-[15px] leading-relaxed text-[var(--l6-cream)]/80 sm:text-lg">
           Διάλεξε κυνήγι, μάζεψε την ομάδα σου και βγες στην πόλη. Τα υπόλοιπα θα τα βρεις στον δρόμο.
         </p>
-        <QuestButton href={CHOOSER} tone="ghost" track="landing6-join" onClick={() => track(EV.landing6Cta, { where: "join", target: "hunts" })}>
+        <Link
+          href={CHOOSER}
+          data-track="landing6-join"
+          onClick={() => track(EV.landing6Cta, { where: "join", target: "hunts" })}
+          className="group mt-2 inline-flex h-14 w-fit items-center gap-3 rounded-full bg-[var(--l6-gold)] px-8 font-sans text-sm font-bold uppercase tracking-[0.2em] text-[var(--l6-night)] shadow-[0_22px_60px_-18px_rgba(224,176,74,0.7)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--l6-cream)] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--l6-night)] active:scale-[0.98]"
+        >
           Θέλω να μπω στο κυνήγι
-        </QuestButton>
-        <RoseDivider wide className="max-w-md rotate-180" />
+          <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true" />
+        </Link>
       </motion.div>
     </section>
   )

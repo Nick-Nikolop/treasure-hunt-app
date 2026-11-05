@@ -10,6 +10,7 @@ export const PALETTE = {
   "--l6-cream": "#f5ecdb",
   "--l6-wine": "#6b1024",
   "--l6-ash": "#17130f",
+  "--l6-uv": "#b69cff",
 } as CSSProperties
 
 export const HUB = "/landing6"
@@ -25,6 +26,12 @@ export interface Hunt {
   title: string
   body: string[]
   facts: string[]
+  /** Live hunt: how it plays, in order. */
+  steps?: { icon: "poster" | "uv" | "key"; label: string; note: string }[]
+  /** Finished hunt: the case file numbers. */
+  ledger?: { label: string; value: string }[]
+  perk?: string
+  stamp?: { top: string; bottom: string }
   image: string
   imageAlt: string
   href?: string
@@ -43,6 +50,12 @@ export const HUNTS: Hunt[] = [
       "Άναψε το UV φως, βρες τα σημάδια, εντόπισε το κλειδί κάπου στην πόλη και διάβασε τι λέει στ' αλήθεια.",
     ],
     facts: ["Δωρεάν για καρναβαλικές ομάδες", "Αφίσα · UV · Κλειδί"],
+    steps: [
+      { icon: "poster", label: "Η αφίσα", note: "Πάρε την αφίσα του Καρναβαλιού" },
+      { icon: "uv", label: "Το UV φως", note: "Δες ό,τι δεν φαίνεται στο φως της μέρας" },
+      { icon: "key", label: "Το κλειδί", note: "Βρες το στην πόλη και διάβασε το μήνυμα" },
+    ],
+    perk: "Δωρεάν για καρναβαλικές ομάδες",
     image: "/landing/mission-carnival.webp",
     imageAlt: "Σφραγισμένος φάκελος με κόκκινο βουλοκέρι TH δίπλα σε χρυσή καρναβαλική μάσκα",
     href: "/carnival-intro",
@@ -59,6 +72,12 @@ export const HUNTS: Hunt[] = [
       "Βρήκαν την πυξίδα του, έλυσαν μια τελευταία εξίσωση και έφτασαν στον θησαυρό. Η τελετή έγινε την 1η Αυγούστου στο Lighthouse.",
     ],
     facts: ["10 σταθμοί", "Έπαθλο 500 €", "1 Αυγ 2026"],
+    ledger: [
+      { label: "Σταθμοί", value: "10" },
+      { label: "Έπαθλο", value: "500 €" },
+      { label: "Τελετή", value: "1.8.2026" },
+    ],
+    stamp: { top: "The Hunt · Υπόθεση 001", bottom: "Lighthouse · 1.8.2026" },
     image: "/landing/mission-pythea.webp",
     imageAlt: "Δερμάτινο ημερολόγιο «Πυθέας ο Μεσσήνιος» με βουλοκέρι πάνω σε ξύλινο γραφείο",
     href: "/standings",
