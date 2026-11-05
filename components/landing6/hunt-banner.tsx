@@ -33,9 +33,39 @@ export function StatusBadge({ hunt, className }: { hunt: Hunt; className?: strin
   )
 }
 
-function Ledger({ rows, delay }: { rows: NonNullable<Hunt["ledger"]>; delay: (n: number) => object }) {
+function LedgerSentence({ text, mark, delay }: { text: string; mark: boolean; delay: (n: number) => object }) {
   return (
-    <motion.dl {...delay(4)} className="pointer-events-auto grid w-full grid-cols-3 border-y border-[var(--l6-cream)]/12">
+    <motion.p
+      {...delay(4)}
+      className="pointer-events-auto flex max-w-[34ch] flex-col items-center gap-3 text-balance font-sans text-[15px] leading-relaxed text-[var(--l6-cream)]/80 sm:hidden"
+    >
+      <span aria-hidden="true" className="flex items-center gap-2 text-[var(--l6-gold)]/70">
+        <span className="h-px w-10 bg-current" />
+        <span className="size-1.5 rotate-45 bg-current" />
+        <span className="h-px w-10 bg-current" />
+      </span>
+      <span>
+        {text.split("**").map((part, i) =>
+          i % 2 ? (
+            <strong key={i} className="whitespace-nowrap font-serif text-[17px] font-black text-[var(--l6-gold)]">
+              {part}
+            </strong>
+          ) : (
+            part
+          ),
+        )}
+        {mark && <span className="font-bold text-[var(--l6-gold)]">*</span>}.
+      </span>
+    </motion.p>
+  )
+}
+
+function Ledger({ rows, delay, compact }: { rows: NonNullable<Hunt["ledger"]>; delay: (n: number) => object; compact: boolean }) {
+  return (
+    <motion.dl
+      {...delay(4)}
+      className={cn("pointer-events-auto w-full grid-cols-3 border-y border-[var(--l6-cream)]/12", compact ? "hidden sm:grid" : "grid")}
+    >
       {rows.map((r, i) => (
         <div
           key={r.label}
@@ -243,7 +273,10 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
           ))}
         </motion.div>
 
-        {hunt.ledger && <Ledger rows={hunt.ledger} delay={item} />}
+        {hunt.summary && (
+          <LedgerSentence text={hunt.summary} mark={!!hunt.ledger?.some((r) => r.mark)} delay={item} />
+        )}
+        {hunt.ledger && <Ledger rows={hunt.ledger} delay={item} compact={!!hunt.summary} />}
 
         <motion.div {...item(5)} className="pointer-events-auto flex w-full flex-wrap items-center justify-center gap-x-6 gap-y-3 pt-1 sm:w-auto sm:pt-2 lg:justify-start">
           {hunt.href && (
