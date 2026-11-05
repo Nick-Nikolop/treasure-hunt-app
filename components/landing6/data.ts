@@ -72,7 +72,7 @@ export const HUNTS: Hunt[] = [
     ledger: [
       { label: "Γρίφοι", value: "12" },
       { label: "Έπαθλο", value: "500 €" },
-      { label: "Κυνήγι", value: "29.7 – 1.8", note: "2026" },
+      { label: "Κυνήγι 2026", value: "29.7–1.8" },
     ],
     stamp: { top: "The Hunt · Υπόθεση 001", bottom: "Lighthouse · 1.8.2026" },
     image: "/landing/mission-pythea.webp",

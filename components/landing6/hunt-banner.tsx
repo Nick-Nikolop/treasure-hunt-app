@@ -37,24 +37,25 @@ function Ledger({ rows, delay }: { rows: NonNullable<Hunt["ledger"]>; delay: (n:
   return (
     <motion.dl {...delay(4)} className="grid w-full grid-cols-3 border-y border-[var(--l6-cream)]/12">
       {rows.map((r, i) => (
-        <div key={r.label} className={cn("flex flex-col gap-1 py-4", i > 0 && "border-l border-[var(--l6-cream)]/12 pl-4 sm:pl-6")}>
-          <dt className="font-sans text-[11px] font-bold uppercase tracking-[0.24em] text-[var(--l6-cream)]/50">{r.label}</dt>
-          <dd className="flex flex-col gap-1">
-            <span
-              className={cn(
-                "whitespace-nowrap font-serif font-black leading-tight text-[var(--l6-cream)]",
-                r.value.length > 7 ? "text-xl sm:text-2xl" : "text-2xl sm:text-3xl",
-              )}
-            >
-              {r.value}
-              {r.mark && (
-                <sup aria-hidden="true" className="ml-0.5 font-sans text-base font-bold text-[var(--l6-gold)]">
-                  *
-                </sup>
-              )}
-            </span>
+        <div
+          key={r.label}
+          className={cn(
+            "flex flex-col items-center gap-2 px-2 py-5 text-center",
+            i > 0 && "border-l border-[var(--l6-cream)]/12",
+          )}
+        >
+          <dt className="whitespace-nowrap font-sans text-[11px] font-bold uppercase tracking-[0.24em] text-[var(--l6-cream)]/50">
+            {r.label}
+          </dt>
+          <dd className="relative whitespace-nowrap font-serif text-2xl font-black leading-none text-[var(--l6-cream)] sm:text-[1.75rem]">
+            {r.value}
             {r.note && (
-              <span className="font-sans text-[11px] font-bold uppercase tracking-[0.22em] text-[var(--l6-gold)]/85">{r.note}</span>
+              <span className="ml-1.5 font-sans text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--l6-gold)]">{r.note}</span>
+            )}
+            {r.mark && (
+              <span aria-hidden="true" className="absolute -right-2.5 -top-1 font-sans text-sm font-bold text-[var(--l6-gold)]">
+                *
+              </span>
             )}
           </dd>
         </div>
