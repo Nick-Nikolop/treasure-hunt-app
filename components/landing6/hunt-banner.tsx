@@ -129,8 +129,9 @@ function Ledger({ rows, delay, compact }: { rows: NonNullable<Hunt["ledger"]>; d
   )
 }
 
-function Stamp({ hunt, on }: { hunt: Hunt; on: boolean }) {
+function Stamp({ hunt, on, delay = 0 }: { hunt: Hunt; on: boolean; delay?: number }) {
   const reduce = useReducedMotion()
+  if (!hunt.stamp) return null
   return (
     <AnimatePresence>
       {on && (
@@ -139,15 +140,15 @@ function Stamp({ hunt, on }: { hunt: Hunt; on: boolean }) {
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 flex items-center justify-center [container-type:size]"
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          animate={{ opacity: 1, transition: { delay } }}
           exit={{ opacity: 0, transition: { duration: 0.25 } }}
         >
           {!reduce && (
             <motion.span
               className="absolute size-72 rounded-full border-2 border-[var(--l6-gold)]/60"
-              initial={{ scale: 0.6, opacity: 0.9 }}
-              animate={{ scale: 1.8, opacity: 0 }}
-              transition={{ duration: 0.7, delay: 0.16, ease: "easeOut" }}
+              initial={{ scale: 0.6, opacity: 0 }}
+              animate={{ scale: 1.8, opacity: [0.9, 0] }}
+              transition={{ duration: 0.7, delay: delay + 0.16, ease: "easeOut" }}
             />
           )}
           <motion.span
@@ -155,17 +156,13 @@ function Stamp({ hunt, on }: { hunt: Hunt; on: boolean }) {
             style={{ textShadow: "0 2px 0 rgba(12,9,7,0.5)" }}
             initial={reduce ? { scale: 1, rotate: -12, opacity: 0 } : { scale: 2.6, rotate: -2, opacity: 0 }}
             animate={{ scale: 1, rotate: -12, opacity: 0.95 }}
-            transition={reduce ? { duration: 0.2 } : { type: "spring", stiffness: 520, damping: 24, mass: 0.9 }}
+            transition={reduce ? { duration: 0.2, delay } : { type: "spring", stiffness: 520, damping: 24, mass: 0.9, delay }}
           >
-            {hunt.stamp && (
-              <span className="whitespace-nowrap font-sans text-[clamp(8px,1.9cqw,12px)] font-bold uppercase tracking-[0.3em]">{hunt.stamp.top}</span>
-            )}
+            <span className="whitespace-nowrap font-sans text-[clamp(8px,1.9cqw,12px)] font-bold uppercase tracking-[0.3em]">{hunt.stamp.top}</span>
             <span className="whitespace-nowrap border-y-2 border-[var(--l6-gold)] py-1 font-sans text-[min(6.4cqw,3rem)] font-black uppercase leading-tight tracking-[0.1em]">
-              Ολοκληρώθηκε
+              {hunt.stamp.word}
             </span>
-            {hunt.stamp && (
-              <span className="whitespace-nowrap font-sans text-[clamp(8px,1.9cqw,12px)] font-bold uppercase tracking-[0.3em]">{hunt.stamp.bottom}</span>
-            )}
+            <span className="whitespace-nowrap font-sans text-[clamp(8px,1.9cqw,12px)] font-bold uppercase tracking-[0.3em]">{hunt.stamp.bottom}</span>
           </motion.span>
         </motion.span>
       )}
@@ -179,11 +176,12 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
   const live = hunt.status === "live"
   const [hovered, setHovered] = useState(false)
   const [tapped, setTapped] = useState(false)
-  const stamped = done && (hovered || tapped)
   const surface = done ? "var(--l6-ash)" : "color-mix(in srgb, var(--l6-wine) 68%, var(--l6-night))"
   const desktop = useIsDesktop()
   const cardRef = useRef<HTMLElement>(null)
   const inView = useInView(cardRef, { once: true, margin: desktop ? "-80px" : "0px 0px -18% 0px" })
+  // Phones replace the status badge with the seal, always visible once the photo has opened.
+  const stamped = !!hunt.stamp && (desktop ? done && (hovered || tapped) : inView)
 
   // Desktop: the whole text column cascades in together. Phones: whatever is on screen while the
   // image curtain opens cascades in order after it; anything scrolled to later reveals right away.
@@ -299,9 +297,13 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
           style={{ background: surface }}
         />
 
-        {done && (
-          <span className="absolute inset-x-0 top-0 h-56 sm:h-72 lg:inset-0 lg:h-auto">
-            <Stamp hunt={hunt} on={stamped} />
+        {hunt.stamp && (done || !desktop) && (
+          <span className="pointer-events-none absolute inset-x-0 top-0 h-56 sm:h-72 lg:pointer-events-auto lg:inset-0 lg:h-auto">
+            <Stamp hunt={hunt} on={stamped} delay={desktop || reduce ? 0 : 0.95} />
+          </span>
+        )}
+        {hunt.stamp && done && desktop && (
+          <span className="absolute inset-0">
             <button
               type="button"
               aria-pressed={tapped}
@@ -323,7 +325,7 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
         )}
       >
         <motion.div {...item(0, { y: 12, scale: 0.9 })} className="pointer-events-auto flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-          <StatusBadge hunt={hunt} />
+          <StatusBadge hunt={hunt} className={hunt.stamp ? "max-lg:sr-only" : undefined} />
           <span className="font-sans text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--l6-gold)]/90">{hunt.kicker}</span>
         </motion.div>
 

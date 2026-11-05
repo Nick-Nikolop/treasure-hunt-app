@@ -32,7 +32,8 @@ export interface Hunt {
   /** Phone version of the ledger as one sentence; `**…**` = highlighted figure. */
   summary?: string
   perk?: string
-  stamp?: { top: string; bottom: string }
+  /** Seal over the photo. Phones always show it instead of the status badge; desktop only on hover (done hunts). */
+  stamp?: { word: string; top: string; bottom: string }
   image: string
   imageAlt: string
   href?: string
@@ -59,6 +60,7 @@ export const HUNTS: Hunt[] = [
     ],
     summary: "**12 γρίφοι** σε **3 εβδομάδες**, για συνολικό έπαθλο **1.000 €**",
     perk: "Δωρεάν για καρναβαλικές ομάδες",
+    stamp: { word: "Έρχεται σύντομα", top: "The Hunt × Καρναβάλι", bottom: "Καλαμάτα" },
     image: "/landing/mission-carnival.webp",
     imageAlt: "Σφραγισμένος φάκελος με κόκκινο βουλοκέρι TH δίπλα σε χρυσή καρναβαλική μάσκα",
     href: "/carnival-intro",
@@ -81,7 +83,7 @@ export const HUNTS: Hunt[] = [
       { label: "Κυνήγι 2026", value: "29.7–1.8" },
     ],
     summary: "Λύθηκαν **12 γρίφοι** από **29.7 έως 1.8.2026**, για συνολικό έπαθλο **500 €**",
-    stamp: { top: "The Hunt · Υπόθεση 001", bottom: "Lighthouse · 1.8.2026" },
+    stamp: { word: "Ολοκληρώθηκε", top: "The Hunt · Υπόθεση 001", bottom: "Lighthouse · 1.8.2026" },
     image: "/landing/mission-pythea.webp",
     imageAlt: "Δερμάτινο ημερολόγιο «Πυθέας ο Μεσσήνιος» με βουλοκέρι πάνω σε ξύλινο γραφείο",
     href: "/standings",
