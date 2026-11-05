@@ -34,6 +34,10 @@ export interface Hunt {
   perk?: string
   /** Seal over the photo. Phones always show it instead of the status badge; desktop only on hover (done hunts). */
   stamp?: { word: string; top: string; bottom: string }
+  /** Case-file number on the folder tab above the card. */
+  file?: string
+  /** Evidence tag pinned to the photo on desktop. */
+  evidence?: { code: string; label: string }
   image: string
   imageAlt: string
   href?: string
@@ -61,6 +65,8 @@ export const HUNTS: Hunt[] = [
     summary: "**12 γρίφοι** σε **3 εβδομάδες**, για συνολικό έπαθλο **1.000 €**",
     perk: "Δωρεάν για καρναβαλικές ομάδες",
     stamp: { word: "Έρχεται σύντομα", top: "The Hunt × Καρναβάλι", bottom: "Καλαμάτα" },
+    file: "002",
+    evidence: { code: "002·Α", label: "Η σφραγισμένη πρόσκληση" },
     image: "/landing/mission-carnival.webp",
     imageAlt: "Σφραγισμένος φάκελος με κόκκινο βουλοκέρι TH δίπλα σε χρυσή καρναβαλική μάσκα",
     href: "/carnival-intro",
@@ -84,6 +90,8 @@ export const HUNTS: Hunt[] = [
     ],
     summary: "Λύθηκαν **12 γρίφοι** από **29.7 έως 1.8.2026**, για συνολικό έπαθλο **500 €**",
     stamp: { word: "Ολοκληρώθηκε", top: "The Hunt · Υπόθεση 001", bottom: "Lighthouse · 1.8.2026" },
+    file: "001",
+    evidence: { code: "001·Α", label: "Το ημερολόγιο του Πυθέα" },
     image: "/landing/mission-pythea.webp",
     imageAlt: "Δερμάτινο ημερολόγιο «Πυθέας ο Μεσσήνιος» με βουλοκέρι πάνω σε ξύλινο γραφείο",
     href: "/standings",

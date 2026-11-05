@@ -1,7 +1,7 @@
 "use client"
 
 import { AnimatePresence, motion, useInView, useReducedMotion } from "framer-motion"
-import { ArrowRight, Ticket, Trophy } from "lucide-react"
+import { Archive, ArrowRight, FolderOpen, Ticket, Trophy } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useEffect, useRef, useState, useSyncExternalStore } from "react"
@@ -95,18 +95,70 @@ function LedgerSentence({ text, mark, delay }: { text: string; mark: boolean; de
   )
 }
 
-function Ledger({ rows, delay, compact }: { rows: NonNullable<Hunt["ledger"]>; delay: (n: number) => object; compact: boolean }) {
+const PERK_STRIP = 40
+
+/** Admission-ticket stub: notches cut on both sides at the perforation above the perk strip. */
+function ticketMask(withStrip: boolean) {
+  const y = withStrip ? `calc(100% - ${PERK_STRIP}px)` : "50%"
+  return `radial-gradient(circle 9px at 0 ${y}, transparent 97%, #000) left / 51% 100% no-repeat, radial-gradient(circle 9px at 100% ${y}, transparent 97%, #000) right / 51% 100% no-repeat`
+}
+
+function Ledger({
+  rows,
+  delay,
+  compact,
+  ticket = false,
+  perk,
+}: {
+  rows: NonNullable<Hunt["ledger"]>
+  delay: (n: number) => object
+  compact: boolean
+  ticket?: boolean
+  perk?: string
+}) {
+  if (ticket) {
+    const mask = ticketMask(!!perk)
+    return (
+      <motion.div {...delay(4)} className={cn("pointer-events-auto w-full", compact ? "hidden sm:block" : "block")}>
+        <div
+          className="bg-[color-mix(in_srgb,var(--l6-gold)_9%,transparent)] shadow-[inset_0_0_0_1px_rgba(224,176,74,0.22)]"
+          style={{ mask, WebkitMask: mask }}
+        >
+          <dl className="grid grid-cols-3">
+            <LedgerCells rows={rows} dashed />
+          </dl>
+          {perk && (
+            <p
+              className="flex items-center justify-center gap-2 border-t border-dashed border-[var(--l6-gold)]/35 px-4 font-sans text-[11px] font-bold uppercase tracking-[0.22em] text-[var(--l6-cream)]/85"
+              style={{ height: PERK_STRIP }}
+            >
+              <Ticket className="size-3.5 text-[var(--l6-gold)]" aria-hidden="true" />
+              {perk}
+            </p>
+          )}
+        </div>
+      </motion.div>
+    )
+  }
   return (
     <motion.dl
       {...delay(4)}
       className={cn("pointer-events-auto w-full grid-cols-3 border-y border-[var(--l6-cream)]/12", compact ? "hidden sm:grid" : "grid")}
     >
+      <LedgerCells rows={rows} />
+    </motion.dl>
+  )
+}
+
+function LedgerCells({ rows, dashed = false }: { rows: NonNullable<Hunt["ledger"]>; dashed?: boolean }) {
+  return (
+    <>
       {rows.map((r, i) => (
         <div
           key={r.label}
           className={cn(
             "flex flex-col items-center gap-2 px-1 py-4 text-center sm:px-2 sm:py-5",
-            i > 0 && "border-l border-[var(--l6-cream)]/12",
+            i > 0 && (dashed ? "border-l border-dashed border-[var(--l6-gold)]/30" : "border-l border-[var(--l6-cream)]/12"),
           )}
         >
           <dt className="whitespace-nowrap font-sans text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--l6-cream)]/55 sm:text-[11px] sm:tracking-[0.24em]">
@@ -125,7 +177,73 @@ function Ledger({ rows, delay, compact }: { rows: NonNullable<Hunt["ledger"]>; d
           </dd>
         </div>
       ))}
-    </motion.dl>
+    </>
+  )
+}
+
+/** Faint paper pattern behind the text: harlequin lattice for the carnival, portolan rhumb lines for the navigator. */
+function paperPattern(hunt: Hunt, flip: boolean) {
+  const outer = flip ? "0% 0%" : "100% 0%"
+  const pattern =
+    hunt.id === "carnival"
+      ? "repeating-linear-gradient(60deg, rgba(224,176,74,0.09) 0 1px, transparent 1px 34px), repeating-linear-gradient(-60deg, rgba(224,176,74,0.09) 0 1px, transparent 1px 34px)"
+      : `repeating-conic-gradient(from 0deg at ${flip ? "6% 10%" : "94% 10%"}, rgba(224,176,74,0.11) 0deg 0.3deg, transparent 0.3deg 11.25deg)`
+  const fade = `radial-gradient(ellipse 85% 75% at ${outer}, #000 0%, transparent 100%)`
+  return { backgroundImage: pattern, maskImage: fade, WebkitMaskImage: fade }
+}
+
+function FileTab({ hunt, flip, inView }: { hunt: Hunt; flip: boolean; inView: boolean }) {
+  const reduce = useReducedMotion()
+  if (!hunt.file) return null
+  return (
+    <div
+      className={cn(
+        "pointer-events-none absolute inset-x-0 top-0 z-30 flex h-[37px] justify-center overflow-hidden px-14",
+        flip ? "lg:justify-start" : "lg:justify-end",
+      )}
+    >
+      <motion.span
+        className="flex h-[37px] items-center gap-2.5 rounded-t-lg border border-b-0 border-[var(--l6-gold)]/35 px-5 font-sans text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--l6-gold)]"
+        style={{ background: "var(--l6-surface)" }}
+        initial={{ y: reduce ? 0 : 37 }}
+        animate={inView ? { y: 0 } : undefined}
+        transition={{ duration: reduce ? 0 : 0.7, delay: 0.5, ease: EASE }}
+      >
+        {hunt.status === "done" ? (
+          <Archive className="size-3.5" aria-hidden="true" />
+        ) : (
+          <FolderOpen className="size-3.5" aria-hidden="true" />
+        )}
+        Φάκελος {hunt.file}
+      </motion.span>
+    </div>
+  )
+}
+
+function EvidenceTag({ hunt, flip, inView, hidden }: { hunt: Hunt; flip: boolean; inView: boolean; hidden: boolean }) {
+  const reduce = useReducedMotion()
+  if (!hunt.evidence) return null
+  return (
+    <motion.div
+      aria-hidden="true"
+      className={cn("pointer-events-none absolute bottom-12 z-10 hidden lg:block", flip ? "right-16" : "left-16")}
+      initial={{ opacity: 0, y: reduce ? 0 : 16 }}
+      animate={inView ? { opacity: hidden ? 0 : 1, y: 0 } : undefined}
+      transition={{ duration: reduce ? 0.2 : 0.6, delay: hidden ? 0 : 1.15, ease: EASE }}
+    >
+      <div
+        className={cn(
+          "relative bg-[var(--l6-cream)] px-4 pb-3 pt-3.5 text-[var(--l6-night)] shadow-[0_14px_30px_-10px_rgba(0,0,0,0.8)]",
+          flip ? "rotate-[2.5deg]" : "-rotate-[3deg]",
+        )}
+      >
+        <span className="absolute -top-2.5 left-1/2 h-5 w-14 -translate-x-1/2 rotate-[4deg] bg-[var(--l6-cream)]/55 shadow-sm" />
+        <span className="block font-sans text-[10px] font-bold uppercase tracking-[0.26em] text-[var(--l6-wine)]">
+          Τεκμήριο {hunt.evidence.code}
+        </span>
+        <span className="mt-1 block font-serif text-[15px] font-bold italic leading-snug">{hunt.evidence.label}</span>
+      </div>
+    </motion.div>
   )
 }
 
@@ -219,6 +337,8 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
       : "inset(0 0 100% 0)"
 
   return (
+    <div className={cn("relative", hunt.file && "pt-9")} style={{ ["--l6-surface" as string]: surface }}>
+    <FileTab hunt={hunt} flip={flip} inView={inView} />
     <motion.article
       ref={cardRef}
       id={hunt.id}
@@ -228,7 +348,7 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
       onFocus={() => stampable && setHovered(true)}
       onBlur={(e) => !e.currentTarget.contains(e.relatedTarget as Node) && setHovered(false)}
       className={cn(
-        "group relative grid scroll-mt-24 overflow-hidden border border-[var(--l6-gold)]/35 shadow-[0_40px_90px_-40px_rgba(0,0,0,0.9)] lg:min-h-[36rem] lg:grid-cols-[1.1fr_1fr]",
+        "group relative grid scroll-mt-32 overflow-hidden border border-[var(--l6-gold)]/35 shadow-[0_40px_90px_-40px_rgba(0,0,0,0.9)] lg:min-h-[36rem] lg:grid-cols-[1.1fr_1fr]",
         flip && "lg:grid-cols-[1fr_1.1fr]",
       )}
       style={{ background: surface, ["--l6-surface" as string]: surface }}
@@ -307,6 +427,8 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
           style={{ background: surface }}
         />
 
+        <EvidenceTag hunt={hunt} flip={flip} inView={inView} hidden={stamped} />
+
         {hunt.stamp && (stampable || !desktop) && (
           <span className="pointer-events-none absolute inset-x-0 top-0 h-56 sm:h-72 lg:pointer-events-auto lg:inset-0 lg:h-auto">
             <Stamp hunt={hunt} on={stamped} delay={0} />
@@ -334,6 +456,7 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
           flip && "lg:order-1",
         )}
       >
+        <span aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 hidden lg:block" style={paperPattern(hunt, flip)} />
         <motion.div {...item(0, { y: 12, scale: 0.9 })} className="pointer-events-auto flex flex-wrap items-center justify-center gap-3 lg:justify-start">
           <StatusBadge hunt={hunt} className={hunt.stamp ? "max-lg:sr-only" : undefined} />
           <span className="font-sans text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--l6-gold)]/90">{hunt.kicker}</span>
@@ -361,7 +484,9 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
         {hunt.summary && (
           <LedgerSentence text={hunt.summary} mark={!!hunt.ledger?.some((r) => r.mark)} delay={item} />
         )}
-        {hunt.ledger && <Ledger rows={hunt.ledger} delay={item} compact={!!hunt.summary} />}
+        {hunt.ledger && (
+          <Ledger rows={hunt.ledger} delay={item} compact={!!hunt.summary} ticket={live} perk={live ? hunt.perk : undefined} />
+        )}
 
         <motion.div {...item(5, { y: 18, scale: 0.96 })} className="pointer-events-auto flex w-full flex-wrap items-center justify-center gap-x-6 gap-y-3 pt-1 sm:w-auto sm:pt-2 lg:justify-start">
           {hunt.href && (
@@ -381,7 +506,7 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
             </Link>
           )}
           {hunt.perk && (
-            <span className="inline-flex items-center gap-2 font-sans text-sm font-bold text-[var(--l6-cream)]/80">
+            <span className={cn("inline-flex items-center gap-2 font-sans text-sm font-bold text-[var(--l6-cream)]/80", live && hunt.ledger && "sm:hidden")}>
               <Ticket className="size-4 text-[var(--l6-gold)]" aria-hidden="true" />
               {hunt.perk}
             </span>
@@ -391,5 +516,6 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
 
       <Frame className="z-20 opacity-70" />
     </motion.article>
+    </div>
   )
 }
