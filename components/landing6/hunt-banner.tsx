@@ -4,12 +4,29 @@ import { AnimatePresence, motion, useInView, useReducedMotion } from "framer-mot
 import { ArrowRight, Ticket, Trophy } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState, useSyncExternalStore } from "react"
 import { EV } from "@/lib/analytics-events"
 import { track } from "@/lib/analytics-client"
 import { cn } from "@/lib/utils"
 import { EASE, type Hunt } from "./data"
 import { Frame } from "./ornaments"
+
+const DESKTOP_QUERY = "(min-width: 1024px)"
+
+function subscribeDesktop(onChange: () => void) {
+  const mq = window.matchMedia(DESKTOP_QUERY)
+  mq.addEventListener("change", onChange)
+  return () => mq.removeEventListener("change", onChange)
+}
+
+/** Side-by-side card layout (lg). Phones stack the image above the text, so they get their own entrance. */
+function useIsDesktop() {
+  return useSyncExternalStore(
+    subscribeDesktop,
+    () => window.matchMedia(DESKTOP_QUERY).matches,
+    () => false,
+  )
+}
 
 export function StatusBadge({ hunt, className }: { hunt: Hunt; className?: string }) {
   return (
@@ -40,9 +57,27 @@ function LedgerSentence({ text, mark, delay }: { text: string; mark: boolean; de
       className="pointer-events-auto flex max-w-[34ch] flex-col items-center gap-3 text-balance font-sans text-[15px] leading-relaxed text-[var(--l6-cream)]/80 sm:hidden"
     >
       <span aria-hidden="true" className="flex items-center gap-2 text-[var(--l6-gold)]/70">
-        <span className="h-px w-10 bg-current" />
-        <span className="size-1.5 rotate-45 bg-current" />
-        <span className="h-px w-10 bg-current" />
+        <motion.span
+          className="h-px w-10 origin-right bg-current"
+          initial={{ scaleX: 0 }}
+          whileInView={{ scaleX: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7, delay: 0.25, ease: EASE }}
+        />
+        <motion.span
+          className="size-1.5 bg-current"
+          initial={{ rotate: 0, scale: 0 }}
+          whileInView={{ rotate: 45, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.15, ease: EASE }}
+        />
+        <motion.span
+          className="h-px w-10 origin-left bg-current"
+          initial={{ scaleX: 0 }}
+          whileInView={{ scaleX: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7, delay: 0.25, ease: EASE }}
+        />
       </span>
       <span>
         {text.split("**").map((part, i) =>
@@ -146,15 +181,36 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
   const [tapped, setTapped] = useState(false)
   const stamped = done && (hovered || tapped)
   const surface = done ? "var(--l6-ash)" : "color-mix(in srgb, var(--l6-wine) 68%, var(--l6-night))"
+  const desktop = useIsDesktop()
   const cardRef = useRef<HTMLElement>(null)
-  const inView = useInView(cardRef, { once: true, margin: "-80px" })
+  const inView = useInView(cardRef, { once: true, margin: desktop ? "-80px" : "0px 0px -18% 0px" })
 
-  const item = (order: number) => ({
-    initial: { opacity: 0, y: reduce ? 0 : 20 },
-    whileInView: { opacity: 1, y: 0 },
-    viewport: { once: true, margin: "-60px" },
-    transition: { duration: reduce ? 0.2 : 0.8, delay: reduce ? 0 : 0.25 + order * 0.1, ease: EASE },
+  // Desktop: the whole text column cascades in together. Phones: whatever is on screen while the
+  // image curtain opens cascades in order after it; anything scrolled to later reveals right away.
+  const [settled, setSettled] = useState(false)
+  useEffect(() => {
+    if (!inView) return
+    const t = window.setTimeout(() => setSettled(true), 1600)
+    return () => window.clearTimeout(t)
+  }, [inView])
+  const mobileDelay = (order: number) => (settled ? 0.06 : 0.5 + order * 0.12)
+  const item = (order: number, from: { y?: number; scale?: number } = {}) => ({
+    initial: { opacity: 0, y: reduce ? 0 : (from.y ?? (desktop ? 20 : 26)), scale: reduce ? 1 : (from.scale ?? 1) },
+    whileInView: { opacity: 1, y: 0, scale: 1 },
+    viewport: { once: true, margin: desktop ? "-60px" : "0px 0px -10% 0px" },
+    transition: {
+      duration: reduce ? 0.2 : desktop ? 0.8 : 0.7,
+      delay: reduce ? 0 : desktop ? 0.25 + order * 0.1 : mobileDelay(order),
+      ease: EASE,
+    },
   })
+  const closedClip = reduce
+    ? "inset(0 0 0 0)"
+    : desktop
+      ? flip
+        ? "inset(0 0 0 100%)"
+        : "inset(0 100% 0 0)"
+      : "inset(0 0 100% 0)"
 
   return (
     <motion.article
@@ -170,20 +226,36 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
         flip && "lg:grid-cols-[1fr_1.1fr]",
       )}
       style={{ background: surface, ["--l6-surface" as string]: surface }}
-      initial={{ opacity: 0, y: reduce ? 0 : 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
-      transition={{ duration: reduce ? 0.2 : 1, ease: EASE }}
+      initial={{ opacity: 0, y: reduce ? 0 : desktop ? 40 : 24 }}
+      animate={inView ? { opacity: 1, y: 0 } : undefined}
+      transition={{ duration: reduce ? 0.2 : desktop ? 1 : 0.8, ease: EASE }}
     >
+      <motion.span
+        aria-hidden="true"
+        className="absolute inset-x-0 top-0 z-20 h-px origin-center bg-[var(--l6-gold)]"
+        initial={{ scaleX: 0, opacity: 1 }}
+        animate={inView ? { scaleX: 1, opacity: 0 } : undefined}
+        transition={{
+          scaleX: { duration: reduce ? 0 : 0.9, delay: 0.15, ease: EASE },
+          opacity: { duration: 0.8, delay: reduce ? 0 : 1.1 },
+        }}
+      />
       <motion.div
+        key={desktop ? "desktop" : "mobile"}
         className={cn(
           "absolute inset-x-0 top-0 h-[24rem] overflow-hidden sm:h-[30rem] lg:relative lg:inset-auto lg:h-auto lg:min-h-0",
           flip ? "lg:order-2 lg:-ml-1" : "lg:-mr-1",
         )}
-        initial={{ clipPath: reduce ? "inset(0 0 0 0)" : flip ? "inset(0 0 0 100%)" : "inset(0 100% 0 0)" }}
+        initial={{ clipPath: closedClip }}
         animate={inView ? { clipPath: "inset(0 0 0 0)" } : undefined}
-        transition={{ duration: reduce ? 0.2 : 1.3, delay: 0.1, ease: EASE }}
+        transition={{ duration: reduce ? 0.2 : desktop ? 1.3 : 1.1, delay: desktop ? 0.1 : 0.2, ease: EASE }}
       >
+        <motion.div
+          className="absolute inset-0"
+          initial={{ scale: reduce ? 1 : 1.18 }}
+          animate={inView ? { scale: 1 } : undefined}
+          transition={{ duration: reduce ? 0 : desktop ? 1.8 : 1.6, delay: 0.2, ease: EASE }}
+        >
         <motion.div
           className="absolute inset-0"
           animate={stamped && !reduce ? { scale: [1.06, 1.02, 1.04] } : { scale: 1 }}
@@ -200,6 +272,7 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
               stamped && "brightness-[0.55] saturate-[0.85]",
             )}
           />
+        </motion.div>
         </motion.div>
         <span
           aria-hidden="true"
@@ -249,7 +322,7 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
           flip && "lg:order-1",
         )}
       >
-        <motion.div {...item(0)} className="pointer-events-auto flex flex-wrap items-center justify-center gap-3 lg:justify-start">
+        <motion.div {...item(0, { y: 12, scale: 0.9 })} className="pointer-events-auto flex flex-wrap items-center justify-center gap-3 lg:justify-start">
           <StatusBadge hunt={hunt} />
           <span className="font-sans text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--l6-gold)]/90">{hunt.kicker}</span>
         </motion.div>
@@ -278,7 +351,7 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
         )}
         {hunt.ledger && <Ledger rows={hunt.ledger} delay={item} compact={!!hunt.summary} />}
 
-        <motion.div {...item(5)} className="pointer-events-auto flex w-full flex-wrap items-center justify-center gap-x-6 gap-y-3 pt-1 sm:w-auto sm:pt-2 lg:justify-start">
+        <motion.div {...item(5, { y: 18, scale: 0.96 })} className="pointer-events-auto flex w-full flex-wrap items-center justify-center gap-x-6 gap-y-3 pt-1 sm:w-auto sm:pt-2 lg:justify-start">
           {hunt.href && (
             <Link
               href={hunt.href}
