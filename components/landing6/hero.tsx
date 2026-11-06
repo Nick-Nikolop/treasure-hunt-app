@@ -25,7 +25,7 @@ export function Hero() {
   })
 
   return (
-    <section ref={ref} aria-labelledby="l6-title" className="relative isolate flex min-h-[calc(100svh-4rem)] items-center justify-center overflow-hidden px-5 pb-20 pt-16 sm:px-8 sm:pt-20">
+    <section ref={ref} aria-labelledby="l6-title" className="relative isolate flex min-h-[calc(100svh-4rem)] items-center justify-center overflow-hidden px-5 pb-16 pt-6 sm:px-8 sm:pt-10 sm:[@media(min-height:900px)]:pb-20 sm:[@media(min-height:900px)]:pt-20">
       <motion.div aria-hidden="true" className="absolute inset-0 -z-20" style={{ scale: mapScale }}>
         <Image src="/landing/hero-kalamata-map.webp" alt="" fill priority sizes="100vw" className="object-cover opacity-[0.16] sepia" />
       </motion.div>
@@ -38,15 +38,15 @@ export function Hero() {
         }}
       />
 
-      <motion.div style={{ y: lift, opacity: fade }} className="flex flex-col items-center gap-6 text-center sm:gap-7">
+      <motion.div style={{ y: lift, opacity: fade }} className="flex flex-col items-center gap-4 text-center max-sm:[@media(max-height:680px)]:gap-3 sm:gap-5 sm:[@media(min-height:900px)]:gap-7">
         <motion.div
-          className="relative my-7 flex size-44 items-center justify-center min-[400px]:my-9 min-[400px]:size-52 sm:my-12 sm:size-72"
+          className="relative my-6 flex size-36 items-center justify-center min-[400px]:my-7 min-[400px]:size-40 max-sm:[@media(min-height:820px)]:my-8 max-sm:[@media(min-height:820px)]:size-48 max-sm:[@media(max-height:680px)]:my-5 max-sm:[@media(max-height:680px)]:size-28 sm:my-8 sm:size-44 sm:[@media(min-height:900px)]:my-12 sm:[@media(min-height:900px)]:size-72"
           initial={{ opacity: 0, scale: reduce ? 1 : 0.86 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: reduce ? 0.2 : 1.6, ease: EASE }}
         >
           <motion.div
-            className="absolute -inset-7 text-[var(--l6-gold)] min-[400px]:-inset-9 sm:-inset-12"
+            className="absolute -inset-6 text-[var(--l6-gold)] min-[400px]:-inset-7 max-sm:[@media(min-height:820px)]:-inset-8 max-sm:[@media(max-height:680px)]:-inset-5 sm:-inset-8 sm:[@media(min-height:900px)]:-inset-12"
             animate={reduce ? undefined : { rotate: 360 }}
             transition={{ duration: 160, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
           >
@@ -88,11 +88,11 @@ export function Hero() {
           The Hunt
         </motion.h1>
 
-        <motion.p {...rise(3)} className="max-w-[46ch] text-pretty font-serif text-[17px] italic leading-relaxed text-[var(--l6-cream)]/75 sm:text-xl">
+        <motion.p {...rise(3)} className="max-w-[46ch] text-pretty font-serif text-base italic leading-relaxed text-[var(--l6-cream)]/75 sm:text-xl">
           Η πόλη γίνεται το ταμπλό. Γρίφοι σε πραγματικά σημεία, μια ιστορία σε κάθε γωνιά κι ένας θησαυρός στο τέλος.
         </motion.p>
 
-        <motion.div {...rise(4)} className="pt-2">
+        <motion.div {...rise(4)} className="sm:pt-2">
           <QuestButton href={CHOOSER} track="landing6-hero-begin" onClick={() => track(EV.landing6Cta, { where: "hero", target: "hunts" })}>
             Ξεκίνα το κυνήγι
           </QuestButton>
@@ -102,7 +102,7 @@ export function Hero() {
       <motion.a
         href="#hunts"
         aria-label="Δες τα κυνήγια"
-        className="absolute bottom-6 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1 font-sans text-[10px] font-bold uppercase tracking-[0.35em] text-[var(--l6-cream)]/45 transition hover:text-[var(--l6-gold)]"
+        className="absolute bottom-6 left-1/2 flex -translate-x-1/2 [@media(max-height:600px)]:hidden flex-col items-center gap-1 font-sans text-[10px] font-bold uppercase tracking-[0.35em] text-[var(--l6-cream)]/45 transition hover:text-[var(--l6-gold)]"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: reduce ? 0 : 1.4, duration: 0.8 }}
