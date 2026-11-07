@@ -9,7 +9,7 @@ const manrope = Manrope({
 })
 
 export const metadata: Metadata = {
-  title: "Brand system | The Hunt",
+  title: { absolute: "Brand system | The Hunt" },
   description: "Internal preview of The Hunt's themeable compass mark.",
   robots: { index: false, follow: false },
 }

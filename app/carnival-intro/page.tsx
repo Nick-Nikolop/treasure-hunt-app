@@ -3,7 +3,7 @@ import { CarnivalIntro, type CarnivalAccount } from "@/components/carnival-intro
 import { currentUserId, getKeyQuota, getNotes } from "@/lib/carnival-intro/account"
 
 export const metadata: Metadata = {
-  title: "Κάποια μυστικά πρέπει να τα κυνηγήσεις | The Hunt × Καλαματιανό Καρναβάλι",
+  title: { absolute: "Κάποια μυστικά πρέπει να τα κυνηγήσεις | The Hunt × Καλαματιανό Καρναβάλι" },
   description: "Ένα κρυπτογραφημένο μήνυμα, μια αφίσα κι ένα κλειδί που πρέπει να βρεις μόνος σου.",
   robots: { index: false, follow: false },
 }
