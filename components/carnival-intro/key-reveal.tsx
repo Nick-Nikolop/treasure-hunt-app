@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion } from "framer-motion"
 import { ArrowDown, KeyRound } from "lucide-react"
+import { GuardScroll } from "./guard-scroll"
 import { EASE } from "./palette"
 
 /** A keyhole that turns twice, the visual echo of the hint. */
@@ -68,21 +69,17 @@ export function KeyReveal({ value }: { value?: string }) {
           </ol>
         )}
 
-        <motion.figure
+        <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, delay: 0.5 + letters.length * 0.09 + 0.3, ease: EASE }}
-          className="relative w-full max-w-2xl rounded-2xl border border-[var(--ci-cream)]/10 bg-[var(--ci-cream)]/[0.04] px-6 py-8 sm:px-10"
+          className="-mx-4 flex w-[calc(100%+2rem)] flex-col items-center gap-6 sm:mx-0 sm:w-full"
         >
-          <span aria-hidden="true" className="absolute left-4 top-4 size-1.5 rounded-full bg-[var(--ci-gold)]/50" />
-          <span aria-hidden="true" className="absolute right-4 top-4 size-1.5 rounded-full bg-[var(--ci-gold)]/50" />
-          <span aria-hidden="true" className="absolute bottom-4 left-4 size-1.5 rounded-full bg-[var(--ci-gold)]/50" />
-          <span aria-hidden="true" className="absolute bottom-4 right-4 size-1.5 rounded-full bg-[var(--ci-gold)]/50" />
-          <blockquote className="text-balance font-serif text-xl italic leading-snug text-[var(--ci-cream)] sm:text-3xl">
-            Ένας σωστός νοικοκύρης κλειδώνει πάντα την πόρτα του{" "}
-            <span className="not-italic font-bold text-[var(--ci-gold)]">δύο φορές</span>. Ακόμα κι αν έχει ένα μόνο κλειδί.
-          </blockquote>
-        </motion.figure>
+          <p className="max-w-md text-balance px-4 font-sans text-[15px] leading-relaxed text-[var(--ci-cream)]/75">
+            Πίσω από την κλειδαριά σε περίμενε ένας σφραγισμένος πάπυρος.
+          </p>
+          <GuardScroll />
+        </motion.div>
 
         <a
           href="#ci-decrypt"

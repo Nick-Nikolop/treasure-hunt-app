@@ -10,10 +10,10 @@ export function SiteFooter() {
   const year = new Date().getFullYear()
 
   const exploreLinks = [
-    { href: "/#story", label: t.footer.linkStory },
-    { href: "/#treasure", label: t.footer.linkTreasure },
+    { href: "/pythea#story", label: t.footer.linkStory },
+    { href: "/pythea#treasure", label: t.footer.linkTreasure },
     { href: "/guide", label: t.footer.linkHow },
-    { href: "/#faq", label: t.footer.linkFaq },
+    { href: "/pythea#faq", label: t.footer.linkFaq },
   ]
   // Registration closes once the hunt starts, so drop the sign-up link rather
   // than advertise a route that only explains it is shut.

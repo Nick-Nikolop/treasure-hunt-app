@@ -11,7 +11,7 @@ import { CHOOSER, CONTACT_EMAIL, EASE, HUNTS, SOCIALS } from "./data"
 import { HuntBanner } from "./hunt-banner"
 import { Frame, RoseDivider, TikTokIcon } from "./ornaments"
 
-function Heading({ id, kicker, title, lead, light = false }: { id: string; kicker: string; title: string; lead?: ReactNode; light?: boolean }) {
+export function Heading({ id, kicker, title, lead, light = false }: { id: string; kicker: string; title: string; lead?: ReactNode; light?: boolean }) {
   const reduce = useReducedMotion()
   return (
     <motion.header
@@ -150,7 +150,7 @@ export function About() {
             transition={{ duration: reduce ? 0.2 : 1.2, ease: EASE }}
           >
             <div className="relative aspect-[4/5] overflow-hidden border border-[var(--l6-gold)]/60 bg-[var(--l6-night)] shadow-[0_40px_80px_-30px_rgba(12,9,7,0.6)]">
-              <Image src="/landing/scene-team.webp" alt="Τέσσερις κυνηγοί σκυμμένοι πάνω από ένα κινητό σε πλακόστρωτο δρόμο τη νύχτα" fill loading="eager" sizes="(min-width: 1024px) 40vw, 90vw" className="object-cover" />
+              <Image src="/landing/about-team-church.webp" alt="Τέσσερις κυνηγοί σκυμμένοι πάνω από ένα κινητό σε βρεγμένη πλατεία τη νύχτα, μπροστά σε φωτισμένη βυζαντινή εκκλησία" fill loading="eager" sizes="(min-width: 1024px) 40vw, 90vw" className="object-cover" />
               <Frame />
             </div>
             <figcaption className="mt-4 text-center font-serif text-base italic text-[var(--l6-night)]/60">Η καλύτερη ομάδα είναι αυτή που προσέχει τις λεπτομέρειες.</figcaption>

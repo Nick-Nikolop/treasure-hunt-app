@@ -51,7 +51,7 @@ export function FloatingCta() {
     <AnimatePresence>
       {show && (
         <motion.a
-          href="/#register"
+          href="/pythea#register"
           onClick={() => track(EV.ctaClick, { id: "register", location: "floating" }, { category: "cta" })}
           initial={{ opacity: 0, y: 24, scale: 0.92 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}

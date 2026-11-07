@@ -31,6 +31,11 @@ export const EV = {
   landing6Hunt: "landing6.hunt", // props: { hunt: "carnival" | "pythea" | "next", where: "banner" | "chooser", action: "open" | "standings" | "locked" }
   landing6Social: "landing6.social", // props: { network: "instagram" | "tiktok" | "facebook" | "email" }
   landing6Menu: "landing6.menu", // mobile menu; props: { action: "open" | "close" }
+  // /themissingcrown carnival hunt home
+  crownCta: "crown.cta", // props: { where: "hero" | "steps" | "story" | "band" | "teams", target }
+  crownFaq: "crown.faq", // props: { question, action: "open" | "close" } (never the search text)
+  crownFont: "crown.font", // design-review font picker; props: { font }
+  crownSocial: "crown.social", // props: { network: "instagram" | "tiktok" | "facebook" | "email" }
   // /carnival-intro poster puzzle (never the typed key, only outcomes)
   carnivalOpening: "carnival.opening", // durationMs; props: { action: "finished" | "skipped" }
   // landing office walk-in opening (phone hero)
@@ -46,6 +51,7 @@ export const EV = {
   carnivalKeyGate: "carnival.key_gate", // signed-out sign-in popup; props: { action: "shown" | "sign_up" | "sign_in" | "dismiss", step: "key" | "phrase" }
   carnivalPhraseCheck: "carnival.phrase_check", // props: { result: "correct" | "wrong" | "locked" | "unset" | "auth", attempt, filled }
   carnivalReset: "carnival.reset",
+  carnivalScroll: "carnival.scroll", // guards scroll after the key; props: { action: "open" | "close" | "zoom" | "narrate_play" | "narrate_pause" | "narrate_end", from?, at? }
   carnivalTip: "carnival.tip", // poster viewer tip box; props: { action: "open" | "close", uv }
   carnivalDock: "carnival.dock", // mobile action bar; props: { action: "poster" | "key" | "decrypt" | "notes", step }
   // Auth funnel (durationMs on the success events where relevant)

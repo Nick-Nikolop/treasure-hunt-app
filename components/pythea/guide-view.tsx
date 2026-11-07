@@ -190,7 +190,7 @@ export function GuideView({ isLoggedIn = false }: { isLoggedIn?: boolean }) {
           </p>
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
             <a
-              href="/#register"
+              href="/pythea#register"
               className="inline-flex items-center gap-2 rounded-sm bg-brass px-5 py-3 font-sans text-xs font-bold tracking-chip text-primary-foreground transition-transform hover:-translate-y-0.5"
             >
               {g.ctaRegister}

@@ -6,6 +6,12 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  async redirects() {
+    return [
+      { source: "/landing6", destination: "/", permanent: true },
+      { source: "/landing6/hunts", destination: "/hunts", permanent: true },
+    ]
+  },
   experimental: {
     // Stamp images are uploaded through a Server Action. The default body
     // limit is 1 MB, which rejected valid stamps well under the UI's stated

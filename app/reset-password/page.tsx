@@ -1,6 +1,5 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
-import { Atmosphere } from "@/components/pythea/atmosphere"
 import { ResetPasswordForm } from "@/components/reset-password-form"
 
 export const metadata: Metadata = {
@@ -11,7 +10,6 @@ export const metadata: Metadata = {
 export default function ResetPasswordPage() {
   return (
     <>
-      <Atmosphere />
       <Suspense fallback={null}>
         <ResetPasswordForm />
       </Suspense>

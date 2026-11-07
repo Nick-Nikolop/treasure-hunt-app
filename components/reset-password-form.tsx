@@ -2,14 +2,22 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import Image from "next/image"
 import { useRouter, useSearchParams } from "next/navigation"
-import { motion } from "framer-motion"
-import { Eye, EyeOff, ArrowLeft, Loader2, CheckCircle2, AlertTriangle } from "lucide-react"
+import { Eye, EyeOff, ArrowLeft, ArrowRight, Loader2, CheckCircle2, AlertTriangle } from "lucide-react"
 import { authClient } from "@/lib/auth-client"
 import { useI18n } from "@/components/pythea/language-provider"
 import { track } from "@/lib/analytics-client"
 import { EV } from "@/lib/analytics-events"
+import {
+  AuthAlert,
+  AuthFrame,
+  AuthHeading,
+  AuthIcon,
+  authInput,
+  authLabel,
+  authPrimary,
+  authSecondary,
+} from "@/components/auth/auth-frame"
 
 export function ResetPasswordForm() {
   const router = useRouter()
@@ -53,161 +61,84 @@ export function ResetPasswordForm() {
     setDone(true)
   }
 
-  const inputClass =
-    "w-full rounded-sm border border-input bg-background/60 px-4 py-3 font-serif text-foreground placeholder:text-muted-foreground/60 focus:border-brass focus:outline-none focus:ring-1 focus:ring-brass/40 transition-colors"
-  const labelClass = "font-sans text-[11px] font-bold tracking-chip text-muted-foreground"
-
   return (
-    <main className="relative flex min-h-svh items-center justify-center px-5 py-16">
-      <Link
-        href="/"
-        className="absolute left-5 top-6 inline-flex items-center gap-2 font-sans text-[11px] font-bold tracking-chip text-muted-foreground transition-colors hover:text-foreground md:left-8 md:top-8"
-      >
-        <ArrowLeft className="size-3.5" />
-        {a.backHome}
-      </Link>
-
-      <motion.div
-        initial={{ opacity: 0, y: 28 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-        className="w-full max-w-md"
-      >
-        <div className="relative overflow-hidden rounded-md border border-border bg-card/70 p-7 backdrop-blur-sm md:p-9">
-          <div
-            className="pointer-events-none absolute -right-16 -top-16 size-48 rounded-full opacity-20 blur-3xl"
-            style={{ background: "radial-gradient(circle, var(--brass), transparent 70%)" }}
-            aria-hidden
-          />
-
-          <div className="relative mb-7 flex items-center gap-3">
-            <Image src="/compass-icon.png" alt="" width={32} height={32} className="size-8" />
-            <span className="font-serif text-base font-extrabold leading-none tracking-tight text-foreground">
-              {a.brand}
-              <span className="block font-sans text-[10px] font-medium tracking-chip text-muted-foreground">
-                {a.brandSub}
-              </span>
-            </span>
-          </div>
-
-          {invalidLink ? (
-            <div className="relative">
-              <div className="mb-5 flex size-12 items-center justify-center rounded-full bg-destructive/15">
-                <AlertTriangle className="size-6 text-destructive" />
-              </div>
-              <h1 className="text-balance font-serif text-3xl font-black leading-tight text-foreground md:text-4xl">
-                {a.resetInvalidTitle}
-              </h1>
-              <p className="mt-3 text-pretty font-serif leading-relaxed text-muted-foreground">
-                {a.resetInvalidSubtitle}
-              </p>
-              <Link
-                href="/sign-in"
-                className="mt-6 inline-flex items-center gap-2 font-sans text-sm font-bold tracking-chip text-brass transition-colors hover:text-brass/80"
-              >
-                <ArrowLeft className="size-4" />
-                {a.backToSignIn}
-              </Link>
-            </div>
-          ) : done ? (
-            <div className="relative">
-              <div className="mb-5 flex size-12 items-center justify-center rounded-full bg-brass/15">
-                <CheckCircle2 className="size-6 text-brass" />
-              </div>
-              <h1 className="text-balance font-serif text-3xl font-black leading-tight text-foreground md:text-4xl">
-                {a.resetSuccessTitle}
-              </h1>
-              <p className="mt-3 text-pretty font-serif leading-relaxed text-muted-foreground">
-                {a.resetSuccessSubtitle}
-              </p>
-              <button
-                type="button"
-                onClick={() => router.push("/sign-in")}
-                className="mt-6 inline-flex items-center justify-center gap-2 rounded-sm bg-brass px-6 py-3.5 font-sans text-sm font-bold tracking-chip text-primary-foreground transition-transform hover:-translate-y-0.5"
-              >
-                {a.signInCta}
-              </button>
-            </div>
-          ) : (
-            <>
-              <span className="font-sans text-[11px] font-bold tracking-chip text-brass">
-                {a.signInEyebrow}
-              </span>
-              <h1 className="mt-2 text-balance font-serif text-3xl font-black leading-tight text-foreground md:text-4xl">
-                {a.resetTitle}
-              </h1>
-              <p className="mt-2 text-pretty font-serif leading-relaxed text-muted-foreground">
-                {a.resetSubtitle}
-              </p>
-
-              <form onSubmit={handleSubmit} className="mt-7 flex flex-col gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label htmlFor="new-password" className={labelClass}>
-                    {a.newPassword}
-                  </label>
-                  <div className="relative">
-                    <input
-                      id="new-password"
-                      name="new-password"
-                      type={showPassword ? "text" : "password"}
-                      required
-                      minLength={8}
-                      autoComplete="new-password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder={a.passwordPlaceholder}
-                      className={`${inputClass} pr-12`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((v) => !v)}
-                      aria-label={showPassword ? a.hidePassword : a.showPassword}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <label htmlFor="confirm-password" className={labelClass}>
-                    {a.confirmPassword}
-                  </label>
-                  <input
-                    id="confirm-password"
-                    name="confirm-password"
-                    type={showPassword ? "text" : "password"}
-                    required
-                    minLength={8}
-                    autoComplete="new-password"
-                    value={confirm}
-                    onChange={(e) => setConfirm(e.target.value)}
-                    className={inputClass}
-                  />
-                </div>
-
-                {error && (
-                  <p
-                    role="alert"
-                    className="rounded-sm border border-destructive/40 bg-destructive/10 px-3 py-2 font-serif text-sm text-destructive"
-                  >
-                    {error}
-                  </p>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="mt-1 inline-flex items-center justify-center gap-2 rounded-sm bg-brass px-6 py-3.5 font-sans text-sm font-bold tracking-chip text-primary-foreground transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
-                >
-                  {loading && <Loader2 className="size-4 animate-spin" />}
-                  {loading ? a.resetSaving : a.resetCta}
-                </button>
-              </form>
-            </>
-          )}
+    <AuthFrame>
+      {invalidLink ? (
+        <div className="flex flex-col">
+          <AuthIcon icon={AlertTriangle} tone="wine" />
+          <AuthHeading title={a.resetInvalidTitle} lead={a.resetInvalidSubtitle} />
+          <Link href="/sign-in" className={`${authSecondary} mt-8`}>
+            <ArrowLeft className="size-4" aria-hidden="true" />
+            {a.backToSignIn}
+          </Link>
         </div>
-      </motion.div>
-    </main>
+      ) : done ? (
+        <div className="flex flex-col">
+          <AuthIcon icon={CheckCircle2} />
+          <AuthHeading title={a.resetSuccessTitle} lead={a.resetSuccessSubtitle} />
+          <button type="button" onClick={() => router.push("/sign-in")} className={`${authPrimary} mt-8`}>
+            {a.signInCta}
+            <ArrowRight className="size-4" aria-hidden="true" />
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-col">
+          <AuthHeading eyebrow={a.signInEyebrow} title={a.resetTitle} lead={a.resetSubtitle} />
+          <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-5">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="new-password" className={authLabel}>
+                {a.newPassword}
+              </label>
+              <div className="relative">
+                <input
+                  id="new-password"
+                  name="new-password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  minLength={8}
+                  autoComplete="new-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={a.passwordPlaceholder}
+                  className={`${authInput} pr-12`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? a.hidePassword : a.showPassword}
+                  className="absolute right-1.5 top-1/2 grid size-10 -translate-y-1/2 place-items-center rounded-lg text-[var(--l6-cream)]/50 transition hover:text-[var(--l6-gold)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--l6-gold)]"
+                >
+                  {showPassword ? <EyeOff className="size-4" aria-hidden="true" /> : <Eye className="size-4" aria-hidden="true" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label htmlFor="confirm-password" className={authLabel}>
+                {a.confirmPassword}
+              </label>
+              <input
+                id="confirm-password"
+                name="confirm-password"
+                type={showPassword ? "text" : "password"}
+                required
+                minLength={8}
+                autoComplete="new-password"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                className={authInput}
+              />
+            </div>
+
+            {error && <AuthAlert>{error}</AuthAlert>}
+
+            <button type="submit" disabled={loading} className={`${authPrimary} mt-1`}>
+              {loading && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+              {loading ? a.resetSaving : a.resetCta}
+            </button>
+          </form>
+        </div>
+      )}
+    </AuthFrame>
   )
 }

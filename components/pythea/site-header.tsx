@@ -54,9 +54,9 @@ export function SiteHeader({
   const loggedIn = isPending ? !!initialUser : !!session?.user
 
   const nav = [
-    { label: t.nav.story, href: "/#story" },
+    { label: t.nav.story, href: "/pythea#story" },
     { label: t.nav.journal, href: "/journal", lock: "journal" as const },
-    { label: t.nav.treasure, href: "/#treasure" },
+    { label: t.nav.treasure, href: "/pythea#treasure" },
     { label: t.nav.how, href: "/guide" },
   ]
 
@@ -152,7 +152,7 @@ export function SiteHeader({
           <AuthNav initialUser={initialUser} />
           {!loggedIn && (
             <a
-              href="/#register"
+              href="/pythea#register"
               onClick={() => track(EV.ctaClick, { id: "register", location: "header" }, { category: "cta" })}
               className="inline-flex items-center gap-2 rounded-sm border border-brass/60 px-4 py-2 font-sans text-xs font-bold tracking-chip text-brass transition-colors hover:bg-brass hover:text-primary-foreground"
             >
@@ -223,7 +223,7 @@ export function SiteHeader({
               })}
               {!loggedIn && (
                 <a
-                  href="/#register"
+                  href="/pythea#register"
                   onClick={() => {
                     track(EV.ctaClick, { id: "register", location: "mobile_menu" }, { category: "cta" })
                     setOpen(false)

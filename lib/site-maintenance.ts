@@ -11,13 +11,15 @@ import { SITE_MAINTENANCE } from "@/lib/maintenance"
  * account get through, and both must still resolve as superadmin; every other
  * visitor, signed in or not, is held at the screen.
  */
-const OPEN_DURING_MAINTENANCE = ["/vote", "/brand", "/landing", "/landing2", "/landing3", "/landing4", "/landing4heroimage", "/landing6", "/carnival", "/carnival-intro",
+const OPEN_DURING_MAINTENANCE = ["/vote", "/brand", "/landing", "/landing2", "/landing3", "/landing4", "/landing4heroimage", "/landing6", "/hunts", "/terms", "/themissingcrown", "/carnival", "/carnival-intro",
   // Carnival players must be able to sign in / sign up to check a key. Sign-up itself stays closed to everyone
   // else (see REGISTRATION_OPEN), and after logging in the rest of the site is still held.
   "/sign-in", "/sign-up", "/reset-password"]
 
 function isOpenPath(pathname: string | null): boolean {
   if (!pathname) return false
+  // The hub landing is public. Matched exactly: a "/" prefix would open every page.
+  if (pathname === "/") return true
   return OPEN_DURING_MAINTENANCE.some((path) => pathname === path || pathname.startsWith(`${path}/`))
 }
 

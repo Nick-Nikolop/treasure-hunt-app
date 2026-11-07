@@ -2,7 +2,6 @@ import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 import { headers } from "next/headers"
 import { auth } from "@/lib/auth"
-import { Atmosphere } from "@/components/pythea/atmosphere"
 import { AuthForm } from "@/components/auth-form"
 import { RegistrationClosedDialog } from "@/components/pythea/registration-closed-dialog"
 import { REGISTRATION_OPEN } from "@/lib/registration"
@@ -25,7 +24,6 @@ export default async function SignUpPage({ searchParams }: { searchParams: Promi
   if (!REGISTRATION_OPEN && !fromCarnival) {
     return (
       <>
-        <Atmosphere />
         <RegistrationClosedDialog />
       </>
     )
@@ -33,7 +31,6 @@ export default async function SignUpPage({ searchParams }: { searchParams: Promi
 
   return (
     <>
-      <Atmosphere />
       <AuthForm mode="sign-up" />
     </>
   )

@@ -94,11 +94,11 @@ export function Chooser() {
           </p>
         </motion.header>
 
-        <ul className="grid w-full gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
+        <ul className="flex w-full flex-wrap justify-center gap-6 lg:gap-8">
           {HUNTS.map((hunt, i) => (
             <motion.li
               key={hunt.id}
-              className={cn(hunt.id === "next" && "sm:col-span-2 sm:mx-auto sm:w-1/2 lg:col-span-1 lg:w-auto")}
+              className="w-full sm:w-[calc((100%-1.5rem)/2)] lg:w-[calc((100%-4rem)/3)]"
               initial={{ opacity: 0, y: reduce ? 0 : 50 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: reduce ? 0.2 : 1, delay: reduce ? 0 : 0.25 + i * 0.14, ease: EASE }}

@@ -12,8 +12,8 @@ export const PALETTE = {
   "--l6-ash": "#17130f",
 } as CSSProperties
 
-export const HUB = "/landing6"
-export const CHOOSER = "/landing6/hunts"
+export const HUB = "/"
+export const CHOOSER = "/hunts"
 
 export type HuntId = "carnival" | "pythea" | "next"
 
@@ -27,8 +27,8 @@ export interface Hunt {
   title: string
   body: string[]
   facts: string[]
-  /** `note` = small unit under the value, `mark` = asterisk for a footnote. */
-  ledger?: { label: string; value: string; note?: string; mark?: boolean }[]
+  /** `note` = small unit under the value, `mark` = asterisk for a footnote, `secret` = show a "?" with this hint instead of the value. */
+  ledger?: { label: string; value: string; note?: string; mark?: boolean; secret?: string }[]
   /** Phone version of the ledger as one sentence; `**…**` = highlighted figure. */
   summary?: string
   perk?: string
@@ -51,23 +51,23 @@ export const HUNTS: Hunt[] = [
     upcoming: true,
     statusLabel: "Έρχεται σύντομα",
     kicker: "The Hunt × Καλαματιανό Καρναβάλι",
-    title: "Το κυνήγι του θησαυρού της Ιζαμπώ",
+    title: "Το χαμένο στέμμα",
     body: [
       "Ένα κυνήγι βασισμένο στην ιστορία της Ιζαμπώ, της πριγκίπισσας του Καλαματιανού Καρναβαλιού.",
       "Ζήσε μια εναλλακτική εκδοχή της ιστορίας της, με την ομάδα σου και σκηνικό όλη την Καλαμάτα.",
     ],
-    facts: ["12 γρίφοι", "3 εβδομάδες", "Έπαθλο 1.000 €*"],
+    facts: ["Κρυφοί γρίφοι", "3 εβδομάδες", "Έπαθλο 1.000 €*"],
     ledger: [
-      { label: "Γρίφοι", value: "12" },
+      { label: "Γρίφοι", value: "?", secret: "Θα μάθεις όταν παίξεις" },
       { label: "Διάρκεια", value: "3", note: "εβδομάδες" },
       { label: "Έπαθλο", value: "1.000 €", mark: true },
     ],
-    summary: "**12 γρίφοι** σε **3 εβδομάδες**, για συνολικό έπαθλο **1.000 €**",
+    summary: "**Κρυφοί γρίφοι** σε **3 εβδομάδες**, για συνολικό έπαθλο **1.000 €**",
     perk: "Δωρεάν για καρναβαλικές ομάδες",
     stamp: { word: "Έρχεται σύντομα", top: "The Hunt × Καρναβάλι", bottom: "Καλαμάτα" },
     image: "/landing/mission-carnival.webp",
     imageAlt: "Σφραγισμένος φάκελος με κόκκινο βουλοκέρι TH δίπλα σε χρυσή καρναβαλική μάσκα",
-    href: "/carnival-intro",
+    href: "/themissingcrown",
     cta: "Μπες στο κυνήγι",
   },
   {

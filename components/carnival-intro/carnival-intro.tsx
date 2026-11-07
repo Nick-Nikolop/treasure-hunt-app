@@ -279,8 +279,8 @@ export function CarnivalIntro({ account }: { account: CarnivalAccount | null }) 
 
       <div className="relative" inert={viewer}>
         <Reveal order={0} y={-10}>
-        <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-5 py-5 sm:px-8">
-          <div className="flex items-center gap-3" aria-label="The Hunt × Καλαματιανό Καρναβάλι">
+        <header className="mx-auto flex w-full max-w-6xl items-center justify-center gap-4 px-5 py-5 sm:justify-between sm:px-8">
+          <div className="hidden items-center gap-3 sm:flex" aria-label="The Hunt × Καλαματιανό Καρναβάλι">
             <Image src="/carnival/logo.webp" alt="The Hunt" width={96} height={96} priority className="size-11 object-contain sm:size-12" />
             <span aria-hidden="true" className="font-serif text-lg text-[var(--ci-gold)]/70">
               ×
@@ -304,6 +304,15 @@ export function CarnivalIntro({ account }: { account: CarnivalAccount | null }) 
             className="grid items-center gap-8 pt-2 sm:gap-12 sm:pt-6 lg:min-h-[calc(100svh-6rem)] lg:grid-cols-[1.1fr_1fr] lg:grid-rows-[auto_auto] lg:gap-x-10 lg:gap-y-7 lg:pt-0"
           >
             <div className="flex flex-col items-center gap-4 text-center lg:items-start lg:self-end lg:text-left">
+              <Reveal order={1} className="sm:hidden">
+                <div className="flex items-center justify-center gap-5 pb-2" aria-label="The Hunt × Καλαματιανό Καρναβάλι">
+                  <Image src="/carnival/logo.webp" alt="The Hunt" width={192} height={192} priority className="size-24 object-contain" />
+                  <span aria-hidden="true" className="font-serif text-2xl text-[var(--ci-gold)]/70">
+                    ×
+                  </span>
+                  <Image src="/carnival/kalamata-carnival.webp" alt="Καλαματιανό Καρναβάλι" width={192} height={180} priority className="h-auto w-24 object-contain" />
+                </div>
+              </Reveal>
               <Reveal order={1}>
               <p
                 className="font-sans text-[11px] font-bold uppercase tracking-[0.32em] text-[var(--ci-gold)] sm:text-xs sm:tracking-[0.4em]"

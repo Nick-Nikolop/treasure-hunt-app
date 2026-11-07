@@ -167,6 +167,32 @@ const LEDGER_ICON: Record<string, LucideIcon> = {
   Έπαθλο: Coins,
 }
 
+/** A tilted gold "?" in place of a figure we keep secret; hover, focus or tap shows the hint. */
+function SecretValue({ hint }: { hint: string }) {
+  return (
+    <button
+      type="button"
+      aria-label={`Μυστικό: ${hint}`}
+      data-track="ledger-secret"
+      className="group/secret relative inline-flex cursor-help items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-[var(--l6-gold)]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+    >
+      <span
+        aria-hidden="true"
+        className="inline-block -rotate-[10deg] bg-gradient-to-b from-[#f6dc8f] via-[var(--l6-gold)] to-[#a8782a] bg-clip-text px-1 font-serif text-[1.15em] italic text-transparent [text-shadow:0_2px_10px_rgba(212,168,74,0.35)] transition-transform duration-300 ease-out group-hover/secret:rotate-[8deg] group-hover/secret:scale-110 group-focus-visible/secret:rotate-[8deg] group-focus/secret:rotate-[8deg]"
+      >
+        ?
+      </span>
+      <span
+        role="tooltip"
+        className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-3 w-max max-w-[14rem] -translate-x-1/2 translate-y-1 rounded-md border border-[var(--l6-gold)]/40 bg-[#1a0b0c] px-3 py-2 font-serif text-sm font-semibold italic leading-snug text-[var(--l6-cream)] opacity-0 shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition duration-200 group-hover/secret:translate-y-0 group-hover/secret:opacity-100 group-focus/secret:translate-y-0 group-focus/secret:opacity-100"
+      >
+        {hint}
+        <span aria-hidden="true" className="absolute left-1/2 top-full -mt-1 size-2 -translate-x-1/2 rotate-45 border-b border-r border-[var(--l6-gold)]/40 bg-[#1a0b0c]" />
+      </span>
+    </button>
+  )
+}
+
 function LedgerCells({ rows, dashed = false }: { rows: NonNullable<Hunt["ledger"]>; dashed?: boolean }) {
   return (
     <>
@@ -185,7 +211,7 @@ function LedgerCells({ rows, dashed = false }: { rows: NonNullable<Hunt["ledger"
             {r.label}
           </dt>
           <dd className="relative whitespace-nowrap font-serif text-[1.375rem] font-black leading-none text-[var(--l6-cream)] sm:text-[1.75rem]">
-            {r.value}
+            {r.secret ? <SecretValue hint={r.secret} /> : r.value}
             {r.note && (
                   <span className="ml-1.5 align-baseline font-serif text-[0.62em] font-semibold italic tracking-[0.01em] text-[var(--l6-gold)] sm:ml-2">{r.note}</span>
             )}

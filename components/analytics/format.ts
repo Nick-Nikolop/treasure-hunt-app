@@ -137,6 +137,18 @@ export function describeEvent(e: EventLike): { text: string; detail: string | nu
       }
     case "landing6.social":
       return { text: `Opened our ${str(p.network) ?? "social"} link`, detail: null, tone: "normal" }
+    case "crown.cta":
+      return { text: "Clicked 'Begin the hunt' on The Missing Crown page", detail: str(p.where), tone: "key" }
+    case "crown.faq":
+      return {
+        text: p.action === "close" ? "Closed a Missing Crown FAQ answer" : "Opened a Missing Crown FAQ answer",
+        detail: str(p.question),
+        tone: p.action === "close" ? "quiet" : "normal",
+      }
+    case "crown.font":
+      return { text: "Tried a font on The Missing Crown", detail: [str(p.target), str(p.font)].filter(Boolean).join(" · "), tone: "quiet" }
+    case "crown.social":
+      return { text: `Opened our ${str(p.network) ?? "social"} link from The Missing Crown`, detail: null, tone: "normal" }
     case "landing6.menu":
       return { text: p.action === "open" ? "Opened the mobile menu" : "Closed the mobile menu", detail: null, tone: "quiet" }
     case "carnival.opening":
@@ -159,6 +171,28 @@ export function describeEvent(e: EventLike): { text: string; detail: string | nu
       }
     case "carnival.notes_open":
       return { text: "Opened the carnival notebook", detail: p.where === "poster" ? "on the poster" : null, tone: "quiet" }
+    case "carnival.scroll":
+      return {
+        text:
+          p.action === "close"
+            ? "Rolled the guards scroll back up"
+            : p.action === "zoom"
+              ? "Zoomed into the guards scroll"
+              : p.action === "narrate_play"
+                ? "Played the scroll narration"
+                : p.action === "narrate_pause"
+                  ? "Paused the scroll narration"
+                  : p.action === "narrate_end"
+                    ? "Listened to the whole scroll narration"
+                    : "Opened the guards scroll",
+        detail:
+          p.action === "narrate_play" && Number(p.from) > 0
+            ? `from ${String(p.from)}s`
+            : p.action === "narrate_pause"
+              ? `at ${String(p.at)}s`
+              : null,
+        tone: p.action === "close" ? "quiet" : "normal",
+      }
     case "carnival.worksheet":
       return { text: "Filled in the cipher worksheet", detail: `${String(p.filled ?? "?")}/${String(p.total ?? "?")}`, tone: "normal" }
     case "carnival.key_check":

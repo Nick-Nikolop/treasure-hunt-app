@@ -7,7 +7,7 @@ const COLS = [
   {
     title: "Κυνήγια",
     links: [
-      { href: "/carnival-intro", label: "Καρναβάλι" },
+      { href: "/themissingcrown", label: "Το χαμένο στέμμα" },
       { href: `${HUB}#pythea`, label: "Το ταξίδι του Πυθέα" },
       { href: CHOOSER, label: "Διάλεξε κυνήγι" },
     ],

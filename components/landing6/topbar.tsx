@@ -4,13 +4,13 @@ import { AnimatePresence, motion } from "framer-motion"
 import { ArrowRight, Menu, X } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 import { EV } from "@/lib/analytics-events"
 import { track } from "@/lib/analytics-client"
 import { cn } from "@/lib/utils"
 import { CHOOSER, EASE, HUB, NAV } from "./data"
 
-export function Topbar() {
+export function Topbar({ tools }: { tools?: ReactNode }) {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
 
@@ -71,6 +71,7 @@ export function Topbar() {
           </nav>
 
           <div className="flex shrink-0 items-center gap-2">
+            {tools}
             <Link
               href={CHOOSER}
               onClick={() => track(EV.landing6Cta, { where: "topbar", target: "hunts" })}

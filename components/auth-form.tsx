@@ -2,10 +2,20 @@
 
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
-import Image from "next/image"
 import { useRouter, useSearchParams } from "next/navigation"
-import { motion } from "framer-motion"
-import { Eye, EyeOff, ArrowLeft, Loader2, MailCheck, CheckCircle2 } from "lucide-react"
+import { Eye, EyeOff, ArrowLeft, ArrowRight, Loader2, MailCheck, CheckCircle2 } from "lucide-react"
+import {
+  AuthAlert,
+  AuthFrame,
+  AuthHeading,
+  AuthIcon,
+  authInput,
+  authLabel,
+  authPrimary,
+  authQuiet,
+  authSecondary,
+  authTextLink,
+} from "@/components/auth/auth-frame"
 import { authClient } from "@/lib/auth-client"
 import { useI18n } from "@/components/pythea/language-provider"
 import { ConsentCheckbox } from "@/components/pythea/consent-checkbox"
@@ -216,194 +226,112 @@ export function AuthForm({ mode }: { mode: Mode }) {
     router.refresh()
   }
 
-  const inputClass =
-    "w-full rounded-sm border border-input bg-background/60 px-4 py-3 font-serif text-foreground placeholder:text-muted-foreground/60 focus:border-brass focus:outline-none focus:ring-1 focus:ring-brass/40 transition-colors"
-  const labelClass =
-    "font-sans text-[11px] font-bold tracking-chip text-muted-foreground"
+  const switchHref = `${isSignUp ? "/sign-in" : "/sign-up"}${
+    rawRedirect ? `?redirect=${encodeURIComponent(rawRedirect)}` : ""
+  }`
 
   return (
-    <main className="relative flex min-h-svh items-center justify-center px-5 py-16">
-      <Link
-        href="/"
-        className="absolute left-5 top-6 inline-flex items-center gap-2 font-sans text-[11px] font-bold tracking-chip text-muted-foreground transition-colors hover:text-foreground md:left-8 md:top-8"
-      >
-        <ArrowLeft className="size-3.5" />
-        {a.backHome}
-      </Link>
-
-      <motion.div
-        initial={{ opacity: 0, y: 28 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-        className="w-full max-w-md"
-      >
-        <div className="relative overflow-hidden rounded-md border border-border bg-card/70 p-7 backdrop-blur-sm md:p-9">
-          <div
-            className="pointer-events-none absolute -right-16 -top-16 size-48 rounded-full opacity-20 blur-3xl"
-            style={{ background: "radial-gradient(circle, var(--brass), transparent 70%)" }}
-            aria-hidden
+    <AuthFrame>
+      {awaitingVerification ? (
+        <div className="flex flex-col">
+          <AuthIcon icon={MailCheck} />
+          <AuthHeading title={a.verifyTitle} lead={a.verifySubtitle(email.trim())} />
+          <p className="mt-3 text-center font-sans text-sm leading-relaxed text-[var(--l6-cream)]/55">{a.verifyHint}</p>
+          {resent && (
+            <div className="mt-6">
+              <AuthAlert tone="ok">
+                <CheckCircle2 className="mr-2 inline size-4 align-[-3px]" aria-hidden="true" />
+                {a.verifyResent}
+              </AuthAlert>
+            </div>
+          )}
+          <div className="mt-8 flex flex-col gap-3">
+            <button type="button" onClick={resendVerification} disabled={resending} className={authSecondary}>
+              {resending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+              {resending ? a.verifyResending : a.verifyResendCta}
+            </button>
+            <Link href="/sign-in" className={authPrimary}>
+              {a.goToSignIn}
+              <ArrowRight className="size-4" aria-hidden="true" />
+            </Link>
+          </div>
+        </div>
+      ) : forgotSent ? (
+        <div className="flex flex-col">
+          <AuthIcon icon={MailCheck} />
+          <AuthHeading title={a.forgotSentTitle} lead={a.forgotSentSubtitle(email.trim())} />
+          <p className="mt-3 text-center font-sans text-sm leading-relaxed text-[var(--l6-cream)]/55">{a.verifyHint}</p>
+          <button
+            type="button"
+            onClick={() => {
+              setForgotMode(false)
+              setForgotSent(false)
+            }}
+            className={`${authSecondary} mt-8`}
+          >
+            <ArrowLeft className="size-4" aria-hidden="true" />
+            {a.backToSignIn}
+          </button>
+        </div>
+      ) : forgotMode ? (
+        <div className="flex flex-col">
+          <AuthHeading eyebrow={a.signInEyebrow} title={a.forgotTitle} lead={a.forgotSubtitle} />
+          <form onSubmit={requestReset} className="mt-8 flex flex-col gap-5">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="forgot-email" className={authLabel}>
+                {a.emailLabel}
+              </label>
+              <input
+                id="forgot-email"
+                name="email"
+                type="email"
+                required
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={a.emailPlaceholder}
+                className={authInput}
+              />
+            </div>
+            {error && <AuthAlert>{error}</AuthAlert>}
+            <button type="submit" disabled={loading} className={authPrimary}>
+              {loading && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+              {loading ? a.forgotSending : a.forgotSendCta}
+            </button>
+          </form>
+          <button
+            type="button"
+            onClick={() => {
+              setForgotMode(false)
+              setError(null)
+            }}
+            className={`${authQuiet} mt-7`}
+          >
+            <ArrowLeft className="size-4" aria-hidden="true" />
+            {a.backToSignIn}
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-col">
+          <AuthHeading
+            eyebrow={isSignUp ? a.signUpEyebrow : a.signInEyebrow}
+            title={isSignUp ? a.signUpTitle : a.signInTitle}
+            lead={isSignUp ? a.signUpSubtitle : a.signInSubtitle}
           />
 
-          {/* Brand mark */}
-          <div className="relative mb-7 flex items-center gap-3">
-            <Image src="/compass-icon.png" alt="" width={32} height={32} className="size-8" />
-            <span className="font-serif text-base font-extrabold leading-none tracking-tight text-foreground">
-              {a.brand}
-              <span className="block font-sans text-[10px] font-medium tracking-chip text-muted-foreground">
-                {a.brandSub}
-              </span>
-            </span>
-          </div>
-
-          {awaitingVerification ? (
-            <div className="relative">
-              <div className="mb-5 flex size-12 items-center justify-center rounded-full bg-brass/15">
-                <MailCheck className="size-6 text-brass" />
-              </div>
-              <h1 className="text-balance font-serif text-3xl font-black leading-tight text-foreground md:text-4xl">
-                {a.verifyTitle}
-              </h1>
-              <p className="mt-3 text-pretty font-serif leading-relaxed text-muted-foreground">
-                {a.verifySubtitle(email.trim())}
-              </p>
-              <p className="mt-2 font-serif text-sm leading-relaxed text-muted-foreground/80">
-                {a.verifyHint}
-              </p>
-
-              {resent && (
-                <p className="mt-5 inline-flex items-center gap-2 rounded-sm border border-brass/40 bg-brass/10 px-3 py-2 font-serif text-sm text-brass">
-                  <CheckCircle2 className="size-4" />
-                  {a.verifyResent}
-                </p>
-              )}
-
-              <button
-                type="button"
-                onClick={resendVerification}
-                disabled={resending}
-                className="mt-6 inline-flex items-center justify-center gap-2 rounded-sm border border-border px-5 py-3 font-sans text-sm font-bold tracking-chip text-foreground transition-colors hover:border-brass hover:text-brass disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                {resending && <Loader2 className="size-4 animate-spin" />}
-                {resending ? a.verifyResending : a.verifyResendCta}
-              </button>
-
-              <p className="mt-6 text-center font-serif text-sm text-muted-foreground">
-                <Link
-                  href="/sign-in"
-                  className="font-bold text-brass underline-offset-4 hover:underline"
-                >
-                  {a.goToSignIn}
-                </Link>
-              </p>
-            </div>
-          ) : forgotSent ? (
-            <div className="relative">
-              <div className="mb-5 flex size-12 items-center justify-center rounded-full bg-brass/15">
-                <MailCheck className="size-6 text-brass" />
-              </div>
-              <h1 className="text-balance font-serif text-3xl font-black leading-tight text-foreground md:text-4xl">
-                {a.forgotSentTitle}
-              </h1>
-              <p className="mt-3 text-pretty font-serif leading-relaxed text-muted-foreground">
-                {a.forgotSentSubtitle(email.trim())}
-              </p>
-              <p className="mt-2 font-serif text-sm leading-relaxed text-muted-foreground/80">
-                {a.verifyHint}
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setForgotMode(false)
-                  setForgotSent(false)
-                }}
-                className="mt-6 inline-flex items-center gap-2 font-sans text-sm font-bold tracking-chip text-brass transition-colors hover:text-brass/80"
-              >
-                <ArrowLeft className="size-4" />
-                {a.backToSignIn}
-              </button>
-            </div>
-          ) : forgotMode ? (
-            <div className="relative">
-              <span className="font-sans text-[11px] font-bold tracking-chip text-brass">
-                {a.signInEyebrow}
-              </span>
-              <h1 className="mt-2 text-balance font-serif text-3xl font-black leading-tight text-foreground md:text-4xl">
-                {a.forgotTitle}
-              </h1>
-              <p className="mt-2 text-pretty font-serif leading-relaxed text-muted-foreground">
-                {a.forgotSubtitle}
-              </p>
-              <form onSubmit={requestReset} className="mt-7 flex flex-col gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label htmlFor="forgot-email" className={labelClass}>
-                    {a.emailLabel}
-                  </label>
-                  <input
-                    id="forgot-email"
-                    name="email"
-                    type="email"
-                    required
-                    autoComplete="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder={a.emailPlaceholder}
-                    className={inputClass}
-                  />
-                </div>
-                {error && (
-                  <p
-                    role="alert"
-                    className="rounded-sm border border-destructive/40 bg-destructive/10 px-3 py-2 font-serif text-sm text-destructive"
-                  >
-                    {error}
-                  </p>
-                )}
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="mt-1 inline-flex items-center justify-center gap-2 rounded-sm bg-brass px-6 py-3.5 font-sans text-sm font-bold tracking-chip text-primary-foreground transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
-                >
-                  {loading && <Loader2 className="size-4 animate-spin" />}
-                  {loading ? a.forgotSending : a.forgotSendCta}
-                </button>
-              </form>
-              <button
-                type="button"
-                onClick={() => {
-                  setForgotMode(false)
-                  setError(null)
-                }}
-                className="mt-6 inline-flex items-center gap-2 font-sans text-sm font-bold tracking-chip text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <ArrowLeft className="size-4" />
-                {a.backToSignIn}
-              </button>
-            </div>
-          ) : (
-          <>
-          <span className="font-sans text-[11px] font-bold tracking-chip text-brass">
-            {isSignUp ? a.signUpEyebrow : a.signInEyebrow}
-          </span>
-          <h1 className="mt-2 text-balance font-serif text-3xl font-black leading-tight text-foreground md:text-4xl">
-            {isSignUp ? a.signUpTitle : a.signInTitle}
-          </h1>
-          <p className="mt-2 text-pretty font-serif leading-relaxed text-muted-foreground">
-            {isSignUp ? a.signUpSubtitle : a.signInSubtitle}
-          </p>
-
           {isSignUp && (
-            <p className="mt-4 inline-flex items-center gap-2 rounded-sm border border-brass/40 bg-brass/10 px-3 py-2 font-sans text-[11px] font-bold tracking-chip text-brass">
-              <CheckCircle2 className="size-4 shrink-0" />
+            <p className="mx-auto mt-5 inline-flex items-center gap-2 rounded-2xl text-left leading-snug border border-[var(--l6-gold)]/40 bg-[var(--l6-gold)]/10 px-4 py-2 font-sans text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--l6-gold)]">
+              <CheckCircle2 className="size-4 shrink-0" aria-hidden="true" />
               {a.signUpFree}
             </p>
           )}
 
-          <form onSubmit={handleSubmit} onFocusCapture={markStart} className="mt-7 flex flex-col gap-4">
+          <form onSubmit={handleSubmit} onFocusCapture={markStart} className="mt-8 flex flex-col gap-5">
             {isSignUp && (
               <>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="flex flex-col gap-1.5">
-                    <label htmlFor="firstName" className={labelClass}>
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="firstName" className={authLabel}>
                       {a.firstNameLabel}
                     </label>
                     <input
@@ -415,11 +343,11 @@ export function AuthForm({ mode }: { mode: Mode }) {
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
                       placeholder={a.firstNamePlaceholder}
-                      className={inputClass}
+                      className={authInput}
                     />
                   </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label htmlFor="lastName" className={labelClass}>
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="lastName" className={authLabel}>
                       {a.lastNameLabel}
                     </label>
                     <input
@@ -430,12 +358,12 @@ export function AuthForm({ mode }: { mode: Mode }) {
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
                       placeholder={a.lastNamePlaceholder}
-                      className={inputClass}
+                      className={authInput}
                     />
                   </div>
                 </div>
-                <div className="flex flex-col gap-1.5">
-                  <label htmlFor="year" className={labelClass}>
+                <div className="flex flex-col gap-2">
+                  <label htmlFor="year" className={authLabel}>
                     {a.yearLabel}
                   </label>
                   <input
@@ -449,14 +377,14 @@ export function AuthForm({ mode }: { mode: Mode }) {
                     value={year}
                     onChange={(e) => setYear(e.target.value)}
                     placeholder={a.yearPlaceholder}
-                    className={inputClass}
+                    className={authInput}
                   />
                 </div>
               </>
             )}
 
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="email" className={labelClass}>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="email" className={authLabel}>
                 {a.emailLabel}
               </label>
               <input
@@ -468,14 +396,28 @@ export function AuthForm({ mode }: { mode: Mode }) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={a.emailPlaceholder}
-                className={inputClass}
+                className={authInput}
               />
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="password" className={labelClass}>
-                {a.passwordLabel}
-              </label>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between gap-3">
+                <label htmlFor="password" className={authLabel}>
+                  {a.passwordLabel}
+                </label>
+                {!isSignUp && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setForgotMode(true)
+                      setError(null)
+                    }}
+                    className="font-sans text-xs font-semibold text-[var(--l6-gold)]/85 underline-offset-4 transition hover:text-[var(--l6-gold)] hover:underline focus-visible:outline-none focus-visible:underline"
+                  >
+                    {a.forgotPasswordCta}
+                  </button>
+                )}
+              </div>
               <div className="relative">
                 <input
                   id="password"
@@ -487,34 +429,22 @@ export function AuthForm({ mode }: { mode: Mode }) {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={isSignUp ? a.passwordPlaceholder : undefined}
-                  className={`${inputClass} pr-12`}
+                  className={`${authInput} pr-12`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
                   aria-label={showPassword ? a.hidePassword : a.showPassword}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                  className="absolute right-1.5 top-1/2 grid size-10 -translate-y-1/2 place-items-center rounded-lg text-[var(--l6-cream)]/50 transition hover:text-[var(--l6-gold)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--l6-gold)]"
                 >
-                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  {showPassword ? <EyeOff className="size-4" aria-hidden="true" /> : <Eye className="size-4" aria-hidden="true" />}
                 </button>
               </div>
-              {!isSignUp && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setForgotMode(true)
-                    setError(null)
-                  }}
-                  className="self-end font-sans text-[11px] font-bold tracking-chip text-muted-foreground transition-colors hover:text-brass"
-                >
-                  {a.forgotPasswordCta}
-                </button>
-              )}
             </div>
 
             {isSignUp && (
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="confirmPassword" className={labelClass}>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="confirmPassword" className={authLabel}>
                   {a.confirmPasswordLabel}
                 </label>
                 <input
@@ -527,72 +457,51 @@ export function AuthForm({ mode }: { mode: Mode }) {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder={a.confirmPasswordPlaceholder}
-                  className={inputClass}
+                  className={authInput}
                 />
               </div>
             )}
 
             {isSignUp && (
-              <div className="rounded-sm border border-border/60 bg-background/30 px-3.5 py-3">
+              <div className="rounded-xl border border-[var(--l6-cream)]/12 bg-[var(--l6-night)]/50 px-4 py-3.5">
                 <ConsentCheckbox id="signup-consent" checked={agreed} onChange={setAgreed} />
               </div>
             )}
 
-            {error && (
-              <p
-                role="alert"
-                className="rounded-sm border border-destructive/40 bg-destructive/10 px-3 py-2 font-serif text-sm text-destructive"
-              >
-                {error}
-              </p>
-            )}
+            {error && <AuthAlert>{error}</AuthAlert>}
 
-            <button
-              type="submit"
-              disabled={loading || (isSignUp && !agreed)}
-              className="mt-1 inline-flex items-center justify-center gap-2 rounded-sm bg-brass px-6 py-3.5 font-sans text-sm font-bold tracking-chip text-primary-foreground transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
-            >
-              {loading && <Loader2 className="size-4 animate-spin" />}
-              {loading
-                ? isSignUp
-                  ? a.signUpLoading
-                  : a.signInLoading
-                : isSignUp
-                  ? a.signUpCta
-                  : a.signInCta}
+            <button type="submit" disabled={loading || (isSignUp && !agreed)} className={`${authPrimary} mt-1`}>
+              {loading && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+              {loading ? (isSignUp ? a.signUpLoading : a.signInLoading) : isSignUp ? a.signUpCta : a.signInCta}
+              {!loading && <ArrowRight className="size-4" aria-hidden="true" />}
             </button>
           </form>
 
           {/* Only offer the switch to sign-up while registration is open; on the
               sign-in screen it would otherwise point at the closed notice. */}
           {(isSignUp || canSignUp) && (
-            <p className="mt-6 text-center font-serif text-sm text-muted-foreground">
-              {isSignUp ? `${a.haveAccount} ` : `${a.noAccount} `}
-              <Link
-                href={`${isSignUp ? "/sign-in" : "/sign-up"}${
-                  searchParams.get("redirect")
-                    ? `?redirect=${encodeURIComponent(searchParams.get("redirect")!)}`
-                    : ""
-                }`}
-                className="font-bold text-brass underline-offset-4 hover:underline"
-              >
-                {isSignUp ? a.goToSignIn : a.goToSignUp}
-              </Link>
-            </p>
+            <>
+              <div aria-hidden="true" className="my-7 flex items-center gap-4">
+                <span className="h-px flex-1 bg-[var(--l6-cream)]/10" />
+                <span className="size-1.5 rotate-45 bg-[var(--l6-gold)]/70" />
+                <span className="h-px flex-1 bg-[var(--l6-cream)]/10" />
+              </div>
+              <p className="text-center font-sans text-sm text-[var(--l6-cream)]/65">
+                {isSignUp ? `${a.haveAccount} ` : `${a.noAccount} `}
+                <Link href={switchHref} className={authTextLink}>
+                  {isSignUp ? a.goToSignIn : a.goToSignUp}
+                </Link>
+              </p>
+            </>
           )}
 
-          <p className="mt-4 text-center">
-            <Link
-              href="/terms"
-              className="font-sans text-[11px] font-bold tracking-chip text-muted-foreground/60 underline-offset-4 transition-colors hover:text-brass hover:underline"
-            >
+          <p className="mt-5 text-center">
+            <Link href="/terms" className={authQuiet}>
               {a.legalLink}
             </Link>
           </p>
-          </>
-          )}
         </div>
-      </motion.div>
-    </main>
+      )}
+    </AuthFrame>
   )
 }

@@ -17,17 +17,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
         },
       },
     },
-    {
-      url: `${SITE_URL}/guide`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8,
-      alternates: {
-        languages: {
-          "el-GR": `${SITE_URL}/guide`,
-          en: `${SITE_URL}/guide`,
-        },
-      },
-    },
+    { url: `${SITE_URL}/hunts`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.9 },
+    { url: `${SITE_URL}/themissingcrown`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.9 },
+    { url: `${SITE_URL}/terms`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
   ]
 }
