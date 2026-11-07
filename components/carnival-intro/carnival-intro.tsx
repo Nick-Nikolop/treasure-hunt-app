@@ -11,6 +11,7 @@ import { track } from "@/lib/analytics-client"
 import { KEY_LIMIT, type KeyQuota } from "@/lib/carnival-intro/limits"
 import { CIPHER_LETTERS, UV_TOTAL } from "@/lib/carnival-intro/poster"
 import { AuthGate } from "./auth-gate"
+import { ResetConfirm } from "./reset-confirm"
 import { CipherBoard } from "./cipher-board"
 import { buzz } from "./haptics"
 import { KeyCheck, type KeyState } from "./key-check"
@@ -150,6 +151,7 @@ export function CarnivalIntro({ account }: { account: CarnivalAccount | null }) 
   const [gate, setGate] = useState<"key" | "phrase" | null>(null)
   const syncedNotes = useRef<string | null>(null)
   const router = useRouter()
+  const [resetOpen, setResetOpen] = useState(false)
   const [viewer, setViewer] = useState(false)
   const [notesOpen, setNotesOpen] = useState(false)
   const [posterSeen, setPosterSeen] = useState(false)
@@ -245,7 +247,7 @@ export function CarnivalIntro({ account }: { account: CarnivalAccount | null }) 
   }
 
   const reset = () => {
-    if (!window.confirm("Θέλεις να σβήσεις σημειώσεις, γράμματα, κλειδί και μήνυμα και να ξεκινήσεις από την αρχή;")) return
+    setResetOpen(false)
     setSaved({ ...EMPTY, guesses: blankGuesses() })
     if (!account) {
       track(EV.carnivalReset, { cooldownReset: false })
@@ -434,7 +436,7 @@ export function CarnivalIntro({ account }: { account: CarnivalAccount | null }) 
           <p className="font-sans text-sm text-[var(--ci-cream)]/45">The Hunt × Καλαματιανό Καρναβάλι</p>
           <button
             type="button"
-            onClick={reset}
+            onClick={() => setResetOpen(true)}
             className="inline-flex items-center gap-2 font-sans text-sm font-bold text-[var(--ci-cream)]/45 transition hover:text-[var(--ci-cream)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ci-gold)]"
           >
             <RotateCcw className="size-3.5" aria-hidden="true" />
@@ -473,6 +475,7 @@ export function CarnivalIntro({ account }: { account: CarnivalAccount | null }) 
       <AnimatePresence>{notesOpen && saved && !viewer && <Notebook value={saved.notes} onChange={setNotes} synced={!!account} onClose={() => setNotesOpen(false)} />}</AnimatePresence>
 
       <AnimatePresence>{gate && <AuthGate step={gate} onClose={() => setGate(null)} />}</AnimatePresence>
+      <AnimatePresence>{resetOpen && <ResetConfirm onConfirm={reset} onClose={() => setResetOpen(false)} />}</AnimatePresence>
     </div>
   )
 }

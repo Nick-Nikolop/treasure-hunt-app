@@ -177,6 +177,12 @@ export function describeEvent(e: EventLike): { text: string; detail: string | nu
             : `attempt ${String(p.attempt ?? "?")}`,
         tone: p.result === "correct" ? "key" : "normal",
       }
+    case "carnival.reset_prompt":
+      return {
+        text: p.action === "cancel" ? "Kept the carnival progress (cancelled start over)" : "Opened the carnival start-over popup",
+        detail: null,
+        tone: "quiet",
+      }
     case "carnival.key_gate":
       return {
         text:

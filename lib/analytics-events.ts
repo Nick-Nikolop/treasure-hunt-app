@@ -42,6 +42,7 @@ export const EV = {
   carnivalNotesOpen: "carnival.notes_open", // props: { where: "poster" | "page" }
   carnivalWorksheet: "carnival.worksheet", // props: { filled, total } (never the letters)
   carnivalKeyCheck: "carnival.key_check", // props: { result: "correct" | "close" | "wrong" | "unset" | "cooldown", attempt, remaining }
+  carnivalResetPrompt: "carnival.reset_prompt", // "start over" confirm popup; props: { action: "shown" | "cancel" }
   carnivalKeyGate: "carnival.key_gate", // signed-out sign-in popup; props: { action: "shown" | "sign_up" | "sign_in" | "dismiss", step: "key" | "phrase" }
   carnivalPhraseCheck: "carnival.phrase_check", // props: { result: "correct" | "wrong" | "locked" | "unset" | "auth", attempt, filled }
   carnivalReset: "carnival.reset",
