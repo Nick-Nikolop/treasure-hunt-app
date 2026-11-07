@@ -7,8 +7,19 @@ import { EASE } from "./palette"
 
 export const NOTES_MAX = 4000
 
-/** Lined field notebook. Text stays on this device only and is never tracked. */
-export function Notebook({ value, onChange, onClose }: { value: string; onChange: (v: string) => void; onClose: () => void }) {
+/** Lined field notebook. Saved to the account when signed in, otherwise on this device. Never tracked. */
+export function Notebook({
+  value,
+  onChange,
+  onClose,
+  synced = false,
+}: {
+  value: string
+  onChange: (v: string) => void
+  onClose: () => void
+  /** True when the notes are saved to the player's account. */
+  synced?: boolean
+}) {
   const ref = useRef<HTMLTextAreaElement>(null)
   const drag = useDragControls()
 
@@ -74,7 +85,9 @@ export function Notebook({ value, onChange, onClose }: { value: string; onChange
           </span>
           <div className="flex flex-col">
             <p className="font-serif text-lg font-bold leading-tight">Σημειωματάριο</p>
-            <p className="font-sans text-xs text-[var(--ci-night)]/55">Μένει μόνο σε αυτή τη συσκευή</p>
+            <p className="font-sans text-xs text-[var(--ci-night)]/55">
+              {synced ? "Αποθηκεύεται στον λογαριασμό σου" : "Μένει μόνο σε αυτή τη συσκευή"}
+            </p>
           </div>
         </div>
         <button

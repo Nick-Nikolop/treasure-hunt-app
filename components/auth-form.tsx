@@ -13,6 +13,7 @@ import { track, trackTiming } from "@/lib/analytics-client"
 import { EV } from "@/lib/analytics-events"
 import { TERMS_VERSION } from "@/lib/legal"
 import { REGISTRATION_OPEN } from "@/lib/registration"
+import { isCarnivalPath } from "@/lib/carnival-intro/limits"
 
 type Mode = "sign-in" | "sign-up"
 
@@ -22,6 +23,12 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const { t } = useI18n()
   const a = t.auth
   const isSignUp = mode === "sign-up"
+  // Honor a ?redirect= target (e.g. an invite link), but only allow internal
+  // paths to avoid open-redirects. Default home.
+  const rawRedirect = searchParams.get("redirect")
+  const dest = rawRedirect && rawRedirect.startsWith("/") && !rawRedirect.startsWith("//") ? rawRedirect : "/"
+  // The carnival puzzle keeps taking new players while general sign-ups are closed.
+  const canSignUp = REGISTRATION_OPEN || isCarnivalPath(dest)
 
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
@@ -101,7 +108,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
   async function resendVerification() {
     setResending(true)
     setResent(false)
-    await authClient.sendVerificationEmail({ email: email.trim(), callbackURL: "/" })
+    await authClient.sendVerificationEmail({ email: email.trim(), callbackURL: dest })
     setResending(false)
     setResent(true)
     track(EV.verifyResent, { mode: trackingMode }, { category: "auth" })
@@ -169,6 +176,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
         lastName: lastName.trim() || undefined,
         yearOfBirth,
         termsVersion: TERMS_VERSION,
+        callbackURL: dest,
       })
       setLoading(false)
       if (error) {
@@ -204,10 +212,6 @@ export function AuthForm({ mode }: { mode: Mode }) {
       trackTiming(EV.loginSuccess, fillDuration(), undefined, "auth")
     }
 
-    // Honor a ?redirect= target (e.g. an invite link), but only allow internal
-    // paths to avoid open-redirects. Default home.
-    const raw = searchParams.get("redirect")
-    const dest = raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : "/"
     router.push(dest)
     router.refresh()
   }
@@ -561,7 +565,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
 
           {/* Only offer the switch to sign-up while registration is open; on the
               sign-in screen it would otherwise point at the closed notice. */}
-          {(isSignUp || REGISTRATION_OPEN) && (
+          {(isSignUp || canSignUp) && (
             <p className="mt-6 text-center font-serif text-sm text-muted-foreground">
               {isSignUp ? `${a.haveAccount} ` : `${a.noAccount} `}
               <Link

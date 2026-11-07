@@ -41,8 +41,9 @@ export const EV = {
   carnivalPosterClose: "carnival.poster_close", // durationMs; props: { uv, zoomed }
   carnivalNotesOpen: "carnival.notes_open", // props: { where: "poster" | "page" }
   carnivalWorksheet: "carnival.worksheet", // props: { filled, total } (never the letters)
-  carnivalKeyCheck: "carnival.key_check", // props: { result: "correct" | "close" | "wrong" | "unset", attempt }
-  carnivalPhraseCheck: "carnival.phrase_check", // props: { result: "correct" | "wrong" | "locked" | "unset", attempt, filled }
+  carnivalKeyCheck: "carnival.key_check", // props: { result: "correct" | "close" | "wrong" | "unset" | "cooldown", attempt, remaining }
+  carnivalKeyGate: "carnival.key_gate", // signed-out sign-in popup; props: { action: "shown" | "sign_up" | "sign_in" | "dismiss", step: "key" | "phrase" }
+  carnivalPhraseCheck: "carnival.phrase_check", // props: { result: "correct" | "wrong" | "locked" | "unset" | "auth", attempt, filled }
   carnivalReset: "carnival.reset",
   carnivalTip: "carnival.tip", // poster viewer tip box; props: { action: "open" | "close", uv }
   carnivalDock: "carnival.dock", // mobile action bar; props: { action: "poster" | "key" | "decrypt" | "notes", step }

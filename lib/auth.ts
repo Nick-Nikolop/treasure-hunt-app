@@ -4,6 +4,7 @@ import { Pool } from "pg"
 import { logActivity } from "@/lib/activity"
 import { anonIdFromCookieHeader, linkVisitor } from "@/lib/journey"
 import { REGISTRATION_OPEN } from "@/lib/registration"
+import { isCarnivalPath } from "@/lib/carnival-intro/limits"
 
 // Relay a transactional email to the Google Apps Script web app. The script
 // routes by `type` ("registration" -> Registration Logs sheet, "password_reset"
@@ -94,12 +95,15 @@ export const auth = betterAuth({
         // Stamp the consent timestamp server-side. If the client sent a
         // termsVersion (it always does from our forms), record when we saw it
         // so the acceptance time can't be spoofed from the browser.
-        before: async (newUser) => {
+        before: async (newUser, ctx) => {
           // Registration is closed once the hunt starts. This is the REAL gate:
           // hiding the form only stops the honest path, while this rejects any
           // direct POST to the sign-up endpoint too. Throwing here aborts the
           // insert, so no half-created account is left behind.
-          if (!REGISTRATION_OPEN) {
+          // The carnival puzzle still takes new players: sign-ups started from it
+          // carry its page as the verification callback.
+          const callbackURL = (ctx?.body as { callbackURL?: unknown } | undefined)?.callbackURL
+          if (!REGISTRATION_OPEN && !isCarnivalPath(callbackURL)) {
             throw new APIError("FORBIDDEN", {
               code: "REGISTRATION_CLOSED",
               message: "Registration is closed: the hunt has already begun.",

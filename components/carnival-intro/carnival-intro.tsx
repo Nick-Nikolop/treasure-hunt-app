@@ -4,11 +4,14 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
 import { KeyRound, Maximize2, NotebookPen, RotateCcw } from "lucide-react"
 import Image from "next/image"
 import { useEffect, useRef, useState, type ReactNode } from "react"
+import { useRouter } from "next/navigation"
+import { resetCarnivalCooldown, saveCarnivalNotes } from "@/app/carnival-intro/actions"
 import { EV } from "@/lib/analytics-events"
 import { track } from "@/lib/analytics-client"
+import { KEY_LIMIT, type KeyQuota } from "@/lib/carnival-intro/limits"
 import { CIPHER_LETTERS, UV_TOTAL } from "@/lib/carnival-intro/poster"
+import { AuthGate } from "./auth-gate"
 import { CipherBoard } from "./cipher-board"
-import { CinematicOpening } from "./cinematic-opening"
 import { buzz } from "./haptics"
 import { KeyCheck, type KeyState } from "./key-check"
 import { MobileDock, type DockStep } from "./mobile-dock"
@@ -94,15 +97,29 @@ function Section({ id, kicker, title, lead, children }: { id: string; kicker: st
   )
 }
 
-/** Holds its content hidden until the cinematic opening ends, then rises in on a shared stagger. */
-function Reveal({ ready, order, className, children, y = 22 }: { ready: boolean; order: number; className?: string; children: ReactNode; y?: number }) {
+/** Page-load entrance: each block rises out of a soft blur on a shared stagger. */
+function Reveal({
+  order,
+  className,
+  children,
+  y = 22,
+  scale = 1,
+  rotate = 0,
+}: {
+  order: number
+  className?: string
+  children: ReactNode
+  y?: number
+  scale?: number
+  rotate?: number
+}) {
   const reduce = useReducedMotion()
   return (
     <motion.div
       className={className}
-      initial={false}
-      animate={ready ? { opacity: 1, y: 0, filter: "blur(0px)" } : { opacity: 0, y: reduce ? 0 : y, filter: reduce ? "blur(0px)" : "blur(6px)" }}
-      transition={{ duration: reduce ? 0.2 : 0.9, delay: ready && !reduce ? 0.12 + order * 0.11 : 0, ease: EASE }}
+      initial={reduce ? { opacity: 0 } : { opacity: 0, y, scale, rotate, filter: "blur(8px)" }}
+      animate={{ opacity: 1, y: 0, scale: 1, rotate: 0, filter: "blur(0px)" }}
+      transition={{ duration: reduce ? 0.3 : 1, delay: reduce ? 0 : 0.15 + order * 0.12, ease: EASE }}
     >
       {children}
     </motion.div>
@@ -123,9 +140,16 @@ function Divider() {
   )
 }
 
-export function CarnivalIntro() {
-  const [opening, setOpening] = useState(true)
+export interface CarnivalAccount {
+  quota: KeyQuota
+  notes: string
+}
+
+export function CarnivalIntro({ account }: { account: CarnivalAccount | null }) {
   const [saved, setSaved] = useState<Saved | null>(null)
+  const [gate, setGate] = useState<"key" | "phrase" | null>(null)
+  const syncedNotes = useRef<string | null>(null)
+  const router = useRouter()
   const [viewer, setViewer] = useState(false)
   const [notesOpen, setNotesOpen] = useState(false)
   const [posterSeen, setPosterSeen] = useState(false)
@@ -143,25 +167,36 @@ export function CarnivalIntro() {
   }, [saved, keySolved])
 
   useEffect(() => {
-    setSaved(load())
-  }, [])
+    const local = load()
+    if (account) {
+      // The account copy wins; notes written before signing in move into the account once.
+      syncedNotes.current = account.notes
+      if (account.notes) local.notes = account.notes
+    }
+    setSaved(local)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const notes = saved?.notes
+  useEffect(() => {
+    if (!account || notes === undefined || notes === syncedNotes.current) return
+    const id = window.setTimeout(() => {
+      syncedNotes.current = notes
+      saveCarnivalNotes(notes).catch(() => {
+        syncedNotes.current = null
+      })
+    }, 800)
+    return () => window.clearTimeout(id)
+  }, [account, notes])
 
   useEffect(() => {
     if (!saved) return
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(saved))
+      // Signed-in notes live in the account, so they are not left behind on a shared device.
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(account ? { ...saved, notes: "" } : saved))
     } catch {
       // Private mode or full storage: progress just won't survive a refresh.
     }
   }, [saved])
-
-  useEffect(() => {
-    if (viewer) return
-    document.documentElement.style.overflow = opening ? "hidden" : ""
-    return () => {
-      document.documentElement.style.overflow = ""
-    }
-  }, [opening, viewer])
 
   useEffect(() => {
     const el = ctaRef.current
@@ -211,8 +246,17 @@ export function CarnivalIntro() {
 
   const reset = () => {
     if (!window.confirm("Θέλεις να σβήσεις σημειώσεις, γράμματα, κλειδί και μήνυμα και να ξεκινήσεις από την αρχή;")) return
-    track(EV.carnivalReset)
     setSaved({ ...EMPTY, guesses: blankGuesses() })
+    if (!account) {
+      track(EV.carnivalReset, { cooldownReset: false })
+      return
+    }
+    resetCarnivalCooldown()
+      .then((cleared) => {
+        track(EV.carnivalReset, { cooldownReset: cleared })
+        if (cleared) router.refresh()
+      })
+      .catch(() => track(EV.carnivalReset, { cooldownReset: false }))
   }
 
   const setNotes = (notes: string) => setSaved((s) => (s ? { ...s, notes } : s))
@@ -231,10 +275,8 @@ export function CarnivalIntro() {
         }}
       />
 
-      <AnimatePresence>{opening && <CinematicOpening onDone={() => setOpening(false)} />}</AnimatePresence>
-
-      <div className="relative" inert={opening || viewer}>
-        <Reveal ready={!opening} order={0} y={-10}>
+      <div className="relative" inert={viewer}>
+        <Reveal order={0} y={-10}>
         <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-5 py-5 sm:px-8">
           <div className="flex items-center gap-3" aria-label="The Hunt × Καλαματιανό Καρναβάλι">
             <Image src="/carnival/logo.webp" alt="The Hunt" width={96} height={96} priority className="size-11 object-contain sm:size-12" />
@@ -260,14 +302,14 @@ export function CarnivalIntro() {
             className="grid items-center gap-8 pt-2 sm:gap-12 sm:pt-6 lg:min-h-[calc(100svh-6rem)] lg:grid-cols-[1.1fr_1fr] lg:grid-rows-[auto_auto] lg:gap-x-10 lg:gap-y-7 lg:pt-0"
           >
             <div className="flex flex-col items-center gap-4 text-center lg:items-start lg:self-end lg:text-left">
-              <Reveal ready={!opening} order={1}>
+              <Reveal order={1}>
               <p
                 className="font-sans text-[11px] font-bold uppercase tracking-[0.32em] text-[var(--ci-gold)] sm:text-xs sm:tracking-[0.4em]"
               >
                 Καλαματιανό Καρναβάλι · The Hunt
               </p>
               </Reveal>
-              <Reveal ready={!opening} order={2} y={30}>
+              <Reveal order={2} y={30}>
               <h1
                 id="ci-title"
                 className="max-w-[16ch] text-balance font-sans text-[2rem] font-black uppercase leading-[1] tracking-tight text-[var(--ci-cream)] sm:text-5xl lg:text-[clamp(2.75rem,4.6vw,3.75rem)] lg:leading-[0.95]"
@@ -277,12 +319,12 @@ export function CarnivalIntro() {
               </Reveal>
             </div>
 
-            <Reveal ready={!opening} order={3} y={40} className="flex justify-center lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:justify-end lg:pr-10">
+            <Reveal order={3} y={48} scale={0.92} rotate={-3} className="flex justify-center lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:justify-end lg:pr-10">
               <PosterStand onOpen={openPoster} />
             </Reveal>
 
             <div className="flex flex-col items-stretch gap-7 lg:items-start lg:self-start">
-            <Reveal ready={!opening} order={4} className="mx-auto flex max-w-[48ch] flex-col gap-4 text-center font-sans text-[15px] leading-relaxed text-[var(--ci-cream)]/75 sm:text-base lg:mx-0 lg:text-lg lg:text-left">
+            <Reveal order={4} className="mx-auto flex max-w-[48ch] flex-col gap-4 text-center font-sans text-[15px] leading-relaxed text-[var(--ci-cream)]/75 sm:text-base lg:mx-0 lg:text-lg lg:text-left">
               <p className="text-pretty">
                 Η αφίσα του Καρναβαλιού κρύβει κάτι που το μάτι δεν βλέπει. Στο κανονικό φως είναι απλώς μια αφίσα.
               </p>
@@ -294,7 +336,7 @@ export function CarnivalIntro() {
               </p>
               <p className="text-pretty">Ό,τι άλλο χρειάζεσαι υπάρχει ήδη εκεί έξω. Κανείς δεν θα σου πει πού.</p>
             </Reveal>
-              <Reveal ready={!opening} order={5}>
+              <Reveal order={5}>
               <div ref={ctaRef} className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                 <button
                   type="button"
@@ -336,10 +378,21 @@ export function CarnivalIntro() {
             id="ci-lock"
             kicker="Η κλειδαριά"
             title="Βρήκες το κλειδί;"
-            lead={<p>Γράψε το και δες αν ταιριάζει. Μπορείς να δοκιμάσεις όσες φορές θέλεις.</p>}
+            lead={<p>Γράψε το και δες αν ταιριάζει.{" "}
+              <span className="underline decoration-[var(--ci-gold)] decoration-2 underline-offset-4">
+                Έχεις {KEY_LIMIT} δοκιμές κάθε 4 ώρες,
+              </span>{" "}
+              οπότε σκέψου καλά πριν γράψεις.</p>}
           >
             <div className="w-full max-w-2xl">
-              {saved && <KeyCheck state={saved.key} onChange={(key) => setSaved((s) => (s ? { ...s, key } : s))} />}
+              {saved && (
+                <KeyCheck
+                  state={saved.key}
+                  onChange={(key) => setSaved((s) => (s ? { ...s, key } : s))}
+                  quota={account?.quota ?? null}
+                  onAuthNeeded={() => setGate("key")}
+                />
+              )}
             </div>
           </Section>
 
@@ -354,7 +407,7 @@ export function CarnivalIntro() {
                   saved.phrase.solved ? (
                     <p>Αυτό ήταν το μήνυμα της αφίσας.</p>
                   ) : (
-                    <p>Γράψε κάτω από κάθε γράμμα αυτό που βρήκες. Ό,τι γράφεις μένει μόνο σε αυτή τη συσκευή.</p>
+                    <p>Γράψε κάτω από κάθε γράμμα αυτό που βρήκες.</p>
                   )
                 }
               >
@@ -370,6 +423,7 @@ export function CarnivalIntro() {
                     setSaved((s) => (s ? { ...s, key: { ...s.key, solved: false, value: undefined } } : s))
                     document.getElementById("ci-lock")?.scrollIntoView({ behavior: "smooth", block: "center" })
                   }}
+                  onAuthNeeded={() => setGate("phrase")}
                 />
               </Section>
             </>
@@ -391,12 +445,12 @@ export function CarnivalIntro() {
 
       <AnimatePresence>
         {viewer && saved && (
-          <PosterViewer found={saved.found} onFound={onFound} notes={saved.notes} onNotes={setNotes} onClose={() => setViewer(false)} />
+          <PosterViewer found={saved.found} onFound={onFound} notes={saved.notes} onNotes={setNotes} notesSynced={!!account} onClose={() => setViewer(false)} />
         )}
       </AnimatePresence>
 
       <MobileDock
-        visible={pastHero && !opening && !viewer && !notesOpen && !!saved}
+        visible={pastHero && !viewer && !notesOpen && !!saved}
         step={step}
         onPoster={() => {
           track(EV.carnivalDock, { action: "poster", step })
@@ -416,7 +470,9 @@ export function CarnivalIntro() {
         }}
       />
 
-      <AnimatePresence>{notesOpen && saved && !viewer && <Notebook value={saved.notes} onChange={setNotes} onClose={() => setNotesOpen(false)} />}</AnimatePresence>
+      <AnimatePresence>{notesOpen && saved && !viewer && <Notebook value={saved.notes} onChange={setNotes} synced={!!account} onClose={() => setNotesOpen(false)} />}</AnimatePresence>
+
+      <AnimatePresence>{gate && <AuthGate step={gate} onClose={() => setGate(null)} />}</AnimatePresence>
     </div>
   )
 }

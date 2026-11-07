@@ -168,9 +168,27 @@ export function describeEvent(e: EventLike): { text: string; detail: string | nu
             ? "Found the carnival decryption key"
             : p.result === "close"
               ? "Had the right key letters in the wrong order"
-              : "Tried a wrong carnival key",
-        detail: `attempt ${String(p.attempt ?? "?")}`,
+              : p.result === "cooldown"
+                ? "Hit the 5-keys-per-4-hours limit"
+                : "Tried a wrong carnival key",
+        detail:
+          typeof p.remaining === "number"
+            ? `attempt ${String(p.attempt ?? "?")} · ${p.remaining} left`
+            : `attempt ${String(p.attempt ?? "?")}`,
         tone: p.result === "correct" ? "key" : "normal",
+      }
+    case "carnival.key_gate":
+      return {
+        text:
+          p.action === "sign_up"
+            ? "Chose to sign up from the carnival key popup"
+            : p.action === "sign_in"
+              ? "Chose to sign in from the carnival key popup"
+              : p.action === "dismiss"
+                ? "Closed the carnival sign-in popup"
+                : "Was asked to sign in to check a carnival key",
+        detail: p.step === "phrase" ? "at the final phrase" : "at the key lock",
+        tone: p.action === "shown" || p.action === "dismiss" ? "quiet" : "normal",
       }
     case "carnival.phrase_check":
       return {
@@ -179,7 +197,11 @@ export function describeEvent(e: EventLike): { text: string; detail: string | nu
         tone: p.result === "correct" ? "key" : "normal",
       }
     case "carnival.reset":
-      return { text: "Reset the carnival puzzle", detail: null, tone: "quiet" }
+      return {
+        text: "Reset the carnival puzzle",
+        detail: p.cooldownReset === true ? "admin · key cooldown cleared" : null,
+        tone: "quiet",
+      }
     case "carnival.tip":
       return {
         text: p.action === "open" ? "Re-opened the poster tip" : "Closed the poster tip",

@@ -25,7 +25,5 @@ export const UV_MARKS: { code: string; sub: string; x: number; y: number; rot: n
   { code: "K3", sub: "1", x: 0.66, y: 0.9, rot: 5, size: 5.6, ink: 0.92 },
 ]
 
-/** A compass drawn in UV ink. */
-export const UV_COMPASS = { x: 0.84, y: 0.115, size: 13, rot: -6 }
 
-export const UV_TOTAL = UV_MARKS.length + 1
+export const UV_TOTAL = UV_MARKS.length

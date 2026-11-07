@@ -324,22 +324,17 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
   const reduce = useReducedMotion()
   const done = hunt.status === "done"
   const live = hunt.status === "live"
-  const [hovered, setHovered] = useState(false)
-  const [tapped, setTapped] = useState(false)
   const surface = done ? "var(--l6-ash)" : "color-mix(in srgb, var(--l6-wine) 68%, var(--l6-night))"
   const desktop = useIsDesktop()
   const cardRef = useRef<HTMLElement>(null)
   const inView = useInView(cardRef, { once: true, margin: desktop ? "-80px" : "0px 0px -18% 0px" })
-  // Phones replace the status badge with the seal, always visible once the photo has opened.
-  const stampable = !!hunt.stamp && (done || !!hunt.upcoming)
-  // Phones: the seal lands 5s after the card comes into view, so the photo is seen clean first.
-  const [mobileStampDue, setMobileStampDue] = useState(false)
+  // The seal lands on its own 2s after the card comes into view (desktop and phones), so the photo is seen clean first.
+  const [stamped, setStamped] = useState(false)
   useEffect(() => {
-    if (desktop || !inView || !hunt.stamp) return
-    const t = window.setTimeout(() => setMobileStampDue(true), 5000)
+    if (!inView || !hunt.stamp) return
+    const t = window.setTimeout(() => setStamped(true), 2000)
     return () => window.clearTimeout(t)
-  }, [desktop, inView, hunt.stamp])
-  const stamped = !!hunt.stamp && (desktop ? stampable && (hovered || tapped) : mobileStampDue)
+  }, [inView, hunt.stamp])
 
   // Desktop: the whole text column cascades in together. Phones: whatever is on screen while the
   // image curtain opens cascades in order after it; anything scrolled to later reveals right away.
@@ -375,10 +370,6 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
       ref={cardRef}
       id={hunt.id}
       aria-labelledby={`${hunt.id}-title`}
-      onPointerEnter={(e) => e.pointerType === "mouse" && setHovered(true)}
-      onPointerLeave={(e) => e.pointerType === "mouse" && setHovered(false)}
-      onFocus={() => stampable && setHovered(true)}
-      onBlur={(e) => !e.currentTarget.contains(e.relatedTarget as Node) && setHovered(false)}
       className={cn(
         "group relative grid scroll-mt-32 overflow-hidden border border-[var(--l6-gold)]/35 shadow-[0_40px_90px_-40px_rgba(0,0,0,0.9)] lg:min-h-[36rem] lg:grid-cols-[1.1fr_1fr]",
         flip && "lg:grid-cols-[1fr_1.1fr]",
@@ -414,11 +405,7 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
           animate={inView ? { scale: 1 } : undefined}
           transition={{ duration: reduce ? 0 : desktop ? 1.8 : 1.6, delay: 0.2, ease: EASE }}
         >
-        <motion.div
-          className="absolute inset-0"
-          animate={stamped && !reduce ? { scale: [1.06, 1.02, 1.04] } : { scale: 1 }}
-          transition={{ duration: 0.45, ease: "easeOut" }}
-        >
+        <motion.div className="absolute inset-0">
           <Image
             src={hunt.image}
             alt={hunt.imageAlt}
@@ -427,8 +414,7 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
             fetchPriority="high"
             sizes="(min-width: 1024px) 55vw, 100vw"
             className={cn(
-              "object-cover transition-[transform,filter] duration-[1400ms] ease-out",
-              live && "group-hover:scale-105",
+              "object-cover transition-[filter] duration-[1400ms] ease-out",
               stamped && "brightness-[0.55] saturate-[0.85]",
             )}
           />
@@ -461,23 +447,9 @@ export function HuntBanner({ hunt, flip = false }: { hunt: Hunt; flip?: boolean 
 
         <EvidenceTag hunt={hunt} flip={flip} inView={inView} hidden={stamped} />
 
-        {hunt.stamp && (stampable || !desktop) && (
-          <span className="pointer-events-none absolute inset-x-0 top-0 h-56 sm:h-72 lg:pointer-events-auto lg:inset-0 lg:h-auto">
+        {hunt.stamp && (
+          <span className="pointer-events-none absolute inset-x-0 top-0 h-56 sm:h-72 lg:inset-0 lg:h-auto">
             <Stamp hunt={hunt} on={stamped} delay={0} />
-          </span>
-        )}
-        {stampable && desktop && (
-          <span className="absolute inset-0">
-            <button
-              type="button"
-              aria-pressed={tapped}
-              aria-label={tapped ? "Κρύψε τη σφραγίδα" : "Δείξε τη σφραγίδα της υπόθεσης"}
-              onClick={() => {
-                setTapped((t) => !t)
-                track(EV.landing6Hunt, { hunt: hunt.id, where: "banner", action: tapped ? "unstamp" : "stamp" })
-              }}
-              className="absolute inset-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--l6-gold)] lg:cursor-default"
-            />
           </span>
         )}
       </motion.div>

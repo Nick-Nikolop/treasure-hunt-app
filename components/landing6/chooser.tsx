@@ -133,7 +133,7 @@ function HuntCard({ hunt, onActive }: { hunt: Hunt; onActive: () => void }) {
         priority
         sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
         className={cn(
-          "object-cover transition-[transform,filter] duration-[1200ms] ease-out group-hover:scale-105",
+          "object-cover transition-[filter] duration-[1200ms] ease-out",
           live && "object-top",
           done && "grayscale brightness-75 group-hover:grayscale-[0.2] group-focus-visible:grayscale-[0.2]",
           soon && "scale-110 blur-md grayscale brightness-50",

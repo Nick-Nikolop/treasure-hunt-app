@@ -35,6 +35,7 @@ export function PhraseCheck({
   state,
   onChange,
   onLocked,
+  onAuthNeeded,
 }: {
   guesses: string[]
   keyValue: string
@@ -42,6 +43,8 @@ export function PhraseCheck({
   onChange: (next: PhraseState) => void
   /** The server no longer accepts the saved key: send the player back to the lock. */
   onLocked: () => void
+  /** The player is signed out: ask them to sign in before checking. */
+  onAuthNeeded: () => void
 }) {
   const reduce = useReducedMotion()
   const [notice, setNotice] = useState<"wrong" | "unset" | null>(null)
@@ -66,6 +69,10 @@ export function PhraseCheck({
       }
       if (verdict === "locked") {
         onLocked()
+        return
+      }
+      if (verdict === "auth") {
+        onAuthNeeded()
         return
       }
       onChange({ ...state, attempts: attempt })

@@ -7,7 +7,7 @@ import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as R
 import { createPortal } from "react-dom"
 import { EV } from "@/lib/analytics-events"
 import { track } from "@/lib/analytics-client"
-import { UV_COMPASS, UV_MARKS } from "@/lib/carnival-intro/poster"
+import { UV_MARKS } from "@/lib/carnival-intro/poster"
 import { cn } from "@/lib/utils"
 import { Notebook } from "./notebook"
 import { EASE, PALETTE } from "./palette"
@@ -17,7 +17,6 @@ const ASPECT = 0.4
 const PAD = 28
 const Z_MIN = 1
 const Z_MAX = 8
-const COMPASS_INDEX = UV_MARKS.length
 
 const clamp = (v: number, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, v))
 
@@ -27,21 +26,6 @@ const INK_GLOW =
 
 /** One static filter on the single poster image: cheap on phones (no masks, blend layers or per-frame repaints). */
 const UV_FILTER = "grayscale(1) brightness(0.42) contrast(1.3) sepia(1) hue-rotate(215deg) saturate(3.2)"
-
-function UvCompass() {
-  return (
-    <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeLinecap="round" className="size-full" aria-hidden="true">
-      <circle cx="32" cy="34" r="22" strokeWidth="2.2" />
-      <circle cx="32" cy="34" r="2.4" fill="currentColor" stroke="none" />
-      <path d="M32 9v5M32 54v5M7 34h5M52 34h5" strokeWidth="2.2" />
-      <path d="M32 34 46 20" strokeWidth="3" />
-      <path d="M40 19.5 47 19l-.5 7" strokeWidth="3" strokeLinejoin="round" />
-      <text x="32" y="7.5" textAnchor="middle" fontSize="9" fontWeight="700" fill="currentColor" stroke="none" fontFamily="sans-serif">
-        N
-      </text>
-    </svg>
-  )
-}
 
 function UvInk() {
   return (
@@ -63,19 +47,6 @@ function UvInk() {
           <sub className="ml-[0.06em] text-[0.66em] [vertical-align:-0.22em]">({m.sub})</sub>
         </span>
       ))}
-      <span
-        className="absolute text-[#e6fbff]"
-        style={{
-          left: `${UV_COMPASS.x * 100}%`,
-          top: `${UV_COMPASS.y * 100}%`,
-          width: `${UV_COMPASS.size}cqw`,
-          height: `${UV_COMPASS.size}cqw`,
-          transform: `translate(-50%, -50%) rotate(${UV_COMPASS.rot}deg)`,
-          filter: "drop-shadow(0 0 1px #fff) drop-shadow(0 0 4px rgba(170,240,255,0.95)) drop-shadow(0 0 12px rgba(70,160,255,0.7))",
-        }}
-      >
-        <UvCompass />
-      </span>
     </div>
   )
 }
@@ -118,12 +89,14 @@ export function PosterViewer({
   onFound,
   notes,
   onNotes,
+  notesSynced = false,
   onClose,
 }: {
   found: number[]
   onFound: (index: number) => void
   notes: string
   onNotes: (v: string) => void
+  notesSynced?: boolean
   onClose: () => void
 }) {
   const reduce = useReducedMotion()
@@ -274,7 +247,7 @@ export function PosterViewer({
   // The UV light now covers the whole poster, so switching it on reveals every mark at once.
   useEffect(() => {
     if (!uv) return
-    for (let i = 0; i <= COMPASS_INDEX; i++) {
+    for (let i = 0; i < UV_MARKS.length; i++) {
       if (reported.current.has(i)) continue
       reported.current.add(i)
       onFoundRef.current(i)
@@ -573,7 +546,7 @@ export function PosterViewer({
         </div>
       </div>
 
-      <AnimatePresence>{notesOpen && <Notebook value={notes} onChange={onNotes} onClose={() => setNotesOpen(false)} />}</AnimatePresence>
+      <AnimatePresence>{notesOpen && <Notebook value={notes} onChange={onNotes} synced={notesSynced} onClose={() => setNotesOpen(false)} />}</AnimatePresence>
     </motion.div>,
     document.body,
   )
