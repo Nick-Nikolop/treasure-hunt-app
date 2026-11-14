@@ -86,6 +86,21 @@ function Shimmer({ src }: { src: string }) {
 const SQUARE_SIZE =
   "size-36 min-[400px]:size-40 max-sm:[@media(min-height:820px)]:size-48 max-sm:[@media(max-height:680px)]:size-28 sm:size-44 sm:[@media(min-height:900px)]:size-72"
 
+const DIAL_FRAME =
+  "relative my-6 flex items-center justify-center min-[400px]:my-7 max-sm:[@media(min-height:820px)]:my-8 max-sm:[@media(max-height:680px)]:my-5 sm:my-8 sm:[@media(min-height:900px)]:my-12"
+
+function SpinningDial({ reduce }: { reduce: boolean }) {
+  return (
+    <motion.div
+      className="absolute -inset-6 text-[var(--l6-gold)] min-[400px]:-inset-7 max-sm:[@media(min-height:820px)]:-inset-8 max-sm:[@media(max-height:680px)]:-inset-5 sm:-inset-8 sm:[@media(min-height:900px)]:-inset-12"
+      animate={reduce ? undefined : { rotate: 360 }}
+      transition={{ duration: 160, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+    >
+      <Dial className="size-full" />
+    </motion.div>
+  )
+}
+
 export function HeroLogo() {
   const variant = useLogoVariant()
   const reduce = useReducedMotion()
@@ -116,32 +131,22 @@ export function HeroLogo() {
   if (variant === "emblem") {
     const src = "/landing/emblem-gold.webp"
     return (
-      <motion.div key={variant} {...intro} className={cn("relative my-4 sm:my-6", SQUARE_SIZE)}>
+      <motion.div key={variant} {...intro} className={cn(DIAL_FRAME, SQUARE_SIZE)}>
+        <SpinningDial reduce={!!reduce} />
+        <div className="relative size-full">
           <span aria-hidden="true" className="absolute inset-0 drop-shadow-[0_18px_40px_rgba(224,176,74,0.3)]">
             <GoldMark src={src} className="absolute inset-0" />
           </span>
           {!reduce && <Shimmer src={src} />}
-        </motion.div>
+        </div>
+      </motion.div>
     )
   }
 
   const src = "/landing/logo.webp"
   return (
-      <motion.div
-        key={variant}
-        {...intro}
-        className={cn(
-          "relative my-6 flex items-center justify-center min-[400px]:my-7 max-sm:[@media(min-height:820px)]:my-8 max-sm:[@media(max-height:680px)]:my-5 sm:my-8 sm:[@media(min-height:900px)]:my-12",
-          SQUARE_SIZE,
-        )}
-      >
-        <motion.div
-          className="absolute -inset-6 text-[var(--l6-gold)] min-[400px]:-inset-7 max-sm:[@media(min-height:820px)]:-inset-8 max-sm:[@media(max-height:680px)]:-inset-5 sm:-inset-8 sm:[@media(min-height:900px)]:-inset-12"
-          animate={reduce ? undefined : { rotate: 360 }}
-          transition={{ duration: 160, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
-        >
-          <Dial className="size-full" />
-        </motion.div>
+      <motion.div key={variant} {...intro} className={cn(DIAL_FRAME, SQUARE_SIZE)}>
+        <SpinningDial reduce={!!reduce} />
         <div className="relative size-full">
           <Image src={src} alt="" fill priority sizes="(min-width: 640px) 288px, 224px" className="object-contain drop-shadow-[0_18px_40px_rgba(224,176,74,0.28)]" />
           {!reduce && <Shimmer src={src} />}
