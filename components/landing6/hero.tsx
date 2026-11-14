@@ -40,7 +40,7 @@ export function Hero() {
       <motion.div style={{ y: lift, opacity: fade }} className="flex flex-col items-center gap-4 text-center max-sm:[@media(max-height:680px)]:gap-3 sm:gap-5 sm:[@media(min-height:900px)]:gap-7">
         <motion.h1
           id="l6-title"
-          className="relative mb-2 aspect-[1200/689] w-64 min-[400px]:w-72 max-sm:[@media(min-height:820px)]:w-80 max-sm:[@media(max-height:680px)]:w-52 sm:w-96 sm:[@media(min-height:900px)]:mb-4 sm:[@media(min-height:900px)]:w-[30rem]"
+          className="relative mb-3 aspect-[1200/689] w-52 min-[400px]:w-60 max-sm:[@media(min-height:820px)]:w-64 max-sm:[@media(max-height:680px)]:w-44 sm:w-80 sm:[@media(min-height:900px)]:mb-4 sm:[@media(min-height:900px)]:w-96"
           initial={{ opacity: 0, scale: reduce ? 1 : 0.9, filter: reduce ? "blur(0px)" : "blur(10px)" }}
           animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
           transition={{ duration: reduce ? 0.2 : 1.6, ease: EASE }}

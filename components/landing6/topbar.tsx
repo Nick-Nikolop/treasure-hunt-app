@@ -2,7 +2,6 @@
 
 import { AnimatePresence, motion } from "framer-motion"
 import { ArrowRight, Menu, X } from "lucide-react"
-import Image from "next/image"
 import Link from "next/link"
 import { useEffect, useState, type ReactNode } from "react"
 import { EV } from "@/lib/analytics-events"
@@ -49,13 +48,23 @@ export function Topbar({ tools }: { tools?: ReactNode }) {
           <Link
             href={HUB}
             aria-label="The Hunt, αρχική"
-            className="flex shrink-0 items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--l6-gold)]"
+            className="flex shrink-0 items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--l6-gold)]"
           >
-            <Image src="/landing/logo-sm.webp" alt="" width={40} height={40} priority className="size-9 object-contain" />
-            <span className="flex flex-col leading-none">
-              <span className="font-sans text-sm font-black uppercase tracking-[0.28em] text-[var(--l6-gold)]">The Hunt</span>
-              <span className="mt-1 font-sans text-[10px] font-semibold uppercase tracking-[0.3em] text-[var(--l6-cream)]/50">Καλαμάτα</span>
-            </span>
+            <span
+              aria-hidden="true"
+              className="block aspect-[1200/689] h-10"
+              style={{
+                WebkitMaskImage: "url(/landing/wordmark-gold.webp)",
+                maskImage: "url(/landing/wordmark-gold.webp)",
+                WebkitMaskSize: "contain",
+                maskSize: "contain",
+                WebkitMaskRepeat: "no-repeat",
+                maskRepeat: "no-repeat",
+                WebkitMaskPosition: "center",
+                maskPosition: "center",
+                backgroundImage: "linear-gradient(180deg, #f8e3a3 0%, var(--l6-gold) 48%, #a8761f 100%)",
+              }}
+            />
           </Link>
 
           <nav aria-label="Κύρια πλοήγηση" className="hidden items-center gap-1 lg:flex">
