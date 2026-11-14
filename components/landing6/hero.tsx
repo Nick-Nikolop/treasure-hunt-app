@@ -7,7 +7,6 @@ import { useRef } from "react"
 import { EV } from "@/lib/analytics-events"
 import { track } from "@/lib/analytics-client"
 import { CHOOSER, EASE } from "./data"
-import { Dial } from "./ornaments"
 import { QuestButton } from "./quest-button"
 
 export function Hero() {
@@ -39,28 +38,21 @@ export function Hero() {
       />
 
       <motion.div style={{ y: lift, opacity: fade }} className="flex flex-col items-center gap-4 text-center max-sm:[@media(max-height:680px)]:gap-3 sm:gap-5 sm:[@media(min-height:900px)]:gap-7">
-        <motion.div
-          className="relative my-6 flex size-36 items-center justify-center min-[400px]:my-7 min-[400px]:size-40 max-sm:[@media(min-height:820px)]:my-8 max-sm:[@media(min-height:820px)]:size-48 max-sm:[@media(max-height:680px)]:my-5 max-sm:[@media(max-height:680px)]:size-28 sm:my-8 sm:size-44 sm:[@media(min-height:900px)]:my-12 sm:[@media(min-height:900px)]:size-72"
-          initial={{ opacity: 0, scale: reduce ? 1 : 0.86 }}
-          animate={{ opacity: 1, scale: 1 }}
+        <motion.h1
+          id="l6-title"
+          className="relative mb-2 aspect-[1200/689] w-64 min-[400px]:w-72 max-sm:[@media(min-height:820px)]:w-80 max-sm:[@media(max-height:680px)]:w-52 sm:w-96 sm:[@media(min-height:900px)]:mb-4 sm:[@media(min-height:900px)]:w-[30rem]"
+          initial={{ opacity: 0, scale: reduce ? 1 : 0.9, filter: reduce ? "blur(0px)" : "blur(10px)" }}
+          animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
           transition={{ duration: reduce ? 0.2 : 1.6, ease: EASE }}
         >
-          <motion.div
-            className="absolute -inset-6 text-[var(--l6-gold)] min-[400px]:-inset-7 max-sm:[@media(min-height:820px)]:-inset-8 max-sm:[@media(max-height:680px)]:-inset-5 sm:-inset-8 sm:[@media(min-height:900px)]:-inset-12"
-            animate={reduce ? undefined : { rotate: 360 }}
-            transition={{ duration: 160, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
-          >
-            <Dial className="size-full" />
-          </motion.div>
-          <div className="relative size-full">
-            <Image src="/landing/logo.webp" alt="" fill priority sizes="(min-width: 640px) 288px, 224px" className="object-contain drop-shadow-[0_18px_40px_rgba(224,176,74,0.28)]" />
-            {!reduce && (
+          <Image src="/landing/wordmark-gold.webp" alt="The Hunt" fill priority sizes="(min-width: 640px) 480px, 320px" className="object-contain drop-shadow-[0_18px_40px_rgba(224,176,74,0.28)]" />
+          {!reduce && (
               <motion.span
                 aria-hidden="true"
                 className="absolute inset-0 mix-blend-screen"
                 style={{
-                  WebkitMaskImage: "url(/landing/logo.webp)",
-                  maskImage: "url(/landing/logo.webp)",
+                  WebkitMaskImage: "url(/landing/wordmark-gold.webp)",
+                  maskImage: "url(/landing/wordmark-gold.webp)",
                   WebkitMaskSize: "contain",
                   maskSize: "contain",
                   WebkitMaskRepeat: "no-repeat",
@@ -74,19 +66,14 @@ export function Hero() {
                 animate={{ backgroundPosition: ["120% 0%", "-20% 0%"] }}
                 transition={{ duration: 2.4, delay: 1.2, repeat: Number.POSITIVE_INFINITY, repeatDelay: 5.5, ease: "easeInOut" }}
               />
-            )}
-          </div>
-        </motion.div>
+          )}
+        </motion.h1>
 
         <motion.p {...rise(1)} className="flex items-center gap-3 whitespace-nowrap font-sans text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--l6-gold)] sm:text-xs sm:tracking-[0.4em]">
           <span aria-hidden="true" className="hidden h-px w-8 bg-[var(--l6-gold)]/60 min-[400px]:block" />
           Κυνήγι θησαυρού · Καλαμάτα
           <span aria-hidden="true" className="hidden h-px w-8 bg-[var(--l6-gold)]/60 min-[400px]:block" />
         </motion.p>
-
-        <motion.h1 {...rise(2, 30)} id="l6-title" className="font-sans text-4xl font-black uppercase leading-none tracking-[0.18em] text-[var(--l6-cream)] sm:text-6xl sm:tracking-[0.22em]">
-          The Hunt
-        </motion.h1>
 
         <motion.p {...rise(3)} className="max-w-[46ch] text-pretty font-serif text-base italic leading-relaxed text-[var(--l6-cream)]/75 sm:text-xl">
           Η πόλη γίνεται το ταμπλό. Γρίφοι σε πραγματικά σημεία, μια ιστορία σε κάθε γωνιά κι ένας θησαυρός στο τέλος.
