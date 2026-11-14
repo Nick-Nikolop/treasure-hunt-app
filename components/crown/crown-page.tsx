@@ -1,11 +1,13 @@
 import { FaqSection } from "./faq"
 import { CrownFontScope } from "./font-picker"
 import { CrownDivider, LATTICE } from "./ornaments"
+import { CrownScrollTop } from "./scroll-top"
 import { Community, CtaBand, Hero, Prize, Setting, Steps, Story, Teams } from "./sections"
 
 export function CrownPage() {
   return (
     <CrownFontScope>
+      <CrownScrollTop />
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[0.06]" style={LATTICE} />
       <main className="relative flex flex-col gap-20 pb-20 sm:gap-36 sm:pb-36">
         <Hero />

@@ -104,11 +104,10 @@ export function Hero() {
         <motion.h1
           {...rise(1, 32)}
           id="crown-title"
-          className="bg-[linear-gradient(180deg,#f8e3a3_0%,#e0b04a_45%,#a8761f_100%)] bg-clip-text pb-2 [font-family:var(--crown-title-font,var(--font-serif))] text-[3.25rem] font-black leading-[0.95] tracking-[0.02em] text-transparent drop-shadow-[0_6px_30px_rgba(224,176,74,0.25)] min-[400px]:text-6xl sm:text-8xl lg:text-[7.5rem]"
+          className="bg-[linear-gradient(180deg,#f8e3a3_0%,#e0b04a_45%,#a8761f_100%)] bg-clip-text pb-2 [font-family:var(--crown-title-font,var(--font-serif))] font-black leading-[0.95] tracking-[0.02em] text-transparent drop-shadow-[0_6px_30px_rgba(224,176,74,0.25)] [font-size:clamp(2rem,11.5vw,7.5rem)]"
         >
-          ΤΟ ΧΑΜΕΝΟ
-          <br />
-          ΣΤΕΜΜΑ
+          <span className="block whitespace-nowrap">ΤΟ ΧΑΜΕΝΟ</span>
+          <span className="block whitespace-nowrap">ΣΤΕΜΜΑ</span>
         </motion.h1>
 
         <motion.p {...rise(2)} className="-mt-3 max-w-[22ch] text-balance [font-family:var(--crown-sub-font,var(--font-serif))] text-2xl font-bold leading-[1.12] text-[var(--l6-cream)] min-[400px]:text-[1.7rem] sm:-mt-5 sm:text-[2.6rem] lg:text-[3.25rem]">
