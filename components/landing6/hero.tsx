@@ -7,6 +7,7 @@ import { useRef } from "react"
 import { EV } from "@/lib/analytics-events"
 import { track } from "@/lib/analytics-client"
 import { CHOOSER, EASE } from "./data"
+import { HeroLogo, HeroTextTitle } from "./logo-variant"
 import { QuestButton } from "./quest-button"
 
 export function Hero() {
@@ -38,59 +39,15 @@ export function Hero() {
       />
 
       <motion.div style={{ y: lift, opacity: fade }} className="flex flex-col items-center gap-4 text-center max-sm:[@media(max-height:680px)]:gap-3 sm:gap-5 sm:[@media(min-height:900px)]:gap-7">
-        <motion.h1
-          id="l6-title"
-          className="relative mb-3 aspect-[1200/689] w-52 min-[400px]:w-60 max-sm:[@media(min-height:820px)]:w-64 max-sm:[@media(max-height:680px)]:w-44 sm:w-80 sm:[@media(min-height:900px)]:mb-4 sm:[@media(min-height:900px)]:w-96"
-          initial={{ opacity: 0, scale: reduce ? 1 : 0.9, filter: reduce ? "blur(0px)" : "blur(10px)" }}
-          animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-          transition={{ duration: reduce ? 0.2 : 1.6, ease: EASE }}
-        >
-          {/* The file is only a stencil (kept for alt text + preload); the visible fill is the brand gold gradient. */}
-          <Image src="/landing/wordmark-gold.webp" alt="The Hunt" fill priority sizes="(min-width: 640px) 480px, 320px" className="object-contain opacity-0" />
-          <span aria-hidden="true" className="absolute inset-0 drop-shadow-[0_18px_40px_rgba(224,176,74,0.3)]">
-            <span
-              className="absolute inset-0"
-              style={{
-                WebkitMaskImage: "url(/landing/wordmark-gold.webp)",
-                maskImage: "url(/landing/wordmark-gold.webp)",
-                WebkitMaskSize: "contain",
-                maskSize: "contain",
-                WebkitMaskRepeat: "no-repeat",
-                maskRepeat: "no-repeat",
-                WebkitMaskPosition: "center",
-                maskPosition: "center",
-                backgroundImage: "linear-gradient(180deg, #f8e3a3 0%, var(--l6-gold) 48%, #a8761f 100%)",
-              }}
-            />
-          </span>
-          {!reduce && (
-              <motion.span
-                aria-hidden="true"
-                className="absolute inset-0 mix-blend-screen"
-                style={{
-                  WebkitMaskImage: "url(/landing/wordmark-gold.webp)",
-                  maskImage: "url(/landing/wordmark-gold.webp)",
-                  WebkitMaskSize: "contain",
-                  maskSize: "contain",
-                  WebkitMaskRepeat: "no-repeat",
-                  maskRepeat: "no-repeat",
-                  WebkitMaskPosition: "center",
-                  maskPosition: "center",
-                  backgroundImage: "linear-gradient(110deg, transparent 38%, rgba(255,246,214,0.75) 50%, transparent 62%)",
-                  backgroundSize: "300% 100%",
-                }}
-                initial={{ backgroundPosition: "120% 0%" }}
-                animate={{ backgroundPosition: ["120% 0%", "-20% 0%"] }}
-                transition={{ duration: 2.4, delay: 1.2, repeat: Number.POSITIVE_INFINITY, repeatDelay: 5.5, ease: "easeInOut" }}
-              />
-          )}
-        </motion.h1>
+        <HeroLogo />
 
         <motion.p {...rise(1)} className="flex items-center gap-3 whitespace-nowrap font-sans text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--l6-gold)] sm:text-xs sm:tracking-[0.4em]">
           <span aria-hidden="true" className="hidden h-px w-8 bg-[var(--l6-gold)]/60 min-[400px]:block" />
           Κυνήγι θησαυρού · Καλαμάτα
           <span aria-hidden="true" className="hidden h-px w-8 bg-[var(--l6-gold)]/60 min-[400px]:block" />
         </motion.p>
+
+        <HeroTextTitle />
 
         <motion.p {...rise(3)} className="max-w-[46ch] text-pretty font-serif text-base italic leading-relaxed text-[var(--l6-cream)]/75 sm:text-xl">
           Η πόλη γίνεται το ταμπλό. Γρίφοι σε πραγματικά σημεία, μια ιστορία σε κάθε γωνιά κι ένας θησαυρός στο τέλος.
