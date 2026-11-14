@@ -45,7 +45,7 @@ export function Topbar({ tools }: { tools?: ReactNode }) {
           scrolled || open ? "border-[var(--l6-gold)]/25 shadow-[0_10px_30px_-12px_rgba(0,0,0,0.7)]" : "border-[var(--l6-cream)]/10",
         )}
       >
-        <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-6 px-5 sm:px-8">
+        <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-3 px-5 sm:gap-6 sm:px-8">
           <Link
             href={HUB}
             aria-label="The Hunt, αρχική"

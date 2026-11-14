@@ -10,12 +10,15 @@ import { cn } from "@/lib/utils"
 import { EASE } from "./data"
 import { Dial } from "./ornaments"
 
-export type LogoVariant = "old" | "wordmark" | "emblem"
+export type LogoVariant = "old" | "wordmark" | "emblem" | "th1" | "th2" | "th3"
 
 const VARIANTS: { id: LogoVariant; label: string; short: string }[] = [
   { id: "old", label: "Παλιό", short: "1" },
   { id: "wordmark", label: "Wordmark", short: "2" },
   { id: "emblem", label: "Πυξίδα", short: "3" },
+  { id: "th1", label: "TH 1", short: "4" },
+  { id: "th2", label: "TH 2", short: "5" },
+  { id: "th3", label: "TH 3", short: "6" },
 ]
 
 const KEY = "l6-logo-variant"
@@ -25,7 +28,7 @@ const listeners = new Set<() => void>()
 function read(): LogoVariant {
   try {
     const v = window.localStorage.getItem(KEY)
-    return v === "old" || v === "wordmark" || v === "emblem" ? v : DEFAULT
+    return VARIANTS.some((x) => x.id === v) ? (v as LogoVariant) : DEFAULT
   } catch {
     return DEFAULT
   }
@@ -47,6 +50,14 @@ export function useLogoVariant() {
     read,
     () => DEFAULT,
   )
+}
+
+/** Square-ish marks shown inside the spinning dial, filled with the brand gold. */
+const MASKED_MARKS: Partial<Record<LogoVariant, string>> = {
+  emblem: "/landing/emblem-gold.webp",
+  th1: "/landing/th-1.webp",
+  th2: "/landing/th-2.webp",
+  th3: "/landing/th-3.webp",
 }
 
 const GOLD_FILL = "linear-gradient(180deg, #f8e3a3 0%, var(--l6-gold) 48%, #a8761f 100%)"
@@ -128,8 +139,9 @@ export function HeroLogo() {
     )
   }
 
-  if (variant === "emblem") {
-    const src = "/landing/emblem-gold.webp"
+  const masked = MASKED_MARKS[variant]
+  if (masked) {
+    const src = masked
     return (
       <motion.div key={variant} {...intro} className={cn(DIAL_FRAME, SQUARE_SIZE)}>
         <SpinningDial reduce={!!reduce} />
@@ -173,8 +185,8 @@ export function TopbarBrand() {
 
   return (
     <span className="flex items-center gap-3">
-      {variant === "emblem" ? (
-        <GoldMark src="/landing/emblem-gold.webp" className="size-9" />
+      {MASKED_MARKS[variant] ? (
+        <GoldMark src={MASKED_MARKS[variant]!} className="size-9" />
       ) : (
         <Image src="/landing/logo-sm.webp" alt="" width={40} height={40} priority className="size-9 object-contain" />
       )}
@@ -206,7 +218,7 @@ export function LogoSwitcher() {
             aria-label={v.label}
             onClick={() => setVariant(v.id)}
             className={cn(
-              "h-8 rounded-full px-2.5 font-sans text-[11px] font-bold uppercase tracking-[0.12em] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--l6-gold)]",
+              "h-8 w-5 rounded-full font-sans sm:w-auto sm:px-2.5 text-[11px] font-bold uppercase tracking-[0.12em] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--l6-gold)]",
               active ? "bg-[var(--l6-gold)] text-[var(--l6-night)]" : "text-[var(--l6-cream)]/70 hover:text-[var(--l6-cream)]",
             )}
           >
