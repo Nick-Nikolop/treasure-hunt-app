@@ -45,7 +45,24 @@ export function Hero() {
           animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
           transition={{ duration: reduce ? 0.2 : 1.6, ease: EASE }}
         >
-          <Image src="/landing/wordmark-gold.webp" alt="The Hunt" fill priority sizes="(min-width: 640px) 480px, 320px" className="object-contain drop-shadow-[0_18px_40px_rgba(224,176,74,0.28)]" />
+          {/* The file is only a stencil (kept for alt text + preload); the visible fill is the brand gold gradient. */}
+          <Image src="/landing/wordmark-gold.webp" alt="The Hunt" fill priority sizes="(min-width: 640px) 480px, 320px" className="object-contain opacity-0" />
+          <span aria-hidden="true" className="absolute inset-0 drop-shadow-[0_18px_40px_rgba(224,176,74,0.3)]">
+            <span
+              className="absolute inset-0"
+              style={{
+                WebkitMaskImage: "url(/landing/wordmark-gold.webp)",
+                maskImage: "url(/landing/wordmark-gold.webp)",
+                WebkitMaskSize: "contain",
+                maskSize: "contain",
+                WebkitMaskRepeat: "no-repeat",
+                maskRepeat: "no-repeat",
+                WebkitMaskPosition: "center",
+                maskPosition: "center",
+                backgroundImage: "linear-gradient(180deg, #f8e3a3 0%, var(--l6-gold) 48%, #a8761f 100%)",
+              }}
+            />
+          </span>
           {!reduce && (
               <motion.span
                 aria-hidden="true"
