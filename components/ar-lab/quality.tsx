@@ -9,7 +9,7 @@ const TONE = {
 export const QUALITY_COPY = {
   good: "Πολλές λεπτομέρειες. Η κάμερα θα το κλειδώσει γρήγορα, ακόμα και από απόσταση.",
   ok: "Θα δουλέψει, αλλά θέλει καλό φως και να σταθεί ο παίκτης κοντά και σχετικά ίσια.",
-  poor: "Πολύ λίγες λεπτομέρειες για το live tracking. Ο AI έλεγχος θα το αναγνωρίζει κανονικά.",
+  poor: "Πολύ λίγες λεπτομέρειες για το live tracking. Τράβηξε πιο κοντά ή διάλεξε σημείο με περισσότερη υφή.",
 } as const
 
 export function QualityBadge({ quality }: { quality: keyof typeof LABEL }) {

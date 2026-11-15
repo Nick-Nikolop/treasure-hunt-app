@@ -2,7 +2,7 @@ import "server-only"
 import { randomUUID } from "node:crypto"
 import { pool } from "@/lib/db"
 
-// The AR lab keeps its own two tables, created at runtime with idempotent
+// The AR lab keeps its own tables, created at runtime with idempotent
 // statements (same pattern as lib/analytics-storage.ts) so the separate
 // production database gets them on first use without a manual migration.
 const STATEMENTS = [
@@ -42,7 +42,6 @@ export function ensureArStorage(): Promise<void> {
 }
 
 export const MAX_TARGETS = 12
-export const DAILY_AI_CHECKS = 40
 
 /** What the scanner needs: tracking data plus the reveal (this is a demo, so the reveal ships to the client). */
 export type ArTarget = {
@@ -111,33 +110,4 @@ export async function createTarget(input: NewTarget): Promise<string> {
 export async function deleteTarget(id: string): Promise<void> {
   await ensureArStorage()
   await pool.query(`DELETE FROM ar_target WHERE id = $1`, [id])
-}
-
-/** Reference photos for the AI check, oldest first so the numbering stays stable. */
-export async function listReferences(): Promise<{ id: string; name: string; refImage: string }[]> {
-  await ensureArStorage()
-  const { rows } = await pool.query(
-    `SELECT id, name, "refImage" FROM ar_target ORDER BY "createdAt" ASC LIMIT $1`,
-    [MAX_TARGETS],
-  )
-  return rows
-}
-
-export async function checksToday(userId: string): Promise<number> {
-  await ensureArStorage()
-  const { rows } = await pool.query(
-    `SELECT count(*)::int AS n FROM ar_check WHERE "userId" = $1 AND "createdAt" > now() - interval '24 hours'`,
-    [userId],
-  )
-  return rows[0]?.n ?? 0
-}
-
-export async function logCheck(userId: string, targetId: string | null, confidence: number): Promise<void> {
-  await ensureArStorage()
-  await pool.query(`INSERT INTO ar_check (id, "userId", "targetId", confidence) VALUES ($1, $2, $3, $4)`, [
-    randomUUID(),
-    userId,
-    targetId,
-    confidence,
-  ])
 }

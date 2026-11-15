@@ -1,6 +1,6 @@
 "use client"
 
-import { Camera, ImageIcon, ScanEye, Sparkles } from "lucide-react"
+import { Camera, ImageIcon, ScanEye } from "lucide-react"
 import { useId, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { fileToCanvas } from "./image-utils"
@@ -10,7 +10,7 @@ import { TeachPanel } from "./teach-panel"
 
 export type LabTarget = ScanTarget & ListedTarget
 
-export function ArLab({ targets, isAdmin, signedIn, maxTargets }: { targets: LabTarget[]; isAdmin: boolean; signedIn: boolean; maxTargets: number }) {
+export function ArLab({ targets, isAdmin, maxTargets }: { targets: LabTarget[]; isAdmin: boolean; maxTargets: number }) {
   const photoId = useId()
   const [source, setSource] = useState<ScanSource | null>(null)
   const scanTargets = useMemo<ScanTarget[]>(
@@ -63,22 +63,14 @@ export function ArLab({ targets, isAdmin, signedIn, maxTargets }: { targets: Lab
 
       <section aria-labelledby="ar-methods" className="flex flex-col gap-4">
         <h2 id="ar-methods" className="sr-only">
-          Οι δύο τρόποι αναγνώρισης
+          Πώς γίνεται η αναγνώριση
         </h2>
-        <div className="grid gap-4 md:grid-cols-2">
-          <Method
-            icon={<ScanEye className="size-5" aria-hidden="true" />}
-            title="Live tracking"
-            when="Επίπεδα πράγματα με λεπτομέρεια: αφίσες, πινακίδες, τοιχογραφίες, κάρτες."
-            facts={["Στιγμιαίο, συνεχές", "Τρέχει στο κινητό, δωρεάν", "Το εφέ «κολλάει» πάνω στο αντικείμενο"]}
-          />
-          <Method
-            icon={<Sparkles className="size-5" aria-hidden="true" />}
-            title="AI έλεγχος"
-            when="Οτιδήποτε: αγάλματα, κτίρια, βρύσες, από άλλη γωνία ή με άλλο φως."
-            facts={["Πατάς κουμπί, απάντηση σε 1-3″", "Μικρό κόστος ανά έλεγχο", "Καταλαβαίνει αν του δείχνεις οθόνη"]}
-          />
-        </div>
+        <Method
+          icon={<ScanEye className="size-5" aria-hidden="true" />}
+          title="Live tracking"
+          when="Δουλεύει καλύτερα σε επίπεδα πράγματα με λεπτομέρεια: αφίσες, πινακίδες, τοιχογραφίες, κάρτες, επιγραφές."
+          facts={["Στιγμιαίο, συνεχές", "Τρέχει μόνο στο κινητό, χωρίς κόστος", "Το εφέ «κολλάει» πάνω στο αντικείμενο"]}
+        />
       </section>
 
       {isAdmin ? (
@@ -90,7 +82,7 @@ export function ArLab({ targets, isAdmin, signedIn, maxTargets }: { targets: Lab
         <p className="text-pretty leading-relaxed text-muted-foreground">Οι στόχοι προστίθενται από τους διαχειριστές του The Hunt.</p>
       )}
 
-      {source && <Scanner targets={scanTargets} source={source} signedIn={signedIn} onClose={() => setSource(null)} />}
+      {source && <Scanner targets={scanTargets} source={source} onClose={() => setSource(null)} />}
     </main>
   )
 }

@@ -1,13 +1,11 @@
 "use client"
 
-import { Loader2, ScanSearch, Sparkles, X } from "lucide-react"
-import Link from "next/link"
+import { Sparkles, X } from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { Button } from "@/components/ui/button"
 import { EV } from "@/lib/analytics-events"
 import { track } from "@/lib/analytics-client"
-import { drawScaled } from "./image-utils"
 import { type MatrixUpdate, type MindController, homographyCss, loadMindAR, mergeTargets, projectCorners } from "./mindar"
 
 export type ScanTarget = { id: string; name: string; unlockTitle: string; unlockBody: string; mindData: string; width: number; height: number }
@@ -16,30 +14,25 @@ export type ScanSource = { kind: "camera" } | { kind: "photo"; canvas: HTMLCanva
 
 type Phase = "starting" | "warming" | "scanning" | "error"
 type Point = { x: number; y: number }
-type Reveal = { target: ScanTarget; via: "live" | "ai" }
-type AiState = { status: "idle" } | { status: "asking" } | { status: "miss"; message: string }
+type Reveal = { target: ScanTarget }
 
 const PLAQUE_W = 400
 
 export function Scanner({
   targets,
   source,
-  signedIn,
   onClose,
 }: {
   targets: ScanTarget[]
   source: ScanSource
-  signedIn: boolean
   onClose: () => void
 }) {
   const stageRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
-  const frameRef = useRef<HTMLVideoElement | HTMLCanvasElement | null>(null)
   const [phase, setPhase] = useState<Phase>("starting")
   const [error, setError] = useState<string | null>(null)
   const [lock, setLock] = useState<{ index: number; corners: Point[] } | null>(null)
   const [reveal, setReveal] = useState<Reveal | null>(null)
-  const [ai, setAi] = useState<AiState>({ status: "idle" })
   const [stageSize, setStageSize] = useState({ width: 0, height: 0 })
   const [frameSize, setFrameSize] = useState({ width: 0, height: 0 })
   const seen = useRef(new Set<string>())
@@ -47,8 +40,8 @@ export function Scanner({
 
   const fit = source.kind === "camera" ? "cover" : "contain"
 
-  const openReveal = useCallback((target: ScanTarget, via: Reveal["via"]) => {
-    setReveal((current) => current ?? { target, via })
+  const openReveal = useCallback((target: ScanTarget) => {
+    setReveal((current) => current ?? { target })
   }, [])
 
   useEffect(() => {
@@ -91,7 +84,6 @@ export function Scanner({
       } else {
         frame = source.canvas
       }
-      frameRef.current = frame
       setFrameSize({ width: frame.width, height: frame.height })
       setPhase("warming")
 
@@ -153,7 +145,7 @@ export function Scanner({
     seen.current.add(target.id)
     track(EV.arLiveMatch, { targetId: target.id, source: source.kind }, { durationMs: Math.round(performance.now() - startedAt.current) })
     navigator.vibrate?.(40)
-    openReveal(target, "live")
+    openReveal(target)
   }, [lock, targets, source.kind, openReveal])
 
   useEffect(() => {
@@ -173,39 +165,6 @@ export function Scanner({
     holder?.appendChild(canvas)
     return () => canvas.remove()
   }, [source])
-
-  async function askAi() {
-    const frame = frameRef.current
-    if (!frame) return
-    setAi({ status: "asking" })
-    const width = frame instanceof HTMLVideoElement ? frame.videoWidth : frame.width
-    const height = frame instanceof HTMLVideoElement ? frame.videoHeight : frame.height
-    const image = drawScaled(frame, width, height, 768).toDataURL("image/jpeg", 0.8)
-    const res = await fetch("/api/ar-lab/check", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ image }),
-    }).catch(() => null)
-    const data = res ? await res.json().catch(() => null) : null
-    if (!res?.ok || !data) {
-      const code = (data?.error as string | undefined) ?? "network"
-      track(EV.arAiCheck, { error: code })
-      setAi({ status: "miss", message: AI_ERROR_COPY[code] ?? AI_ERROR_COPY.network })
-      return
-    }
-    track(EV.arAiCheck, { matched: !!data.targetId, confidence: data.confidence, screen: data.screen })
-    const target = targets.find((t) => t.id === data.targetId)
-    if (target) {
-      seen.current.add(target.id)
-      setAi({ status: "idle" })
-      openReveal(target, "ai")
-    } else {
-      setAi({
-        status: "miss",
-        message: data.screen ? "Μοιάζει με φωτογραφία σε οθόνη. Δείξε μου το αληθινό." : `Δεν το αναγνώρισα. ${data.reason ?? ""}`.trim(),
-      })
-    }
-  }
 
   const mapped = lock ? mapToStage(lock.corners, frameSize, stageSize, fit) : null
   const locked = lock ? targets[lock.index] : null
@@ -260,26 +219,11 @@ export function Scanner({
       </div>
 
       <div className="flex flex-col gap-3 border-t border-border bg-background p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-        {ai.status === "miss" && (
-          <p className="text-pretty text-sm leading-relaxed text-muted-foreground" role="status">
-            {ai.message}
-          </p>
-        )}
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-pretty text-sm leading-relaxed text-muted-foreground">
-            {source.kind === "camera" ? "Δεν κλειδώνει; Ρώτα το AI με ένα στιγμιότυπο." : "Δοκιμή με φωτογραφία."}
-          </p>
-          {signedIn ? (
-            <Button type="button" onClick={() => void askAi()} disabled={phase === "starting" || phase === "error" || ai.status === "asking"}>
-              {ai.status === "asking" ? <Loader2 className="animate-spin" aria-hidden="true" /> : <ScanSearch aria-hidden="true" />}
-              {ai.status === "asking" ? "Ελέγχω…" : "AI έλεγχος"}
-            </Button>
-          ) : (
-            <Button asChild variant="secondary">
-              <Link href="/sign-in">Σύνδεση για AI έλεγχο</Link>
-            </Button>
-          )}
-        </div>
+        <p className="text-pretty text-sm leading-relaxed text-muted-foreground">
+          {source.kind === "camera"
+            ? "Δεν κλειδώνει; Πλησίασε, κράτα το κινητό σταθερό και βάλε όλο το αντικείμενο μέσα στο κάδρο."
+            : "Δοκιμή με φωτογραφία."}
+        </p>
       </div>
 
       {reveal && <RevealSheet reveal={reveal} onDismiss={() => setReveal(null)} />}
@@ -299,14 +243,6 @@ const ERROR_COPY: Record<string, string> = {
   unavailable: "Η κάμερα δεν άνοιξε. Ίσως τη χρησιμοποιεί άλλη εφαρμογή.",
   unsupported: "Αυτός ο browser δεν δίνει πρόσβαση στην κάμερα εδώ. Άνοιξε τη σελίδα απευθείας (https) από το κινητό.",
   engine: "Ο ανιχνευτής δεν φόρτωσε. Έλεγξε τη σύνδεση και ξαναδοκίμασε.",
-}
-
-const AI_ERROR_COPY: Record<string, string> = {
-  signin: "Χρειάζεται σύνδεση για τον AI έλεγχο.",
-  limit: "Έφτασες το ημερήσιο όριο των AI ελέγχων.",
-  empty: "Δεν υπάρχει ακόμα αποθηκευμένος στόχος.",
-  ai: "Το AI δεν απάντησε. Δοκίμασε ξανά.",
-  network: "Ο έλεγχος δεν ολοκληρώθηκε. Δοκίμασε ξανά.",
 }
 
 function mapToStage(
@@ -359,9 +295,7 @@ function RevealSheet({ reveal, onDismiss }: { reveal: Reveal; onDismiss: () => v
     <div className="absolute inset-x-0 bottom-0 z-10 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
       <div className="ar-sheet mx-auto flex max-w-lg flex-col gap-3 rounded-md border border-primary/60 bg-card p-5 text-card-foreground shadow-2xl">
         <div className="flex items-center justify-between gap-3">
-          <span className="text-xs font-medium uppercase tracking-widest text-primary">
-            {reveal.via === "live" ? "Αναγνωρίστηκε live" : "Επιβεβαιώθηκε από το AI"}
-          </span>
+          <span className="text-xs font-medium uppercase tracking-widest text-primary">Αναγνωρίστηκε</span>
           <span className="text-xs text-muted-foreground">{reveal.target.name}</span>
         </div>
         <h2 className="text-balance font-serif text-3xl text-foreground">{reveal.target.unlockTitle}</h2>
