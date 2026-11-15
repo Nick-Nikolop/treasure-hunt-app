@@ -36,6 +36,14 @@ export const EV = {
   crownFaq: "crown.faq", // props: { question, action: "open" | "close" } (never the search text)
   crownFont: "crown.font", // design-review font picker; props: { font }
   crownSocial: "crown.social", // props: { network: "instagram" | "tiktok" | "facebook" | "email" }
+  // /ar-lab image recognition tech demo
+  arTargetCreate: "ar.target_create", // props: { quality: "good" | "ok" | "poor", features }
+  arTargetDelete: "ar.target_delete",
+  arScanStart: "ar.scan_start", // props: { source: "camera" | "photo", targets }
+  arScanEnd: "ar.scan_end", // durationMs; props: { found }
+  arCameraError: "ar.camera_error", // props: { reason }
+  arLiveMatch: "ar.live_match", // durationMs = time to first lock; props: { targetId, source }
+  arAiCheck: "ar.ai_check", // props: { matched, confidence, screen } or { error }
   // /carnival-intro poster puzzle (never the typed key, only outcomes)
   carnivalOpening: "carnival.opening", // durationMs; props: { action: "finished" | "skipped" }
   // landing office walk-in opening (phone hero)

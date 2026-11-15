@@ -1016,3 +1016,18 @@ body {
   .office-hero-pan, .office-hero-off, .office-hero-dark, .office-fade-late, .office-hero-cue { animation: none; }
   .office-hero-off, .office-hero-dark { opacity: 0; }
 }
+
+/* /ar-lab scanner */
+@keyframes ar-dot-in { from { opacity: 0; transform: scale(0); } to { opacity: 0.9; transform: scale(1); } }
+@keyframes ar-pulse { 50% { opacity: 0.35; } }
+@keyframes ar-reticle { 50% { transform: scale(0.94); opacity: 0.7; } }
+@keyframes ar-sheet-in { from { opacity: 0; transform: translateY(24px); } }
+@keyframes ar-plaque-in { from { opacity: 0; } }
+.ar-dot { transform-box: fill-box; transform-origin: center; animation: ar-dot-in 400ms ease-out both; }
+.ar-pulse { animation: ar-pulse 1.2s ease-in-out infinite; }
+.ar-reticle { animation: ar-reticle 2.4s ease-in-out infinite; }
+.ar-sheet { animation: ar-sheet-in 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.ar-plaque { animation: ar-plaque-in 300ms ease-out both; box-shadow: 0 0 40px var(--brass); }
+@media (prefers-reduced-motion: reduce) {
+  .ar-dot, .ar-pulse, .ar-reticle, .ar-sheet, .ar-plaque { animation: none; }
+}

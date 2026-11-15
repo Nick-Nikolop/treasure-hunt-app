@@ -149,6 +149,24 @@ export function describeEvent(e: EventLike): { text: string; detail: string | nu
       return { text: "Tried a font on The Missing Crown", detail: [str(p.target), str(p.font)].filter(Boolean).join(" · "), tone: "quiet" }
     case "crown.social":
       return { text: `Opened our ${str(p.network) ?? "social"} link from The Missing Crown`, detail: null, tone: "normal" }
+    case "ar.target_create":
+      return { text: "Taught the AR lab a new target", detail: [str(p.quality), p.features != null ? `${String(p.features)} features` : null].filter(Boolean).join(" · ") || null, tone: "normal" }
+    case "ar.target_delete":
+      return { text: "Deleted an AR lab target", detail: null, tone: "quiet" }
+    case "ar.scan_start":
+      return { text: p.source === "photo" ? "Tested the AR scanner with a photo" : "Opened the AR camera scanner", detail: p.targets != null ? `${String(p.targets)} targets` : null, tone: "normal" }
+    case "ar.scan_end":
+      return { text: "Closed the AR scanner", detail: [p.found ? "found something" : "found nothing", e.durationMs ? duration(e.durationMs) : null].filter(Boolean).join(" · "), tone: "quiet" }
+    case "ar.camera_error":
+      return { text: "The AR camera could not open", detail: str(p.reason), tone: "normal" }
+    case "ar.live_match":
+      return { text: "The AR scanner recognised a target live", detail: e.durationMs ? `after ${duration(e.durationMs)}` : null, tone: "key" }
+    case "ar.ai_check":
+      return {
+        text: p.error ? "The AR AI check failed" : p.matched ? "The AR AI check confirmed a target" : "The AR AI check found no match",
+        detail: p.error ? str(p.error) : p.confidence != null ? `confidence ${Math.round(Number(p.confidence) * 100)}%` : null,
+        tone: p.matched ? "key" : "normal",
+      }
     case "landing6.menu":
       return { text: p.action === "open" ? "Opened the mobile menu" : "Closed the mobile menu", detail: null, tone: "quiet" }
     case "carnival.opening":
