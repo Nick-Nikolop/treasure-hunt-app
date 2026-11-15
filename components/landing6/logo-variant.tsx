@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils"
 import { EASE } from "./data"
 import { Dial } from "./ornaments"
 
-export type LogoVariant = "old" | "wordmark" | "emblem" | "th1" | "th2" | "th3"
+export type LogoVariant = "old" | "wordmark" | "emblem" | "th1" | "th2" | "th3" | "key"
 
 const VARIANTS: { id: LogoVariant; label: string; short: string }[] = [
   { id: "old", label: "Παλιό", short: "1" },
@@ -19,6 +19,7 @@ const VARIANTS: { id: LogoVariant; label: string; short: string }[] = [
   { id: "th1", label: "TH 1", short: "4" },
   { id: "th2", label: "TH 2", short: "5" },
   { id: "th3", label: "TH 3", short: "6" },
+  { id: "key", label: "Κλειδί", short: "7" },
 ]
 
 const KEY = "l6-logo-variant"
@@ -58,6 +59,7 @@ const MASKED_MARKS: Partial<Record<LogoVariant, string>> = {
   th1: "/landing/th-1.webp",
   th2: "/landing/th-2.webp",
   th3: "/landing/th-3.webp",
+  key: "/landing/th-key.webp",
 }
 
 const GOLD_FILL = "linear-gradient(180deg, #f8e3a3 0%, var(--l6-gold) 48%, #a8761f 100%)"
@@ -190,7 +192,7 @@ export function TopbarBrand() {
       ) : (
         <Image src="/landing/logo-sm.webp" alt="" width={40} height={40} priority className="size-9 object-contain" />
       )}
-      <span className="flex flex-col leading-none">
+      <span className="hidden flex-col leading-none min-[420px]:flex">
         <span className="font-sans text-sm font-black uppercase tracking-[0.28em] text-[var(--l6-gold)]">The Hunt</span>
         <span className="mt-1 font-sans text-[10px] font-semibold uppercase tracking-[0.3em] text-[var(--l6-cream)]/50">Καλαμάτα</span>
       </span>
