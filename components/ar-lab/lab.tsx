@@ -55,10 +55,29 @@ export function ArLab({ targets, isAdmin, maxTargets }: { targets: LabTarget[]; 
               }}
             />
           </label>
-          <span className="text-sm text-muted-foreground">
-            {empty ? "Δεν υπάρχει ακόμα στόχος." : `${targets.length} ${targets.length === 1 ? "στόχος" : "στόχοι"} στη μνήμη`}
-          </span>
+          {!empty && (
+            <span className="text-sm text-muted-foreground">{`${targets.length} ${targets.length === 1 ? "στόχος" : "στόχοι"} στη μνήμη`}</span>
+          )}
         </div>
+        {empty && (
+          <div className="flex max-w-2xl flex-col gap-3 rounded-md border border-primary/50 bg-card p-5" role="status">
+            <p className="font-serif text-xl text-foreground">Πρώτα χρειάζεται ένα αντικείμενο για να ψάχνει.</p>
+            <p className="text-pretty leading-relaxed text-muted-foreground">
+              {isAdmin
+                ? "Η κάμερα ανοίγει μόλις αποθηκεύσεις τον πρώτο στόχο. Βγάλε μια φωτογραφία ενός αντικειμένου στο «Δίδαξε κάτι νέο» παρακάτω."
+                : "Δεν έχει αποθηκευτεί ακόμα κανένας στόχος. Για να προσθέσεις έναν, συνδέσου με τον λογαριασμό διαχειριστή."}
+            </p>
+            {isAdmin ? (
+              <Button asChild className="self-start">
+                <a href="#teach">Πρόσθεσε τον πρώτο στόχο</a>
+              </Button>
+            ) : (
+              <Button asChild variant="secondary" className="self-start">
+                <a href="/sign-in">Σύνδεση</a>
+              </Button>
+            )}
+          </div>
+        )}
       </section>
 
       <section aria-labelledby="ar-methods" className="flex flex-col gap-4">
@@ -74,7 +93,7 @@ export function ArLab({ targets, isAdmin, maxTargets }: { targets: LabTarget[]; 
       </section>
 
       {isAdmin ? (
-        <div className="flex flex-col gap-6">
+        <div id="teach" className="flex scroll-mt-6 flex-col gap-6">
           <TeachPanel full={targets.length >= maxTargets} />
           <TargetList targets={targets} max={maxTargets} />
         </div>
