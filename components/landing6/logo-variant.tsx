@@ -56,11 +56,13 @@ export function useLogoVariant() {
 /** Square-ish marks shown inside the spinning dial, filled with the brand gold. */
 const MASKED_MARKS: Partial<Record<LogoVariant, string>> = {
   emblem: "/landing/emblem-gold.webp",
-  th1: "/landing/th-1.webp",
-  th2: "/landing/th-2.webp",
-  th3: "/landing/th-3.webp",
+  th1: "/landing/th-1.png",
+  th2: "/landing/th-2.png",
+  th3: "/landing/th-3.png",
   key: "/landing/th-key.webp",
 }
+
+const WORDMARK = "/landing/wordmark-gold.png"
 
 const GOLD_FILL = "linear-gradient(180deg, #f8e3a3 0%, var(--l6-gold) 48%, #a8761f 100%)"
 
@@ -124,13 +126,13 @@ export function HeroLogo() {
   }
 
   if (variant === "wordmark") {
-    const src = "/landing/wordmark-gold.webp"
+    const src = WORDMARK
     return (
       <motion.h1
         key={variant}
         id="l6-title"
         {...intro}
-        className="relative mb-3 aspect-[1200/689] w-52 min-[400px]:w-60 max-sm:[@media(min-height:820px)]:w-64 max-sm:[@media(max-height:680px)]:w-44 sm:w-80 sm:[@media(min-height:900px)]:mb-4 sm:[@media(min-height:900px)]:w-96"
+        className="relative mb-3 aspect-[763/450] w-52 min-[400px]:w-60 max-sm:[@media(min-height:820px)]:w-64 max-sm:[@media(max-height:680px)]:w-44 sm:w-80 sm:[@media(min-height:900px)]:mb-4 sm:[@media(min-height:900px)]:w-96"
       >
         <Image src={src} alt="The Hunt" fill priority sizes="(min-width: 640px) 384px, 256px" className="object-contain opacity-0" />
         <span aria-hidden="true" className="absolute inset-0 drop-shadow-[0_18px_40px_rgba(224,176,74,0.3)]">
@@ -183,7 +185,7 @@ export function HeroTextTitle({ className }: { className?: string }) {
 export function TopbarBrand() {
   const variant = useLogoVariant()
 
-  if (variant === "wordmark") return <GoldMark src="/landing/wordmark-gold.webp" className="aspect-[1200/689] h-10" />
+  if (variant === "wordmark") return <GoldMark src={WORDMARK} className="aspect-[763/450] h-10" />
 
   return (
     <span className="flex items-center gap-3">
