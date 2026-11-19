@@ -7,7 +7,7 @@ import { useRef } from "react"
 import { EV } from "@/lib/analytics-events"
 import { track } from "@/lib/analytics-client"
 import { CHOOSER, EASE } from "./data"
-import { HeroLogo, HeroTextTitle } from "./logo-variant"
+import { HeroLogo, HeroTextTitle } from "./brand-mark"
 import { QuestButton } from "./quest-button"
 
 export function Hero() {
