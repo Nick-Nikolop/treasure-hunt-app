@@ -2,87 +2,15 @@
 
 import { motion, useReducedMotion } from "framer-motion"
 import Image from "next/image"
-import { useSyncExternalStore, type CSSProperties } from "react"
+import type { CSSProperties } from "react"
 import { cn } from "@/lib/utils"
 import { EASE } from "./data"
 import { Dial } from "./ornaments"
 
-/** Flat gold master; also the alpha mask for the shimmer (same shape for every texture). */
+/** Flat gold master; also the alpha mask for the shimmer. */
 export const BRAND_MARK = "/brand/th-gold.png"
 
-// TEMPORARY texture comparison: delete TEXTURES/useTexture/TextureSwitcher and
-// point TEXTURE_SRC at the chosen file once the team picks one.
-export type Texture =
-  | "flat"
-  | "brushed"
-  | "polished"
-  | "antique"
-  | "hammered"
-  | "leaf"
-  | "rose"
-  | "champagne"
-  | "guilloche"
-  | "glitter"
-  | "molten"
-  | "faceted"
-  | "sunray"
-  | "crackle"
-  | "sandblast"
-  | "verdigris"
-
-export const TEXTURES: { id: Texture; label: string }[] = [
-  { id: "flat", label: "Χωρίς υφή" },
-  { id: "brushed", label: "Βουρτσισμένο" },
-  { id: "polished", label: "Γυαλιστερό" },
-  { id: "antique", label: "Αντίκα" },
-  { id: "hammered", label: "Σφυρήλατο" },
-  { id: "leaf", label: "Φύλλο χρυσού" },
-  { id: "rose", label: "Ροζ χρυσό" },
-  { id: "champagne", label: "Σαμπανί σατέν" },
-  { id: "guilloche", label: "Γκιλοσέ" },
-  { id: "glitter", label: "Γκλίτερ" },
-  { id: "molten", label: "Λιωμένο" },
-  { id: "faceted", label: "Διαμαντοκομμένο" },
-  { id: "sunray", label: "Ηλιαχτίδες" },
-  { id: "crackle", label: "Κρακελέ" },
-  { id: "sandblast", label: "Αμμοβολή" },
-  { id: "verdigris", label: "Πατίνα" },
-]
-
-const KEY = "l6-logo-texture"
-const DEFAULT: Texture = "brushed"
-const listeners = new Set<() => void>()
-
-function read(): Texture {
-  try {
-    const v = window.localStorage.getItem(KEY)
-    return TEXTURES.some((t) => t.id === v) ? (v as Texture) : DEFAULT
-  } catch {
-    return DEFAULT
-  }
-}
-
-export function setTexture(t: Texture) {
-  try {
-    window.localStorage.setItem(KEY, t)
-  } catch {}
-  listeners.forEach((l) => l())
-}
-
-export function useTexture() {
-  return useSyncExternalStore(
-    (cb) => {
-      listeners.add(cb)
-      return () => listeners.delete(cb)
-    },
-    read,
-    () => DEFAULT,
-  )
-}
-
-function useMarkSrc() {
-  return `/brand/tex/th-${useTexture()}.webp`
-}
+const MARK_SRC = "/brand/th-mark.webp"
 
 function maskStyle(src: string, background: string, extra?: CSSProperties): CSSProperties {
   return {
@@ -120,7 +48,6 @@ const DIAL_FRAME =
 
 export function HeroLogo() {
   const reduce = useReducedMotion()
-  const src = useMarkSrc()
   return (
     <motion.div
       initial={{ opacity: 0, scale: reduce ? 1 : 0.9, filter: reduce ? "blur(0px)" : "blur(10px)" }}
@@ -137,7 +64,7 @@ export function HeroLogo() {
       </motion.div>
       <div className="relative size-full">
         <Image
-          src={src}
+          src={MARK_SRC}
           alt=""
           fill
           priority
@@ -159,10 +86,9 @@ export function HeroTextTitle({ className }: { className?: string }) {
   )
 }
 
-/** Brand mark as a plain image, following the selected texture. */
+/** Brand mark as a plain image. */
 export function BrandMarkImage({ className, alt = "", height }: { className?: string; alt?: string; height: number }) {
-  const src = useMarkSrc()
-  return <Image src={src} alt={alt} width={Math.round(height * 0.82)} height={height} unoptimized loading="eager" className={cn("w-auto", className)} />
+  return <Image src={MARK_SRC} alt={alt} width={Math.round(height * 0.82)} height={height} unoptimized loading="eager" className={cn("w-auto", className)} />
 }
 
 export function TopbarBrand() {
@@ -174,87 +100,5 @@ export function TopbarBrand() {
         <span className="mt-1 font-sans text-[10px] font-semibold uppercase tracking-[0.3em] text-[var(--l6-cream)]/50">Καλαμάτα</span>
       </span>
     </span>
-  )
-}
-
-const STEP_BTN =
-  "flex size-8 items-center justify-center rounded-full font-sans text-base font-bold text-[var(--l6-cream)]/80 transition hover:text-[var(--l6-gold)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--l6-gold)]"
-
-function TextureStepper() {
-  const texture = useTexture()
-  const index = TEXTURES.findIndex((t) => t.id === texture)
-  const go = (delta: number) => setTexture(TEXTURES[(index + delta + TEXTURES.length) % TEXTURES.length].id)
-  return (
-    <div
-      data-no-track
-      className="flex items-center rounded-full border border-dashed border-[var(--l6-gold)]/50 p-0.5 2xl:hidden"
-    >
-      <button type="button" aria-label="Προηγούμενη υφή" onClick={() => go(-1)} className={STEP_BTN}>
-        {"‹"}
-      </button>
-      <span aria-live="polite" className="min-w-12 text-center font-sans text-[11px] font-bold tabular-nums text-[var(--l6-gold)]">
-        <span className="sr-only">{TEXTURES[index].label}, </span>
-        {index}/{TEXTURES.length - 1}
-      </span>
-      <button type="button" aria-label="Επόμενη υφή" onClick={() => go(1)} className={STEP_BTN}>
-        {"›"}
-      </button>
-    </div>
-  )
-}
-
-export function TextureSwitcher() {
-  return (
-    <>
-      <TextureStepper />
-      <TextureRow />
-      <a
-        href="/brand/textures"
-        data-no-track
-        aria-label="Συλλογή υφών σε πλήρη οθόνη"
-        title="Συλλογή υφών"
-        className="flex size-8 shrink-0 items-center justify-center rounded-full border border-dashed border-[var(--l6-gold)]/50 text-[var(--l6-gold)] transition hover:bg-[var(--l6-gold)] hover:text-[var(--l6-night)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--l6-gold)]"
-      >
-        <svg aria-hidden="true" viewBox="0 0 16 16" className="size-3.5" fill="currentColor">
-          <rect x="1" y="1" width="6" height="6" rx="1" />
-          <rect x="9" y="1" width="6" height="6" rx="1" />
-          <rect x="1" y="9" width="6" height="6" rx="1" />
-          <rect x="9" y="9" width="6" height="6" rx="1" />
-        </svg>
-      </a>
-    </>
-  )
-}
-
-function TextureRow() {
-  const texture = useTexture()
-  return (
-    <div
-      role="radiogroup"
-      aria-label="Δοκιμή υφής λογότυπου (προσωρινό)"
-      data-no-track
-      className="hidden items-center gap-0.5 rounded-full border border-dashed border-[var(--l6-gold)]/50 p-0.5 2xl:flex"
-    >
-      {TEXTURES.map((t, i) => {
-        const active = t.id === texture
-        return (
-          <button
-            key={t.id}
-            type="button"
-            role="radio"
-            aria-checked={active}
-            aria-label={t.label}
-            title={t.label}
-            onClick={() => setTexture(t.id)}
-            className={cn(
-              "h-7 min-w-6 rounded-full px-1 font-sans text-[11px] font-bold tabular-nums transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--l6-gold)] sm:h-8 sm:min-w-7",
-              active ? "bg-[var(--l6-gold)] text-[var(--l6-night)]" : "text-[var(--l6-cream)]/70 hover:text-[var(--l6-cream)]",
-            )}
-          >
-            {i}
-          </button>
-        )
-      })}
-    </div>
   )
 }
