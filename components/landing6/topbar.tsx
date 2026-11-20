@@ -8,7 +8,7 @@ import { EV } from "@/lib/analytics-events"
 import { track } from "@/lib/analytics-client"
 import { cn } from "@/lib/utils"
 import { CHOOSER, EASE, HUB, NAV } from "./data"
-import { TopbarBrand } from "./brand-mark"
+import { TextureSwitcher, TopbarBrand } from "./brand-mark"
 
 export function Topbar({ tools }: { tools?: ReactNode }) {
   const [scrolled, setScrolled] = useState(false)
@@ -67,6 +67,7 @@ export function Topbar({ tools }: { tools?: ReactNode }) {
           </nav>
 
           <div className="flex shrink-0 items-center gap-2">
+            <TextureSwitcher />
             {tools}
             <Link
               href={CHOOSER}

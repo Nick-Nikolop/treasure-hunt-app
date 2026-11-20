@@ -18,8 +18,6 @@ const OPEN_DURING_MAINTENANCE = ["/vote", "/brand", "/landing", "/landing2", "/l
 
 function isOpenPath(pathname: string | null): boolean {
   if (!pathname) return false
-  // The hub landing is public. Matched exactly: a "/" prefix would open every page.
-  if (pathname === "/") return true
   return OPEN_DURING_MAINTENANCE.some((path) => pathname === path || pathname.startsWith(`${path}/`))
 }
 
