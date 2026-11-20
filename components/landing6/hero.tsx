@@ -25,7 +25,7 @@ export function Hero() {
   })
 
   return (
-    <section ref={ref} aria-labelledby="l6-title" className="relative isolate flex min-h-[calc(100svh-4rem)] items-center justify-center overflow-hidden px-5 pb-16 pt-6 sm:px-8 sm:pt-10 sm:[@media(min-height:900px)]:pb-20 sm:[@media(min-height:900px)]:pt-20">
+    <section ref={ref} aria-labelledby="l6-title" className="relative isolate flex min-h-[calc(100svh-4rem)] flex-col items-center overflow-hidden px-5 pt-4 sm:px-8 sm:pt-6">
       <motion.div aria-hidden="true" className="absolute inset-0 -z-20" style={{ scale: mapScale }}>
         <Image src="/landing/hero-kalamata-map.webp" alt="" fill priority sizes="100vw" className="object-cover opacity-[0.16] sepia" />
       </motion.div>
@@ -38,7 +38,7 @@ export function Hero() {
         }}
       />
 
-      <motion.div style={{ y: lift, opacity: fade }} className="flex flex-col items-center gap-4 text-center max-sm:[@media(max-height:680px)]:gap-3 sm:gap-5 sm:[@media(min-height:900px)]:gap-7">
+      <motion.div style={{ y: lift, opacity: fade }} className="my-auto flex flex-col items-center gap-4 text-center max-sm:[@media(max-height:680px)]:gap-3 sm:gap-5 sm:[@media(min-height:1000px)]:gap-7">
         <HeroLogo />
 
         <motion.p {...rise(1)} className="flex items-center gap-3 whitespace-nowrap font-sans text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--l6-gold)] sm:text-xs sm:tracking-[0.4em]">
@@ -63,7 +63,7 @@ export function Hero() {
       <motion.a
         href="#hunts"
         aria-label="Δες τα κυνήγια"
-        className="absolute bottom-6 left-1/2 flex -translate-x-1/2 [@media(max-height:600px)]:hidden flex-col items-center gap-1 font-sans text-[10px] font-bold uppercase tracking-[0.35em] text-[var(--l6-cream)]/45 transition hover:text-[var(--l6-gold)]"
+        className="mb-5 mt-6 flex shrink-0 [@media(max-height:600px)]:hidden flex-col items-center gap-1 font-sans text-[10px] font-bold uppercase tracking-[0.35em] text-[var(--l6-cream)]/45 transition hover:text-[var(--l6-gold)]"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: reduce ? 0 : 1.4, duration: 0.8 }}

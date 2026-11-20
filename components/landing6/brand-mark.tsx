@@ -41,10 +41,10 @@ function Shimmer() {
 }
 
 const SQUARE_SIZE =
-  "size-36 min-[400px]:size-40 max-sm:[@media(min-height:820px)]:size-48 max-sm:[@media(max-height:680px)]:size-28 sm:size-44 sm:[@media(min-height:900px)]:size-72"
+  "size-36 min-[400px]:size-40 max-sm:[@media(min-height:820px)]:size-48 max-sm:[@media(max-height:680px)]:size-28 sm:size-44 sm:[@media(min-height:1000px)]:size-72"
 
 const DIAL_FRAME =
-  "relative my-6 flex items-center justify-center min-[400px]:my-7 max-sm:[@media(min-height:820px)]:my-8 max-sm:[@media(max-height:680px)]:my-5 sm:my-8 sm:[@media(min-height:900px)]:my-12"
+  "relative my-6 flex items-center justify-center min-[400px]:my-7 max-sm:[@media(min-height:820px)]:my-8 max-sm:[@media(max-height:680px)]:my-5 sm:my-8 sm:[@media(min-height:1000px)]:my-12"
 
 export function HeroLogo() {
   const reduce = useReducedMotion()
@@ -56,7 +56,7 @@ export function HeroLogo() {
       className={cn(DIAL_FRAME, SQUARE_SIZE)}
     >
       <motion.div
-        className="absolute -inset-6 text-[var(--l6-gold)] min-[400px]:-inset-7 max-sm:[@media(min-height:820px)]:-inset-8 max-sm:[@media(max-height:680px)]:-inset-5 sm:-inset-8 sm:[@media(min-height:900px)]:-inset-12"
+        className="absolute -inset-6 text-[var(--l6-gold)] min-[400px]:-inset-7 max-sm:[@media(min-height:820px)]:-inset-8 max-sm:[@media(max-height:680px)]:-inset-5 sm:-inset-8 sm:[@media(min-height:1000px)]:-inset-12"
         animate={reduce ? undefined : { rotate: 360 }}
         transition={{ duration: 160, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
       >
